@@ -1,0 +1,15 @@
+# Secrets: never commit API keys
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Eval output and local data
+eval/data/
+eval/results/
+
+.DS_Store
