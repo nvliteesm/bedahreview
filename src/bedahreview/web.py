@@ -23,15 +23,20 @@ from typing import Any, Callable, Dict, List, Optional
 
 from .classifier import ClassificationError, classify, resolve_model
 from .env import has_api_key, load_dotenv
+from .fetchers import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, get_fetcher, to_review_dicts
+from .fetchers.base import check_shopee_product_url, clamp_limit
 from .parse import parse_reviews
 
 STATIC = Path(__file__).resolve().parent / "static"
 MAX_BODY_BYTES = 200_000
 MAX_REVIEWS = 50  # v1 cap: keeps one paste to a handful of API calls
 BUCKET_ORDER = ["fix", "fight", "check", "ignore", "keep"]
+DEFAULT_LIMIT = 10  # reviews fetched from a link when the seller does not choose
 
 
-def build_response(reviews: List[Dict[str, Any]], results: List[Dict[str, Any]], model: str) -> Dict[str, Any]:
+def build_response(
+    reviews: List[Dict[str, Any]], results: List[Dict[str, Any]], model: str, source: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
     """Join each classifier result with the review it came from and add the counts the board shows."""
     by_id = {r["id"]: r for r in reviews}
     items = []
@@ -44,11 +49,13 @@ def build_response(reviews: List[Dict[str, Any]], results: List[Dict[str, Any]],
         "items": items,
         "counts": {b: counts.get(b, 0) for b in BUCKET_ORDER},
         "likely_fake": sum(1 for item in items if item["likely_fake"]["flag"]),
+        "source": source or {"kind": "paste"},
     }
 
 
 class Handler(BaseHTTPRequestHandler):
     classify_fn: Callable[..., List[Dict[str, Any]]] = staticmethod(classify)  # replaced in tests
+    fetcher: Optional[Fetcher] = None  # set when FETCHER=apify; None keeps the link box switched off
     server_version = "BedahReview"
 
     # -- helpers ---------------------------------------------------------
@@ -72,12 +79,39 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args: Any) -> None:  # one short line per request, no review text
         sys.stderr.write("%s %s\n" % (self.command, self.path))
 
+    def _fetch(self, url: str, limit: Any):
+        """Fetch reviews from a product link (demo). Returns (reviews, source) or None after sending an error."""
+        fetcher = type(self).fetcher
+        if fetcher is None:
+            self._json(400, {"error": "The link box is switched off. Paste the reviews instead."})
+            return None
+        try:
+            url = check_shopee_product_url(url)
+            limit = clamp_limit(limit)
+        except FetchError as exc:
+            self._json(400, {"error": str(exc)})
+            return None
+        try:
+            fetched = fetcher.fetch_reviews(url, limit)
+        except FetchError as exc:
+            self._json(502, {"error": "%s You can paste the reviews instead." % exc, "fallback": "paste"})
+            return None
+        except Exception as exc:
+            sys.stderr.write("fetch failed: %s\n" % type(exc).__name__)
+            self._json(502, {"error": "Could not fetch reviews from that link. You can paste the reviews instead.", "fallback": "paste"})
+            return None
+        source = {"kind": "url", "url": url, "count": len(fetched), "cached": bool(getattr(fetcher, "last_from_cache", False))}
+        return to_review_dicts(fetched), source
+
     # -- routes ----------------------------------------------------------
     def do_GET(self) -> None:
         if not self._host_ok():
             return self._json(403, {"error": "Host not allowed"})
         if self.path in ("/", "/index.html"):
             return self._send(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
+        if self.path == "/api/config":
+            on = type(self).fetcher is not None
+            return self._json(200, {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT})
         self._json(404, {"error": "Not found"})
 
     def do_POST(self) -> None:
@@ -94,13 +128,23 @@ class Handler(BaseHTTPRequestHandler):
         if length <= 0 or length > MAX_BODY_BYTES:
             return self._json(413, {"error": "Paste is empty or too large (limit %d KB)" % (MAX_BODY_BYTES // 1000)})
         try:
-            text = json.loads(self.rfile.read(length).decode("utf-8")).get("text", "")
-            if not isinstance(text, str):
+            body = json.loads(self.rfile.read(length).decode("utf-8"))
+            if not isinstance(body, dict):
                 raise ValueError
-        except (ValueError, AttributeError, UnicodeDecodeError):
+            text, url = body.get("text", ""), body.get("url", "")
+            if not isinstance(text, str) or not isinstance(url, str):
+                raise ValueError
+        except (ValueError, UnicodeDecodeError):
             return self._json(400, {"error": "Body must be JSON like {\"text\": \"...\"}"})
 
-        reviews = parse_reviews(text)
+        source: Optional[Dict[str, Any]] = None
+        if url.strip():
+            fetched = self._fetch(url, body.get("limit", DEFAULT_LIMIT))
+            if fetched is None:  # _fetch already sent the error
+                return
+            reviews, source = fetched
+        else:
+            reviews = parse_reviews(text)
         if not reviews:
             return self._json(400, {"error": "No reviews found. Paste at least one review."})
         if len(reviews) > MAX_REVIEWS:
@@ -114,13 +158,16 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:  # timeout, rate limit, network: say what happened without a traceback
             sys.stderr.write("classify failed: %s: %s\n" % (type(exc).__name__, exc))
             return self._json(502, {"error": "Could not reach Gemini (%s). Try again in a moment." % type(exc).__name__})
-        self._json(200, build_response(reviews, results, model))
+        self._json(200, build_response(reviews, results, model, source))
 
 
-def make_server(port: int = 8000, classify_fn: Optional[Callable[..., Any]] = None) -> ThreadingHTTPServer:
+def make_server(
+    port: int = 8000, classify_fn: Optional[Callable[..., Any]] = None, fetcher: Optional[Fetcher] = None
+) -> ThreadingHTTPServer:
     handler = type("BoundHandler", (Handler,), {})
     if classify_fn is not None:
         handler.classify_fn = staticmethod(classify_fn)
+    handler.fetcher = fetcher
     return ThreadingHTTPServer(("127.0.0.1", port), handler)
 
 
@@ -134,11 +181,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("GEMINI_API_KEY is not set. Add it to .env (see .env.example).", file=sys.stderr)
         return 1
     try:
-        server = make_server(args.port)
+        fetcher = get_fetcher()
+    except FetcherConfigError as exc:
+        print("Setup problem: %s" % exc, file=sys.stderr)
+        return 1
+    try:
+        server = make_server(args.port, fetcher=fetcher)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (args.port, exc.strerror), file=sys.stderr)
         return 1
-    print("BedahReview is running on http://127.0.0.1:%d  (model: %s)  Press Ctrl+C to stop." % (args.port, resolve_model()))
+    print("BedahReview is running on http://127.0.0.1:%d  (model: %s)  Press Ctrl+C to stop." % (args.port, resolve_model()), flush=True)
+    print("Product-link box (demo): %s" % ("ON, paid third-party fetch" if fetcher else "off (set FETCHER=apify in .env to turn on)"), flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

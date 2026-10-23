@@ -53,6 +53,21 @@ It only listens on your own computer, so your API key never leaves it. Up to 50 
 Paste one review per line (or separate multi-line reviews with a blank line). Stars and variant are
 optional: `★★★☆☆  Putih, M   warna tulisannya ijo`.
 
+## Product-link box (demo only)
+
+Off by default. Paste is the main way to bring in reviews. To try fetching from a Shopee link:
+
+1. Create an Apify account and copy your API token (Apify Console > Settings > API & Integrations).
+2. In `.env` set `FETCHER=apify` and `APIFY_TOKEN=...` (never paste the token into code, chat or git).
+3. Restart the app. The terminal says "Product-link box (demo): ON" and a dashed "Demo only" box appears.
+
+It uses the Apify actor `zen-studio/shopee-product-reviews-scraper`, which costs roughly $0.004 per review plus
+$0.008 per run. `APIFY_MAX_COST_USD` (default 0.05, about 10 reviews) is a hard cap on each run, so asking for
+20 reviews at the default cap returns about 10. Results are saved in `fetch_cache/` so the same link is not
+paid for twice. Only `shopee.co.id` product links are accepted. Shopee's terms for this have not been checked,
+the service often returns nothing, and the app then tells the seller to paste instead. Reviewer names are
+never kept. Tokopedia is not supported.
+
 ## Run the eval
 
 1. In the Google Sheet, open the **Review log** tab and choose File > Download > Comma-separated values.

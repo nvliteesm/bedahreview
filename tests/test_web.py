@@ -4,6 +4,8 @@ import threading
 import unittest
 
 from bedahreview.classifier import ClassificationError
+from bedahreview.fetchers import FetchError
+from bedahreview.fetchers.base import Review
 from bedahreview.web import MAX_REVIEWS, build_response, make_server
 
 
@@ -112,6 +114,75 @@ class WebTests(unittest.TestCase):
         self.assertEqual(resp.status, 502)
         self.assertIn("TimeoutError", json.loads(data)["error"])
         self.assertNotIn("Traceback", data.decode())
+
+    def test_link_box_is_off_by_default(self):
+        resp, data = self.request("GET", "/api/config")
+        self.assertEqual(json.loads(data)["url_box"], False)
+        body = json.dumps({"url": "https://shopee.co.id/p-i.1.2"}).encode()
+        resp, data = self.request("POST", "/api/classify", body, {"Content-Type": "application/json"})
+        self.assertEqual(resp.status, 400)
+        self.assertIn("switched off", json.loads(data)["error"])
+        self.assertEqual(self.seen, [])
+
+    def _with_fetcher(self, fetcher):
+        self.server.shutdown(); self.server.server_close()
+        self.server = make_server(0, classify_fn=self.fake_classify, fetcher=fetcher)
+        self.port = self.server.server_address[1]
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def post_json(self, payload):
+        return self.request("POST", "/api/classify", json.dumps(payload).encode(), {"Content-Type": "application/json"})
+
+    def test_link_flow_fetches_then_classifies(self):
+        class Fake:
+            last_from_cache = True
+            calls = []
+
+            def fetch_reviews(self, url, limit):
+                Fake.calls.append((url, limit))
+                return [Review(2, "Pas sampe koyak", "Hitam, L", "2026-10-07", 0, None), Review(5, "bagus", None, "", 1, "terima kasih")]
+
+        self._with_fetcher(Fake())
+        cfg = json.loads(self.request("GET", "/api/config")[1])
+        self.assertEqual((cfg["url_box"], cfg["max_limit"], cfg["default_limit"]), (True, 20, 10))
+        resp, data = self.post_json({"url": "https://shopee.co.id/p-i.1.2?x=1", "limit": 99})
+        out = json.loads(data)
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(Fake.calls, [("https://shopee.co.id/p-i.1.2", 20)])  # tracking stripped, limit clamped
+        self.assertEqual(out["source"], {"kind": "url", "url": "https://shopee.co.id/p-i.1.2", "count": 2, "cached": True})
+        self.assertEqual([i["text"] for i in out["items"]], ["Pas sampe koyak", "bagus"])
+        self.assertEqual(self.seen[0][0], {"id": "1", "stars": 2, "variant": "Hitam, L", "date": "2026-10-07", "text": "Pas sampe koyak"})
+
+    def test_failed_fetch_points_to_paste_and_skips_the_model(self):
+        class Down:
+            def fetch_reviews(self, url, limit):
+                raise FetchError("No reviews came back.")
+
+        self._with_fetcher(Down())
+        resp, data = self.post_json({"url": "https://shopee.co.id/p-i.1.2"})
+        out = json.loads(data)
+        self.assertEqual((resp.status, out["fallback"]), (502, "paste"))
+        self.assertIn("paste the reviews instead", out["error"])
+        self.assertEqual(self.seen, [])
+
+        class Crash:
+            def fetch_reviews(self, url, limit):
+                raise RuntimeError("boom with details")
+
+        self._with_fetcher(Crash())
+        resp, data = self.post_json({"url": "https://shopee.co.id/p-i.1.2"})
+        self.assertEqual(resp.status, 502)
+        self.assertNotIn("boom", data.decode())
+
+    def test_bad_links_are_rejected_before_any_fetch(self):
+        class Never:
+            def fetch_reviews(self, url, limit):
+                raise AssertionError("must not be called")
+
+        self._with_fetcher(Never())
+        for bad in ("https://tokopedia.com/a/b-i.1.2", "https://shopee.co.id.evil.com/p-i.1.2", "javascript:alert(1)"):
+            self.assertEqual(self.post_json({"url": bad})[0].status, 400, bad)
+        self.assertEqual(self.post_json({"url": "https://shopee.co.id/p-i.1.2", "limit": "lots"})[0].status, 400)
 
     def test_unknown_paths(self):
         self.assertEqual(self.request("GET", "/nope")[0].status, 404)

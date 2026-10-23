@@ -48,6 +48,11 @@ button { font: inherit; font-weight: 700; font-size: 0.88rem; padding: 8px 16px;
 details summary { cursor: pointer; font-weight: 600; color: var(--accent); }
 details pre { margin: 8px 0 0; padding: 10px; background: var(--quote); border-radius: 6px; font: 0.8rem/1.6 var(--font-mono); white-space: pre-wrap; }
 
+.demo { border-style: dashed; }
+input[type=url], input[type=number] { font: inherit; color: var(--ink); background: var(--quote); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; }
+input[type=url] { flex: 1 1 280px; min-width: 0; }
+input[type=number] { width: 5.5rem; }
+input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .error { background: var(--error-soft); color: var(--error); border-radius: 8px; padding: 10px 14px; font-weight: 600; }
 .status { color: var(--muted); }
 
@@ -123,6 +128,20 @@ Stars can be ★ symbols, "4★", "4/5" or "bintang 4". A variant needs a comma 
       <span class="status" id="status" role="status" aria-live="polite"></span>
     </div>
     <div class="error" id="error" role="alert" hidden></div>
+  </section>
+
+  <section class="panel demo" id="urlpanel" hidden aria-labelledby="url-h">
+    <div class="row">
+      <label class="field" id="url-h" for="url">Or paste a product link</label>
+      <span class="chip warn">Demo only: fetched via a third-party service</span>
+    </div>
+    <div class="row">
+      <input id="url" type="url" inputmode="url" autocomplete="off" placeholder="https://shopee.co.id/...-i.12345.67890">
+      <label for="limit" class="muted">Reviews</label>
+      <input id="limit" type="number" min="1" max="20" value="10">
+      <button class="primary" id="fetch" type="button">Fetch &amp; bedah</button>
+    </div>
+    <p class="foot">shopee.co.id product links only. It gets the newest reviews that have comments. Each run costs a few cents, can come back with fewer reviews than you ask for, and sometimes fails. Pasting always works.</p>
   </section>
 
   <section id="results" hidden aria-labelledby="results-h">
@@ -276,37 +295,64 @@ function render(data) {
   keep.replaceChildren(h("p", {}, h("b", { text: "Keep doing  " }), themes.join(", ")),
     ...by.keep.slice(0, 3).map((k) => quote(k)));
 
-  $("foot").textContent = "Model: " + data.model + ". Suggestions and drafts are machine-written: read them, and have a Bahasa speaker check any text before you send it to a buyer.";
+  const src = data.source || {};
+  const fromLink = src.kind === "url" ? "Demo: " + src.count + (src.count === 1 ? " review" : " reviews") + " fetched from the product link" + (src.cached ? " (saved copy, no new charge)" : "") + " via a third-party service. " : "";
+  $("foot").textContent = fromLink + "Model: " + data.model + ". Suggestions and drafts are machine-written: read them, and have a Bahasa speaker check any text before you send it to a buyer.";
   $("results").hidden = false;
   $("results").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function showError(msg) { const e = $("error"); e.textContent = msg; e.hidden = !msg; }
 
-async function run() {
-  const text = $("paste").value;
+async function send(payload, btn, idleLabel) {
   showError("");
-  if (!text.trim()) { showError("Paste some reviews first."); return; }
-  const btn = $("run");
-  btn.disabled = true; btn.textContent = "Membedah…";
+  btn.disabled = true; btn.textContent = "Membedah\u2026";
   $("status").textContent = "Reading your reviews. This can take up to a minute.";
   try {
-    const res = await fetch("/api/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+    const res = await fetch("/api/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     let data = null;
     try { data = await res.json(); } catch (e) { /* not JSON */ }
-    if (!res.ok || !data) { showError((data && data.error) || "Something went wrong (" + res.status + ")."); return; }
+    if (!res.ok || !data) {
+      showError((data && data.error) || "Something went wrong (" + res.status + ").");
+      if (data && data.fallback === "paste") $("paste").focus();
+      return;
+    }
     render(data);
   } catch (e) {
     showError("Could not reach the app. Is the terminal window still running it?");
   } finally {
-    btn.disabled = false; btn.textContent = "Bedah ulasan"; $("status").textContent = "";
+    btn.disabled = false; btn.textContent = idleLabel; $("status").textContent = "";
   }
 }
 
-$("run").addEventListener("click", run);
+function runPaste() {
+  const text = $("paste").value;
+  if (!text.trim()) { showError("Paste some reviews first."); return; }
+  send({ text }, $("run"), "Bedah ulasan");
+}
+
+function runFetch() {
+  const url = $("url").value.trim();
+  if (!url) { showError("Paste a product link first."); return; }
+  send({ url, limit: parseInt($("limit").value, 10) || 10 }, $("fetch"), "Fetch & bedah");
+}
+
+async function loadConfig() {
+  try {
+    const cfg = await (await fetch("/api/config")).json();
+    if (!cfg.url_box) return;
+    $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
+    $("urlpanel").hidden = false;
+  } catch (e) { /* the link box simply stays hidden */ }
+}
+
+$("run").addEventListener("click", runPaste);
+$("fetch").addEventListener("click", runFetch);
+$("url").addEventListener("keydown", (e) => { if (e.key === "Enter") runFetch(); });
 $("sample").addEventListener("click", () => { $("paste").value = SAMPLE; showError(""); });
-$("clear").addEventListener("click", () => { $("paste").value = ""; $("results").hidden = true; showError(""); $("paste").focus(); });
-$("paste").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run(); });
+$("clear").addEventListener("click", () => { $("paste").value = ""; $("url").value = ""; $("results").hidden = true; showError(""); $("paste").focus(); });
+$("paste").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") runPaste(); });
+loadConfig();
 </script>
 </body>
 </html>

@@ -14,3 +14,6 @@ eval/results/
 
 .DS_Store
 *.egg-info/
+
+# Cached product-link fetches (review text from third-party runs)
+fetch_cache/
