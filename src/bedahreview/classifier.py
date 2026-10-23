@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 import os
+import threading
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -12,8 +14,11 @@ ROOT = Path(__file__).resolve().parents[2]
 PROMPT_PATH = ROOT / "prompts" / "classifier.md"
 SCHEMA_PATH = ROOT / "prompts" / "output_schema.json"
 
-DEFAULT_MODEL = "gemini-3.8-flash"
+DEFAULT_MODEL = "gemini-3.5-flash-lite"
 BATCH_SIZE = 15  # reviews per API call; fake-review signals only work inside one batch
+REQUEST_TIMEOUT_MS = 180_000  # SDK-level timeout; it did not stop a hung connection in practice
+REQUEST_DEADLINE_S = 120  # hard wall-clock cap per attempt, enforced by us
+RETRY_DELAYS_S = (2, 6)  # waits before retrying a temporary API error (503, 429, timeout)
 MAX_TOKENS = 16000  # Gemini counts its internal thinking tokens against this too
 
 
@@ -68,7 +73,17 @@ def validate_results(reviews: List[Dict[str, Any]], results: List[Any]) -> List[
     return problems
 
 
-def _call(client: Any, model: str, system: str, messages: List[Dict[str, str]]) -> str:
+def build_system_prompt() -> str:
+    """The prompt file plus the output schema, so the model sees the exact theme values."""
+    schema = SCHEMA_PATH.read_text(encoding="utf-8").strip()
+    return (
+        PROMPT_PATH.read_text(encoding="utf-8")
+        + "\n\n## output_schema.json\n\nEvery object you return must validate against this JSON Schema. "
+        "Use only the exact `theme` values in its enum.\n\n```json\n" + schema + "\n```\n"
+    )
+
+
+def _generate(client: Any, model: str, system: str, messages: List[Dict[str, str]]) -> str:
     """One Gemini call. `messages` use roles user/assistant; Gemini calls the latter "model"."""
     from google.genai import types
 
@@ -93,7 +108,46 @@ def _call(client: Any, model: str, system: str, messages: List[Dict[str, str]]) 
     if finish not in ("STOP", "FINISH_REASON_UNSPECIFIED", "None"):
         raise ClassificationError("Gemini stopped with finish_reason=%s" % finish)
     parts = candidates[0].content.parts if candidates[0].content else []
-    return "".join(part.text for part in parts or [] if getattr(part, "text", None))
+    return "".join(
+        part.text for part in parts or [] if getattr(part, "text", None) and not getattr(part, "thought", False)
+    )
+
+
+def _run_with_deadline(fn: Any, seconds: float) -> Any:
+    """Run fn in a daemon thread and give up after `seconds`, since a hung socket can block for many minutes."""
+    box: Dict[str, Any] = {}
+
+    def target() -> None:
+        try:
+            box["value"] = fn()
+        except BaseException as exc:  # re-raised in the caller's thread
+            box["error"] = exc
+
+    thread = threading.Thread(target=target, daemon=True)
+    thread.start()
+    thread.join(seconds)
+    if thread.is_alive():
+        raise TimeoutError("no response from Gemini after %ds" % seconds)
+    if "error" in box:
+        raise box["error"]
+    return box["value"]
+
+
+def _is_transient(exc: BaseException) -> bool:
+    return isinstance(exc, TimeoutError) or getattr(exc, "code", None) in (429, 500, 502, 503, 504)
+
+
+def _call(client: Any, model: str, system: str, messages: List[Dict[str, str]]) -> str:
+    """_generate with a hard deadline, retrying temporary errors (overloaded model, rate limit, hang)."""
+    for attempt, delay in enumerate((0,) + tuple(RETRY_DELAYS_S)):
+        if delay:
+            time.sleep(delay)
+        try:
+            return _run_with_deadline(lambda: _generate(client, model, system, messages), REQUEST_DEADLINE_S)
+        except Exception as exc:
+            if not _is_transient(exc) or attempt == len(RETRY_DELAYS_S):
+                raise
+    raise AssertionError("unreachable")
 
 
 def _classify_batch(client: Any, model: str, system: str, reviews: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -139,10 +193,12 @@ def classify(
 
     if client is None:
         from google import genai
+        from google.genai import types
 
-        client = genai.Client()  # reads GEMINI_API_KEY (or GOOGLE_API_KEY) from the environment
+        # reads GEMINI_API_KEY (or GOOGLE_API_KEY) from the environment
+        client = genai.Client(http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS))
     model = model or os.environ.get("BEDAHREVIEW_MODEL", DEFAULT_MODEL)
-    system = PROMPT_PATH.read_text(encoding="utf-8")
+    system = build_system_prompt()
 
     results: List[Dict[str, Any]] = []
     for i in range(0, len(reviews), BATCH_SIZE):

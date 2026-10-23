@@ -47,7 +47,8 @@ class ClassifyTests(unittest.TestCase):
         out = classify(self.reviews, client=client, model="m")
         self.assertEqual([r["id"] for r in out], ["33", "34", "31", "99"])
         config = client.calls[0]["config"]
-        self.assertEqual(config.system_instruction, classifier.PROMPT_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(config.system_instruction, classifier.build_system_prompt())
+        self.assertIn("Colour vs photo", config.system_instruction)  # theme enum reaches the model
         self.assertEqual(config.response_mime_type, "application/json")
         self.assertEqual(json.loads(_sent_text(client.calls[0])), self.reviews)
 
@@ -103,6 +104,57 @@ class ClassifyTests(unittest.TestCase):
         client = StubClient(*replies)
         self.assertEqual(len(classify(many, client=client)), len(many))
         self.assertEqual(len(client.calls), 2)
+
+    def test_transient_error_is_retried(self):
+        class Overloaded(Exception):
+            code = 503
+
+        class Flaky(StubClient):
+            def generate_content(self, model, contents, config):
+                if len(self.calls) == 0:
+                    self.calls.append("failed")
+                    raise Overloaded("high demand")
+                return super().generate_content(model, contents, config)
+
+        client = Flaky(json.dumps(self.good))
+        original = classifier.RETRY_DELAYS_S
+        classifier.RETRY_DELAYS_S = (0, 0)
+        try:
+            self.assertEqual(len(classify(self.reviews, client=client)), 4)
+        finally:
+            classifier.RETRY_DELAYS_S = original
+
+    def test_non_transient_error_is_not_retried(self):
+        class BadKey(Exception):
+            code = 403
+
+        class Broken(StubClient):
+            def generate_content(self, model, contents, config):
+                self.calls.append("x")
+                raise BadKey("denied")
+
+        client = Broken()
+        with self.assertRaises(BadKey):
+            classify(self.reviews, client=client)
+        self.assertEqual(len(client.calls), 1)
+
+    def test_hung_request_hits_the_deadline(self):
+        import time as _time
+
+        class Hung(StubClient):
+            def generate_content(self, model, contents, config):
+                self.calls.append("x")
+                _time.sleep(3)
+
+        original = (classifier.REQUEST_DEADLINE_S, classifier.RETRY_DELAYS_S)
+        classifier.REQUEST_DEADLINE_S, classifier.RETRY_DELAYS_S = 0.2, (0,)
+        try:
+            client = Hung()
+            with self.assertRaises(TimeoutError):
+                classify(self.reviews, client=client)
+            self.assertEqual(len(client.calls), 2)  # first attempt + one retry
+        finally:
+            classifier.REQUEST_DEADLINE_S, classifier.RETRY_DELAYS_S = original
 
     def test_duplicate_ids_rejected_and_empty_input(self):
         with self.assertRaises(ValueError):
