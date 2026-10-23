@@ -13,3 +13,4 @@ eval/data/
 eval/results/
 
 .DS_Store
+*.egg-info/
