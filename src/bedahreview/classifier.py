@@ -78,8 +78,11 @@ def validate_results(reviews: List[Dict[str, Any]], results: List[Any]) -> List[
             )
         if (bucket == "fight") != (result.get("fight") is not None):
             problems.append("review %s: 'fight' must be set exactly when bucket is fight" % rid)
-        if (bucket == "fix") != bool(result.get("fix_suggestion_id")):
-            problems.append("review %s: 'fix_suggestion_id' must be set exactly when bucket is fix" % rid)
+        has_fix_hint = bool(result.get("fix_suggestion_id"))
+        if bucket == "fix" and not has_fix_hint:
+            problems.append("review %s: 'fix_suggestion_id' must be set when bucket is fix" % rid)
+        if bucket in ("keep", "ignore") and has_fix_hint:
+            problems.append("review %s: 'fix_suggestion_id' must be null when bucket is %s" % (rid, bucket))
     return problems
 
 

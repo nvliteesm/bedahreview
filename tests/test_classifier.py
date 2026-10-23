@@ -97,6 +97,17 @@ class ClassifyTests(unittest.TestCase):
         bad[0]["cause"] = "unclear"
         self.assertEqual([p for p in validate_results(self.reviews, bad) if "check_first" in p], [])
 
+    def test_fix_hint_rules(self):
+        both = copy.deepcopy(self.good)
+        both[1]["fix_suggestion_id"] = "Cek kembali deskripsi dan stok produk."  # fight + own-side check is allowed
+        self.assertEqual(validate_results(self.reviews, both), [])
+        keep_with_hint = copy.deepcopy(self.good)
+        keep_with_hint[2]["fix_suggestion_id"] = "Ganti foto."
+        self.assertTrue(any("must be null" in p for p in validate_results(self.reviews, keep_with_hint)))
+        fix_without_hint = copy.deepcopy(self.good)
+        fix_without_hint[0]["fix_suggestion_id"] = None
+        self.assertTrue(any("must be set" in p for p in validate_results(self.reviews, fix_without_hint)))
+
     def test_bad_enum_is_flagged(self):
         bad = copy.deepcopy(self.good)
         bad[2]["bucket"] = "praise"

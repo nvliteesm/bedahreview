@@ -142,6 +142,7 @@ def score(rows: List[Dict[str, str]], preds: Dict[str, Dict[str, Any]], failures
     courier = Counter()
     mismatches = []
     scored = 0
+    fix_rows = fix_covered = 0
 
     for row in rows:
         pred = preds.get(row["id"])
@@ -162,6 +163,9 @@ def score(rows: List[Dict[str, str]], preds: Dict[str, Dict[str, Any]], failures
                     "text": row["text"][:160],
                 }
             )
+        if gold == "fix":
+            fix_rows += 1
+            fix_covered += bool(pred.get("fix_suggestion_id"))
         theme_n += 1
         theme_ok += row["theme"] == pred["theme"]
 
@@ -190,6 +194,7 @@ def score(rows: List[Dict[str, str]], preds: Dict[str, Dict[str, Any]], failures
         "per_bucket": per_bucket,
         "confusion": {g: {p: confusion[(g, p)] for p in BUCKETS} for g in BUCKETS},
         "theme_accuracy": theme_ok / theme_n if theme_n else None,
+        "fix_suggestion_coverage": fix_covered / fix_rows if fix_rows else None,
         "likely_fake": _prf(fake["tp"], fake["fp"], fake["fn"]),
         "check_first_vs_courier": _prf(courier["tp"], courier["fp"], courier["fn"]),
         "mismatches": mismatches,
@@ -205,6 +210,7 @@ def format_report(m: Dict[str, Any], max_mismatches: int = 15) -> str:
     lines = [
         "Scored %d of %d reviews (%d failed to classify)" % (m["scored"], m["reviews"], m["failed"]),
         "Bucket accuracy: %s    Theme accuracy: %s" % (_pct(m["bucket_accuracy"]), _pct(m["theme_accuracy"])),
+        "Sheet-fixable reviews that got a fix suggestion (any bucket): %s" % _pct(m["fix_suggestion_coverage"]),
         "",
         "Per bucket        precision  recall  support",
     ]

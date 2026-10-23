@@ -3,11 +3,29 @@
   "title": "TriagedReview",
   "description": "One triaged review. The classifier returns a JSON array of these, one per input review, in input order.",
   "type": "object",
-  "required": ["id", "bucket", "theme", "cause", "check_first", "proof_quote", "likely_fake", "confidence"],
+  "required": [
+    "id",
+    "bucket",
+    "theme",
+    "cause",
+    "check_first",
+    "proof_quote",
+    "likely_fake",
+    "confidence"
+  ],
   "additionalProperties": false,
   "properties": {
-    "id": { "type": "string" },
-    "bucket": { "enum": ["fix", "fight", "ignore", "keep"] },
+    "id": {
+      "type": "string"
+    },
+    "bucket": {
+      "enum": [
+        "fix",
+        "fight",
+        "ignore",
+        "keep"
+      ]
+    },
     "theme": {
       "enum": [
         "Not as described / claim vs reality",
@@ -32,39 +50,113 @@
         "Other"
       ]
     },
-    "variant": { "type": ["string", "null"] },
-    "cause": { "enum": ["product", "listing", "packing", "courier", "buyer", "unclear", "none"] },
+    "variant": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cause": {
+      "enum": [
+        "product",
+        "listing",
+        "packing",
+        "courier",
+        "buyer",
+        "unclear",
+        "none"
+      ]
+    },
     "check_first": {
       "type": "boolean",
       "description": "True when the cause (usually courier vs product) cannot be known from the text and the seller should verify before acting."
     },
     "proof_quote": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "Exact substring of the review text that supports the label. Null only when the review has no text."
     },
     "likely_fake": {
       "type": "object",
-      "required": ["flag", "signals"],
+      "required": [
+        "flag",
+        "signals"
+      ],
       "additionalProperties": false,
       "properties": {
-        "flag": { "type": "boolean" },
-        "signals": { "type": "array", "items": { "type": "string" } }
+        "flag": {
+          "type": "boolean"
+        },
+        "signals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
-    "fix_suggestion_id": { "type": ["string", "null"], "description": "Bahasa. Only for bucket=fix." },
+    "fix_suggestion_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Bahasa. Required for bucket=fix. Also filled for bucket=fight on unverifiable claims (own-side check). Null for keep/ignore."
+    },
     "fight": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "description": "Only for bucket=fight.",
-      "required": ["why", "steps", "chat_to_buyer", "public_reply", "report_text"],
+      "required": [
+        "why",
+        "steps",
+        "chat_to_buyer",
+        "public_reply",
+        "report_text"
+      ],
       "additionalProperties": false,
       "properties": {
-        "why": { "type": "string" },
-        "steps": { "type": "array", "items": { "type": "string" } },
-        "chat_to_buyer": { "type": ["string", "null"], "description": "Bahasa" },
-        "public_reply": { "type": ["string", "null"], "description": "Bahasa" },
-        "report_text": { "type": ["string", "null"], "description": "Bahasa. Only when likely_fake.flag is true." }
+        "why": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "chat_to_buyer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Bahasa"
+        },
+        "public_reply": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Bahasa"
+        },
+        "report_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Bahasa. Only when likely_fake.flag is true."
+        }
       }
     },
-    "confidence": { "enum": ["low", "medium", "high"] }
+    "confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    }
   }
 }

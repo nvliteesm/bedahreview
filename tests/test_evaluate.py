@@ -28,8 +28,8 @@ def _row(**kw):
     return base
 
 
-def _pred(rid, bucket, theme="Colour vs photo", check_first=False, fake=False):
-    return {"id": rid, "bucket": bucket, "theme": theme, "cause": "none", "check_first": check_first,
+def _pred(rid, bucket, theme="Colour vs photo", check_first=False, fake=False, hint=None):
+    return {"id": rid, "fix_suggestion_id": hint, "bucket": bucket, "theme": theme, "cause": "none", "check_first": check_first,
             "likely_fake": {"flag": fake, "signals": []}}
 
 
@@ -92,6 +92,16 @@ class ScoreTests(unittest.TestCase):
         self.assertEqual(m["check_first_vs_courier"]["tp"], 1)
         self.assertEqual(m["mismatches"][0]["id"], "6")
         self.assertIn("Bucket accuracy: 83%", format_report(m))
+
+    def test_fix_suggestion_coverage_counts_fight_cards_with_a_hint(self):
+        # gold=fix rows are 2 (Colour vs photo) -> one fix card, one fight card that carries a hint
+        preds = {r["id"]: _pred(r["id"], "keep") for r in self.rows}
+        preds["2"] = _pred("2", "fix", hint="Ganti foto.")
+        self.assertEqual(score(self.rows, preds, {})["fix_suggestion_coverage"], 1.0)
+        preds["2"] = _pred("2", "fight", hint="Cek deskripsi.")
+        self.assertEqual(score(self.rows, preds, {})["fix_suggestion_coverage"], 1.0)
+        preds["2"] = _pred("2", "fight")
+        self.assertEqual(score(self.rows, preds, {})["fix_suggestion_coverage"], 0.0)
 
     def test_missed_fake_and_false_courier(self):
         preds = {r["id"]: _pred(r["id"], "fix", check_first=(r["id"] == "1")) for r in self.rows}

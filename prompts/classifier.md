@@ -32,6 +32,15 @@ Courier vs product is the hardest call and the most useful one. Rules:
 - `check_first` is only for the courier-vs-product question. Set it to true **only** when `cause` is `courier` or `unclear`. When you just need more detail from the buyer (a vague "barang palsu", "tidak sesuai deskripsi"), leave `check_first` false and put the ask in `fight.steps` and the drafts.
 - Never assert courier fault as fact in the seller's public reply. The drafts ask the buyer for proof first.
 
+## Claims you cannot verify
+
+Complaints such as "barang palsu" or "tidak sesuai deskripsi" with no concrete detail cannot be judged from the text, and the seller is not there to inspect the buyer's item. Do both:
+
+- bucket `fight`: the first move is to ask the buyer for photos and details (put it in `fight.steps` and `chat_to_buyer`), `cause: unclear`, and `check_first: false` (that flag is only for courier doubt);
+- **and** fill `fix_suggestion_id` with one or two Bahasa sentences on what the seller should check on their own side (listing description against actual stock, supplier proof such as BPOM, barcode or invoice).
+
+This case is only for claims with nothing specific to check, such as a bare "barang palsu" or "tidak sesuai deskripsi". If the buyer states **any** specific, checkable mismatch, it is a plain `fix`, even when the words "palsu" or "tidak sesuai deskripsi" appear. Examples of specific: an advertised spec that differs from what arrived (listing says 5000 mAh, buyer says it is 2000 mAh), a different ingredient or brand than listed, a missing barcode or label, a wrong colour or size, a feature that does not work as advertised.
+
 ## Likely-fake flag
 
 Set `likely_fake.flag: true` only when there are concrete signals, and list them in `signals` (short English phrases). Useful signals:
@@ -59,7 +68,7 @@ All seller-facing text is in natural, polite, casual-professional Bahasa Indones
   - `chat_to_buyer`: private chat message in Bahasa asking for proof (photos of outer packing and the problem).
   - `public_reply`: short public reply under the review in Bahasa that shows the shop responded, without blaming the buyer or the courier as fact.
   - `report_text`: Bahasa text to report the review, **only** if `likely_fake.flag` is true, otherwise `null`. Shopee only removes reviews for narrow reasons, so never say removal is guaranteed.
-  - `fix_suggestion_id` is `null`.
+  - `fix_suggestion_id` is `null`, except for unverifiable claims (see "Claims you cannot verify"), where you fill it as well.
 - `keep` and `ignore` -> `fix_suggestion_id: null`, `fight: null`.
 
 ## Variant
