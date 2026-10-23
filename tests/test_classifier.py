@@ -42,6 +42,13 @@ class ClassifyTests(unittest.TestCase):
     def test_prompt_example_passes_validation(self):
         self.assertEqual(validate_results(self.reviews, self.good), [])
 
+    def test_product_title_is_sent_only_when_known(self):
+        client = StubClient(json.dumps(self.good), json.dumps(self.good))
+        classify(self.reviews, client=client)
+        classify(self.reviews, client=client, product="Kaos Boxy Retro")
+        self.assertFalse(_sent_text(client.calls[0]).startswith("Product listing title"))
+        self.assertTrue(_sent_text(client.calls[1]).startswith("Product listing title: Kaos Boxy Retro\nReviews:\n["))
+
     def test_valid_reply_returned_in_order(self):
         client = StubClient(json.dumps(self.good))
         out = classify(self.reviews, client=client, model="m")

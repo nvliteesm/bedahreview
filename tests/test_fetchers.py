@@ -9,7 +9,7 @@ from unittest import mock
 
 from bedahreview.fetchers import CachedFetcher, FetcherConfigError, FetchError, get_fetcher, to_review_dicts
 from bedahreview.fetchers.apify_shopee import ACTOR_ID, ApifyShopeeFetcher, review_from_item
-from bedahreview.fetchers.base import MAX_LIMIT, Review, check_shopee_product_url, clamp_limit
+from bedahreview.fetchers.base import MAX_LIMIT, Review, check_shopee_product_url, clamp_limit, product_title_from_url
 
 URL = "https://shopee.co.id/Kaos-Boxy-Retro-i.42255190.2257643102"
 SECRET_NAME = "Budi Santoso"
@@ -85,6 +85,12 @@ class UrlCheckTests(unittest.TestCase):
     def test_accepts_product_links_and_strips_tracking(self):
         self.assertEqual(check_shopee_product_url(URL + "?sp_atk=abc&xptdk=1#x"), URL)
         self.assertEqual(check_shopee_product_url("https://www.shopee.co.id/p-i.1.2/"), "https://www.shopee.co.id/p-i.1.2/")
+
+    def test_title_is_read_from_the_link(self):
+        self.assertEqual(product_title_from_url(URL), "Kaos Boxy Retro")
+        self.assertEqual(product_title_from_url("https://shopee.co.id/Kopi-Susu-%26-Gula-i.1.2"), "Kopi Susu & Gula")
+        self.assertEqual(product_title_from_url("https://shopee.co.id/product-i.1.2"), "product")
+        self.assertEqual(len(product_title_from_url("https://shopee.co.id/" + "a-" * 400 + "i.1.2")), 150)
 
     def test_rejects_everything_else(self):
         for bad in [

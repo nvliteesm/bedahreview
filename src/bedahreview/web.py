@@ -23,7 +23,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from .classifier import ClassificationError, classify, resolve_model
 from .env import has_api_key, load_dotenv
-from .fetchers import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, get_fetcher, to_review_dicts
+from .fetchers import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, get_fetcher, product_title_from_url, to_review_dicts
 from .fetchers.base import check_mode, check_shopee_product_url, clamp_limit
 from .parse import parse_reviews
 
@@ -101,7 +101,7 @@ class Handler(BaseHTTPRequestHandler):
             sys.stderr.write("fetch failed: %s\n" % type(exc).__name__)
             self._json(502, {"error": "Could not fetch reviews from that link. You can paste the reviews instead.", "fallback": "paste"})
             return None
-        source = {"kind": "url", "url": url, "mode": mode, "count": len(fetched), "cached": bool(getattr(fetcher, "last_from_cache", False))}
+        source = {"kind": "url", "url": url, "title": product_title_from_url(url), "mode": mode, "count": len(fetched), "cached": bool(getattr(fetcher, "last_from_cache", False))}
         return to_review_dicts(fetched), source
 
     # -- routes ----------------------------------------------------------
@@ -153,7 +153,8 @@ class Handler(BaseHTTPRequestHandler):
 
         model = resolve_model()
         try:
-            results = type(self).classify_fn(reviews)
+            title = (source or {}).get("title")
+            results = type(self).classify_fn(reviews, product=title) if title else type(self).classify_fn(reviews)
         except ClassificationError as exc:
             return self._json(502, {"error": "The model's reply could not be used: %s" % str(exc).splitlines()[0]})
         except Exception as exc:  # timeout, rate limit, network: say what happened without a traceback

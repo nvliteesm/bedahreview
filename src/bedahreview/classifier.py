@@ -167,8 +167,13 @@ def _call(client: Any, model: str, system: str, messages: List[Dict[str, str]]) 
     raise AssertionError("unreachable")
 
 
-def _classify_batch(client: Any, model: str, system: str, reviews: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    messages = [{"role": "user", "content": json.dumps(reviews, ensure_ascii=False)}]
+def _classify_batch(
+    client: Any, model: str, system: str, reviews: List[Dict[str, Any]], product: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    content = json.dumps(reviews, ensure_ascii=False)
+    if product:
+        content = "Product listing title: %s\nReviews:\n%s" % (product, content)
+    messages = [{"role": "user", "content": content}]
     problems: List[str] = []
     for attempt in range(2):  # one retry, telling the model what was wrong
         raw = _call(client, model, system, messages)
@@ -195,8 +200,11 @@ def classify(
     reviews: List[Dict[str, Any]],
     client: Optional[Any] = None,
     model: Optional[str] = None,
+    product: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """Triage reviews. Each review: {"id", "stars", "variant", "date", "text"}.
+
+    `product` is the listing title when known (for example read from a product link); it helps spot reviews about the wrong product.
 
     Returns one result per review, in input order, matching prompts/output_schema.json.
     The API key is read from GEMINI_API_KEY by the Gemini client; it is never stored here.
@@ -219,5 +227,5 @@ def classify(
 
     results: List[Dict[str, Any]] = []
     for i in range(0, len(reviews), BATCH_SIZE):
-        results += _classify_batch(client, model, system, reviews[i : i + BATCH_SIZE])
+        results += _classify_batch(client, model, system, reviews[i : i + BATCH_SIZE], product)
     return results

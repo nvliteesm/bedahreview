@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 MAX_LIMIT = 20  # v1 cap per fetch; the paid actor charges per review
 
@@ -65,6 +65,12 @@ def clamp_limit(limit: Any) -> int:
     except (TypeError, ValueError):
         raise FetchError("The number of reviews must be a whole number.")
     return max(1, min(n, MAX_LIMIT))
+
+
+def product_title_from_url(url: str) -> str:
+    """The listing title Shopee puts in the link ("Kaos-Boxy-Retro-i.1.2" -> "Kaos Boxy Retro"), or "" if there is none."""
+    slug = unquote(urlsplit(url).path.strip("/")).rsplit("-i.", 1)[0]
+    return " ".join(slug.replace("-", " ").split())[:150]
 
 
 def check_mode(mode: Any) -> str:

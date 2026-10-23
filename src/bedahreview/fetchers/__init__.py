@@ -6,13 +6,13 @@ from typing import Optional
 
 from ..classifier import ROOT
 from .apify_shopee import DEFAULT_MAX_COST_USD, ApifyShopeeFetcher
-from .base import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, Review, to_review_dicts
+from .base import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, Review, product_title_from_url, to_review_dicts
 from .cache import CachedFetcher
 
 CACHE_DIR = ROOT / "fetch_cache"
 MAX_COST_CEILING_USD = 1.0  # refuse an APIFY_MAX_COST_USD typo like 50
 
-__all__ = ["get_fetcher", "Fetcher", "FetchError", "FetcherConfigError", "Review", "MAX_LIMIT", "to_review_dicts"]
+__all__ = ["get_fetcher", "Fetcher", "FetchError", "FetcherConfigError", "Review", "MAX_LIMIT", "product_title_from_url", "to_review_dicts"]
 
 
 def get_fetcher() -> Optional[Fetcher]:

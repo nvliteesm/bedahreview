@@ -20,10 +20,11 @@ def _result(rid, bucket="fix", theme="Colour vs photo", fake=False):
 
 class WebTests(unittest.TestCase):
     def setUp(self):
-        self.seen = []
+        self.seen, self.products = [], []
 
-        def fake_classify(reviews):
+        def fake_classify(reviews, product=None):
             self.seen.append(reviews)
+            self.products.append(product)
             return [_result(r["id"], "fix" if i % 2 == 0 else "keep", fake=False) for i, r in enumerate(reviews)]
 
         self.fake_classify = fake_classify
@@ -149,7 +150,8 @@ class WebTests(unittest.TestCase):
         out = json.loads(data)
         self.assertEqual(resp.status, 200)
         self.assertEqual(Fake.calls, [("https://shopee.co.id/p-i.1.2", 20, "complaints")])  # tracking stripped, limit clamped
-        self.assertEqual(out["source"], {"kind": "url", "url": "https://shopee.co.id/p-i.1.2", "mode": "complaints", "count": 2, "cached": True})
+        self.assertEqual(out["source"], {"kind": "url", "url": "https://shopee.co.id/p-i.1.2", "title": "p", "mode": "complaints", "count": 2, "cached": True})
+        self.assertEqual(self.products, ["p"])  # the listing title from the link reaches the classifier
         self.assertEqual([i["text"] for i in out["items"]], ["Pas sampe koyak", "bagus"])
         self.assertEqual(self.seen[0][0], {"id": "1", "stars": 2, "variant": "Hitam, L", "date": "2026-10-07", "text": "Pas sampe koyak"})
 
