@@ -76,14 +76,18 @@ def validate_results(reviews: List[Dict[str, Any]], results: List[Any]) -> List[
                 "review %s: check_first is only for courier-vs-product doubt (cause courier or unclear), not cause %s"
                 % (rid, result["cause"])
             )
-        if (bucket == "fight") != (result.get("fight") is not None):
-            problems.append("review %s: 'fight' must be set exactly when bucket is fight" % rid)
+        if (bucket in ("fight", "check")) != (result.get("fight") is not None):
+            problems.append("review %s: 'fight' (the reply kit) must be set exactly when bucket is fight or check" % rid)
         has_fix_hint = bool(result.get("fix_suggestion_id"))
         if bucket == "fix" and not has_fix_hint:
             problems.append("review %s: 'fix_suggestion_id' must be set when bucket is fix" % rid)
-        if bucket in ("keep", "ignore") and has_fix_hint:
+        if bucket in ("fight", "keep", "ignore") and has_fix_hint:
             problems.append("review %s: 'fix_suggestion_id' must be null when bucket is %s" % (rid, bucket))
     return problems
+
+
+def resolve_model(model: Optional[str] = None) -> str:
+    return model or os.environ.get("BEDAHREVIEW_MODEL", DEFAULT_MODEL)
 
 
 def build_system_prompt() -> str:
@@ -210,7 +214,7 @@ def classify(
 
         # reads GEMINI_API_KEY (or GOOGLE_API_KEY) from the environment
         client = genai.Client(http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS))
-    model = model or os.environ.get("BEDAHREVIEW_MODEL", DEFAULT_MODEL)
+    model = resolve_model(model)
     system = build_system_prompt()
 
     results: List[Dict[str, Any]] = []

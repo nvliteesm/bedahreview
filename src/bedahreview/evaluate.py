@@ -23,10 +23,11 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from .classifier import ROOT, classify
+from .classifier import ROOT, classify, resolve_model
 from .env import has_api_key, load_dotenv
 
-BUCKETS = ["fix", "fight", "ignore", "keep"]
+BUCKETS = ["fix", "fight", "ignore", "keep"]  # what the sheet can say
+PRED_BUCKETS = BUCKETS + ["check"]  # the model may also set a review aside for the seller
 
 # CSV header (lowercased) prefix -> field name
 COLUMNS = {
@@ -182,7 +183,7 @@ def score(rows: List[Dict[str, str]], preds: Dict[str, Dict[str, Any]], failures
     for b in BUCKETS:
         tp = confusion[(b, b)]
         fp = sum(confusion[(g, b)] for g in BUCKETS if g != b)
-        fn = sum(confusion[(b, p)] for p in BUCKETS if p != b)
+        fn = sum(confusion[(b, p)] for p in PRED_BUCKETS if p != b)
         per_bucket[b] = dict(_prf(tp, fp, fn), support=tp + fn)
 
     correct = sum(confusion[(b, b)] for b in BUCKETS)
@@ -192,7 +193,11 @@ def score(rows: List[Dict[str, str]], preds: Dict[str, Dict[str, Any]], failures
         "failed": len(failures),
         "bucket_accuracy": correct / scored if scored else None,
         "per_bucket": per_bucket,
-        "confusion": {g: {p: confusion[(g, p)] for p in BUCKETS} for g in BUCKETS},
+        "confusion": {g: {p: confusion[(g, p)] for p in PRED_BUCKETS} for g in BUCKETS},
+        "set_aside_as_check": {g: confusion[(g, "check")] for g in BUCKETS if confusion[(g, "check")]},
+        "accuracy_when_committed": (
+            correct / (scored - sum(confusion[(g, "check")] for g in BUCKETS)) if scored > sum(confusion[(g, "check")] for g in BUCKETS) else None
+        ),
         "theme_accuracy": theme_ok / theme_n if theme_n else None,
         "fix_suggestion_coverage": fix_covered / fix_rows if fix_rows else None,
         "likely_fake": _prf(fake["tp"], fake["fp"], fake["fn"]),
@@ -208,6 +213,7 @@ def _pct(x: Optional[float]) -> str:
 
 def format_report(m: Dict[str, Any], max_mismatches: int = 15) -> str:
     lines = [
+        "Model: %s" % m.get("model", "unknown"),
         "Scored %d of %d reviews (%d failed to classify)" % (m["scored"], m["reviews"], m["failed"]),
         "Bucket accuracy: %s    Theme accuracy: %s" % (_pct(m["bucket_accuracy"]), _pct(m["theme_accuracy"])),
         "Sheet-fixable reviews that got a fix suggestion (any bucket): %s" % _pct(m["fix_suggestion_coverage"]),
@@ -217,9 +223,14 @@ def format_report(m: Dict[str, Any], max_mismatches: int = 15) -> str:
     for b in BUCKETS:
         s = m["per_bucket"][b]
         lines.append("  %-14s %8s %7s %8d" % (b, _pct(s["precision"]), _pct(s["recall"]), s["support"]))
-    lines += ["", "Confusion (rows = sheet label, columns = model)", "  %-8s" % "" + "".join("%8s" % b for b in BUCKETS)]
+    lines += ["", "Confusion (rows = sheet label, columns = model)", "  %-8s" % "" + "".join("%8s" % b for b in PRED_BUCKETS)]
     for g in BUCKETS:
-        lines.append("  %-8s" % g + "".join("%8d" % m["confusion"][g][p] for p in BUCKETS))
+        lines.append("  %-8s" % g + "".join("%8d" % m["confusion"][g][p] for p in PRED_BUCKETS))
+    aside = m["set_aside_as_check"]
+    lines.append(
+        "Set aside as 'check': %d of %d (sheet says: %s). Accuracy on the ones the model committed to: %s"
+        % (sum(aside.values()), m["scored"], ", ".join("%s %d" % kv for kv in aside.items()) or "none", _pct(m["accuracy_when_committed"]))
+    )
     f, c = m["likely_fake"], m["check_first_vs_courier"]
     lines += [
         "",
@@ -265,6 +276,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     print("Classifying %d reviews in %d product group(s)..." % (len(rows), len({r["product"] for r in rows})))
     preds, failures = predict(rows, lambda reviews: classify(reviews, model=args.model))
     metrics = score(rows, preds, failures)
+    metrics["model"] = resolve_model(args.model)
     print(format_report(metrics))
 
     out_dir = ROOT / "eval" / "results"

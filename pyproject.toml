@@ -10,3 +10,6 @@ dependencies = ["google-genai>=1.0", "jsonschema>=4"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+bedahreview = ["static/*"]

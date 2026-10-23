@@ -1,7 +1,7 @@
 # BedahReview
 
 A seller pastes Shopee/Tokopedia review text and gets **Fix it or fight it** triage:
-each review is labelled `fix`, `fight`, `ignore` or `keep` (praise), with a proof quote,
+each review is labelled `fix`, `fight`, `check` (unsure: the seller looks into it), `ignore` or `keep` (praise), with a proof quote,
 a Bahasa fix suggestion, Bahasa reply drafts for fight items, a likely-fake flag and a
 courier-vs-product split.
 
@@ -18,7 +18,8 @@ v1 scope: paste-text input only. No scraping, no logins.
 | `src/bedahreview/evaluate.py` | Eval: scores the classifier against the labelled Review log |
 | `tests/` | Offline tests (stub client, no API key) |
 | `eval/data/` | Your Review log CSV export (gitignored; real review data stays local) |
-| `app/` | Minimal web UI (step 4) |
+| `src/bedahreview/web.py`, `static/index.html` | The paste-in web app (step 4) |
+| `src/bedahreview/parse.py` | Turns pasted text into reviews (stars, variant, text) |
 
 ## Setup
 
@@ -36,9 +37,21 @@ python -m bedahreview samples/demo_reviews.json
 python -m unittest discover -s tests
 ```
 
-Set `BEDAHREVIEW_MODEL` to use a different Gemini model (default `gemini-3.8-flash`).
+Set `BEDAHREVIEW_MODEL` to use a different Gemini model (default `gemini-3.5-flash-lite`).
 
 The API key lives only in `.env` (gitignored).
+
+## Run the app
+
+```bash
+source .venv/bin/activate
+python -m bedahreview.web
+```
+
+Open http://127.0.0.1:8000, paste reviews, click **Bedah ulasan**. Press Ctrl+C in the terminal to stop it.
+It only listens on your own computer, so your API key never leaves it. Up to 50 reviews per paste.
+Paste one review per line (or separate multi-line reviews with a blank line). Stars and variant are
+optional: `★★★☆☆  Putih, M   warna tulisannya ijo`.
 
 ## Run the eval
 
@@ -66,4 +79,4 @@ agreement with the sheet, not ground truth.
 1. Skeleton + classifier prompt (done)
 2. `classify()` function: prompt + Gemini API, validated against the schema (done; not yet run against the live API; Gemini is the main provider, Groq/Qwen are a possible backup)
 3. Eval script scoring against the labelled Review log (done; needs your CSV export to run)
-4. Minimal paste-in web UI
+4. Minimal paste-in web UI (done)

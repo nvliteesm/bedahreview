@@ -98,15 +98,27 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual([p for p in validate_results(self.reviews, bad) if "check_first" in p], [])
 
     def test_fix_hint_rules(self):
-        both = copy.deepcopy(self.good)
-        both[1]["fix_suggestion_id"] = "Cek kembali deskripsi dan stok produk."  # fight + own-side check is allowed
-        self.assertEqual(validate_results(self.reviews, both), [])
+        check = copy.deepcopy(self.good)
+        check[1]["bucket"] = "check"  # a set-aside card: reply kit + optional own-side hint
+        check[1]["fix_suggestion_id"] = "Cek kembali deskripsi dan stok produk."
+        self.assertEqual(validate_results(self.reviews, check), [])
+        fight_with_hint = copy.deepcopy(self.good)
+        fight_with_hint[1]["fix_suggestion_id"] = "Cek kembali deskripsi."
+        self.assertTrue(any("must be null" in p for p in validate_results(self.reviews, fight_with_hint)))
         keep_with_hint = copy.deepcopy(self.good)
         keep_with_hint[2]["fix_suggestion_id"] = "Ganti foto."
         self.assertTrue(any("must be null" in p for p in validate_results(self.reviews, keep_with_hint)))
         fix_without_hint = copy.deepcopy(self.good)
         fix_without_hint[0]["fix_suggestion_id"] = None
         self.assertTrue(any("must be set" in p for p in validate_results(self.reviews, fix_without_hint)))
+
+    def test_check_needs_the_reply_kit(self):
+        bad = copy.deepcopy(self.good)
+        bad[1].update(bucket="check", fight=None)
+        self.assertTrue(any("reply kit" in p for p in validate_results(self.reviews, bad)))
+        bad = copy.deepcopy(self.good)
+        bad[2]["bucket"] = "check"  # keep -> check but no reply kit
+        self.assertTrue(any("reply kit" in p for p in validate_results(self.reviews, bad)))
 
     def test_bad_enum_is_flagged(self):
         bad = copy.deepcopy(self.good)

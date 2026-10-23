@@ -22,6 +22,7 @@
       "enum": [
         "fix",
         "fight",
+        "check",
         "ignore",
         "keep"
       ]
@@ -102,14 +103,14 @@
         "string",
         "null"
       ],
-      "description": "Bahasa. Required for bucket=fix. Also filled for bucket=fight on unverifiable claims (own-side check). Null for keep/ignore."
+      "description": "Bahasa. Required for bucket=fix. Optional for bucket=check (own-side check). Null for fight/keep/ignore."
     },
     "fight": {
       "type": [
         "object",
         "null"
       ],
-      "description": "Only for bucket=fight.",
+      "description": "Reply kit. Required for bucket=fight and bucket=check; null otherwise.",
       "required": [
         "why",
         "steps",

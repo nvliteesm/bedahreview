@@ -103,6 +103,25 @@ class ScoreTests(unittest.TestCase):
         preds["2"] = _pred("2", "fight")
         self.assertEqual(score(self.rows, preds, {})["fix_suggestion_coverage"], 0.0)
 
+    def test_check_bucket_is_reported_separately(self):
+        preds = {
+            "1": _pred("1", "keep", "Praise: quality / material"),
+            "2": _pred("2", "check"),  # sheet: fix
+            "3": _pred("3", "fight", "Packaging / damaged on arrival", check_first=True),
+            "4": _pred("4", "fight", "Praise: works as described", fake=True),
+            "5": _pred("5", "keep", "Praise: works as described"),
+            "6": _pred("6", "fight", "Taste / subjective"),
+        }
+        m = score(self.rows, preds, {})
+        self.assertEqual(m["set_aside_as_check"], {"fix": 1})
+        self.assertAlmostEqual(m["bucket_accuracy"], 5 / 6)  # the one check counts as a miss
+        self.assertEqual(m["confusion"]["fix"]["check"], 1)
+        self.assertEqual(m["per_bucket"]["fix"]["fn"], 1)
+        self.assertAlmostEqual(m["accuracy_when_committed"], 1.0)  # all 5 it committed to are right
+        report = format_report(dict(m, model="m"))
+        self.assertIn("Model: m", report)
+        self.assertIn("Set aside as 'check': 1 of 6", report)
+
     def test_missed_fake_and_false_courier(self):
         preds = {r["id"]: _pred(r["id"], "fix", check_first=(r["id"] == "1")) for r in self.rows}
         m = score(self.rows, preds, {})

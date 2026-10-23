@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BedahReview</title>
+<style>
+/* Layout: header -> paste box -> counts -> board (fix / fight / check / ignore) -> keep row */
+:root {
+  --bg: #f6f7f5; --surface: #ffffff; --ink: #17201c; --muted: #5d6963; --line: #dde2de; --accent: #0f6b5a;
+  --fix: #b25a00; --fix-soft: #fff1e0; --fight: #b3263e; --fight-soft: #fde8ec;
+  --check: #5b3fa6; --check-soft: #efeafb; --ignore: #69726e; --ignore-soft: #eef0ef;
+  --keep: #2d7a3a; --keep-soft: #e6f4e8; --quote: #f3f5f2; --error: #b3263e; --error-soft: #fde8ec;
+  --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --accent: #4fc2a8;
+    --fix: #f0a24a; --fix-soft: #33261a; --fight: #f27088; --fight-soft: #351c22;
+    --check: #b9a4f2; --check-soft: #2a2340; --ignore: #a3aca8; --ignore-soft: #242b28;
+    --keep: #6fcf7f; --keep-soft: #1c2e20; --quote: #222a26; --error: #f27088; --error-soft: #351c22;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-ui); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 56px; display: grid; gap: 20px; }
+h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: 1.1rem; }
+h3 { font-size: 1rem; }
+p { margin: 0; }
+.eyebrow { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.muted { color: var(--muted); }
+.pitch { max-width: 70ch; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 10px; }
+label.field { font-weight: 700; }
+textarea { width: 100%; min-height: 190px; resize: vertical; font: 0.85rem/1.6 var(--font-mono); color: var(--ink);
+  background: var(--quote); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+textarea:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+button { font: inherit; font-weight: 700; font-size: 0.88rem; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+.primary { border: 0; background: var(--accent); color: var(--surface); }
+.primary[disabled] { opacity: 0.6; cursor: progress; }
+.ghost { border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 600; }
+details summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+details pre { margin: 8px 0 0; padding: 10px; background: var(--quote); border-radius: 6px; font: 0.8rem/1.6 var(--font-mono); white-space: pre-wrap; }
+
+.error { background: var(--error-soft); color: var(--error); border-radius: 8px; padding: 10px 14px; font-weight: 600; }
+.status { color: var(--muted); }
+
+.counts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.count { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
+.count .n { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.count .lbl { font-size: 0.82rem; color: var(--muted); }
+.count.fix .n { color: var(--fix); } .count.fight .n { color: var(--fight); } .count.check .n { color: var(--check); }
+.count.ignore .n { color: var(--ignore); } .count.keep .n { color: var(--keep); }
+
+.board { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; align-items: start; }
+.col { display: grid; gap: 10px; min-width: 0; }
+.col-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; font-weight: 700; }
+.col-head .tag { font-weight: 500; font-size: 0.82rem; opacity: 0.85; }
+.col.fix .col-head { background: var(--fix-soft); color: var(--fix); }
+.col.fight .col-head { background: var(--fight-soft); color: var(--fight); }
+.col.check .col-head { background: var(--check-soft); color: var(--check); }
+.col.ignore .col-head { background: var(--ignore-soft); color: var(--ignore); }
+.col-rule { font-size: 0.82rem; color: var(--muted); padding: 0 2px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.chip.hot { border-color: currentColor; color: var(--fight); }
+.chip.warn { border-color: currentColor; color: var(--fix); }
+blockquote { margin: 0; background: var(--quote); border-radius: 6px; padding: 8px 10px; font-size: 0.88rem; display: grid; gap: 2px; overflow-wrap: anywhere; }
+blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+.stars { color: var(--fix); letter-spacing: 1px; }
+.why { font-size: 0.86rem; color: var(--muted); }
+.steps { margin: 0; padding-left: 18px; font-size: 0.86rem; display: grid; gap: 3px; }
+.draft { border: 1px dashed var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px; }
+.draft-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.draft-head .eyebrow { color: var(--ink); }
+.draft .bahasa { font-size: 0.9rem; overflow-wrap: anywhere; white-space: pre-wrap; }
+.copy { font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border: 1px solid var(--line); background: var(--surface); color: var(--accent); }
+.empty { border: 1px dashed var(--line); border-radius: 10px; padding: 14px; font-size: 0.88rem; color: var(--muted); }
+.keep-row { background: var(--keep-soft); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; }
+.keep-row b { color: var(--keep); }
+.full summary { font-size: 0.8rem; }
+.full p { font-size: 0.82rem; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 4px; }
+.foot { font-size: 0.8rem; color: var(--muted); max-width: 80ch; }
+
+@media (max-width: 700px) { .counts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="eyebrow">BedahReview</span>
+    <h1>Fix it or fight it</h1>
+    <p class="pitch muted">Paste your product's reviews. Each one is sorted into what you can fix, what to push back on, what only you can check, and what to keep doing. You get the Bahasa words to act on it.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="paste-h">
+    <label class="field" id="paste-h" for="paste">Paste reviews</label>
+    <textarea id="paste" spellcheck="false" placeholder="★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem&#10;★★☆☆☆  Hitam, L   Pas sampe koyak bajunya"></textarea>
+    <details>
+      <summary>How to paste</summary>
+      <pre>One review per line. If a review has several lines, put a blank line between reviews.
+Stars and variant are optional, in this order:
+
+★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem
+4★ bahannya tebel
+Pas sampe koyak bajunya
+
+Stars can be ★ symbols, "4★", "4/5" or "bintang 4". A variant needs a comma ("Putih, L") or " | " after it.</pre>
+    </details>
+    <div class="row">
+      <button class="primary" id="run" type="button">Bedah ulasan</button>
+      <button class="ghost" id="sample" type="button">Load demo reviews</button>
+      <button class="ghost" id="clear" type="button">Clear</button>
+      <span class="status" id="status" role="status" aria-live="polite"></span>
+    </div>
+    <div class="error" id="error" role="alert" hidden></div>
+  </section>
+
+  <section id="results" hidden aria-labelledby="results-h">
+    <h2 id="results-h" class="eyebrow">Results</h2>
+    <div class="counts" id="counts" style="margin-top:10px"></div>
+    <p class="foot" id="fakenote" style="margin-top:10px" hidden></p>
+    <div class="board" id="board" style="margin-top:14px"></div>
+    <div class="keep-row" id="keep" style="margin-top:14px" hidden></div>
+    <p class="foot" id="foot" style="margin-top:14px"></p>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+const SAMPLE = [
+  "★★★★★  Putih, L   bagus banget pakenya sama bahannya bagus luamayan tebel",
+  "★★★★☆  Putih, L   nyaman bet dah pokoknya, bahannya tebel cuman pas dateng kok ada dikit noda kecil ya, tapi ini gacor sih bagus banget desainnya",
+  "★★★☆☆  Putih, M   di tampilan sebelom beli, warna tulisannya ijo, pas dateng warna tulisannya hitem",
+  "★★☆☆☆  Hitam, L   Pas sampe koyak bajunya",
+  "★☆☆☆☆  Putih, L   produk tidak sesuai deskripsi, buat yang mau checkout produk ini ga sesuai pict nya ya, warna hijau tapi realitanya hitam, kalo emg terima dari pabrikan nya hitam kenapa ga pasang foto hitam aja?",
+].join("\n");
+
+const COLUMNS = [
+  { key: "fix", title: "Fix it", tag: "Perbaiki", rule: "The product, listing or packing caused it. You can change it." },
+  { key: "fight", title: "Fight it", tag: "Tanggapi", rule: "Likely not the product: courier damage, a fake review, or an unfair claim." },
+  { key: "check", title: "Check it yourself", tag: "Cek sendiri", rule: "The review does not say enough to tell what is wrong. This one is yours to look into." },
+  { key: "ignore", title: "Ignore", tag: "Abaikan", rule: "Star ratings with no text, or filler with nothing to act on." },
+];
+const COUNT_LABELS = { fix: "to fix", fight: "to fight", check: "to check yourself", ignore: "to ignore", keep: "with praise to keep" };
+
+const $ = (id) => document.getElementById(id);
+
+// Build DOM without innerHTML: review text and model output are never parsed as HTML.
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k === "text") el.textContent = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat(Infinity)) {
+    if (kid == null || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+
+function starsText(n) { return n ? "★".repeat(n) + "☆".repeat(5 - n) : ""; }
+
+async function copyText(text, btn) {
+  const done = (label) => { btn.textContent = label; setTimeout(() => { btn.textContent = "Salin"; }, 1500); };
+  try { await navigator.clipboard.writeText(text); done("Tersalin"); return; } catch (e) { /* fall through */ }
+  const ta = h("textarea", { style: "position:fixed;opacity:0" });
+  ta.value = text; document.body.append(ta); ta.select();
+  try { document.execCommand("copy"); done("Tersalin"); } catch (e) { done("Pilih & salin manual"); }
+  ta.remove();
+}
+
+function draft(label, text) {
+  if (!text) return null;
+  const btn = h("button", { class: "copy", type: "button", text: "Salin" });
+  btn.addEventListener("click", () => copyText(text, btn));
+  return h("div", { class: "draft" }, h("div", { class: "draft-head" }, h("span", { class: "eyebrow", text: label }), btn), h("p", { class: "bahasa", text: text }));
+}
+
+function quote(item) {
+  const q = item.proof_quote;
+  const src = ["#" + item.id, item.variant].filter(Boolean).join(" · ");
+  return h("blockquote", {},
+    h("span", {}, item.stars ? h("span", { class: "stars", text: starsText(item.stars) + " " }) : null, q ? "“" + q + "”" : "(no text)"),
+    h("span", { class: "src", text: src }));
+}
+
+function fullText(item) {
+  if (!item.text || item.text === item.proof_quote) return null;
+  return h("details", { class: "full" }, h("summary", { text: "Full review" }), h("p", { text: item.text }));
+}
+
+function chips(item, extra) {
+  const list = [].concat(extra || []);
+  if (item.stars) list.push(h("span", { class: "chip", text: starsText(item.stars) }));
+  if (item.variant) list.push(h("span", { class: "chip", text: item.variant }));
+  if (item.check_first) list.push(h("span", { class: "chip warn", text: "Courier? Check first" }));
+  if (item.likely_fake && item.likely_fake.flag) list.push(h("span", { class: "chip hot", text: "Likely fake" }));
+  if (item.confidence === "low") list.push(h("span", { class: "chip", text: "Low confidence" }));
+  return h("div", { class: "chips" }, list);
+}
+
+function fixCards(items) {
+  const byTheme = new Map();
+  for (const it of items) {
+    if (!byTheme.has(it.theme)) byTheme.set(it.theme, []);
+    byTheme.get(it.theme).push(it);
+  }
+  return [...byTheme.entries()].sort((a, b) => b[1].length - a[1].length).map(([theme, group]) => {
+    const suggestions = [...new Set(group.map((g) => g.fix_suggestion_id).filter(Boolean))];
+    return h("article", { class: "card" },
+      h("div", { class: "chips" }, h("span", { class: "chip warn", text: group.length + (group.length === 1 ? " review" : " reviews") })),
+      h("h3", { text: theme }),
+      group.map((g) => [quote(g), fullText(g)]),
+      suggestions.map((s) => draft("Saran perbaikan", s)));
+  });
+}
+
+function replyCard(item, kind) {
+  const kit = item.fight || {};
+  return h("article", { class: "card" },
+    chips(item),
+    h("h3", { text: item.theme }),
+    quote(item),
+    fullText(item),
+    kit.why ? h("p", { class: "why", text: kit.why }) : null,
+    kit.steps && kit.steps.length ? h("ol", { class: "steps" }, kit.steps.map((s) => h("li", { text: s }))) : null,
+    kind === "check" ? draft("Cek di sisi toko", item.fix_suggestion_id) : null,
+    draft("Chat ke pembeli", kit.chat_to_buyer),
+    draft("Balasan publik di ulasan", kit.public_reply),
+    draft("Teks laporan ulasan", kit.report_text));
+}
+
+function ignoreCard(items) {
+  return h("div", { class: "empty" }, items.map((it) => h("p", { text: "#" + it.id + (it.stars ? " · " + starsText(it.stars) : "") + (it.text ? " · " + it.text : " · no text") })));
+}
+
+function render(data) {
+  const by = { fix: [], fight: [], check: [], ignore: [], keep: [] };
+  for (const it of data.items) (by[it.bucket] || by.check).push(it);
+
+  $("counts").replaceChildren(...["fix", "fight", "check", "ignore", "keep"].map((k) =>
+    h("div", { class: "count " + k }, h("span", { class: "n", text: data.counts[k] }), h("span", { class: "lbl", text: (data.counts[k] === 1 ? "review " : "reviews ") + COUNT_LABELS[k] }))));
+
+  const fake = $("fakenote");
+  fake.hidden = !data.likely_fake;
+  fake.textContent = data.likely_fake ? data.likely_fake + " likely-fake review" + (data.likely_fake === 1 ? " is" : "s are") + " in Fight it. Leave them out of your rating analysis; each has a report text you can copy." : "";
+
+  $("board").replaceChildren(...COLUMNS.map((c) => {
+    const items = by[c.key];
+    let body;
+    if (!items.length) body = h("div", { class: "empty", text: "None in this paste." });
+    else if (c.key === "fix") body = fixCards(items);
+    else if (c.key === "ignore") body = ignoreCard(items);
+    else body = items.map((it) => replyCard(it, c.key));
+    return h("div", { class: "col " + c.key }, h("div", { class: "col-head" }, c.title, h("span", { class: "tag", text: "· " + c.tag })), h("p", { class: "col-rule", text: c.rule }), body);
+  }));
+
+  const keep = $("keep");
+  keep.hidden = !by.keep.length;
+  const themes = [...new Set(by.keep.map((k) => k.theme.replace(/^Praise: /, "")))];
+  keep.replaceChildren(h("p", {}, h("b", { text: "Keep doing  " }), themes.join(", ")),
+    ...by.keep.slice(0, 3).map((k) => quote(k)));
+
+  $("foot").textContent = "Model: " + data.model + ". Suggestions and drafts are machine-written: read them, and have a Bahasa speaker check any text before you send it to a buyer.";
+  $("results").hidden = false;
+  $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function showError(msg) { const e = $("error"); e.textContent = msg; e.hidden = !msg; }
+
+async function run() {
+  const text = $("paste").value;
+  showError("");
+  if (!text.trim()) { showError("Paste some reviews first."); return; }
+  const btn = $("run");
+  btn.disabled = true; btn.textContent = "Membedah…";
+  $("status").textContent = "Reading your reviews. This can take up to a minute.";
+  try {
+    const res = await fetch("/api/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+    let data = null;
+    try { data = await res.json(); } catch (e) { /* not JSON */ }
+    if (!res.ok || !data) { showError((data && data.error) || "Something went wrong (" + res.status + ")."); return; }
+    render(data);
+  } catch (e) {
+    showError("Could not reach the app. Is the terminal window still running it?");
+  } finally {
+    btn.disabled = false; btn.textContent = "Bedah ulasan"; $("status").textContent = "";
+  }
+}
+
+$("run").addEventListener("click", run);
+$("sample").addEventListener("click", () => { $("paste").value = SAMPLE; showError(""); });
+$("clear").addEventListener("click", () => { $("paste").value = ""; $("results").hidden = true; showError(""); $("paste").focus(); });
+$("paste").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run(); });
+</script>
+</body>
+</html>
