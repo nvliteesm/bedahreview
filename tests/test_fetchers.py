@@ -48,12 +48,32 @@ class FakeApifyClient:
         return mock.Mock(iterate_items=lambda: iter(self.items))
 
 
+class StarFakeClient(FakeApifyClient):
+    """Answers each run with reviews of the star the fetcher asked for, so a complaints run can be checked."""
+
+    def __init__(self, per_star, failing=()):
+        super().__init__()
+        self.per_star, self.failing, self._last = per_star, failing, None
+
+    def call(self, **kwargs):
+        self.calls.append(kwargs)
+        self._last = kwargs["run_input"].get("starFilter")
+        if self._last in self.failing:
+            raise RuntimeError("boom")
+        return self.run
+
+    def dataset(self, _id):
+        star = self._last
+        items = [dict(ITEM, ratingStar=int(star), comment="review %s-%d" % (star, i)) for i in range(self.per_star.get(star, 0))]
+        return mock.Mock(iterate_items=lambda: iter(items))
+
+
 class CountingInner:
     def __init__(self, reviews):
         self.reviews, self.calls = reviews, []
 
-    def fetch_reviews(self, url, limit):
-        self.calls.append((url, limit))
+    def fetch_reviews(self, url, limit, mode="latest"):
+        self.calls.append((url, limit, mode))
         return self.reviews[:limit]
 
 
@@ -123,6 +143,30 @@ class ApifyFetcherTests(unittest.TestCase):
         self.assertEqual(call["max_total_charge_usd"], Decimal("0.05"))
         self.assertEqual(len(reviews), 1)
 
+    def test_complaints_mode_runs_one_filtered_run_per_low_star_worst_first(self):
+        client = StarFakeClient({"1": 4, "2": 4, "3": 4})
+        reviews = ApifyShopeeFetcher("tok", client=client).fetch_reviews(URL, 10, "complaints")
+        self.assertEqual(sorted(c["run_input"]["starFilter"] for c in client.calls), ["1", "2", "3"])
+        self.assertTrue(all(c["max_total_charge_usd"] == Decimal("0.05") for c in client.calls))
+        self.assertEqual([r.star for r in reviews], [1, 1, 1, 1, 2, 2, 2, 2, 3, 3])
+
+    def test_complaints_mode_survives_one_failed_or_empty_star(self):
+        client = StarFakeClient({"1": 3, "3": 2}, failing=("2",))
+        reviews = ApifyShopeeFetcher("tok", client=client).fetch_reviews(URL, 10, "complaints")
+        self.assertEqual(sorted({r.star for r in reviews}), [1, 3])
+
+    def test_complaints_mode_fails_cleanly_when_every_star_fails_or_is_empty(self):
+        with self.assertRaises(FetchError):
+            ApifyShopeeFetcher("tok", client=StarFakeClient({}, failing=("1", "2", "3"))).fetch_reviews(URL, 5, "complaints")
+        with self.assertRaises(FetchError):
+            ApifyShopeeFetcher("tok", client=StarFakeClient({})).fetch_reviews(URL, 5, "complaints")
+
+    def test_unknown_mode_never_reaches_the_paid_service(self):
+        client = FakeApifyClient()
+        with self.assertRaises(FetchError):
+            ApifyShopeeFetcher("tok", client=client).fetch_reviews(URL, 5, "everything")
+        self.assertEqual(client.calls, [])
+
     def test_cap_is_configurable_and_limit_clamped(self):
         client = FakeApifyClient()
         ApifyShopeeFetcher("tok", max_cost_usd=0.1, client=client).fetch_reviews(URL, 500)
@@ -176,9 +220,18 @@ class CacheTests(unittest.TestCase):
         f.fetch_reviews(URL, 20)
         self.assertEqual(len(inner.calls), 2)
 
+    def test_modes_are_cached_separately(self):
+        inner = CountingInner(_reviews(20))
+        f = CachedFetcher(inner, self.dir)
+        f.fetch_reviews(URL, 10, "latest")
+        f.fetch_reviews(URL, 10, "complaints")
+        self.assertEqual(len(inner.calls), 2)
+        f.fetch_reviews(URL, 10, "complaints")
+        self.assertEqual((len(inner.calls), f.last_from_cache), (2, True))
+
     def test_failures_are_not_cached_and_cache_holds_no_reviewer_data(self):
         class Boom(CountingInner):
-            def fetch_reviews(self, url, limit):
+            def fetch_reviews(self, url, limit, mode="latest"):
                 raise FetchError("nope")
 
         with self.assertRaises(FetchError):

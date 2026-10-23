@@ -5,11 +5,12 @@ if the service returns nothing, the caller shows the seller a message and they p
 """
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
-from .base import Fetcher, FetchError, Review, check_shopee_product_url, clamp_limit
+from .base import COMPLAINT_STARS, Fetcher, FetchError, Review, check_mode, check_shopee_product_url, clamp_limit
 
 ACTOR_ID = "zen-studio/shopee-product-reviews-scraper"
 # Prices seen on the actor page on 2026-10-23 (free Apify plan). Used only for the estimate below.
@@ -19,8 +20,14 @@ DEFAULT_MAX_COST_USD = 0.05
 RUN_TIMEOUT_SECS = 120
 
 
-def estimated_cost_usd(limit: int) -> float:
+def estimated_cost_usd(limit: int, mode: str = "latest") -> float:
+    if mode == "complaints":  # one run per star, each with its own start fee
+        return len(COMPLAINT_STARS) * START_FEE_USD + _per_star_limit(limit) * len(COMPLAINT_STARS) * PRICE_PER_REVIEW_USD
     return START_FEE_USD + limit * PRICE_PER_REVIEW_USD
+
+
+def _per_star_limit(limit: int) -> int:
+    return max(1, -(-limit // len(COMPLAINT_STARS)) + 1)  # a little over a third each, so a thin star can be covered by the others
 
 
 def _text(value: Any) -> str:
@@ -81,14 +88,14 @@ class ApifyShopeeFetcher(Fetcher):
             client = ApifyClient(token)
         self._client = client
 
-    def fetch_reviews(self, url: str, limit: int) -> List[Review]:
-        url = check_shopee_product_url(url)
-        limit = clamp_limit(limit)
-        run_input = {
+    def _run(self, url: str, limit: int, star: Optional[int]) -> List[Review]:
+        run_input: Dict[str, Any] = {
             "startUrls": [{"url": url}],
             "maxReviewsPerProduct": limit,
             "contentFilter": "with comments",  # the newest reviews are often blank 5-stars
         }
+        if star is not None:
+            run_input["starFilter"] = str(star)
         try:
             run = self._client.actor(ACTOR_ID).call(
                 run_input=run_input,
@@ -103,9 +110,31 @@ class ApifyShopeeFetcher(Fetcher):
             raise
         except Exception as exc:  # network, quota, bad token: name the error type, never echo details
             raise FetchError("The fetch service failed (%s)." % type(exc).__name__)
-
         reviews = [review_from_item(i) for i in items if isinstance(i, dict)]
-        reviews = [r for r in reviews if r.text][:limit]
+        reviews = [r for r in reviews if r.text]
+        if star is not None:
+            reviews = [r for r in reviews if r.star == star]  # never trust the filter blindly
+        return reviews[:limit]
+
+    def fetch_reviews(self, url: str, limit: int, mode: str = "latest") -> List[Review]:
+        url = check_shopee_product_url(url)
+        limit = clamp_limit(limit)
+        mode = check_mode(mode)
+        if mode == "latest":
+            reviews = self._run(url, limit, None)
+        else:
+            per_star = _per_star_limit(limit)
+            with ThreadPoolExecutor(max_workers=len(COMPLAINT_STARS)) as pool:
+                futures = [pool.submit(self._run, url, per_star, star) for star in COMPLAINT_STARS]
+            batches, errors = [], []
+            for future in futures:
+                try:
+                    batches.append(future.result())
+                except FetchError as exc:
+                    errors.append(exc)
+            if not batches:
+                raise errors[0]  # every star failed: show why
+            reviews = sorted((r for b in batches for r in b), key=lambda r: (r.star or 0, r.date), reverse=False)[:limit]
         if not reviews:
             raise FetchError("No reviews came back. This service often cannot collect Shopee reviews.")
         return reviews

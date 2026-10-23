@@ -64,9 +64,14 @@ Off by default. Paste is the main way to bring in reviews. To try fetching from 
 It uses the Apify actor `zen-studio/shopee-product-reviews-scraper`, which costs roughly $0.004 per review plus
 $0.008 per run. `APIFY_MAX_COST_USD` (default 0.05, about 10 reviews) is a hard cap on each run, so asking for
 20 reviews at the default cap returns about 10. Results are saved in `fetch_cache/` so the same link is not
-paid for twice. Only `shopee.co.id` product links are accepted. Shopee's terms for this have not been checked,
+paid for twice (per link and mode). Only `shopee.co.id` product links are accepted. Shopee's terms for this have not been checked,
 the service often returns nothing, and the app then tells the seller to paste instead. Reviewer names are
 never kept. Tokopedia is not supported.
+
+The box has two modes. **Complaints first** (default) runs three small fetches in parallel, one each for 1, 2 and
+3 star reviews that have comments, and shows the worst first; for 10 reviews that is about $0.07 (three start
+fees), and each of the three runs has its own `APIFY_MAX_COST_USD` cap. **Latest reviews** is the single newest-first
+fetch, which is often mostly 5-star praise.
 
 ## Run the eval
 

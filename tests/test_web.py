@@ -138,8 +138,8 @@ class WebTests(unittest.TestCase):
             last_from_cache = True
             calls = []
 
-            def fetch_reviews(self, url, limit):
-                Fake.calls.append((url, limit))
+            def fetch_reviews(self, url, limit, mode="latest"):
+                Fake.calls.append((url, limit, mode))
                 return [Review(2, "Pas sampe koyak", "Hitam, L", "2026-10-07", 0, None), Review(5, "bagus", None, "", 1, "terima kasih")]
 
         self._with_fetcher(Fake())
@@ -148,14 +148,14 @@ class WebTests(unittest.TestCase):
         resp, data = self.post_json({"url": "https://shopee.co.id/p-i.1.2?x=1", "limit": 99})
         out = json.loads(data)
         self.assertEqual(resp.status, 200)
-        self.assertEqual(Fake.calls, [("https://shopee.co.id/p-i.1.2", 20)])  # tracking stripped, limit clamped
-        self.assertEqual(out["source"], {"kind": "url", "url": "https://shopee.co.id/p-i.1.2", "count": 2, "cached": True})
+        self.assertEqual(Fake.calls, [("https://shopee.co.id/p-i.1.2", 20, "complaints")])  # tracking stripped, limit clamped
+        self.assertEqual(out["source"], {"kind": "url", "url": "https://shopee.co.id/p-i.1.2", "mode": "complaints", "count": 2, "cached": True})
         self.assertEqual([i["text"] for i in out["items"]], ["Pas sampe koyak", "bagus"])
         self.assertEqual(self.seen[0][0], {"id": "1", "stars": 2, "variant": "Hitam, L", "date": "2026-10-07", "text": "Pas sampe koyak"})
 
     def test_failed_fetch_points_to_paste_and_skips_the_model(self):
         class Down:
-            def fetch_reviews(self, url, limit):
+            def fetch_reviews(self, url, limit, mode="latest"):
                 raise FetchError("No reviews came back.")
 
         self._with_fetcher(Down())
@@ -166,7 +166,7 @@ class WebTests(unittest.TestCase):
         self.assertEqual(self.seen, [])
 
         class Crash:
-            def fetch_reviews(self, url, limit):
+            def fetch_reviews(self, url, limit, mode="latest"):
                 raise RuntimeError("boom with details")
 
         self._with_fetcher(Crash())
@@ -176,7 +176,7 @@ class WebTests(unittest.TestCase):
 
     def test_bad_links_are_rejected_before_any_fetch(self):
         class Never:
-            def fetch_reviews(self, url, limit):
+            def fetch_reviews(self, url, limit, mode="latest"):
                 raise AssertionError("must not be called")
 
         self._with_fetcher(Never())

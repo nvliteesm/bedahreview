@@ -8,6 +8,9 @@ from urllib.parse import urlsplit
 
 MAX_LIMIT = 20  # v1 cap per fetch; the paid actor charges per review
 
+COMPLAINT_STARS = (1, 2, 3)  # "complaints first" fetches these ratings, worst first
+MODES = ("complaints", "latest")
+
 _SHOPEE_HOSTS = ("shopee.co.id", "www.shopee.co.id")
 _PRODUCT_PATH = re.compile(r"-i\.\d+\.\d+/?$")
 
@@ -35,7 +38,8 @@ class Review:
 class Fetcher:
     """Interface: a product link in, a list of Review out. Raise FetchError on any failure."""
 
-    def fetch_reviews(self, url: str, limit: int) -> List[Review]:
+    def fetch_reviews(self, url: str, limit: int, mode: str = "latest") -> List[Review]:
+        """mode "complaints" returns 1-3 star reviews (worst first); "latest" returns the newest reviews with text."""
         raise NotImplementedError
 
 
@@ -61,6 +65,12 @@ def clamp_limit(limit: Any) -> int:
     except (TypeError, ValueError):
         raise FetchError("The number of reviews must be a whole number.")
     return max(1, min(n, MAX_LIMIT))
+
+
+def check_mode(mode: Any) -> str:
+    if mode not in MODES:
+        raise FetchError("Choose complaints first or latest reviews.")
+    return mode
 
 
 def to_review_dicts(reviews: List[Review]) -> List[Dict[str, Any]]:

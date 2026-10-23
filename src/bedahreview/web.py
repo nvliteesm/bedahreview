@@ -24,7 +24,7 @@ from typing import Any, Callable, Dict, List, Optional
 from .classifier import ClassificationError, classify, resolve_model
 from .env import has_api_key, load_dotenv
 from .fetchers import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, get_fetcher, to_review_dicts
-from .fetchers.base import check_shopee_product_url, clamp_limit
+from .fetchers.base import check_mode, check_shopee_product_url, clamp_limit
 from .parse import parse_reviews
 
 STATIC = Path(__file__).resolve().parent / "static"
@@ -79,7 +79,7 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args: Any) -> None:  # one short line per request, no review text
         sys.stderr.write("%s %s\n" % (self.command, self.path))
 
-    def _fetch(self, url: str, limit: Any):
+    def _fetch(self, url: str, limit: Any, mode: Any):
         """Fetch reviews from a product link (demo). Returns (reviews, source) or None after sending an error."""
         fetcher = type(self).fetcher
         if fetcher is None:
@@ -88,11 +88,12 @@ class Handler(BaseHTTPRequestHandler):
         try:
             url = check_shopee_product_url(url)
             limit = clamp_limit(limit)
+            mode = check_mode(mode)
         except FetchError as exc:
             self._json(400, {"error": str(exc)})
             return None
         try:
-            fetched = fetcher.fetch_reviews(url, limit)
+            fetched = fetcher.fetch_reviews(url, limit, mode)
         except FetchError as exc:
             self._json(502, {"error": "%s You can paste the reviews instead." % exc, "fallback": "paste"})
             return None
@@ -100,7 +101,7 @@ class Handler(BaseHTTPRequestHandler):
             sys.stderr.write("fetch failed: %s\n" % type(exc).__name__)
             self._json(502, {"error": "Could not fetch reviews from that link. You can paste the reviews instead.", "fallback": "paste"})
             return None
-        source = {"kind": "url", "url": url, "count": len(fetched), "cached": bool(getattr(fetcher, "last_from_cache", False))}
+        source = {"kind": "url", "url": url, "mode": mode, "count": len(fetched), "cached": bool(getattr(fetcher, "last_from_cache", False))}
         return to_review_dicts(fetched), source
 
     # -- routes ----------------------------------------------------------
@@ -139,7 +140,7 @@ class Handler(BaseHTTPRequestHandler):
 
         source: Optional[Dict[str, Any]] = None
         if url.strip():
-            fetched = self._fetch(url, body.get("limit", DEFAULT_LIMIT))
+            fetched = self._fetch(url, body.get("limit", DEFAULT_LIMIT), body.get("mode", "complaints"))
             if fetched is None:  # _fetch already sent the error
                 return
             reviews, source = fetched

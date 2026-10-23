@@ -49,7 +49,7 @@ details summary { cursor: pointer; font-weight: 600; color: var(--accent); }
 details pre { margin: 8px 0 0; padding: 10px; background: var(--quote); border-radius: 6px; font: 0.8rem/1.6 var(--font-mono); white-space: pre-wrap; }
 
 .demo { border-style: dashed; }
-input[type=url], input[type=number] { font: inherit; color: var(--ink); background: var(--quote); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; }
+input[type=url], input[type=number], select { font: inherit; color: var(--ink); background: var(--quote); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; }
 input[type=url] { flex: 1 1 280px; min-width: 0; }
 input[type=number] { width: 5.5rem; }
 input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -137,11 +137,13 @@ Stars can be ★ symbols, "4★", "4/5" or "bintang 4". A variant needs a comma 
     </div>
     <div class="row">
       <input id="url" type="url" inputmode="url" autocomplete="off" placeholder="https://shopee.co.id/...-i.12345.67890">
+      <label for="mode" class="muted">Get</label>
+      <select id="mode"><option value="complaints">Complaints first (1-3&#9733;)</option><option value="latest">Latest reviews</option></select>
       <label for="limit" class="muted">Reviews</label>
       <input id="limit" type="number" min="1" max="20" value="10">
       <button class="primary" id="fetch" type="button">Fetch &amp; bedah</button>
     </div>
-    <p class="foot">shopee.co.id product links only. It gets the newest reviews that have comments. Each run costs a few cents, can come back with fewer reviews than you ask for, and sometimes fails. Pasting always works.</p>
+    <p class="foot">shopee.co.id product links only. Complaints first gets the lowest-rated reviews that have comments (3 small runs, about 7 US cents for 10); latest gets the newest ones. Each run costs a few cents, can come back with fewer reviews than you ask for, and sometimes fails. Pasting always works.</p>
   </section>
 
   <section id="results" hidden aria-labelledby="results-h">
@@ -296,7 +298,7 @@ function render(data) {
     ...by.keep.slice(0, 3).map((k) => quote(k)));
 
   const src = data.source || {};
-  const fromLink = src.kind === "url" ? "Demo: " + src.count + (src.count === 1 ? " review" : " reviews") + " fetched from the product link" + (src.cached ? " (saved copy, no new charge)" : "") + " via a third-party service. " : "";
+  const fromLink = src.kind === "url" ? "Demo: " + src.count + (src.mode === "complaints" ? " low-star" : "") + (src.count === 1 ? " review" : " reviews") + " fetched from the product link" + (src.cached ? " (saved copy, no new charge)" : "") + " via a third-party service. " : "";
   $("foot").textContent = fromLink + "Model: " + data.model + ". Suggestions and drafts are machine-written: read them, and have a Bahasa speaker check any text before you send it to a buyer.";
   $("results").hidden = false;
   $("results").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -334,7 +336,7 @@ function runPaste() {
 function runFetch() {
   const url = $("url").value.trim();
   if (!url) { showError("Paste a product link first."); return; }
-  send({ url, limit: parseInt($("limit").value, 10) || 10 }, $("fetch"), "Fetch & bedah");
+  send({ url, limit: parseInt($("limit").value, 10) || 10, mode: $("mode").value }, $("fetch"), "Fetch & bedah");
 }
 
 async function loadConfig() {
