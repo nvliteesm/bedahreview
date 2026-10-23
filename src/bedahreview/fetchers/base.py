@@ -62,7 +62,7 @@ def check_shopee_product_url(url: str) -> str:
 def clamp_limit(limit: Any) -> int:
     try:
         n = int(limit)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):  # OverflowError: JSON allows Infinity
         raise FetchError("The number of reviews must be a whole number.")
     return max(1, min(n, MAX_LIMIT))
 

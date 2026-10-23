@@ -143,7 +143,7 @@ Stars can be ★ symbols, "4★", "4/5" or "bintang 4". A variant needs a comma 
       <input id="limit" type="number" min="1" max="20" value="10">
       <button class="primary" id="fetch" type="button">Fetch &amp; bedah</button>
     </div>
-    <p class="foot">shopee.co.id product links only. Complaints first gets the lowest-rated reviews that have comments (3 small runs, about 7 US cents for 10); latest gets the newest ones. Each run costs a few cents, can come back with fewer reviews than you ask for, and sometimes fails. Pasting always works.</p>
+    <p class="foot">shopee.co.id product links only. Complaints first gets the lowest-rated reviews that have comments (3 small runs, up to about 8 US cents for 10); latest gets the newest ones. Each run costs a few cents, can come back with fewer reviews than you ask for, and sometimes fails. Pasting always works.</p>
   </section>
 
   <section id="results" hidden aria-labelledby="results-h">
@@ -309,7 +309,7 @@ function showError(msg) { const e = $("error"); e.textContent = msg; e.hidden = 
 async function send(payload, btn, idleLabel) {
   showError("");
   btn.disabled = true; btn.textContent = "Membedah\u2026";
-  $("status").textContent = "Reading your reviews. This can take up to a minute.";
+  $("status").textContent = "Reading your reviews. A product link can take up to two minutes.";
   try {
     const res = await fetch("/api/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     let data = null;

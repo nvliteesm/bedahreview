@@ -69,7 +69,7 @@ the service often returns nothing, and the app then tells the seller to paste in
 never kept. Tokopedia is not supported.
 
 The box has two modes. **Complaints first** (default) runs three small fetches in parallel, one each for 1, 2 and
-3 star reviews that have comments, and shows the worst first; for 10 reviews that is about $0.07 (three start
+3 star reviews that have comments, and shows the worst first; for 10 reviews that is up to about $0.08 (three start
 fees), and each of the three runs has its own `APIFY_MAX_COST_USD` cap. **Latest reviews** is the single newest-first
 fetch, which is often mostly 5-star praise.
 

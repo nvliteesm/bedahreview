@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest import mock
 
 from bedahreview.fetchers import CachedFetcher, FetcherConfigError, FetchError, get_fetcher, to_review_dicts
-from bedahreview.fetchers.apify_shopee import ACTOR_ID, ApifyShopeeFetcher, review_from_item
+from bedahreview.fetchers.apify_shopee import ACTOR_ID, ApifyShopeeFetcher, estimated_cost_usd, review_from_item
 from bedahreview.fetchers.base import MAX_LIMIT, Review, check_shopee_product_url, clamp_limit, product_title_from_url
 
 URL = "https://shopee.co.id/Kaos-Boxy-Retro-i.42255190.2257643102"
@@ -46,6 +46,21 @@ class FakeApifyClient:
 
     def dataset(self, _id):
         return mock.Mock(iterate_items=lambda: iter(self.items))
+
+
+class DatedStarClient(FakeApifyClient):
+    """Returns two dated reviews per star, oldest first, like an unsorted feed."""
+
+    def call(self, **kwargs):
+        self.calls.append(kwargs)
+        self._last = kwargs["run_input"]["starFilter"]
+        return self.run
+
+    def dataset(self, _id):
+        star = int(self._last)
+        items = [dict(ITEM, ratingStar=star, comment="old %d" % star, createdAt="2026-01-01T00:00:00Z"),
+                 dict(ITEM, ratingStar=star, comment="new %d" % star, createdAt="2026-10-01T00:00:00Z")]
+        return mock.Mock(iterate_items=lambda: iter(items))
 
 
 class StarFakeClient(FakeApifyClient):
@@ -110,6 +125,9 @@ class UrlCheckTests(unittest.TestCase):
 
     def test_limit_is_clamped(self):
         self.assertEqual((clamp_limit(0), clamp_limit(5), clamp_limit(999), clamp_limit("7")), (1, 5, MAX_LIMIT, 7))
+        for odd in (float("inf"), float("-inf"), float("nan"), None, [], {}):
+            with self.assertRaises(FetchError, msg=repr(odd)):
+                clamp_limit(odd)
         with self.assertRaises(FetchError):
             clamp_limit("many")
 
@@ -166,6 +184,14 @@ class ApifyFetcherTests(unittest.TestCase):
             ApifyShopeeFetcher("tok", client=StarFakeClient({}, failing=("1", "2", "3"))).fetch_reviews(URL, 5, "complaints")
         with self.assertRaises(FetchError):
             ApifyShopeeFetcher("tok", client=StarFakeClient({})).fetch_reviews(URL, 5, "complaints")
+
+    def test_complaints_are_worst_star_first_then_newest_first(self):
+        reviews = ApifyShopeeFetcher("tok", client=DatedStarClient()).fetch_reviews(URL, 4, "complaints")
+        self.assertEqual([r.text for r in reviews], ["new 1", "old 1", "new 2", "old 2"])
+
+    def test_cost_estimate_matches_what_the_screen_promises(self):
+        self.assertLessEqual(estimated_cost_usd(10, "complaints"), 0.09)  # the page says "up to about 8-9 US cents"
+        self.assertGreater(estimated_cost_usd(10, "complaints"), estimated_cost_usd(10, "latest"))
 
     def test_unknown_mode_never_reaches_the_paid_service(self):
         client = FakeApifyClient()

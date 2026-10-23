@@ -170,6 +170,25 @@ class ClassifyTests(unittest.TestCase):
         finally:
             classifier.RETRY_DELAYS_S = original
 
+    def test_dropped_connections_are_retried(self):
+        import httpx
+
+        for error in (ConnectionResetError("Connection reset by peer"), httpx.ReadError("dropped"), httpx.RemoteProtocolError("closed")):
+            class Drops(StubClient):
+                def generate_content(self, model, contents, config, _error=error):
+                    if not self.calls:
+                        self.calls.append("failed")
+                        raise _error
+                    return super().generate_content(model, contents, config)
+
+            client = Drops(json.dumps(self.good))
+            original = classifier.RETRY_DELAYS_S
+            classifier.RETRY_DELAYS_S = (0, 0)
+            try:
+                self.assertEqual(len(classify(self.reviews, client=client)), 4, repr(error))
+            finally:
+                classifier.RETRY_DELAYS_S = original
+
     def test_non_transient_error_is_not_retried(self):
         class BadKey(Exception):
             code = 403

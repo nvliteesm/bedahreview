@@ -186,6 +186,18 @@ class WebTests(unittest.TestCase):
             self.assertEqual(self.post_json({"url": bad})[0].status, 400, bad)
         self.assertEqual(self.post_json({"url": "https://shopee.co.id/p-i.1.2", "limit": "lots"})[0].status, 400)
 
+    def test_odd_limits_and_modes_are_clean_400s(self):
+        class Never:
+            def fetch_reviews(self, url, limit, mode="latest"):
+                raise AssertionError("must not be called")
+
+        self._with_fetcher(Never())
+        link = "https://shopee.co.id/p-i.1.2"
+        for body in ({"limit": float("inf")}, {"limit": float("nan")}, {"limit": None}, {"limit": [1]}, {"mode": ["latest"]}, {"mode": "all"}, {"mode": 5}):
+            resp, data = self.post_json(dict(body, url=link))
+            self.assertEqual(resp.status, 400, body)
+            self.assertIn("error", json.loads(data))
+
     def test_unknown_paths(self):
         self.assertEqual(self.request("GET", "/nope")[0].status, 404)
         self.assertEqual(self.request("POST", "/nope", b"{}", {"Content-Type": "application/json"})[0].status, 404)

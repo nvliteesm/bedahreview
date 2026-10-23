@@ -151,7 +151,12 @@ def _run_with_deadline(fn: Any, seconds: float) -> Any:
 
 
 def _is_transient(exc: BaseException) -> bool:
-    return isinstance(exc, TimeoutError) or getattr(exc, "code", None) in (429, 500, 502, 503, 504)
+    """Worth retrying: a hang, a dropped connection, or an overloaded / rate-limited model. Not a bad key or bad request."""
+    import httpx  # a dependency of google-genai, which raises its errors on dropped connections
+
+    if isinstance(exc, (TimeoutError, ConnectionError, httpx.TransportError)):
+        return True
+    return getattr(exc, "code", None) in (429, 500, 502, 503, 504)
 
 
 def _call(client: Any, model: str, system: str, messages: List[Dict[str, str]]) -> str:
