@@ -29,6 +29,7 @@ Courier vs product is the hardest call and the most useful one. Rules:
 - "Pas sampe koyak", "dateng udah penyok", "kemasan rusak" point at transit damage, but one short line rarely proves it. Mark `cause: courier`, `check_first: true`, bucket `fight`.
 - If the text suggests a manufacturing fault (bad seams, "jahitan lepas", stopped working after days of use), it is `product`, bucket `fix`.
 - If you cannot tell, use `cause: unclear`, `check_first: true`, and pick the bucket that is safer for the seller to investigate. Prefer `fight` with a "check first" step over a wrong `fix`.
+- `check_first` is only for the courier-vs-product question. Set it to true **only** when `cause` is `courier` or `unclear`. When you just need more detail from the buyer (a vague "barang palsu", "tidak sesuai deskripsi"), leave `check_first` false and put the ask in `fight.steps` and the drafts.
 - Never assert courier fault as fact in the seller's public reply. The drafts ask the buyer for proof first.
 
 ## Likely-fake flag
@@ -41,7 +42,7 @@ Set `likely_fake.flag: true` only when there are concrete signals, and list them
 - a big health or performance claim with no detail;
 - very short generic praise, **only** when combined with another signal.
 
-A short generic review alone is not fake. A 5-star fake still goes to `fight` (the seller or a competitor-checker should leave it out of the counts); set `fight.report_text` to a Bahasa report text. Be cautious: a false accusation against a real buyer is worse than a missed fake. When unsure, set `flag: false` and lower `confidence`.
+A short generic review alone is not fake. A terse, vague or angry **negative** review ("Barang palsu", "Tidak sesuai deskripsi") is not a fake review either: lack of detail is not a signal. Planted reviews are usually glowing. If `likely_fake.flag` is true the bucket **must** be `fight`, even for a glowing 5-star review: the praise in a fake review is not a reason to `keep` it. Always fill `fight.report_text` with a Bahasa report text when the flag is true. Be cautious: a false accusation against a real buyer is worse than a missed fake. When unsure, set `flag: false` and lower `confidence`.
 
 ## Proof quote
 

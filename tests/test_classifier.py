@@ -81,6 +81,22 @@ class ClassifyTests(unittest.TestCase):
         self.assertTrue(validate_results(self.reviews, self.good[:3]))
         self.assertTrue(any("order" in p for p in validate_results(self.reviews, self.good[::-1])))
 
+    def test_fake_flag_must_mean_fight_with_report_text(self):
+        bad = copy.deepcopy(self.good)
+        bad[2]["likely_fake"] = {"flag": True, "signals": ["translated-sounding"]}  # keep + fake
+        self.assertTrue(any("must be fight" in p for p in validate_results(self.reviews, bad)))
+        bad[2].update(bucket="fight", fight=dict(self.good[1]["fight"], report_text=None))
+        self.assertTrue(any("report_text" in p for p in validate_results(self.reviews, bad)))
+        bad[2]["fight"]["report_text"] = "Ulasan ini tampaknya tidak asli."
+        self.assertEqual([p for p in validate_results(self.reviews, bad) if "review 31" in p], [])
+
+    def test_check_first_only_for_courier_or_unclear(self):
+        bad = copy.deepcopy(self.good)
+        bad[0]["check_first"] = True  # cause is listing
+        self.assertTrue(any("check_first" in p for p in validate_results(self.reviews, bad)))
+        bad[0]["cause"] = "unclear"
+        self.assertEqual([p for p in validate_results(self.reviews, bad) if "check_first" in p], [])
+
     def test_bad_enum_is_flagged(self):
         bad = copy.deepcopy(self.good)
         bad[2]["bucket"] = "praise"

@@ -66,6 +66,16 @@ def validate_results(reviews: List[Dict[str, Any]], results: List[Any]) -> List[
         if quote is None and text.strip():
             problems.append("review %s: proof_quote is null but the review has text" % rid)
         bucket = result["bucket"]
+        if result["likely_fake"]["flag"]:
+            if bucket != "fight":
+                problems.append("review %s: likely_fake.flag is true, so bucket must be fight (not %s)" % (rid, bucket))
+            elif not (result.get("fight") or {}).get("report_text"):
+                problems.append("review %s: likely_fake.flag is true, so fight.report_text must be filled" % rid)
+        if result["check_first"] and result["cause"] not in ("courier", "unclear"):
+            problems.append(
+                "review %s: check_first is only for courier-vs-product doubt (cause courier or unclear), not cause %s"
+                % (rid, result["cause"])
+            )
         if (bucket == "fight") != (result.get("fight") is not None):
             problems.append("review %s: 'fight' must be set exactly when bucket is fight" % rid)
         if (bucket == "fix") != bool(result.get("fix_suggestion_id")):
