@@ -40,6 +40,18 @@ def _extract_json_array(raw: str) -> List[Any]:
     return parsed
 
 
+_BAD_QUOTE = "proof_quote is not an exact substring of the review text"
+
+
+def no_text_result(review: Dict[str, Any]) -> Dict[str, Any]:
+    """The Ignore result for a star rating with no text. Built in code: such a review is counted, never analysed."""
+    return {
+        "id": str(review["id"]), "bucket": "ignore", "theme": "No text", "variant": review.get("variant") or None,
+        "cause": "none", "check_first": False, "proof_quote": None, "likely_fake": {"flag": False, "signals": []},
+        "fix_suggestion_id": None, "fight": None, "confidence": "high",
+    }
+
+
 def validate_results(reviews: List[Dict[str, Any]], results: List[Any]) -> List[str]:
     """Return a list of problems; empty means the results are usable."""
     validator = Draft202012Validator(_load_schema())
@@ -62,7 +74,7 @@ def validate_results(reviews: List[Dict[str, Any]], results: List[Any]) -> List[
             problems.append("review %s: result id is %r, results must stay in input order" % (rid, result["id"]))
         quote, text = result["proof_quote"], review.get("text") or ""
         if quote is not None and quote not in text:
-            problems.append("review %s: proof_quote is not an exact substring of the review text" % rid)
+            problems.append("review %s: %s" % (rid, _BAD_QUOTE))
         if quote is None and text.strip():
             problems.append("review %s: proof_quote is null but the review has text" % rid)
         bucket = result["bucket"]
@@ -180,13 +192,14 @@ def _classify_batch(
         content = "Product listing title: %s\nReviews:\n%s" % (product, content)
     messages = [{"role": "user", "content": content}]
     problems: List[str] = []
+    results: List[Any] = []
     for attempt in range(2):  # one retry, telling the model what was wrong
         raw = _call(client, model, system, messages)
         try:
             results = _extract_json_array(raw)
             problems = validate_results(reviews, results)
         except ValueError as exc:  # includes json.JSONDecodeError
-            problems = ["reply was not valid JSON: %s" % exc]
+            results, problems = [], ["reply was not valid JSON: %s" % exc]
         if not problems:
             return results
         messages += [
@@ -198,6 +211,10 @@ def _classify_batch(
                 + "\nReturn the corrected full JSON array only.",
             },
         ]
+    if results and all(p.endswith(_BAD_QUOTE) for p in problems):
+        # Only unverifiable quotes are left: drop those reviews rather than show an invented quote.
+        bad = {p.split()[1].rstrip(":") for p in problems}
+        return [r for r in results if r["id"] not in bad]
     raise ClassificationError("invalid reply after retry:\n- " + "\n- ".join(problems[:20]))
 
 
@@ -211,7 +228,9 @@ def classify(
 
     `product` is the listing title when known (for example read from a product link); it helps spot reviews about the wrong product.
 
-    Returns one result per review, in input order, matching prompts/output_schema.json.
+    Returns one result per review, in input order, matching prompts/output_schema.json. Reviews with no text are
+    answered in code (Ignore, "No text"). A review whose proof_quote still is not an exact substring after one retry
+    is left out of the list instead of failing the batch.
     The API key is read from GEMINI_API_KEY by the Gemini client; it is never stored here.
     """
     if not reviews:
@@ -230,7 +249,12 @@ def classify(
     model = resolve_model(model)
     system = build_system_prompt()
 
-    results: List[Dict[str, Any]] = []
-    for i in range(0, len(reviews), BATCH_SIZE):
-        results += _classify_batch(client, model, system, reviews[i : i + BATCH_SIZE], product)
-    return results
+    # Star-only reviews go to Ignore without a model call.
+    blank = {r["id"] for r in reviews if not (r.get("text") or "").strip()}
+    texted = [r for r in reviews if r["id"] not in blank]
+    by_id: Dict[str, Dict[str, Any]] = {r["id"]: no_text_result(r) for r in reviews if r["id"] in blank}
+    for i in range(0, len(texted), BATCH_SIZE):
+        for result in _classify_batch(client, model, system, texted[i : i + BATCH_SIZE], product):
+            by_id[result["id"]] = result
+    # Input order; a review whose quote could not be verified is missing from the list.
+    return [by_id[r["id"]] for r in reviews if r["id"] in by_id]

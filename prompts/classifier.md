@@ -49,6 +49,8 @@ Set `likely_fake.flag: true` only when there are concrete signals, and list them
 - a big health or performance claim with no detail;
 - very short generic praise, **only** when combined with another signal.
 
+Look at the batch as a whole before labelling any single review. When two or more reviews in the batch share the same template (for example fast delivery, then a big health or performance claim) **and** read like translated, formal Bahasa, that is two independent signals: flag every review in that group, including 5-star ones that look like praise. Do not file them under `keep` just because each one reads as positive on its own.
+
 A short generic review alone is not fake. A terse, vague or angry **negative** review ("Barang palsu", "Tidak sesuai deskripsi") is not a fake review either: lack of detail is not a signal. Planted reviews are usually glowing. If `likely_fake.flag` is true the bucket **must** be `fight`, even for a glowing 5-star review: the praise in a fake review is not a reason to `keep` it. Always fill `fight.report_text` with a Bahasa report text when the flag is true. Be cautious: a false accusation against a real buyer is worse than a missed fake. When unsure, set `flag: false` and lower `confidence`.
 
 ## Proof quote

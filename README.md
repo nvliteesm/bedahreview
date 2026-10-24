@@ -18,7 +18,8 @@ v1 scope: paste-text input only. No scraping, no logins.
 | `src/bedahreview/evaluate.py` | Eval: scores the classifier against the labelled Review log |
 | `tests/` | Offline tests (stub client, no API key) |
 | `eval/data/` | Your Review log CSV export (gitignored; real review data stays local) |
-| `src/bedahreview/web.py`, `static/index.html` | The paste-in web app (step 4) |
+| `src/bedahreview/web.py`, `static/index.html` | The phone-first web app: three tabs, ID/EN, Share-menu pre-fill |
+| `static/manifest.webmanifest`, `static/sw.js`, `static/icons/` | Installable app shell (PWA); icons come from `scripts/make_icons.py` |
 | `src/bedahreview/parse.py` | Turns pasted text into reviews (stars, variant, text) |
 
 ## Setup
@@ -52,6 +53,12 @@ Open http://127.0.0.1:8000, paste reviews, click **Bedah ulasan**. Press Ctrl+C 
 It only listens on your own computer, so your API key never leaves it. Up to 50 reviews per paste.
 Paste one review per line (or separate multi-line reviews with a blank line). Stars and variant are
 optional: `★★★☆☆  Putih, M   warna tulisannya ijo`.
+
+## Install on a phone (PWA)
+
+A phone needs https to install it, so the local app only installs on the same computer (Chrome's install icon).
+Hosting is not chosen yet. Android Chrome can then add a Share-menu entry; iPhone cannot (as far as we know) and uses
+paste only (Safari > Share > Add to Home Screen to install). The Share route is untested with Shopee and Tokopedia.
 
 ## Product-link box (demo only)
 

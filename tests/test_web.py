@@ -1,4 +1,6 @@
+import contextlib
 import http.client
+import io
 import json
 import threading
 import unittest
@@ -6,7 +8,7 @@ import unittest
 from bedahreview.classifier import ClassificationError
 from bedahreview.fetchers import FetchError
 from bedahreview.fetchers.base import Review
-from bedahreview.web import MAX_REVIEWS, build_response, make_server
+from bedahreview.web import MAX_REVIEWS, build_response, fix_groups, make_server
 
 
 def _result(rid, bucket="fix", theme="Colour vs photo", fake=False):
@@ -58,8 +60,43 @@ class WebTests(unittest.TestCase):
     def test_serves_the_page(self):
         resp, data = self.request("GET", "/")
         self.assertEqual(resp.status, 200)
-        self.assertIn(b"Fix it or fight it", data)
+        self.assertIn(b"BedahReview", data)
+        self.assertIn(b"manifest.webmanifest", data)
         self.assertEqual(resp.getheader("X-Content-Type-Options"), "nosniff")
+
+    def test_share_url_serves_the_page_and_the_log_has_no_review_text(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            resp, data = self.request("GET", "/?title=Kaos&text=Pas%20sampe%20koyak%20bajunya")
+        self.assertEqual(resp.status, 200)
+        self.assertIn(b"BedahReview", data)
+        self.assertIn("GET /", err.getvalue())
+        self.assertNotIn("koyak", err.getvalue())
+        self.assertNotIn("Kaos", err.getvalue())
+
+    def test_pwa_files_are_served_with_the_right_types(self):
+        resp, data = self.request("GET", "/manifest.webmanifest")
+        self.assertEqual((resp.status, resp.getheader("Content-Type").split(";")[0]), (200, "application/manifest+json"))
+        manifest = json.loads(data)
+        self.assertEqual((manifest["display"], manifest["theme_color"]), ("standalone", "#0f6b5a"))
+        self.assertEqual(manifest["share_target"], {"action": "./", "method": "GET", "params": {"title": "title", "text": "text", "url": "url"}})
+        sizes = {(i["sizes"], i.get("purpose")) for i in manifest["icons"]}
+        self.assertEqual(sizes, {("192x192", None), ("512x512", None), ("512x512", "maskable")})
+        for icon in manifest["icons"]:
+            resp, png = self.request("GET", "/" + icon["src"])
+            self.assertEqual((resp.status, resp.getheader("Content-Type"), png[:4]), (200, "image/png", b"\x89PNG"), icon["src"])
+        resp, js = self.request("GET", "/sw.js")
+        self.assertEqual((resp.status, resp.getheader("Content-Type").split(";")[0]), (200, "text/javascript"))
+
+    def test_service_worker_never_touches_the_api(self):
+        js = self.request("GET", "/sw.js")[1].decode()
+        self.assertIn("/api/", js)  # explicitly skipped
+        self.assertIn("startsWith('/api/')", js)
+        self.assertNotIn("POST", js.replace("method !== 'GET'", ""))  # only GET requests are ever handled
+
+    def test_static_paths_are_an_allowlist(self):
+        for bad in ("/static/index.html", "/icons/../web.py", "/icons/other.png", "/../README.md", "/sw.js/../../web.py"):
+            self.assertEqual(self.request("GET", bad)[0].status, 404, bad)
 
     def test_classifies_pasted_text_and_joins_results(self):
         resp, data = self.post("★★★☆☆  Putih, M   warna ijo\nPas sampe koyak")
@@ -202,12 +239,66 @@ class WebTests(unittest.TestCase):
         self.assertEqual(self.request("GET", "/nope")[0].status, 404)
         self.assertEqual(self.request("POST", "/nope", b"{}", {"Content-Type": "application/json"})[0].status, 404)
 
+    def test_product_name_reaches_the_model_and_the_response(self):
+        resp, data = self.post_json({"text": "Pas sampe koyak", "product": "  Kaos   Boxy Retro "})
+        out = json.loads(data)
+        self.assertEqual(self.products, ["Kaos Boxy Retro"])
+        self.assertEqual(out["source"], {"kind": "paste", "title": "Kaos Boxy Retro"})
+        self.assertEqual(self.post_json({"text": "x", "product": 5})[0].status, 400)
+
     def test_build_response_counts_fakes(self):
         reviews = [{"id": "1", "stars": 5, "variant": "A, B", "text": "x"}, {"id": "2", "stars": None, "variant": None, "text": "y"}]
         out = build_response(reviews, [_result("1", "fight", fake=True), _result("2", "check")], "m")
         self.assertEqual(out["likely_fake"], 1)
         self.assertEqual(out["counts"]["check"], 1)
         self.assertEqual(out["items"][0]["variant"], "A, B")
+
+
+def _item(rid, bucket, theme="Colour vs photo", variant="Putih, L", fake=False, stars=3):
+    return dict(_result(rid, bucket, theme, fake), variant=variant), {"id": rid, "stars": stars, "variant": variant, "text": "t" + rid if theme != "No text" else ""}
+
+
+class TriageBoardTests(unittest.TestCase):
+    def board(self, specs):
+        pairs = [_item(*spec[:1], **spec[1]) for spec in specs]
+        return build_response([r for _, r in pairs], [i for i, _ in pairs], "m")
+
+    def test_fix_cards_group_by_theme_and_base_variant_with_counts(self):
+        out = self.board([
+            ("1", dict(bucket="fix", variant="Putih, L", stars=1)),
+            ("2", dict(bucket="fix", variant="Putih, M", stars=3)),
+            ("3", dict(bucket="fix", theme="Packaging / damaged on arrival", variant="Putih, L", stars=4)),
+            ("4", dict(bucket="fight", variant="Hitam, L", stars=2)),
+        ])
+        self.assertEqual(out["complaints"], 4)
+        first, second = out["groups"]
+        self.assertEqual((first["theme"], first["variant"], first["ids"], first["n"], first["of"]), ("Colour vs photo", "Putih", ["1", "2"], 2, 4))
+        self.assertEqual((second["theme"], second["ids"], second["n"]), ("Packaging / damaged on arrival", ["3"], 1))
+        self.assertEqual(out["star_avg"], 2.5)
+        self.assertEqual(out["reviews"], 4)
+
+    def test_likely_fake_reviews_are_left_out_of_counts_and_cards(self):
+        out = self.board([
+            ("1", dict(bucket="fix")),
+            ("2", dict(bucket="fight", fake=True, stars=5)),
+            ("3", dict(bucket="keep", fake=True, stars=5)),
+        ])
+        self.assertEqual(out["counts"], {"fix": 1, "fight": 0, "check": 0, "ignore": 0, "keep": 0})
+        self.assertEqual((out["likely_fake"], out["complaints"], len(out["items"])), (2, 1, 3))  # still returned, for the Fight it tab
+        self.assertEqual([g["ids"] for g in out["groups"]], [["1"]])
+
+    def test_star_only_reviews_are_counted_under_ignore(self):
+        out = self.board([("1", dict(bucket="ignore", theme="No text", variant=None, stars=1)), ("2", dict(bucket="ignore", theme="No text", variant=None, stars=2)), ("3", dict(bucket="fix"))])
+        self.assertEqual((out["counts"]["ignore"], out["no_text"], out["complaints"]), (2, 2, 1))
+
+    def test_dropped_reviews_are_reported(self):
+        pairs = [_item("1", "fix")[1], _item("2", "fix")[1]]
+        out = build_response(pairs, [_item("1", "fix")[0]], "m")
+        self.assertEqual((out["dropped"], len(out["items"])), (1, 1))
+
+    def test_fix_groups_ignore_non_fix_reviews(self):
+        items = [_item("1", "keep")[0], _item("2", "fix", variant=None)[0]]
+        self.assertEqual(fix_groups(items, 1), [{"theme": "Colour vs photo", "variant": None, "ids": ["2"], "n": 1, "of": 1}])
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""Minimal local web app: paste reviews, get the Fix it or fight it board.
+"""Minimal local web app: paste reviews, get the Fix / Fight / Ignore board. Phone-first, installable (PWA).
 
     python -m bedahreview.web            # then open http://127.0.0.1:8000
 
@@ -32,6 +32,32 @@ MAX_BODY_BYTES = 200_000
 MAX_REVIEWS = 50  # v1 cap: keeps one paste to a handful of API calls
 BUCKET_ORDER = ["fix", "fight", "check", "ignore", "keep"]
 DEFAULT_LIMIT = 10  # reviews fetched from a link when the seller does not choose
+MAX_PRODUCT_CHARS = 150
+# Files served from static/ (exact paths only; the query string is ignored, so /?text=... is the page).
+PAGES = {"/": "index.html", "/index.html": "index.html"}
+ASSETS = {
+    "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json; charset=utf-8"),
+    "/sw.js": ("sw.js", "text/javascript; charset=utf-8"),
+    "/icons/icon-192.png": ("icons/icon-192.png", "image/png"),
+    "/icons/icon-512.png": ("icons/icon-512.png", "image/png"),
+    "/icons/icon-maskable-512.png": ("icons/icon-maskable-512.png", "image/png"),
+}
+
+
+def _base_variant(variant: Optional[str]) -> Optional[str]:
+    """'Putih, L' -> 'Putih': complaints are grouped by the first part of the variant (usually the colour)."""
+    base = (variant or "").split(",")[0].strip()
+    return base or None
+
+
+def fix_groups(items: List[Dict[str, Any]], complaints: int) -> List[Dict[str, Any]]:
+    """Group Fix-it reviews into cards by theme and variant, biggest first, each with 'n of complaints'."""
+    groups: Dict[Any, List[str]] = {}
+    for item in items:
+        if item["bucket"] == "fix" and not item["likely_fake"]["flag"]:
+            groups.setdefault((item["theme"], _base_variant(item["variant"])), []).append(item["id"])
+    ordered = sorted(groups.items(), key=lambda kv: -len(kv[1]))  # stable: ties keep input order
+    return [{"theme": t, "variant": v, "ids": ids, "n": len(ids), "of": complaints} for (t, v), ids in ordered]
 
 
 def build_response(
@@ -43,12 +69,21 @@ def build_response(
     for result in results:
         review = by_id[result["id"]]
         items.append(dict(result, stars=review["stars"], text=review["text"], variant=result.get("variant") or review["variant"]))
-    counts = Counter(item["bucket"] for item in items)
+    real = [item for item in items if not item["likely_fake"]["flag"]]  # likely-fake reviews stay out of every count
+    counts = Counter(item["bucket"] for item in real)
+    complaints = counts.get("fix", 0) + counts.get("fight", 0) + counts.get("check", 0)
+    stars = [r["stars"] for r in reviews if r["stars"]]
     return {
         "model": model,
         "items": items,
         "counts": {b: counts.get(b, 0) for b in BUCKET_ORDER},
-        "likely_fake": sum(1 for item in items if item["likely_fake"]["flag"]),
+        "complaints": complaints,
+        "groups": fix_groups(items, complaints),
+        "likely_fake": len(items) - len(real),
+        "no_text": sum(1 for item in items if item["theme"] == "No text"),
+        "dropped": len(reviews) - len(items),  # reviews left out because the model's quote could not be verified
+        "reviews": len(reviews),
+        "star_avg": round(sum(stars) / len(stars), 1) if stars else None,
         "source": source or {"kind": "paste"},
     }
 
@@ -65,7 +100,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'")
+        self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'")
         self.end_headers()
         self.wfile.write(body)
 
@@ -77,7 +112,8 @@ class Handler(BaseHTTPRequestHandler):
         return host in ("127.0.0.1", "localhost", "::1")
 
     def log_message(self, fmt: str, *args: Any) -> None:  # one short line per request, no review text
-        sys.stderr.write("%s %s\n" % (self.command, self.path))
+        # The Share menu sends the review text in the query string (/?text=...), so log the path only.
+        sys.stderr.write("%s %s\n" % (self.command, self.path.split("?", 1)[0]))
 
     def _fetch(self, url: str, limit: Any, mode: Any):
         """Fetch reviews from a product link (demo). Returns (reviews, source) or None after sending an error."""
@@ -108,9 +144,13 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         if not self._host_ok():
             return self._json(403, {"error": "Host not allowed"})
-        if self.path in ("/", "/index.html"):
-            return self._send(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
-        if self.path == "/api/config":
+        path = self.path.split("?", 1)[0]
+        if path in PAGES:
+            return self._send(200, (STATIC / PAGES[path]).read_bytes(), "text/html; charset=utf-8")
+        if path in ASSETS:
+            name, content_type = ASSETS[path]
+            return self._send(200, (STATIC / name).read_bytes(), content_type)
+        if path == "/api/config":
             on = type(self).fetcher is not None
             return self._json(200, {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT})
         self._json(404, {"error": "Not found"})
@@ -132,8 +172,8 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             if not isinstance(body, dict):
                 raise ValueError
-            text, url = body.get("text", ""), body.get("url", "")
-            if not isinstance(text, str) or not isinstance(url, str):
+            text, url, product = body.get("text", ""), body.get("url", ""), body.get("product", "")
+            if not isinstance(text, str) or not isinstance(url, str) or not isinstance(product, str):
                 raise ValueError
         except (ValueError, UnicodeDecodeError):
             return self._json(400, {"error": "Body must be JSON like {\"text\": \"...\"}"})
@@ -146,6 +186,8 @@ class Handler(BaseHTTPRequestHandler):
             reviews, source = fetched
         else:
             reviews = parse_reviews(text)
+            name = " ".join(product.split())[:MAX_PRODUCT_CHARS]
+            source = {"kind": "paste", "title": name} if name else None
         if not reviews:
             return self._json(400, {"error": "No reviews found. Paste at least one review."})
         if len(reviews) > MAX_REVIEWS:
@@ -153,7 +195,7 @@ class Handler(BaseHTTPRequestHandler):
 
         model = resolve_model()
         try:
-            title = (source or {}).get("title")
+            title = (source or {}).get("title") or " ".join(product.split())[:MAX_PRODUCT_CHARS] or None
             results = type(self).classify_fn(reviews, product=title) if title else type(self).classify_fn(reviews)
         except ClassificationError as exc:
             return self._json(502, {"error": "The model's reply could not be used: %s" % str(exc).splitlines()[0]})

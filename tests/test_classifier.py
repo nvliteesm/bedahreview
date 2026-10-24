@@ -37,10 +37,12 @@ def _sent_text(call, index=0):
 
 class ClassifyTests(unittest.TestCase):
     def setUp(self):
-        self.reviews, self.good = _example()
+        self.all_reviews, self.all_good = _example()
+        # The model only sees reviews with text; the star-only example (id 99) is answered in code.
+        self.reviews, self.good = self.all_reviews[:3], self.all_good[:3]
 
     def test_prompt_example_passes_validation(self):
-        self.assertEqual(validate_results(self.reviews, self.good), [])
+        self.assertEqual(validate_results(self.all_reviews, self.all_good), [])
 
     def test_product_title_is_sent_only_when_known(self):
         client = StubClient(json.dumps(self.good), json.dumps(self.good))
@@ -52,7 +54,7 @@ class ClassifyTests(unittest.TestCase):
     def test_valid_reply_returned_in_order(self):
         client = StubClient(json.dumps(self.good))
         out = classify(self.reviews, client=client, model="m")
-        self.assertEqual([r["id"] for r in out], ["33", "34", "31", "99"])
+        self.assertEqual([r["id"] for r in out], ["33", "34", "31"])
         config = client.calls[0]["config"]
         self.assertEqual(config.system_instruction, classifier.build_system_prompt())
         self.assertIn("Colour vs photo", config.system_instruction)  # theme enum reaches the model
@@ -61,7 +63,7 @@ class ClassifyTests(unittest.TestCase):
 
     def test_markdown_fences_are_tolerated(self):
         client = StubClient("```json\n" + json.dumps(self.good) + "\n```")
-        self.assertEqual(len(classify(self.reviews, client=client)), 4)
+        self.assertEqual(len(classify(self.reviews, client=client)), 3)
 
     def test_retry_fixes_a_bad_quote(self):
         bad = copy.deepcopy(self.good)
@@ -72,6 +74,33 @@ class ClassifyTests(unittest.TestCase):
         retry = client.calls[1]["contents"]
         self.assertEqual([c.role for c in retry], ["user", "model", "user"])
         self.assertIn("proof_quote", _sent_text(client.calls[1], -1))
+
+    def test_star_only_reviews_skip_the_model(self):
+        client = StubClient(json.dumps(self.good))
+        out = classify(self.all_reviews, client=client)
+        self.assertEqual([r["id"] for r in out], ["33", "34", "31", "99"])
+        self.assertEqual(out[3], self.all_good[3])  # the code-built result equals the prompt's Ignore example
+        self.assertEqual([r["id"] for r in json.loads(_sent_text(client.calls[0]))], ["33", "34", "31"])
+        # only star-only reviews: no model call at all
+        quiet = StubClient()
+        out = classify([{"id": "1", "stars": 1, "variant": "Putih, L", "date": "", "text": "  "}], client=quiet)
+        self.assertEqual((quiet.calls, out[0]["bucket"], out[0]["theme"], out[0]["variant"]), ([], "ignore", "No text", "Putih, L"))
+        self.assertEqual(validate_results([{"id": "1", "text": "  "}], out), [])
+
+    def test_unverifiable_quote_is_dropped_after_the_retry(self):
+        bad = copy.deepcopy(self.good)
+        bad[1]["proof_quote"] = "paraphrased, not in the text"
+        client = StubClient(json.dumps(bad), json.dumps(bad))
+        out = classify(self.reviews, client=client)
+        self.assertEqual([r["id"] for r in out], ["33", "31"])  # review 34 is left out, not shown with an invented quote
+        self.assertEqual(len(client.calls), 2)
+
+    def test_other_problems_still_fail_the_batch(self):
+        bad = copy.deepcopy(self.good)
+        bad[1]["proof_quote"] = "paraphrased, not in the text"
+        bad[0]["bucket"] = "nonsense"
+        with self.assertRaises(ClassificationError):
+            classify(self.reviews, client=StubClient(json.dumps(bad), json.dumps(bad)))
 
     def test_gives_up_after_one_retry(self):
         client = StubClient("not json", "still not json")
@@ -85,7 +114,7 @@ class ClassifyTests(unittest.TestCase):
         self.assertTrue(any("fight" in p for p in validate_results(self.reviews, bad)))
 
     def test_wrong_order_and_count_are_flagged(self):
-        self.assertTrue(validate_results(self.reviews, self.good[:3]))
+        self.assertTrue(validate_results(self.reviews, self.good[:2]))
         self.assertTrue(any("order" in p for p in validate_results(self.reviews, self.good[::-1])))
 
     def test_fake_flag_must_mean_fight_with_report_text(self):
@@ -166,7 +195,7 @@ class ClassifyTests(unittest.TestCase):
         original = classifier.RETRY_DELAYS_S
         classifier.RETRY_DELAYS_S = (0, 0)
         try:
-            self.assertEqual(len(classify(self.reviews, client=client)), 4)
+            self.assertEqual(len(classify(self.reviews, client=client)), 3)
         finally:
             classifier.RETRY_DELAYS_S = original
 
@@ -185,7 +214,7 @@ class ClassifyTests(unittest.TestCase):
             original = classifier.RETRY_DELAYS_S
             classifier.RETRY_DELAYS_S = (0, 0)
             try:
-                self.assertEqual(len(classify(self.reviews, client=client)), 4, repr(error))
+                self.assertEqual(len(classify(self.reviews, client=client)), 3, repr(error))
             finally:
                 classifier.RETRY_DELAYS_S = original
 

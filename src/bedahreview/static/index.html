@@ -1,324 +1,350 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0f6b5a">
 <title>BedahReview</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BedahReview">
 <style>
-/* Flat design, teal for actions. One bucket is shown at a time (Fix / Fight / Check / Ignore / Keep),
-   chosen from a sticky tab strip with counts. Light and dark themes follow the system setting. */
+/* Phone first: one column up to 480px wide, 16px gutters, 44px touch targets, safe-area padding.
+   Three tabs: Perbaiki (Fix it), Tanggapi (Fight it), Abaikan (Ignore). Light and dark follow the system. */
 :root {
-  --bg: #f1f8f6; --surface: #ffffff; --ink: #12302c; --muted: #4b625d; --line: #cfe1dc; --soft: #e9f2ef;
-  --primary: #0f766e; --on-primary: #ffffff; --primary-soft: #d9f1ec; --ring: #0f766e;
-  --fix: #9a3f05; --fix-soft: #ffeedb; --fight: #b3123a; --fight-soft: #ffe3ea;
-  --check: #4338ca; --check-soft: #e9ebff; --ignore: #475569; --ignore-soft: #e7ecf1;
-  --keep: #166534; --keep-soft: #def5e4; --error: #b3123a; --error-soft: #ffe3ea;
+  --bg: #f6f7f5; --surface: #ffffff; --ink: #17201c; --muted: #5d6963; --line: #dde2de; --quote: #f3f5f2;
+  --accent: #0f6b5a; --on-accent: #ffffff; --accent-soft: #dff1ec;
+  --fix: #b25a00; --fix-soft: #fff1e0; --fight: #b3263e; --fight-soft: #fde8ec;
+  --ignore: #69726e; --ignore-soft: #eef0ef; --check: #4338ca; --keep: #166534; --keep-soft: #def5e4;
   --font-ui: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --radius: 12px;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --gutter: 16px; --radius: 14px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0b1514; --surface: #12211f; --ink: #e6f2f0; --muted: #9db4af; --line: #25403b; --soft: #182b28;
-    --primary: #2dd4bf; --on-primary: #04201c; --primary-soft: #123a35; --ring: #5eead4;
-    --fix: #fdba74; --fix-soft: #2b1d10; --fight: #fda4af; --fight-soft: #2e1319;
-    --check: #a5b4fc; --check-soft: #1b1d3a; --ignore: #cbd5e1; --ignore-soft: #1e2730;
-    --keep: #86efac; --keep-soft: #12281a; --error: #fda4af; --error-soft: #2e1319;
-    color-scheme: dark;
+    --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --quote: #222a26;
+    --accent: #4fc2a8; --on-accent: #0b1411; --accent-soft: #163a33;
+    --fix: #f0a24a; --fix-soft: #33261a; --fight: #f27088; --fight-soft: #351c22;
+    --ignore: #a3aca8; --ignore-soft: #242b28; --check: #a5b4fc; --keep: #86efac; --keep-soft: #12281a;
   }
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--font-ui); }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font-ui); }
 h1, h2, h3, p, ol, ul { margin: 0; }
-h1 { font-size: clamp(1.75rem, 4.5vw, 2.5rem); line-height: 1.1; font-weight: 800; letter-spacing: -0.03em; text-wrap: balance; }
-h2 { font-size: 1.25rem; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 1.1rem; line-height: 1.3; font-weight: 800; }
 h3 { font-size: 1rem; line-height: 1.3; font-weight: 700; }
-.eyebrow { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.skip { position: absolute; left: var(--s4); top: -60px; background: var(--primary); color: var(--on-primary); padding: var(--s2) var(--s4); border-radius: 8px; font-weight: 700; z-index: 20; }
-.skip:focus { top: var(--s2); }
 svg.i { width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h2[tabindex="-1"]:focus, .error:focus { outline: none; }
 
-:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; border-radius: 6px; }
-h2[tabindex="-1"]:focus, .error:focus { outline: none; }  /* focus moved here by script, not by the user */
+/* ---------- frame ---------- */
+.topbar { position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 1px solid var(--line);
+  padding: env(safe-area-inset-top) max(var(--gutter), env(safe-area-inset-right)) 0 max(var(--gutter), env(safe-area-inset-left)); }
+.topbar-in { max-width: 480px; margin: 0 auto; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.01em; }
+.brand span { color: var(--accent); }
+.lang { min-height: 44px; min-width: 64px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+.lang b { color: var(--accent); }
+main { max-width: 480px; margin: 0 auto; display: grid; gap: 14px; align-content: start;
+  padding: 16px max(var(--gutter), env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left)); }
+.bottombar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); border-top: 1px solid var(--line);
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+.bottombar-in { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; }
+.nav { min-height: 56px; display: grid; place-items: center; align-content: center; gap: 2px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+.nav[aria-current="page"] { color: var(--accent); }
+.nav[disabled] { opacity: 0.4; cursor: default; }
 
-/* ---------- top bar and intro ---------- */
-.topbar { border-bottom: 1px solid var(--line); background: var(--surface); }
-.topbar-in, .wrap { max-width: 1080px; margin: 0 auto; padding-left: var(--s4); padding-right: var(--s4); }
-.topbar-in { display: flex; align-items: center; justify-content: space-between; gap: var(--s4); min-height: 56px; }
-.brand { display: flex; align-items: center; gap: var(--s3); font-weight: 800; letter-spacing: -0.01em; }
-.brand svg { width: 30px; height: 30px; }
-.topbar .note { font-size: 0.8rem; color: var(--muted); text-align: right; }
-.wrap { padding-top: var(--s5); padding-bottom: 72px; display: grid; gap: var(--s5); }
-.hero { display: grid; gap: var(--s3); max-width: 62ch; }
-.hero p { color: var(--muted); font-size: 1.05rem; }
-.flow { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); list-style: none; padding: 0; margin-top: var(--s1); counter-reset: s; }
-.flow li { counter-increment: s; display: flex; align-items: center; gap: var(--s2); font-size: 0.88rem; font-weight: 600; }
-.flow li::before { content: counter(s); display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); font-size: 0.8rem; font-weight: 800; }
-
-/* ---------- input panel ---------- */
-.card-box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
-.input { padding: var(--s4); display: grid; gap: var(--s4); }
-.seg { display: inline-flex; gap: var(--s1); padding: var(--s1); background: var(--soft); border-radius: 10px; justify-self: start; max-width: 100%; }
-.seg button { display: inline-flex; align-items: center; gap: var(--s2); min-height: 40px; padding: 0 var(--s4); border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 0.92rem; cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease; }
+/* ---------- controls ---------- */
+.card-box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: grid; gap: 12px; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; background: var(--ignore-soft); border-radius: 12px; }
+.seg button { min-height: 44px; padding: 0 8px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 0.92rem; cursor: pointer; }
 .seg button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
-.seg button:hover { color: var(--ink); }
-label.field { font-weight: 700; display: block; margin-bottom: var(--s2); }
-textarea, input, select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
-textarea { width: 100%; min-height: 190px; resize: vertical; font: 0.9rem/1.65 var(--font-mono); padding: var(--s3) var(--s4); }
-input[type=url], input[type=number], select { min-height: 44px; padding: 0 var(--s3); }
-input[type=url] { width: 100%; }
-input[type=number] { width: 5.5rem; }
+label.field, .fld { display: grid; gap: 4px; font-size: 0.82rem; font-weight: 700; color: var(--muted); }
+textarea, input, select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; width: 100%; }
+textarea { min-height: 190px; resize: vertical; font: 0.9rem/1.6 var(--font-mono); padding: 12px; }
+input, select { min-height: 44px; padding: 0 12px; font-size: 1rem; /* 16px stops iOS zooming into the field */ }
 textarea::placeholder, input::placeholder { color: var(--muted); opacity: 0.8; }
-.row { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: end; }
-.row .grow { flex: 1 1 100%; }
-.fld { display: grid; gap: var(--s1); font-size: 0.82rem; font-weight: 600; color: var(--muted); }
-.fld select, .fld input { color: var(--ink); font-weight: 500; font-size: 0.95rem; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); min-height: 44px; padding: 0 var(--s5); border-radius: 10px; font: inherit; font-weight: 700; font-size: 0.95rem; cursor: pointer; border: 1px solid transparent; transition: background-color 0.15s ease, opacity 0.15s ease; }
-.btn.primary { background: var(--primary); color: var(--on-primary); }
-.btn.primary:hover { opacity: 0.92; }
-.btn.ghost { background: var(--surface); color: var(--ink); border-color: var(--line); font-weight: 600; }
-.btn.ghost:hover { background: var(--soft); }
-.btn[disabled], .seg button[disabled] { opacity: 0.55; cursor: progress; }
-details summary { cursor: pointer; font-weight: 600; color: var(--primary); min-height: 32px; display: flex; align-items: center; }
-details pre { margin: var(--s2) 0 0; padding: var(--s3) var(--s4); background: var(--soft); border-radius: 10px; font: 0.82rem/1.65 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
-.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
-.chip.warn { border-color: currentColor; color: var(--fix); background: var(--fix-soft); }
-.chip.hot { border-color: currentColor; color: var(--fight); background: var(--fight-soft); }
-.chip.soft { background: var(--soft); }
-.demo-note { font-size: 0.85rem; color: var(--muted); max-width: 70ch; }
-.error { display: flex; gap: var(--s3); align-items: flex-start; background: var(--error-soft); color: var(--error); border-radius: 10px; padding: var(--s3) var(--s4); font-weight: 600; border: 1px solid currentColor; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 12px; border: 1px solid transparent; font: inherit; font-weight: 700; cursor: pointer; }
+.btn.primary { background: var(--accent); color: var(--on-accent); width: 100%; }
+.btn.ghost { background: var(--surface); color: var(--accent); border-color: var(--line); min-height: 44px; font-size: 0.9rem; }
+.btn[disabled] { opacity: 0.55; cursor: progress; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row > .btn.ghost { flex: 1 1 auto; }
+details summary { cursor: pointer; font-weight: 600; color: var(--accent); min-height: 44px; display: flex; align-items: center; }
+details pre { margin: 0 0 4px; padding: 12px; background: var(--quote); border-radius: 10px; font: 0.8rem/1.6 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.steps-list { padding-left: 1.3em; display: grid; gap: 6px; font-size: 0.92rem; }
+.callout { border-radius: 10px; padding: 10px 12px; font-size: 0.88rem; font-weight: 600; background: var(--accent-soft); color: var(--ink); border: 1px solid var(--line); }
+.callout.warn { background: var(--fix-soft); color: var(--fix); border-color: currentColor; }
+.callout.hot { background: var(--fight-soft); color: var(--fight); border-color: currentColor; }
+.error { display: flex; gap: 10px; align-items: flex-start; background: var(--fight-soft); color: var(--fight); border: 1px solid currentColor; border-radius: 10px; padding: 10px 12px; font-weight: 600; }
 .error svg { margin-top: 3px; }
+.chip { display: inline-flex; align-items: center; font-size: 0.75rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.chip.fix { color: var(--fix); background: var(--fix-soft); border-color: currentColor; }
+.chip.hot { color: var(--fight); background: var(--fight-soft); border-color: currentColor; }
+.chip.soft { background: var(--ignore-soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* ---------- loading ---------- */
-.progress { display: grid; gap: var(--s2); }
-.progress-text { display: flex; justify-content: space-between; gap: var(--s3); font-size: 0.9rem; color: var(--muted); font-weight: 600; }
-.bar { height: 6px; border-radius: 99px; background: var(--soft); overflow: hidden; }
-.bar::after { content: ""; display: block; height: 100%; width: 35%; border-radius: 99px; background: var(--primary); animation: slide 1.4s ease-in-out infinite; }
-@keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
-.skeleton { display: grid; gap: var(--s3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
-.sk { height: 150px; border-radius: var(--radius); background: var(--soft); animation: pulse 1.4s ease-in-out infinite; }
-@keyframes pulse { 50% { opacity: 0.5; } }
+.loading { text-align: center; padding: 48px 8px; display: grid; gap: 10px; justify-items: center; }
+.spinner { width: 44px; height: 44px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--accent); animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ---------- results ---------- */
-.res-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--s3); }
-.res-head p { color: var(--muted); font-size: 0.95rem; margin-top: var(--s1); }
-.note { font-size: 0.88rem; color: var(--muted); }
-.notice { background: var(--fight-soft); color: var(--fight); border-radius: 10px; padding: var(--s3) var(--s4); font-size: 0.9rem; font-weight: 600; display: flex; gap: var(--s3); align-items: flex-start; }
-.notice svg { margin-top: 3px; }
-.tabs { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: var(--s2) 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s2); }
-.tab { display: grid; justify-items: center; align-content: center; gap: 1px; min-height: 64px; padding: var(--s2) var(--s1); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; color: var(--muted); font: inherit; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; }
-.tab .n { font-size: 1.4rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--ink); }
-.tab .l { display: flex; align-items: center; gap: 4px; font-size: 0.78rem; font-weight: 700; }
-.tab:hover { border-color: currentColor; }
-.tab[aria-selected="true"] { border-width: 2px; padding: calc(var(--s2) - 1px) calc(var(--s1) - 1px); }
-.tab[data-b="fix"] { --c: var(--fix); --cs: var(--fix-soft); } .tab[data-b="fight"] { --c: var(--fight); --cs: var(--fight-soft); }
-.tab[data-b="check"] { --c: var(--check); --cs: var(--check-soft); } .tab[data-b="ignore"] { --c: var(--ignore); --cs: var(--ignore-soft); }
-.tab[data-b="keep"] { --c: var(--keep); --cs: var(--keep-soft); }
-.tab[aria-selected="true"] { background: var(--cs); border-color: var(--c); color: var(--c); }
-.tab[aria-selected="true"] .n { color: var(--c); }
-.tab[data-zero="true"]:not([aria-selected="true"]) { opacity: 0.6; }
-.bucket { display: grid; gap: var(--s4); margin-top: var(--s3); }
-.bucket-head { display: grid; gap: 2px; padding: var(--s3) var(--s4); border-radius: 10px; background: var(--cs); color: var(--c); }
-.bucket-head h3 { display: flex; align-items: center; gap: var(--s2); font-size: 1.05rem; }
-.bucket-head .tag { font-weight: 500; opacity: 0.9; font-size: 0.9rem; }
-.bucket-head p { font-size: 0.9rem; color: var(--ink); }
-.bucket[data-b="fix"] { --c: var(--fix); --cs: var(--fix-soft); } .bucket[data-b="fight"] { --c: var(--fight); --cs: var(--fight-soft); }
-.bucket[data-b="check"] { --c: var(--check); --cs: var(--check-soft); } .bucket[data-b="ignore"] { --c: var(--ignore); --cs: var(--ignore-soft); }
-.bucket[data-b="keep"] { --c: var(--keep); --cs: var(--keep-soft); }
-.grid { display: grid; gap: var(--s4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); align-items: start; }
-.card { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: var(--radius); padding: var(--s4); display: grid; gap: var(--s3); min-width: 0; }
-.chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.res-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tile { border-radius: 12px; padding: 10px 6px; text-align: center; background: var(--surface); border: 1px solid var(--line); }
+.tile .n { display: block; font-size: 1.6rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile .l { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+.tile[data-b="fix"] .n { color: var(--fix); } .tile[data-b="fight"] .n { color: var(--fight); } .tile[data-b="ignore"] .n { color: var(--ignore); }
+.tabs { position: sticky; top: calc(57px + env(safe-area-inset-top)); z-index: 5; background: var(--bg); padding: 4px 0; }
+.tabs .seg button[aria-selected="true"][data-b="fix"] { color: var(--fix); background: var(--fix-soft); }
+.tabs .seg button[aria-selected="true"][data-b="fight"] { color: var(--fight); background: var(--fight-soft); }
+.tabs .seg button[aria-selected="true"][data-b="ignore"] { color: var(--ignore); background: var(--ignore-soft); }
+.panel { display: grid; gap: 12px; }
+.rule { font-size: 0.9rem; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: var(--radius); padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.panel[data-b="fix"] { --c: var(--fix); } .panel[data-b="fight"] { --c: var(--fight); } .panel[data-b="ignore"] { --c: var(--ignore); } .strip { --c: var(--keep); }
 .stars { color: var(--fix); letter-spacing: 1px; white-space: nowrap; }
-blockquote { margin: 0; padding: var(--s2) var(--s3); border-left: 4px solid var(--c); background: var(--soft); border-radius: 0 8px 8px 0; display: grid; gap: 2px; overflow-wrap: anywhere; font-size: 0.95rem; }
-blockquote .src { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
-.full summary { font-size: 0.85rem; }
-.full p { font-size: 0.88rem; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; margin-top: var(--s1); }
+blockquote { margin: 0; padding: 8px 12px; border-left: 4px solid var(--c); background: var(--quote); border-radius: 0 8px 8px 0; display: grid; gap: 2px; overflow-wrap: anywhere; font-size: 0.95rem; }
+blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+.full summary { font-size: 0.85rem; min-height: 44px; }
+.full p { font-size: 0.88rem; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
 .why { font-size: 0.92rem; color: var(--muted); }
-.steps { padding-left: 1.2em; display: grid; gap: var(--s1); font-size: 0.92rem; }
 .draft { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); overflow: hidden; }
-.draft-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); padding: var(--s1) var(--s2) var(--s1) var(--s3); background: var(--soft); }
-.draft-head .eyebrow { color: var(--ink); }
-.copy { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 var(--s3); border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--primary); font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
-.copy:hover { background: var(--primary-soft); }
-.copy.done { background: var(--primary-soft); border-color: var(--primary); }
-.draft .bahasa { padding: var(--s3); font-size: 0.95rem; overflow-wrap: anywhere; white-space: pre-wrap; }
-.empty { border: 2px dashed var(--line); border-radius: var(--radius); padding: var(--s5); color: var(--muted); text-align: center; }
-.ignore-list { display: grid; gap: var(--s2); list-style: none; padding: 0; }
-.ignore-list li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: var(--s2) var(--s3); font-size: 0.92rem; overflow-wrap: anywhere; }
-.themes { display: flex; flex-wrap: wrap; gap: var(--s2); }
-.foot { font-size: 0.82rem; color: var(--muted); max-width: 80ch; margin-top: var(--s5); }
+.draft-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 4px 2px 12px; background: var(--ignore-soft); }
+.draft-head .lbl { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.copy { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; background: transparent; color: var(--accent); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.copy.done { color: var(--keep); }
+.draft .bahasa { padding: 12px; font-size: 0.95rem; overflow-wrap: anywhere; white-space: pre-wrap; user-select: text; -webkit-user-select: text; }
+.empty { border: 2px dashed var(--line); border-radius: var(--radius); padding: 20px; color: var(--muted); text-align: center; }
+.ignore-list { display: grid; gap: 8px; list-style: none; padding: 0; }
+.ignore-list li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 0.92rem; overflow-wrap: anywhere; }
+.strip { background: var(--keep-soft); border-radius: var(--radius); padding: 12px; display: grid; gap: 8px; }
+.strip h3 { color: var(--keep); }
+.foot { font-size: 0.8rem; color: var(--muted); }
 
-@media (max-width: 520px) {
-  .topbar .note { display: none; }
-  .tab .l svg { display: none; }
-  .btn { padding: 0 var(--s4); }
-  .row .btn.primary { flex: 1 1 100%; }
-}
-@media (pointer: coarse) { .copy { min-height: 44px; } }
-@media (prefers-reduced-motion: reduce) {
-  .bar::after { animation: none; width: 100%; opacity: 0.5; }
-  .sk { animation: none; }
-  * { transition-duration: 0.01ms !important; }
-}
+@media (pointer: fine) and (min-width: 481px) { main { padding-top: 24px; } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } * { transition-duration: 0.01ms !important; } }
 @media print {
-  :root { --bg: #fff; --surface: #fff; --ink: #000; --muted: #333; --line: #bbb; --soft: #f2f2f2; }
-  .topbar, .hero, .input, .tabs, .progress, .skeleton, .res-head .btn, .copy, .skip { display: none !important; }
-  .bucket[hidden] { display: grid !important; }
+  :root { --bg: #fff; --surface: #fff; --ink: #000; --muted: #333; --line: #bbb; }
+  .topbar, .bottombar, #view-input, .tabs, .tiles, .copy, #print { display: none !important; }
+  .panel[hidden] { display: grid !important; }
   .card, .draft { break-inside: avoid; }
-  body { font-size: 11pt; }
+  main { max-width: none; padding-bottom: 0; }
 }
 </style>
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0f766e"/><rect x="7" y="8" width="18" height="3.5" rx="1.75" fill="#fff"/><rect x="7" y="14.25" width="12" height="3.5" rx="1.75" fill="#fb923c"/><rect x="7" y="20.5" width="15" height="3.5" rx="1.75" fill="#fff"/></svg>
-      <span>BedahReview</span>
-    </div>
-    <span class="note">Runs on your computer. Reviews are sent to Google Gemini to be read.</span>
+    <div class="brand">Bedah<span>Review</span></div>
+    <button class="lang" id="lang" type="button" aria-label="Bahasa / Language"></button>
   </div>
 </header>
 
-<main id="main" class="wrap">
+<main id="main">
 
-  <section class="hero" aria-labelledby="title">
-    <span class="eyebrow">Review triage for Shopee and Tokopedia sellers</span>
-    <h1 id="title">Fix it or fight it</h1>
-    <p>Put in your product's reviews. Each one is sorted into what you can fix, what to push back on, what only you can check, and what to keep doing, with the Bahasa words to act on it.</p>
-    <ol class="flow" aria-label="How it works">
-      <li>Add reviews</li><li>We sort them</li><li>Copy the reply</li>
-    </ol>
+  <!-- input -->
+  <section id="view-input" aria-label="Ulasan baru" data-i18n-label="newReviews">
+    <div class="card-box">
+      <div class="seg" role="tablist" id="intabs">
+        <button role="tab" id="intab-paste" aria-controls="in-paste" aria-selected="true" type="button" data-t="paste" data-i18n="tabPaste"></button>
+        <button role="tab" id="intab-share" aria-controls="in-share" aria-selected="false" tabindex="-1" type="button" data-t="share" data-i18n="tabShare"></button>
+        <button role="tab" id="intab-link" aria-controls="in-link" aria-selected="false" tabindex="-1" type="button" data-t="link" hidden><span data-i18n="tabLink"></span> <span class="chip fix">Demo</span></button>
+      </div>
+
+      <div id="in-paste" role="tabpanel" aria-labelledby="intab-paste" style="display:grid;gap:12px">
+        <p class="muted" data-i18n="pasteHint"></p>
+        <div class="callout" id="shared-note" hidden></div>
+        <label class="field" for="product"><span data-i18n="productLabel"></span>
+          <input id="product" type="text" maxlength="150" autocomplete="off" data-i18n-ph="productPh">
+        </label>
+        <label class="field" for="paste"><span data-i18n="reviewsLabel"></span>
+          <textarea id="paste" spellcheck="false" placeholder="★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem&#10;★★☆☆☆  Hitam, L   Pas sampe koyak bajunya"></textarea>
+        </label>
+        <details>
+          <summary data-i18n="howSummary"></summary>
+          <pre data-i18n="howBody"></pre>
+        </details>
+        <button class="btn primary" id="run" type="button" data-i18n="run"></button>
+        <div class="row">
+          <button class="btn ghost" id="sample" type="button" data-i18n="sample"></button>
+          <button class="btn ghost" id="clear" type="button" data-i18n="clear"></button>
+        </div>
+      </div>
+
+      <div id="in-share" role="tabpanel" aria-labelledby="intab-share" style="display:grid;gap:12px" hidden>
+        <p class="muted" data-i18n="shareHint"></p>
+        <ol class="steps-list" id="share-steps"></ol>
+        <div class="callout warn" data-i18n="shareCaveat"></div>
+        <p class="small muted" data-i18n="iosNote"></p>
+        <button class="btn ghost" id="install" type="button" hidden data-i18n="install"></button>
+      </div>
+
+      <div id="in-link" role="tabpanel" aria-labelledby="intab-link" style="display:grid;gap:12px" hidden>
+        <div class="callout warn" data-i18n="linkDemo"></div>
+        <label class="field" for="url"><span data-i18n="linkLabel"></span>
+          <input id="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://shopee.co.id/...-i.12345.67890">
+        </label>
+        <div class="row">
+          <label class="fld" for="mode" style="flex:1 1 150px"><span data-i18n="modeLabel"></span>
+            <select id="mode"><option value="complaints" data-i18n="modeComplaints"></option><option value="latest" data-i18n="modeLatest"></option></select>
+          </label>
+          <label class="fld" for="limit" style="flex:0 0 96px"><span data-i18n="limitLabel"></span>
+            <input id="limit" type="number" min="1" max="20" value="10" inputmode="numeric">
+          </label>
+        </div>
+        <button class="btn primary" id="fetch" type="button" data-i18n="fetchRun"></button>
+        <p class="small muted" data-i18n="linkNote"></p>
+      </div>
+
+      <div class="error" id="error" role="alert" tabindex="-1" hidden>
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <span id="error-text"></span>
+      </div>
+    </div>
   </section>
 
-  <section class="card-box input" aria-label="Add reviews">
-    <div class="seg" role="tablist" aria-label="How to add reviews" id="intabs" hidden>
-      <button role="tab" id="intab-paste" aria-controls="in-paste" aria-selected="true" type="button" data-t="paste"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>Paste reviews</button>
-      <button role="tab" id="intab-link" aria-controls="in-link" aria-selected="false" tabindex="-1" type="button" data-t="link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Product link <span class="chip warn">Demo</span></button>
-    </div>
-
-    <div id="in-paste" role="tabpanel" aria-labelledby="intab-paste" class="pane" style="display:grid;gap:12px">
-      <div>
-        <label class="field" for="paste">Paste reviews</label>
-        <textarea id="paste" spellcheck="false" placeholder="★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem&#10;★★☆☆☆  Hitam, L   Pas sampe koyak bajunya"></textarea>
-      </div>
-      <details>
-        <summary>How to paste</summary>
-        <pre>One review per line. If a review has several lines, put a blank line between reviews.
-Stars and variant are optional, in this order:
-
-★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem
-4★ bahannya tebel
-Pas sampe koyak bajunya
-
-Stars can be ★ symbols, "4★", "4/5" or "bintang 4". A variant needs a comma ("Putih, L") or " | " after it.</pre>
-      </details>
-      <div class="row">
-        <button class="btn primary" id="run" type="button">Bedah ulasan</button>
-        <button class="btn ghost" id="sample" type="button">Load demo reviews</button>
-        <button class="btn ghost" id="clear" type="button">Clear</button>
-      </div>
-    </div>
-
-    <div id="in-link" role="tabpanel" aria-labelledby="intab-link" class="pane" style="display:grid;gap:12px" hidden>
-      <div class="chips"><span class="chip warn">Demo only: fetched via a third-party service</span></div>
-      <div>
-        <label class="field" for="url">Shopee product link</label>
-        <input id="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://shopee.co.id/...-i.12345.67890">
-      </div>
-      <div class="row">
-        <label class="fld" for="mode">Get
-          <select id="mode"><option value="complaints">Complaints first (1-3&#9733;)</option><option value="latest">Latest reviews</option></select>
-        </label>
-        <label class="fld" for="limit">Reviews
-          <input id="limit" type="number" min="1" max="20" value="10" inputmode="numeric">
-        </label>
-        <button class="btn primary" id="fetch" type="button">Fetch &amp; bedah</button>
-      </div>
-      <p class="demo-note">shopee.co.id product links only. Complaints first gets the lowest-rated reviews that have comments (3 small runs, up to about 8 US cents for 10); latest gets the newest ones. Each run costs a few cents, can come back with fewer reviews than you ask for, and sometimes fails. Pasting always works.</p>
-    </div>
-
-    <div class="error" id="error" role="alert" tabindex="-1" hidden>
-      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-      <span id="error-text"></span>
-    </div>
-    <div class="progress" id="progress" hidden>
-      <div class="progress-text"><span id="progress-label">Reading your reviews</span><span id="elapsed" aria-hidden="true">0s</span></div>
-      <div class="bar" aria-hidden="true"></div>
-    </div>
-    <span class="vh" id="status" role="status" aria-live="polite"></span>
+  <!-- loading -->
+  <section id="view-loading" class="loading" hidden aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <h2 id="loading-title"></h2>
+    <p class="muted" id="loading-sub"></p>
+    <p class="small muted" id="elapsed" aria-hidden="true"></p>
   </section>
 
-  <div class="skeleton" id="skeleton" hidden aria-hidden="true"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
-
-  <section id="results" hidden aria-labelledby="results-h">
+  <!-- results -->
+  <section id="view-results" hidden aria-labelledby="results-h" style="display:grid;gap:12px">
     <div class="res-head">
       <div>
-        <h2 id="results-h" tabindex="-1">Results</h2>
-        <p id="summary"></p>
+        <h2 id="results-h" tabindex="-1"></h2>
+        <p class="small muted" id="summary"></p>
       </div>
-      <button class="btn ghost" id="print" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>Print or save as PDF</button>
+      <button class="btn ghost" id="print" type="button" data-i18n="print"></button>
     </div>
-    <div class="notice" id="fakenote" hidden style="margin-top:12px"></div>
-    <div class="tabs" id="tabs" role="tablist" aria-label="Review buckets"></div>
+    <div class="tiles" id="tiles"></div>
+    <div id="notes" style="display:grid;gap:8px"></div>
+    <div class="tabs"><div class="seg" id="tabs" role="tablist"></div></div>
     <div id="panels"></div>
+    <div id="keep"></div>
     <p class="foot" id="foot"></p>
   </section>
 
   <span class="vh" id="toast" role="status" aria-live="polite"></span>
 </main>
 
+<nav class="bottombar" aria-label="Menu">
+  <div class="bottombar-in">
+    <button class="nav" id="nav-results" type="button" disabled><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg><span data-i18n="navCheck"></span></button>
+    <button class="nav" id="nav-input" type="button" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="navNew"></span></button>
+  </div>
+</nav>
+
 <script>
 "use strict";
-const SAMPLE = [
-  "★★★★★  Putih, L   bagus banget pakenya sama bahannya bagus luamayan tebel",
-  "★★★★☆  Putih, L   nyaman bet dah pokoknya, bahannya tebel cuman pas dateng kok ada dikit noda kecil ya, tapi ini gacor sih bagus banget desainnya",
-  "★★★☆☆  Putih, M   di tampilan sebelom beli, warna tulisannya ijo, pas dateng warna tulisannya hitem",
-  "★★☆☆☆  Hitam, L   Pas sampe koyak bajunya",
-  "★☆☆☆☆  Putih, L   produk tidak sesuai deskripsi, buat yang mau checkout produk ini ga sesuai pict nya ya, warna hijau tapi realitanya hitam, kalo emg terima dari pabrikan nya hitam kenapa ga pasang foto hitam aja?",
-].join("\n");
-
-// Order is the order of the tabs. `pick` is the priority for the tab that opens first.
-const BUCKETS = [
-  { key: "fix", title: "Fix it", tag: "Perbaiki", icon: "wrench", rule: "The product, listing or packing caused it, and you can change it." },
-  { key: "fight", title: "Fight it", tag: "Tanggapi", icon: "shield", rule: "Likely not the product: courier damage, a fake review, or an unfair claim. Reply, check, or report." },
-  { key: "check", title: "Check it yourself", tag: "Cek sendiri", icon: "search", rule: "The review does not say enough to tell what is wrong. This one is yours to look into." },
-  { key: "ignore", title: "Ignore", tag: "Abaikan", icon: "minus", rule: "Star ratings with no text, or filler with nothing to act on." },
-  { key: "keep", title: "Keep doing", tag: "Pertahankan", icon: "check", rule: "Praise that shows what customers like. Protect it." },
-];
-const SHORT = { fix: "Fix it", fight: "Fight it", check: "Check", ignore: "Ignore", keep: "Keep" };
-
-const ICONS = {
-  wrench: ["M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"],
-  shield: ["M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"],
-  search: ["M21 21l-4.3-4.3", { c: [11, 11, 8] }],
-  minus: [{ c: [12, 12, 10] }, "M8 12h8"],
-  check: [{ c: [12, 12, 10] }, "M9 12l2 2 4-4"],
-  copy: [{ r: [8, 8, 14, 14, 2] }, "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"],
-  tick: ["M20 6L9 17l-5-5"],
+/* ---------- text: Indonesian (default) and English. Drafts from the model stay in Bahasa Indonesia in both. ---------- */
+const TEXT = {
+  id: {
+    navCheck: "Periksa", navNew: "Ulasan baru", newReviews: "Ulasan baru",
+    tabPaste: "Tempel", tabShare: "Bagikan", tabLink: "Tautan",
+    pasteHint: "Salin ulasan dari aplikasi Shopee, lalu tempel di sini.",
+    productLabel: "Nama produk (opsional)", productPh: "mis. Kaos Boxy Retro", reviewsLabel: "Ulasan",
+    howSummary: "Cara menempel",
+    howBody: "Satu ulasan per baris. Kalau satu ulasan terdiri dari beberapa baris, beri baris kosong di antara ulasan.\nBintang dan varian boleh ditulis, urutannya begini:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya\n\nBintang bisa ★, \"4★\", \"4/5\" atau \"bintang 4\". Varian perlu koma (\"Putih, L\") atau \" | \" setelahnya.",
+    run: "Bedah ulasan", running: "Membedah…", sample: "Contoh ulasan", clear: "Hapus",
+    shareHint: "Di Shopee, pilih teks ulasan lalu ketuk Bagikan.",
+    shareSteps: ["Pasang BedahReview di layar utama (Android Chrome: menu ⋮ > Pasang aplikasi).", "Di Shopee, tekan lama teks ulasan, lalu pilih Bagikan.", "Pilih BedahReview. Teksnya masuk ke kotak Tempel. Ketuk Bedah ulasan."],
+    shareCaveat: "Belum diuji dengan Shopee atau Tokopedia di HP asli. Kalau teksnya tidak masuk, pakai Tempel.",
+    iosNote: "iPhone: menu Bagikan ke aplikasi web belum bisa dipakai, sejauh yang kami tahu. Di iPhone, pakai Tempel. Untuk memasang: Safari > Bagikan > Tambah ke Layar Utama.",
+    install: "Pasang di layar utama",
+    sharedOk: "Teks dari menu Bagikan sudah masuk. Ketuk Bedah ulasan.",
+    sharedLinkOnly: "Yang dikirim hanya tautan, bukan teks ulasan. Salin teks ulasannya, lalu tempel.",
+    linkDemo: "Demo saja: ulasan diambil lewat layanan pihak ketiga yang berbayar.", linkLabel: "Tautan produk Shopee",
+    modeLabel: "Ambil", modeComplaints: "Keluhan dulu (1-3★)", modeLatest: "Ulasan terbaru", limitLabel: "Jumlah", fetchRun: "Ambil & bedah",
+    linkNote: "Hanya tautan produk shopee.co.id. Keluhan dulu mengambil ulasan bintang rendah yang ada komentarnya (3 proses kecil, sekitar 8 sen dolar AS untuk 10 ulasan). Bisa gagal atau kurang dari yang diminta. Tempel selalu bisa.",
+    errPaste: "Tempel ulasan dulu.", errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa menghubungi aplikasi. Apakah jendela terminal masih menjalankannya?",
+    loadingTitle: "Membedah %s ulasan…", loadingFetch: "Mengambil ulasan, lalu membedahnya…", loadingSub: "Memilah: perbaiki, tanggapi, abaikan.",
+    results: "Hasil", reviewsWord: "ulasan", print: "Cetak",
+    fix: "Perbaiki", fight: "Tanggapi", ignore: "Abaikan",
+    fixRule: "Penyebabnya produk, listing, atau pengemasan, dan bisa kamu ubah.",
+    fightRule: "Buktikan penyebabnya, ajukan klaim ke kurir, dan balas di publik. Ini bukan cara menghapus ulasan: Shopee hanya menghapus ulasan untuk alasan tertentu.",
+    ignoreRule: "Bintang tanpa teks atau komentar tanpa isi. Dihitung, tidak dianalisis.",
+    chipOf: "%s dari %s keluhan", chipCourier: "Kurir? Cek dulu", chipCheck: "Cek sendiri", chipFake: "Diduga palsu", chipLow: "Keyakinan rendah",
+    dFix: "Saran perbaikan", dCheckSide: "Cek di sisi toko", dChat: "Chat ke pembeli", dPublic: "Balasan publik", dReport: "Teks laporan ulasan",
+    copy: "Salin", copied: "Tersalin", selectIt: "Teks dipilih, salin manual", copiedAnn: "Disalin: %s",
+    fullReview: "Ulasan lengkap", noText: "(tanpa teks)",
+    emptyFix: "Tidak ada keluhan yang bisa kamu perbaiki di sini.", emptyFight: "Tidak ada ulasan yang perlu ditanggapi.", emptyIgnore: "Tidak ada ulasan yang diabaikan.",
+    keepTitle: "Pertahankan", keepSub: "Yang disukai pembeli. Jaga ini.",
+    noteFake: "%s ulasan diduga palsu dan tidak dihitung. Ada di tab Tanggapi, lengkap dengan teks laporan.",
+    noteDropped: "%s ulasan dilewati karena kutipan buktinya tidak bisa diverifikasi.",
+    noteNoText: "%s ulasan hanya bintang tanpa teks. Dihitung di Abaikan, tidak dianalisis.",
+    footFrom: "Demo: %s ulasan%s diambil dari tautan produk lewat layanan pihak ketiga%s. ", footLow: " bintang rendah", footCached: " (salinan tersimpan, tanpa biaya baru)",
+    footTail: "Model: %s. Saran dan draf ditulis mesin: baca dulu, dan minta penutur Bahasa memeriksa sebelum dikirim ke pembeli. Penjelasan dan langkah di kartu Tanggapi masih berbahasa Inggris.",
+    stars: "%s dari 5 bintang",
+  },
+  en: {
+    navCheck: "Check", navNew: "New reviews", newReviews: "New reviews",
+    tabPaste: "Paste", tabShare: "Share", tabLink: "Link",
+    pasteHint: "Copy reviews from the Shopee app, then paste them here.",
+    productLabel: "Product name (optional)", productPh: "e.g. Retro Boxy Tee", reviewsLabel: "Reviews",
+    howSummary: "How to paste",
+    howBody: "One review per line. If a review has several lines, put a blank line between reviews.\nStars and variant are optional, in this order:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya\n\nStars can be ★ symbols, \"4★\", \"4/5\" or \"bintang 4\". A variant needs a comma (\"Putih, L\") or \" | \" after it.",
+    run: "Bedah ulasan", running: "Working…", sample: "Sample reviews", clear: "Clear",
+    shareHint: "In Shopee, select the review text and tap Share.",
+    shareSteps: ["Install BedahReview to your home screen (Android Chrome: ⋮ menu > Install app).", "In Shopee, long-press the review text and choose Share.", "Pick BedahReview. The text lands in the Paste box. Tap Bedah ulasan."],
+    shareCaveat: "Not yet tested with Shopee or Tokopedia on a real phone. If the text does not arrive, use Paste.",
+    iosNote: "iPhone: sharing into a web app does not work, as far as we know. On iPhone, use Paste. To install: Safari > Share > Add to Home Screen.",
+    install: "Add to home screen",
+    sharedOk: "Text from the Share menu is in. Tap Bedah ulasan.",
+    sharedLinkOnly: "Only a link was shared, not the review text. Copy the review text and paste it.",
+    linkDemo: "Demo only: reviews are fetched through a paid third-party service.", linkLabel: "Shopee product link",
+    modeLabel: "Get", modeComplaints: "Complaints first (1-3★)", modeLatest: "Latest reviews", limitLabel: "Reviews", fetchRun: "Fetch & analyse",
+    linkNote: "shopee.co.id product links only. Complaints first gets the lowest-rated reviews that have comments (3 small runs, up to about 8 US cents for 10). It can fail or return fewer than you ask for. Pasting always works.",
+    errPaste: "Paste some reviews first.", errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach the app. Is the terminal window still running it?",
+    loadingTitle: "Reading %s reviews…", loadingFetch: "Fetching reviews, then reading them…", loadingSub: "Sorting: fix, fight, ignore.",
+    results: "Results", reviewsWord: "reviews", print: "Print",
+    fix: "Fix it", fight: "Fight it", ignore: "Ignore",
+    fixRule: "The product, listing or packing caused it, and you can change it.",
+    fightRule: "Prove the cause, file a courier claim, and reply in public. This is not a way to get a review removed: Shopee only removes reviews for narrow reasons.",
+    ignoreRule: "Star ratings with no text, or filler with nothing to act on. Counted, not analysed.",
+    chipOf: "%s of %s complaints", chipCourier: "Courier? Check first", chipCheck: "Check it yourself", chipFake: "Likely fake", chipLow: "Low confidence",
+    dFix: "Fix suggestion", dCheckSide: "Check on your side", dChat: "Chat to buyer", dPublic: "Public reply", dReport: "Report text",
+    copy: "Copy", copied: "Copied", selectIt: "Text selected, copy it manually", copiedAnn: "Copied: %s",
+    fullReview: "Full review", noText: "(no text)",
+    emptyFix: "Nothing here for you to fix.", emptyFight: "No reviews to answer.", emptyIgnore: "No reviews ignored.",
+    keepTitle: "Keep doing", keepSub: "What buyers like. Protect it.",
+    noteFake: "%s likely-fake review(s) are left out of the counts. They are in the Fight it tab, each with a report text.",
+    noteDropped: "%s review(s) were skipped because the model's proof quote could not be verified.",
+    noteNoText: "%s review(s) are star-only, with no text. Counted under Ignore, not analysed.",
+    footFrom: "Demo: %s%s review(s) fetched from the product link via a third-party service%s. ", footLow: " low-star", footCached: " (saved copy, no new charge)",
+    footTail: "Model: %s. Suggestions and drafts are machine-written: read them, and have a Bahasa speaker check any text before you send it to a buyer. Drafts are always in Bahasa Indonesia; the explanations and steps on Fight it cards are in English.",
+    stars: "%s of 5 stars",
+  },
 };
-function icon(name) {
-  const NS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(NS, "svg");
-  svg.setAttribute("class", "i"); svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("aria-hidden", "true");
-  for (const part of ICONS[name] || []) {
-    let el;
-    if (typeof part === "string") { el = document.createElementNS(NS, "path"); el.setAttribute("d", part); }
-    else if (part.c) { el = document.createElementNS(NS, "circle"); [["cx", 0], ["cy", 1], ["r", 2]].forEach(([k, i]) => el.setAttribute(k, part.c[i])); }
-    else { el = document.createElementNS(NS, "rect"); [["x", 0], ["y", 1], ["width", 2], ["height", 3], ["rx", 4]].forEach(([k, i]) => el.setAttribute(k, part.r[i])); }
-    svg.append(el);
-  }
-  return svg;
-}
+const THEME_ID = {
+  "Not as described / claim vs reality": "Tidak sesuai deskripsi", "Colour vs photo": "Warna beda dari foto", "Sizing & fit": "Ukuran & ukuran pas",
+  "Fabric & material quality": "Bahan & kualitas", "Defect / not working": "Cacat / tidak berfungsi", "Wrong variant / item sent": "Varian / barang salah",
+  "Quantity shortage / missing item": "Jumlah kurang / barang hilang", "Packaging / damaged on arrival": "Kemasan / rusak saat tiba",
+  "Spoilage / freshness": "Basi / kesegaran", "Portion / low meat or filler": "Porsi / isi kurang", "Taste / subjective": "Rasa / selera",
+  "Fake / authenticity doubt": "Diragukan keasliannya", "Praise: quality / material": "Pujian: kualitas / bahan", "Praise: value for money": "Pujian: sepadan harga",
+  "Praise: seller service": "Pujian: layanan toko", "Praise: delivery / packing": "Pujian: pengiriman / kemasan", "Praise: taste": "Pujian: rasa",
+  "Praise: works as described": "Pujian: sesuai deskripsi", "No text": "Tanpa teks", "Other": "Lainnya",
+};
 
 const $ = (id) => document.getElementById(id);
+let lang = "id";
+try { if (localStorage.getItem("bedahreview-lang") === "en") lang = "en"; } catch (e) { /* storage can be blocked */ }
+const tr = (key, ...args) => { let s = (TEXT[lang][key] != null ? TEXT[lang][key] : TEXT.id[key]); args.forEach((a) => { s = s.replace("%s", a); }); return s; };
+const themeName = (t) => (lang === "id" && THEME_ID[t]) || t;
 const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // Build DOM without innerHTML: review text and model output are never parsed as HTML.
@@ -337,177 +363,192 @@ function h(tag, props, ...kids) {
   }
   return el;
 }
-
-function starsText(n) { return n ? "★".repeat(n) + "☆".repeat(5 - n) : ""; }
+const NS = "http://www.w3.org/2000/svg";
+function copyIcon() {
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("class", "i"); svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("aria-hidden", "true");
+  const r = document.createElementNS(NS, "rect"); [["x", 8], ["y", 8], ["width", 14], ["height", 14], ["rx", 2]].forEach(([k, v]) => r.setAttribute(k, v));
+  const p = document.createElementNS(NS, "path"); p.setAttribute("d", "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2");
+  svg.append(r, p); return svg;
+}
+const starsText = (n) => (n ? "★".repeat(n) + "☆".repeat(5 - n) : "");
 function announce(msg) { const t = $("toast"); t.textContent = ""; setTimeout(() => { t.textContent = msg; }, 30); }
 
-async function copyText(text, btn, label) {
-  const done = (ok) => {
-    btn.classList.add("done"); btn.replaceChildren(icon("tick"), ok ? "Tersalin" : "Pilih & salin manual");
-    announce(ok ? "Copied: " + label : "Select the text and copy it manually");
-    setTimeout(() => { btn.classList.remove("done"); btn.replaceChildren(icon("copy"), "Salin"); }, 1600);
-  };
-  try { await navigator.clipboard.writeText(text); done(true); return; } catch (e) { /* fall through */ }
-  const ta = h("textarea", { style: "position:fixed;opacity:0" });
-  ta.value = text; document.body.append(ta); ta.select();
+/* ---------- static text for the current language ---------- */
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = tr(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => { el.placeholder = tr(el.dataset.i18nPh); });
+  document.querySelectorAll("[data-i18n-label]").forEach((el) => { el.setAttribute("aria-label", tr(el.dataset.i18nLabel)); });
+  $("share-steps").replaceChildren(...TEXT[lang].shareSteps.map((s) => h("li", { text: s })));
+  $("lang").replaceChildren(h("b", { text: lang === "id" ? "ID" : "EN" }), " | ", lang === "id" ? "EN" : "ID");
+  if (!$("run").disabled) $("run").textContent = tr("run");
+  if (lastData) render(lastData, false);
+}
+$("lang").addEventListener("click", () => {
+  lang = lang === "id" ? "en" : "id";
+  try { localStorage.setItem("bedahreview-lang", lang); } catch (e) { /* ignore */ }
+  applyLang();
+});
+
+/* ---------- copy with a selection fallback ---------- */
+function selectNode(node) {
+  const range = document.createRange(); range.selectNodeContents(node);
+  const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+}
+async function copyText(text, btn, label, textNode) {
+  const reset = () => setTimeout(() => { btn.classList.remove("done"); btn.replaceChildren(copyIcon(), tr("copy")); }, 1500);
+  try { await navigator.clipboard.writeText(text); btn.classList.add("done"); btn.replaceChildren(tr("copied")); announce(tr("copiedAnn", label)); reset(); return; } catch (e) { /* fall through */ }
+  selectNode(textNode);  // clipboard blocked: leave the text selected so the long-press Copy works
   let ok = false;
   try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
-  ta.remove(); done(ok);
+  btn.classList.add("done"); btn.replaceChildren(ok ? tr("copied") : tr("selectIt")); announce(ok ? tr("copiedAnn", label) : tr("selectIt")); reset();
 }
-
 function draft(label, text) {
   if (!text) return null;
-  const btn = h("button", { class: "copy", type: "button", "aria-label": "Copy: " + label }, icon("copy"), "Salin");
-  btn.addEventListener("click", () => copyText(text, btn, label));
-  return h("div", { class: "draft" }, h("div", { class: "draft-head" }, h("span", { class: "eyebrow", text: label }), btn), h("p", { class: "bahasa", lang: "id", text: text }));
+  const body = h("p", { class: "bahasa", lang: "id", text });
+  const btn = h("button", { class: "copy", type: "button", "aria-label": tr("copy") + ": " + label }, copyIcon(), tr("copy"));
+  btn.addEventListener("click", () => copyText(text, btn, label, body));
+  return h("div", { class: "draft" }, h("div", { class: "draft-head" }, h("span", { class: "lbl", text: label }), btn), body);
 }
 
+/* ---------- cards ---------- */
 function quote(item) {
-  const q = item.proof_quote;
   const src = ["#" + item.id, item.variant].filter(Boolean).join(" · ");
   return h("blockquote", {},
-    h("span", { lang: "id" }, item.stars ? h("span", { class: "stars", "aria-label": item.stars + " of 5 stars", text: starsText(item.stars) + " " }) : null, q ? "“" + q + "”" : "(no text)"),
+    h("span", { lang: "id" }, item.stars ? h("span", { class: "stars", "aria-label": tr("stars", item.stars), text: starsText(item.stars) + " " }) : null, item.proof_quote ? "“" + item.proof_quote + "”" : tr("noText")),
     h("span", { class: "src", text: src }));
 }
-
 function fullText(item) {
   if (!item.text || item.text === item.proof_quote) return null;
-  return h("details", { class: "full" }, h("summary", { text: "Full review" }), h("p", { lang: "id", text: item.text }));
+  return h("details", { class: "full" }, h("summary", { text: tr("fullReview") }), h("p", { lang: "id", text: item.text }));
 }
-
-function chips(item) {
-  const list = [];
-  if (item.stars) list.push(h("span", { class: "chip soft", "aria-label": item.stars + " stars", text: starsText(item.stars) }));
-  if (item.variant) list.push(h("span", { class: "chip soft", text: item.variant }));
-  if (item.check_first) list.push(h("span", { class: "chip warn", text: "Courier? Check first" }));
-  if (item.likely_fake && item.likely_fake.flag) list.push(h("span", { class: "chip hot", text: "Likely fake" }));
-  if (item.confidence === "low") list.push(h("span", { class: "chip", text: "Low confidence" }));
-  return list.length ? h("div", { class: "chips" }, list) : null;
-}
-
-function fixCards(items) {
-  const byTheme = new Map();
-  for (const it of items) {
-    if (!byTheme.has(it.theme)) byTheme.set(it.theme, []);
-    byTheme.get(it.theme).push(it);
-  }
-  return [...byTheme.entries()].sort((a, b) => b[1].length - a[1].length).map(([theme, group]) => {
-    const suggestions = [...new Set(group.map((g) => g.fix_suggestion_id).filter(Boolean))];
-    return h("article", { class: "card" },
-      h("div", { class: "chips" }, h("span", { class: "chip warn", text: group.length + (group.length === 1 ? " review" : " reviews") })),
-      h("h3", { text: theme }),
-      group.map((g) => [quote(g), fullText(g)]),
-      suggestions.map((s) => draft("Saran perbaikan", s)));
-  });
-}
-
-function replyCard(item, kind) {
+function replyCard(item) {
   const kit = item.fight || {};
+  const fake = item.likely_fake && item.likely_fake.flag;
   return h("article", { class: "card" },
-    chips(item),
-    h("h3", { text: item.theme }),
-    quote(item),
-    fullText(item),
+    h("div", { class: "chips" },
+      fake ? h("span", { class: "chip hot", text: tr("chipFake") }) : null,
+      item.bucket === "check" ? h("span", { class: "chip soft", text: tr("chipCheck") }) : null,
+      item.check_first ? h("span", { class: "chip hot", text: tr("chipCourier") }) : null,
+      item.variant ? h("span", { class: "chip soft", text: item.variant }) : null,
+      item.confidence === "low" ? h("span", { class: "chip", text: tr("chipLow") }) : null),
+    h("h3", { text: themeName(item.theme) }),
+    quote(item), fullText(item),
     kit.why ? h("p", { class: "why", text: kit.why }) : null,
-    kit.steps && kit.steps.length ? h("ol", { class: "steps" }, kit.steps.map((s) => h("li", { text: s }))) : null,
-    kind === "check" ? draft("Cek di sisi toko", item.fix_suggestion_id) : null,
-    draft("Chat ke pembeli", kit.chat_to_buyer),
-    draft("Balasan publik di ulasan", kit.public_reply),
-    draft("Teks laporan ulasan", kit.report_text));
+    kit.steps && kit.steps.length ? h("ol", { class: "steps-list" }, kit.steps.map((s) => h("li", { text: s }))) : null,
+    item.bucket === "check" ? draft(tr("dCheckSide"), item.fix_suggestion_id) : null,
+    draft(tr("dChat"), kit.chat_to_buyer), draft(tr("dPublic"), kit.public_reply), draft(tr("dReport"), kit.report_text));
 }
-
+function fixCard(group, byId) {
+  const members = group.ids.map((id) => byId[id]);
+  const suggestions = [...new Set(members.map((m) => m.fix_suggestion_id).filter(Boolean))];
+  return h("article", { class: "card" },
+    h("div", { class: "chips" },
+      h("span", { class: "chip fix", text: tr("chipOf", group.n, group.of) }),
+      group.variant ? h("span", { class: "chip soft", text: group.variant }) : null),
+    h("h3", { text: themeName(group.theme) }),
+    members.map((m) => [quote(m), fullText(m)]),
+    suggestions.map((s) => draft(tr("dFix"), s)));
+}
 function ignoreList(items) {
-  return h("ul", { class: "ignore-list" }, items.map((it) => h("li", { lang: "id", text: "#" + it.id + (it.stars ? " · " + starsText(it.stars) : "") + (it.text ? " · " + it.text : " · no text") })));
+  return h("ul", { class: "ignore-list" }, items.map((it) => h("li", { lang: "id", text: "#" + it.id + (it.stars ? " · " + starsText(it.stars) : "") + " · " + (it.text || tr("noText")) })));
 }
 
-function keepBody(items) {
-  const themes = [...new Set(items.map((k) => k.theme.replace(/^Praise: /, "")))];
-  return [h("div", { class: "themes" }, themes.map((t) => h("span", { class: "chip soft", text: t }))),
-    h("div", { class: "grid" }, items.slice(0, 6).map((k) => h("article", { class: "card" }, quote(k))))];
-}
-
-function bucketBody(key, items) {
-  if (!items.length) return h("div", { class: "empty", text: key === "keep" ? "No praise found in this batch." : "Nothing in this bucket." });
-  if (key === "fix") return h("div", { class: "grid" }, fixCards(items));
-  if (key === "ignore") return ignoreList(items);
-  if (key === "keep") return keepBody(items);
-  return h("div", { class: "grid" }, items.map((it) => replyCard(it, key)));
-}
-
-let activeBucket = "fix";
-function selectBucket(key, focus) {
-  activeBucket = key;
-  for (const b of BUCKETS) {
-    const tab = $("tab-" + b.key), panel = $("panel-" + b.key);
-    const on = b.key === key;
-    tab.setAttribute("aria-selected", on ? "true" : "false");
-    tab.tabIndex = on ? 0 : -1;
-    panel.hidden = !on;
-    if (on && focus) tab.focus();
+/* ---------- results ---------- */
+const TABS = ["fix", "fight", "ignore"];
+let lastData = null, activeTab = "fix";
+function selectTab(key, focus) {
+  activeTab = key;
+  for (const k of TABS) {
+    const on = k === key;
+    $("tab-" + k).setAttribute("aria-selected", on ? "true" : "false"); $("tab-" + k).tabIndex = on ? 0 : -1;
+    $("panel-" + k).hidden = !on;
+    if (on && focus) $("tab-" + k).focus();
   }
 }
-
-function render(data) {
-  const by = { fix: [], fight: [], check: [], ignore: [], keep: [] };
-  for (const it of data.items) (by[it.bucket] || by.check).push(it);
-  const total = data.items.length;
-
-  $("summary").textContent = total + (total === 1 ? " review" : " reviews") + " read. " +
-    by.fix.length + " to fix, " + by.fight.length + " to fight, " + by.check.length + " to check yourself.";
-
-  const fake = $("fakenote");
-  fake.hidden = !data.likely_fake;
-  fake.replaceChildren(...(data.likely_fake ? [
-    h("span", { text: data.likely_fake + " likely-fake review" + (data.likely_fake === 1 ? " is" : "s are") + " in Fight it. Leave them out of your rating analysis; each has a report text you can copy." })] : []));
-
-  $("tabs").replaceChildren(...BUCKETS.map((b) => {
-    const n = by[b.key].length;
-    const tab = h("button", { class: "tab", type: "button", role: "tab", id: "tab-" + b.key, "aria-controls": "panel-" + b.key, "data-b": b.key, "data-zero": n === 0 ? "true" : "false" },
-      h("span", { class: "n", text: n }),
-      h("span", { class: "l" }, icon(b.icon), SHORT[b.key]));
-    tab.addEventListener("click", () => selectBucket(b.key, false));
-    return tab;
-  }));
-  $("panels").replaceChildren(...BUCKETS.map((b) =>
-    h("div", { class: "bucket", role: "tabpanel", id: "panel-" + b.key, "aria-labelledby": "tab-" + b.key, "data-b": b.key, hidden: true },
-      h("div", { class: "bucket-head" },
-        h("h3", {}, icon(b.icon), b.title, h("span", { class: "tag", text: "· " + b.tag })),
-        h("p", { text: b.rule })),
-      bucketBody(b.key, by[b.key]))));
-
-  const first = ["fix", "fight", "check", "ignore", "keep"].find((k) => by[k].length) || "fix";
-  selectBucket(first, false);
+function render(data, fresh) {
+  lastData = data;
+  const byId = {}; data.items.forEach((it) => { byId[it.id] = it; });
+  const real = data.items.filter((it) => !(it.likely_fake && it.likely_fake.flag));
+  const fixItems = data.groups;
+  const fight = data.items.filter((it) => it.bucket === "fight" || it.bucket === "check")
+    .sort((a, b) => (a.likely_fake.flag - b.likely_fake.flag) || (a.bucket === b.bucket ? 0 : a.bucket === "fight" ? -1 : 1));
+  const ignore = data.items.filter((it) => it.bucket === "ignore");
+  const keep = real.filter((it) => it.bucket === "keep");
+  const counts = { fix: data.counts.fix, fight: data.counts.fight + data.counts.check, ignore: data.counts.ignore };
 
   const src = data.source || {};
-  const fromLink = src.kind === "url" ? "Demo: " + src.count + (src.mode === "complaints" ? " low-star" : "") + (src.count === 1 ? " review" : " reviews") + " fetched from the product link" + (src.cached ? " (saved copy, no new charge)" : "") + " via a third-party service. " : "";
-  $("foot").textContent = fromLink + "Model: " + data.model + ". Suggestions and drafts are machine-written: read them, and have a Bahasa speaker check any text before you send it to a buyer.";
-  $("results").hidden = false;
-  $("results").scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
-  $("results-h").focus({ preventScroll: true });
+  const name = src.title ? src.title + " · " : "";
+  $("results-h").textContent = tr("results");
+  $("summary").textContent = name + data.reviews + " " + tr("reviewsWord") + (data.star_avg ? " · " + data.star_avg + "★" : "");
+  $("tiles").replaceChildren(...TABS.map((k) => h("div", { class: "tile", "data-b": k }, h("span", { class: "n", text: counts[k] }), h("span", { class: "l", text: tr(k) }))));
+
+  const notes = [];
+  if (data.likely_fake) notes.push(h("div", { class: "callout hot", text: tr("noteFake", data.likely_fake) }));
+  if (data.no_text) notes.push(h("div", { class: "callout", text: tr("noteNoText", data.no_text) }));
+  if (data.dropped) notes.push(h("div", { class: "callout warn", text: tr("noteDropped", data.dropped) }));
+  $("notes").replaceChildren(...notes);
+
+  $("tabs").replaceChildren(...TABS.map((k) => {
+    const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, "aria-controls": "panel-" + k, "data-b": k, text: tr(k) + " " + counts[k] });
+    tab.addEventListener("click", () => selectTab(k, false));
+    return tab;
+  }));
+  const panel = (k, body) => h("div", { class: "panel", role: "tabpanel", id: "panel-" + k, "aria-labelledby": "tab-" + k, "data-b": k, hidden: true }, h("p", { class: "rule", text: tr(k + "Rule") }), body);
+  $("panels").replaceChildren(
+    panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") })),
+    panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") })),
+    panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })));
+
+  const themes = [...new Set(keep.map((k) => k.theme.replace(/^Praise: /, "")))];
+  $("keep").replaceChildren(...(keep.length ? [h("div", { class: "strip" },
+    h("h3", { text: tr("keepTitle") }), h("p", { class: "small muted", text: tr("keepSub") }),
+    h("div", { class: "chips" }, themes.map((t) => h("span", { class: "chip soft", text: themeName("Praise: " + t).replace(/^Pujian: |^Praise: /, "") }))),
+    keep.slice(0, 3).map(quote))] : []));
+
+  const fromLink = src.kind === "url" ? tr("footFrom", src.count, src.mode === "complaints" ? tr("footLow") : "", src.cached ? tr("footCached") : "") : "";
+  $("foot").textContent = fromLink + tr("footTail", data.model);
+
+  const first = fresh === false ? activeTab : (counts.fix ? "fix" : counts.fight ? "fight" : counts.ignore ? "ignore" : "fix");
+  selectTab(first, false);
+  if (fresh !== false) {
+    $("nav-results").disabled = false;
+    show("results");
+    $("results-h").focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: reduceMotion() ? "auto" : "smooth" });
+  }
 }
 
-// Arrow-key navigation for both tab strips (roving tabindex, as in the ARIA tabs pattern).
-function tabKeys(listEl, tabsSelector, onSelect) {
+/* ---------- views ---------- */
+function show(view) {
+  $("view-input").hidden = view !== "input";
+  $("view-loading").hidden = view !== "loading";
+  $("view-results").hidden = view !== "results";
+  $("nav-input").setAttribute("aria-current", view === "input" || view === "loading" ? "page" : "false");
+  $("nav-results").setAttribute("aria-current", view === "results" ? "page" : "false");
+}
+$("nav-input").addEventListener("click", () => { show("input"); window.scrollTo(0, 0); });
+$("nav-results").addEventListener("click", () => { if (lastData) { show("results"); window.scrollTo(0, 0); } });
+
+function tabKeys(listEl, selector, onSelect) {
   listEl.addEventListener("keydown", (e) => {
-    const tabs = [...listEl.querySelectorAll(tabsSelector)].filter((t) => !t.hidden);
+    const tabs = [...listEl.querySelectorAll(selector)].filter((t) => !t.hidden);
     const i = tabs.indexOf(document.activeElement);
     if (i < 0) return;
     let j = null;
-    if (e.key === "ArrowRight") j = (i + 1) % tabs.length;
-    else if (e.key === "ArrowLeft") j = (i - 1 + tabs.length) % tabs.length;
-    else if (e.key === "Home") j = 0;
-    else if (e.key === "End") j = tabs.length - 1;
+    if (e.key === "ArrowRight") j = (i + 1) % tabs.length; else if (e.key === "ArrowLeft") j = (i - 1 + tabs.length) % tabs.length;
+    else if (e.key === "Home") j = 0; else if (e.key === "End") j = tabs.length - 1;
     if (j == null) return;
     e.preventDefault(); onSelect(tabs[j]);
   });
 }
-tabKeys($("tabs"), ".tab", (t) => selectBucket(t.dataset.b, true));
+tabKeys($("tabs"), "button", (t) => selectTab(t.dataset.b, true));
 
 function selectInput(which, focus) {
-  for (const t of ["paste", "link"]) {
+  for (const t of ["paste", "share", "link"]) {
     const on = t === which;
-    $("intab-" + t).setAttribute("aria-selected", on ? "true" : "false");
-    $("intab-" + t).tabIndex = on ? 0 : -1;
+    $("intab-" + t).setAttribute("aria-selected", on ? "true" : "false"); $("intab-" + t).tabIndex = on ? 0 : -1;
     $("in-" + t).hidden = !on;
     if (on && focus) $("intab-" + t).focus();
   }
@@ -522,54 +563,103 @@ function showError(msg) {
   if (msg) e.focus();
 }
 
+/* ---------- sending ---------- */
 let timer = null;
-function startProgress(label) {
+function startLoading(title) {
   const t0 = Date.now();
-  $("progress-label").textContent = label; $("elapsed").textContent = "0s"; $("progress").hidden = false; $("skeleton").hidden = false;
-  $("status").textContent = label + ". This can take a minute or two.";
+  $("loading-title").textContent = title; $("loading-sub").textContent = tr("loadingSub"); $("elapsed").textContent = "0s";
+  show("loading");
   timer = setInterval(() => { $("elapsed").textContent = Math.round((Date.now() - t0) / 1000) + "s"; }, 1000);
 }
-function stopProgress() {
-  clearInterval(timer); timer = null;
-  $("progress").hidden = true; $("skeleton").hidden = true; $("status").textContent = "";
-}
+function stopLoading() { clearInterval(timer); timer = null; }
 
-async function send(payload, btn, idleLabel, progressLabel) {
-  showError(""); $("results").hidden = true;
-  const buttons = [$("run"), $("fetch")];
-  buttons.forEach((b) => { b.disabled = true; });
-  btn.textContent = "Membedah…";
-  startProgress(progressLabel);
+async function send(payload, title) {
+  showError("");
+  const buttons = [$("run"), $("fetch")]; buttons.forEach((b) => { b.disabled = true; });
+  startLoading(title);
   try {
     const res = await fetch("/api/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     let data = null;
     try { data = await res.json(); } catch (e) { /* not JSON */ }
+    stopLoading();
     if (!res.ok || !data) {
-      showError((data && data.error) || "Something went wrong (" + res.status + ").");
+      show("input");
+      showError((data && data.error) || tr("errGeneric", res.status));
       if (data && data.fallback === "paste") selectInput("paste", false);
       return;
     }
-    stopProgress();
-    render(data);
+    render(data, true);
   } catch (e) {
-    showError("Could not reach the app. Is the terminal window still running it?");
+    stopLoading(); show("input"); showError(tr("errNetwork"));
   } finally {
-    stopProgress();
     buttons.forEach((b) => { b.disabled = false; });
-    btn.textContent = idleLabel;
+    $("run").textContent = tr("run");
   }
 }
-
+function countReviewsRough(text) {
+  const blocks = /\n\s*\n/.test(text.trim()) ? text.trim().split(/\n\s*\n/) : text.trim().split("\n");
+  return blocks.filter((b) => b.trim()).length;
+}
 function runPaste() {
   const text = $("paste").value;
-  if (!text.trim()) { showError("Paste some reviews first."); $("paste").focus(); return; }
-  send({ text }, $("run"), "Bedah ulasan", "Reading your reviews");
+  if (!text.trim()) { showError(tr("errPaste")); $("paste").focus(); return; }
+  $("shared-note").hidden = true;
+  send({ text, product: $("product").value.trim() }, tr("loadingTitle", countReviewsRough(text)));
 }
-
 function runFetch() {
   const url = $("url").value.trim();
-  if (!url) { showError("Paste a product link first."); $("url").focus(); return; }
-  send({ url, limit: parseInt($("limit").value, 10) || 10, mode: $("mode").value }, $("fetch"), "Fetch & bedah", "Fetching reviews, then reading them");
+  if (!url) { showError(tr("errLink")); $("url").focus(); return; }
+  send({ url, limit: parseInt($("limit").value, 10) || 10, mode: $("mode").value }, tr("loadingFetch"));
+}
+$("run").addEventListener("click", runPaste);
+$("fetch").addEventListener("click", runFetch);
+$("print").addEventListener("click", () => window.print());
+$("url").addEventListener("keydown", (e) => { if (e.key === "Enter") runFetch(); });
+$("sample").addEventListener("click", () => {
+  $("paste").value = [
+    "★★★★★  Putih, L   bagus banget pakenya sama bahannya bagus luamayan tebel",
+    "★★★★☆  Putih, L   nyaman bet dah pokoknya, bahannya tebel cuman pas dateng kok ada dikit noda kecil ya, tapi ini gacor sih bagus banget desainnya",
+    "★★★☆☆  Putih, M   di tampilan sebelom beli, warna tulisannya ijo, pas dateng warna tulisannya hitem",
+    "★★☆☆☆  Hitam, L   Pas sampe koyak bajunya",
+    "★☆☆☆☆  Putih, L   produk tidak sesuai deskripsi, warna hijau tapi realitanya hitam, kalo emg terima dari pabrikan nya hitam kenapa ga pasang foto hitam aja?",
+  ].join("\n");
+  $("product").value = "Kaos Boxy Retro"; showError(""); $("paste").focus();
+});
+$("clear").addEventListener("click", () => { $("paste").value = ""; $("product").value = ""; $("url").value = ""; $("shared-note").hidden = true; showError(""); $("paste").focus(); });
+$("paste").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") runPaste(); });
+
+/* ---------- Share menu: /?title=...&text=...&url=... ---------- */
+function sharedFrom(search) {
+  const q = new URLSearchParams(search);
+  return [q.get("title"), q.get("text"), q.get("url")].filter(Boolean).join("\n").trim();
+}
+function takeShared() {
+  const shared = sharedFrom(location.search);
+  if (!shared) return;
+  try { history.replaceState(null, "", location.pathname); } catch (e) { /* keep the query */ }  // do not leave review text in the address bar
+  const note = $("shared-note");
+  if (/^https?:\/\/\S+$/.test(shared)) {  // only a link arrived, not review text
+    note.textContent = tr("sharedLinkOnly"); note.hidden = false;
+    if (!$("intab-link").hidden) { $("url").value = shared; selectInput("link", false); }
+    return;
+  }
+  $("paste").value = shared;
+  note.textContent = tr("sharedOk"); note.hidden = false;
+  selectInput("paste", false);
+}
+
+/* ---------- install and offline ---------- */
+let deferredInstall = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredInstall = e; $("install").hidden = false; });
+$("install").addEventListener("click", () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  deferredInstall.userChoice.finally(() => { deferredInstall = null; $("install").hidden = true; });
+});
+window.addEventListener("appinstalled", () => { $("install").hidden = true; });
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready)
+    .then(() => { document.documentElement.dataset.sw = "ready"; }).catch(() => { document.documentElement.dataset.sw = "failed"; });
 }
 
 async function loadConfig() {
@@ -577,17 +667,13 @@ async function loadConfig() {
     const cfg = await (await fetch("/api/config")).json();
     if (!cfg.url_box) return;
     $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
-    $("intabs").hidden = false;
+    $("intab-link").hidden = false;
+    $("intabs").style.gridAutoColumns = "1fr";
   } catch (e) { /* the link tab simply stays hidden */ }
 }
 
-$("run").addEventListener("click", runPaste);
-$("fetch").addEventListener("click", runFetch);
-$("print").addEventListener("click", () => window.print());
-$("url").addEventListener("keydown", (e) => { if (e.key === "Enter") runFetch(); });
-$("sample").addEventListener("click", () => { $("paste").value = SAMPLE; showError(""); $("paste").focus(); });
-$("clear").addEventListener("click", () => { $("paste").value = ""; $("url").value = ""; $("results").hidden = true; showError(""); $("paste").focus(); });
-$("paste").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") runPaste(); });
+applyLang();
+takeShared();
 loadConfig();
 </script>
 </body>
