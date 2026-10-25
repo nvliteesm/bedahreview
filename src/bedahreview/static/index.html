@@ -582,6 +582,7 @@ async function send(payload, title) {
     let data = null;
     try { data = await res.json(); } catch (e) { /* not JSON */ }
     stopLoading();
+    if (res.status === 401) { location.reload(); return; }  // signed out: the server shows the access-code page
     if (!res.ok || !data) {
       show("input");
       if (data && data.fallback === "paste") selectInput("paste", false);  // first: switching tabs clears the error box

@@ -303,3 +303,105 @@ class TriageBoardTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PublicModeTests(unittest.TestCase):
+    CODE = "open-sesame-1"
+
+    def setUp(self):
+        self.calls = []
+
+        def fake_classify(reviews, product=None):
+            self.calls.append(reviews)
+            return [_result(r["id"]) for r in reviews]
+
+        self.server = make_server(0, classify_fn=fake_classify, access_code=self.CODE, public=True, max_per_hour=2)
+        self.port = self.server.server_address[1]
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+
+    def request(self, method, path, body=None, headers=None):
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
+        conn.request(method, path, body=body, headers=headers or {})
+        resp = conn.getresponse()
+        data = resp.read()
+        conn.close()
+        return resp, data
+
+    def login(self, code, nxt="/"):
+        body = ("code=%s&next=%s" % (code, nxt)).encode()
+        return self.request("POST", "/login", body, {"Content-Type": "application/x-www-form-urlencoded"})
+
+    def cookie(self):
+        resp, _ = self.login(self.CODE)
+        return resp.getheader("Set-Cookie").split(";")[0]
+
+    def classify(self, cookie=None):
+        headers = {"Content-Type": "application/json"}
+        if cookie:
+            headers["Cookie"] = cookie
+        return self.request("POST", "/api/classify", json.dumps({"text": "warna ijo"}).encode(), headers)
+
+    def test_any_host_is_allowed_in_public_mode(self):
+        resp, _ = self.request("GET", "/manifest.webmanifest", headers={"Host": "bedahreview-abc.a.run.app"})
+        self.assertEqual(resp.status, 200)
+
+    def test_page_and_api_need_the_code(self):
+        resp, body = self.request("GET", "/")
+        self.assertEqual(resp.status, 401)  # not 200: the service worker must not cache the sign-in page as the app
+        self.assertIn(b'name="code"', body)
+        self.assertEqual(self.request("GET", "/api/config")[0].status, 401)
+        resp, _ = self.classify()
+        self.assertEqual(resp.status, 401)
+        self.assertEqual(self.calls, [])
+
+    def test_install_files_stay_public(self):
+        for path in ("/manifest.webmanifest", "/sw.js", "/icons/icon-192.png"):
+            self.assertEqual(self.request("GET", path)[0].status, 200, path)
+
+    def test_wrong_code_is_refused_and_locks_after_five_tries(self):
+        for _ in range(5):
+            resp, _ = self.login("nope")
+            self.assertEqual(resp.status, 401)
+            self.assertIsNone(resp.getheader("Set-Cookie"))
+        resp, _ = self.login(self.CODE)  # even the right code waits out the lock
+        self.assertEqual(resp.status, 429)
+
+    def test_right_code_sets_a_secure_cookie_and_opens_the_app(self):
+        resp, _ = self.login(self.CODE, "/?text=halo")
+        self.assertEqual(resp.status, 303)
+        self.assertEqual(resp.getheader("Location"), "/?text=halo")
+        cookie = resp.getheader("Set-Cookie")
+        for flag in ("HttpOnly", "Secure", "SameSite=Lax"):
+            self.assertIn(flag, cookie)
+        self.assertNotIn(self.CODE, cookie)  # the cookie is a derived token, not the code
+        headers = {"Cookie": cookie.split(";")[0]}
+        self.assertEqual(self.request("GET", "/", headers=headers)[0].status, 200)
+        self.assertEqual(self.classify(cookie.split(";")[0])[0].status, 200)
+
+    def test_login_cannot_redirect_off_site(self):
+        for nxt in ("//evil.example", "https://evil.example", "/\\evil"):
+            resp, _ = self.login(self.CODE, nxt)
+            self.assertEqual(resp.getheader("Location"), "/", nxt)
+
+    def test_analyses_per_hour_are_capped(self):
+        cookie = self.cookie()
+        self.assertEqual(self.classify(cookie)[0].status, 200)
+        self.assertEqual(self.classify(cookie)[0].status, 200)
+        self.assertEqual(self.classify(cookie)[0].status, 429)
+        self.assertEqual(len(self.calls), 2)  # the third never reached the model
+
+    def test_local_mode_has_no_login(self):
+        server = make_server(0, classify_fn=lambda reviews, product=None: [])
+        port = server.server_address[1]
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        try:
+            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+            conn.request("GET", "/")
+            self.assertEqual(conn.getresponse().status, 200)
+            conn.close()
+        finally:
+            server.shutdown(); server.server_close()

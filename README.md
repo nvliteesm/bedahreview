@@ -60,6 +60,26 @@ A phone needs https to install it, so the local app only installs on the same co
 Hosting is not chosen yet. Android Chrome can then add a Share-menu entry; iPhone cannot (as far as we know) and uses
 paste only (Safari > Share > Add to Home Screen to install). The Share route is untested with Shopee and Tokopedia.
 
+## Put it online (Google Cloud Run)
+
+The app switches to public mode when `PORT` is set (Cloud Run does this). It then refuses to start without `BEDAHREVIEW_ACCESS_CODE`, shows a sign-in page, and caps analyses per visitor per hour (`BEDAHREVIEW_MAX_PER_HOUR`, default 30). The sign-in uses a shared code, so give it only to people you trust. Keys go in Secret Manager, never in the image or git. The link box stays off unless you also set `FETCHER=apify` and `APIFY_TOKEN` there, and that spends money.
+
+Not tested here (no Docker or gcloud on this Mac): the image build and the deploy itself. Steps, run by the owner:
+
+1. Create a Google Cloud project, link a billing account, and set a budget alert (it only warns; it does not stop spending).
+2. Install the gcloud CLI, then `gcloud auth login` and `gcloud config set project YOUR_PROJECT_ID`.
+3. Turn on the services: `gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com`
+4. Store the secrets (`printf` keeps the key out of your shell history file only if your shell is set that way; paste carefully):
+   `printf '%s' 'YOUR_GEMINI_KEY' | gcloud secrets create gemini-api-key --data-file=-`
+   `printf '%s' 'A_LONG_ACCESS_CODE' | gcloud secrets create bedahreview-access-code --data-file=-`
+5. Let Cloud Run read them: grant the role `roles/secretmanager.secretAccessor` on both secrets to the service account Cloud Run uses (the default is `PROJECT_NUMBER-compute@developer.gserviceaccount.com`).
+6. Deploy from the repo folder (pick the region closest to your users; `asia-southeast2` is Jakarta, check that it is offered to you):
+   `gcloud run deploy bedahreview --source . --region asia-southeast2 --allow-unauthenticated --max-instances 1 --set-secrets GEMINI_API_KEY=gemini-api-key:latest,BEDAHREVIEW_ACCESS_CODE=bedahreview-access-code:latest`
+   `--allow-unauthenticated` is needed because the app does its own sign-in. `--max-instances 1` keeps the cost cap and the in-memory rate limits meaningful.
+7. Open the URL it prints, sign in, and install it on your phone.
+
+The rate limits live in memory, so they reset when the instance restarts. That is fine for a demo with one instance.
+
 ## Product-link box (demo only)
 
 Off by default. Paste is the main way to bring in reviews. To try fetching from a Shopee link:
