@@ -584,8 +584,8 @@ async function send(payload, title) {
     stopLoading();
     if (!res.ok || !data) {
       show("input");
+      if (data && data.fallback === "paste") selectInput("paste", false);  // first: switching tabs clears the error box
       showError((data && data.error) || tr("errGeneric", res.status));
-      if (data && data.fallback === "paste") selectInput("paste", false);
       return;
     }
     render(data, true);

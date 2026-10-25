@@ -137,5 +137,5 @@ class ApifyShopeeFetcher(Fetcher):
             found = sorted((r for b in batches for r in b), key=lambda r: r.date, reverse=True)  # newest first...
             reviews = sorted(found, key=lambda r: r.star or 0)[:limit]  # ...then worst star first (the sort is stable)
         if not reviews:
-            raise FetchError("No reviews came back. This service often cannot collect Shopee reviews.")
+            raise FetchError("No reviews came back (Shopee often blocks this service, and a failed run can still be charged).")
         return reviews
