@@ -67,11 +67,10 @@ window.__probe = (async () => {
     document.getElementById("sample").click();
     document.getElementById("run").click();
     for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
-    out.tiles = [...document.querySelectorAll("#tiles .tile")].map((t) => t.textContent);
     out.tabs = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
     out.cards = document.querySelectorAll("#panel-fix .card").length;
     out.chips = [...document.querySelectorAll("#panel-fight .chip")].map((c) => c.textContent);
-    out.keep = !!document.querySelector("#keep .strip");
+    out.keep = document.querySelectorAll("#panel-keep blockquote").length;
     const cache = await caches.open("bedahreview-shell-v1");
     out.cachedPaths = (await cache.keys()).map((r) => new URL(r.url).pathname);
     out.copyButtons = document.querySelectorAll(".copy").length;
@@ -227,15 +226,16 @@ class BrowserTests(unittest.TestCase):
 
     def test_results_board_and_language_switch(self):
         out = self.probe("/#flow")
-        self.assertEqual([t.replace("\n", "") for t in out["tiles"]], ["2Perbaiki", "1Tanggapi", "0Abaikan"])
-        self.assertEqual(out["tabs"], ["Perbaiki 2", "Tanggapi 1", "Abaikan 0"])
+        self.assertEqual(out["tabs"][:3], ["2Perbaiki", "1Tanggapi", "0Abaikan"])  # a 2x2 board: Pertahankan is the fourth tab
+        self.assertTrue(out["tabs"][3].endswith("Pertahankan"), out["tabs"])
         self.assertEqual(out["cards"], 1)  # the two colour complaints become one card
         self.assertIn("Kurir? Cek dulu", out["chips"])
-        self.assertTrue(out["keep"])
+        self.assertGreaterEqual(out["keep"], 1)  # praise sits in its own Pertahankan tab
         self.assertIn("/", out["cachedPaths"])  # the app shell is cached...
         self.assertFalse([p for p in out["cachedPaths"] if p.startswith("/api/")], out["cachedPaths"])  # ...reviews never are
         self.assertGreaterEqual(out["copyButtons"], 3)
-        self.assertEqual(out["enTabs"], ["Fix it 2", "Fight it 1", "Ignore 0"])
+        self.assertEqual(out["enTabs"][:3], ["2Fix it", "1Fight it", "0Ignore"])
+        self.assertTrue(out["enTabs"][3].endswith("Keep"), out["enTabs"])
         self.assertEqual(out["enLang"], "en")
         self.assertEqual(out["draftStillBahasa"], "Ganti foto varian.")  # drafts stay Bahasa in English mode
 

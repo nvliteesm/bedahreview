@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="BedahReview">
 <style>
 /* Phone first: one column up to 480px wide, 16px gutters, 44px touch targets, safe-area padding.
-   Three tabs: Perbaiki (Fix it), Tanggapi (Fight it), Abaikan (Ignore). Light and dark follow the system. */
+   A 2x2 board of four tabs: Perbaiki (Fix it) and Tanggapi (Fight it) on top as the main ones, Abaikan (Ignore) and Pertahankan (Keep) below. Light and dark follow the system. */
 :root {
   --bg: #f6f7f5; --surface: #ffffff; --ink: #17201c; --muted: #5d6963; --line: #dde2de; --quote: #f3f5f2;
   --accent: #0f6b5a; --on-accent: #ffffff; --accent-soft: #dff1ec;
@@ -99,19 +99,24 @@ details pre { margin: 0 0 4px; padding: 12px; background: var(--quote); border-r
 
 /* ---------- results ---------- */
 .res-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
-.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.tile { border-radius: 12px; padding: 10px 6px; text-align: center; background: var(--surface); border: 1px solid var(--line); }
-.tile .n { display: block; font-size: 1.6rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.tile .l { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
-.tile[data-b="fix"] .n { color: var(--fix); } .tile[data-b="fight"] .n { color: var(--fight); } .tile[data-b="ignore"] .n { color: var(--ignore); }
-.tabs { position: sticky; top: calc(57px + env(safe-area-inset-top)); z-index: 5; background: var(--bg); padding: 4px 0; }
-.tabs .seg button[aria-selected="true"][data-b="fix"] { color: var(--fix); background: var(--fix-soft); }
-.tabs .seg button[aria-selected="true"][data-b="fight"] { color: var(--fight); background: var(--fight-soft); }
-.tabs .seg button[aria-selected="true"][data-b="ignore"] { color: var(--ignore); background: var(--ignore-soft); }
+.board { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.board button { display: grid; justify-items: center; align-content: center; gap: 2px; border-radius: 14px; padding: 8px 6px; min-height: 64px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font: inherit; cursor: pointer; }
+.board .n { font-size: 1.4rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.board .l { font-size: 0.82rem; font-weight: 700; }
+.board button.main { min-height: 88px; }  /* Fix and Fight are the point of the app: bigger */
+.board button.main .n { font-size: 2.1rem; }
+.board button.main .l { font-size: 0.95rem; }
+.board button[data-b="fix"] .n { color: var(--fix); } .board button[data-b="fight"] .n { color: var(--fight); } .board button[data-b="ignore"] .n { color: var(--ignore); } .board button[data-b="keep"] .n { color: var(--keep); }
+.board button[aria-selected="true"] { border-width: 2px; color: var(--ink); }
+.board button[aria-selected="true"][data-b="fix"] { background: var(--fix-soft); border-color: var(--fix); }
+.board button[aria-selected="true"][data-b="fight"] { background: var(--fight-soft); border-color: var(--fight); }
+.board button[aria-selected="true"][data-b="ignore"] { background: var(--ignore-soft); border-color: var(--ignore); }
+.board button[aria-selected="true"][data-b="keep"] { background: var(--keep-soft); border-color: var(--keep); }
+.board button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .panel { display: grid; gap: 12px; }
 .rule { font-size: 0.9rem; color: var(--muted); }
 .card { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: var(--radius); padding: 14px; display: grid; gap: 10px; min-width: 0; }
-.panel[data-b="fix"] { --c: var(--fix); } .panel[data-b="fight"] { --c: var(--fight); } .panel[data-b="ignore"] { --c: var(--ignore); } .strip { --c: var(--keep); }
+.panel[data-b="fix"] { --c: var(--fix); } .panel[data-b="fight"] { --c: var(--fight); } .panel[data-b="ignore"] { --c: var(--ignore); } .panel[data-b="keep"] { --c: var(--keep); }
 .stars { color: var(--fix); letter-spacing: 1px; white-space: nowrap; }
 blockquote { margin: 0; padding: 8px 12px; border-left: 4px solid var(--c); background: var(--quote); border-radius: 0 8px 8px 0; display: grid; gap: 2px; overflow-wrap: anywhere; font-size: 0.95rem; }
 blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
@@ -127,15 +132,13 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
 .empty { border: 2px dashed var(--line); border-radius: var(--radius); padding: 20px; color: var(--muted); text-align: center; }
 .ignore-list { display: grid; gap: 8px; list-style: none; padding: 0; }
 .ignore-list li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 0.92rem; overflow-wrap: anywhere; }
-.strip { background: var(--keep-soft); border-radius: var(--radius); padding: 12px; display: grid; gap: 8px; }
-.strip h3 { color: var(--keep); }
 .foot { font-size: 0.8rem; color: var(--muted); }
 
 @media (pointer: fine) and (min-width: 481px) { main { padding-top: 24px; } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } * { transition-duration: 0.01ms !important; } }
 @media print {
   :root { --bg: #fff; --surface: #fff; --ink: #000; --muted: #333; --line: #bbb; }
-  .topbar, .bottombar, #view-input, .tabs, .tiles, .copy, #print { display: none !important; }
+  .topbar, .bottombar, #view-input, .board, .copy, #print { display: none !important; }
   .panel[hidden] { display: grid !important; }
   .card, .draft { break-inside: avoid; }
   main { max-width: none; padding-bottom: 0; }
@@ -193,7 +196,7 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
       <div id="in-link" role="tabpanel" aria-labelledby="intab-link" style="display:grid;gap:12px" hidden>
         <div class="callout warn" data-i18n="linkDemo"></div>
         <label class="field" for="url"><span data-i18n="linkLabel"></span>
-          <input id="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://shopee.co.id/...-i.12345.67890">
+          <input id="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" data-i18n-ph="linkPh" placeholder="It supports Tokopedia, Lazada, TikTok Shop">
         </label>
         <div class="row">
           <label class="fld" for="mode" style="flex:1 1 150px"><span data-i18n="modeLabel"></span>
@@ -231,11 +234,9 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
       </div>
       <button class="btn ghost" id="print" type="button" data-i18n="print"></button>
     </div>
-    <div class="tiles" id="tiles"></div>
     <div id="notes" style="display:grid;gap:8px"></div>
-    <div class="tabs"><div class="seg" id="tabs" role="tablist"></div></div>
+    <div class="board" id="tabs" role="tablist"></div>
     <div id="panels"></div>
-    <div id="keep"></div>
     <p class="foot" id="foot"></p>
   </section>
 
@@ -268,13 +269,13 @@ const TEXT = {
     install: "Pasang di layar utama",
     sharedOk: "Teks dari menu Bagikan sudah masuk. Ketuk Bedah ulasan.",
     sharedLinkOnly: "Yang dikirim hanya tautan, bukan teks ulasan. Salin teks ulasannya, lalu tempel.",
-    linkDemo: "Demo saja: ulasan diambil lewat layanan pihak ketiga yang berbayar.", linkLabel: "Tautan produk Shopee",
+    linkDemo: "Demo saja: ulasan diambil lewat layanan pihak ketiga yang berbayar.", linkLabel: "Tautan produk", linkPh: "Mendukung Tokopedia, Lazada, TikTok Shop",
     modeLabel: "Ambil", modeComplaints: "Keluhan dulu (1-3★)", modeLatest: "Ulasan terbaru", limitLabel: "Jumlah", fetchRun: "Ambil & bedah",
-    linkNote: "Hanya tautan produk shopee.co.id. Keluhan dulu mengambil ulasan bintang rendah yang ada komentarnya (3 proses kecil, sekitar 8 sen dolar AS untuk 10 ulasan). Bisa gagal atau kurang dari yang diminta. Tempel selalu bisa.",
+    linkNote: "Tempel tautan produk Tokopedia, Lazada, atau TikTok Shop. Platformnya dikenali otomatis, tautan pendek dari tombol Bagikan juga bisa. Shopee belum bisa lewat tautan: tempel ulasannya. Biayanya beberapa sen dolar AS per pengambilan. Bisa gagal atau kurang dari yang diminta. Tempel selalu bisa.",
     errPaste: "Tempel ulasan dulu.", errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa menghubungi aplikasi. Apakah jendela terminal masih menjalankannya?",
     loadingTitle: "Membedah %s ulasan…", loadingFetch: "Mengambil ulasan, lalu membedahnya…", loadingSub: "Memilah: perbaiki, tanggapi, abaikan.",
     results: "Hasil", reviewsWord: "ulasan", print: "Cetak",
-    fix: "Perbaiki", fight: "Tanggapi", ignore: "Abaikan",
+    fix: "Perbaiki", fight: "Tanggapi", ignore: "Abaikan", keep: "Pertahankan",
     fixRule: "Penyebabnya produk, listing, atau pengemasan, dan bisa kamu ubah.",
     fightRule: "Buktikan penyebabnya, ajukan klaim ke kurir, dan balas di publik. Ini bukan cara menghapus ulasan: Shopee hanya menghapus ulasan untuk alasan tertentu.",
     ignoreRule: "Bintang tanpa teks atau komentar tanpa isi. Dihitung, tidak dianalisis.",
@@ -283,7 +284,7 @@ const TEXT = {
     copy: "Salin", copied: "Tersalin", selectIt: "Teks dipilih, salin manual", copiedAnn: "Disalin: %s",
     fullReview: "Ulasan lengkap", noText: "(tanpa teks)",
     emptyFix: "Tidak ada keluhan yang bisa kamu perbaiki di sini.", emptyFight: "Tidak ada ulasan yang perlu ditanggapi.", emptyIgnore: "Tidak ada ulasan yang diabaikan.",
-    keepTitle: "Pertahankan", keepSub: "Yang disukai pembeli. Jaga ini.",
+    keepRule: "Yang disukai pembeli. Jaga ini.", emptyKeep: "Belum ada pujian yang jelas.",
     noteFake: "%s ulasan diduga palsu dan tidak dihitung. Ada di tab Tanggapi, lengkap dengan teks laporan.",
     noteDropped: "%s ulasan dilewati karena kutipan buktinya tidak bisa diverifikasi.",
     noteNoText: "%s ulasan hanya bintang tanpa teks. Dihitung di Abaikan, tidak dianalisis.",
@@ -306,13 +307,13 @@ const TEXT = {
     install: "Add to home screen",
     sharedOk: "Text from the Share menu is in. Tap Bedah ulasan.",
     sharedLinkOnly: "Only a link was shared, not the review text. Copy the review text and paste it.",
-    linkDemo: "Demo only: reviews are fetched through a paid third-party service.", linkLabel: "Shopee product link",
+    linkDemo: "Demo only: reviews are fetched through a paid third-party service.", linkLabel: "Product link", linkPh: "It supports Tokopedia, Lazada, TikTok Shop",
     modeLabel: "Get", modeComplaints: "Complaints first (1-3★)", modeLatest: "Latest reviews", limitLabel: "Reviews", fetchRun: "Fetch & analyse",
-    linkNote: "shopee.co.id product links only. Complaints first gets the lowest-rated reviews that have comments (3 small runs, up to about 8 US cents for 10). It can fail or return fewer than you ask for. Pasting always works.",
+    linkNote: "Paste a Tokopedia, Lazada or TikTok Shop product link. The platform is detected for you, and short links from the Share button work too. Shopee cannot be read from a link yet: paste its reviews. Each fetch costs a few US cents. It can fail or return fewer than you ask for. Pasting always works.",
     errPaste: "Paste some reviews first.", errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach the app. Is the terminal window still running it?",
     loadingTitle: "Reading %s reviews…", loadingFetch: "Fetching reviews, then reading them…", loadingSub: "Sorting: fix, fight, ignore.",
     results: "Results", reviewsWord: "reviews", print: "Print",
-    fix: "Fix it", fight: "Fight it", ignore: "Ignore",
+    fix: "Fix it", fight: "Fight it", ignore: "Ignore", keep: "Keep",
     fixRule: "The product, listing or packing caused it, and you can change it.",
     fightRule: "Prove the cause, file a courier claim, and reply in public. This is not a way to get a review removed: Shopee only removes reviews for narrow reasons.",
     ignoreRule: "Star ratings with no text, or filler with nothing to act on. Counted, not analysed.",
@@ -321,7 +322,7 @@ const TEXT = {
     copy: "Copy", copied: "Copied", selectIt: "Text selected, copy it manually", copiedAnn: "Copied: %s",
     fullReview: "Full review", noText: "(no text)",
     emptyFix: "Nothing here for you to fix.", emptyFight: "No reviews to answer.", emptyIgnore: "No reviews ignored.",
-    keepTitle: "Keep doing", keepSub: "What buyers like. Protect it.",
+    keepRule: "What buyers like. Protect it.", emptyKeep: "No clear praise yet.",
     noteFake: "%s likely-fake review(s) are left out of the counts. They are in the Fight it tab, each with a report text.",
     noteDropped: "%s review(s) were skipped because the model's proof quote could not be verified.",
     noteNoText: "%s review(s) are star-only, with no text. Counted under Ignore, not analysed.",
@@ -451,12 +452,18 @@ function fixCard(group, byId) {
     members.map((m) => [quote(m), fullText(m)]),
     suggestions.map((s) => draft(tr("dFix"), s)));
 }
+function keepBody(keep) {
+  const themes = [...new Set(keep.map((k) => k.theme.replace(/^Praise: /, "")))];
+  return [h("div", { class: "chips" }, themes.map((t) => h("span", { class: "chip soft", text: themeName("Praise: " + t).replace(/^Pujian: |^Praise: /, "") }))),
+    keep.map((k) => quote(k))];
+}
 function ignoreList(items) {
   return h("ul", { class: "ignore-list" }, items.map((it) => h("li", { lang: "id", text: "#" + it.id + (it.stars ? " · " + starsText(it.stars) : "") + " · " + (it.text || tr("noText")) })));
 }
 
 /* ---------- results ---------- */
-const TABS = ["fix", "fight", "ignore"];
+const TABS = ["fix", "fight", "ignore", "keep"];
+const MAIN_TABS = ["fix", "fight"];
 let lastData = null, activeTab = "fix";
 function selectTab(key, focus) {
   activeTab = key;
@@ -476,13 +483,12 @@ function render(data, fresh) {
     .sort((a, b) => (a.likely_fake.flag - b.likely_fake.flag) || (a.bucket === b.bucket ? 0 : a.bucket === "fight" ? -1 : 1));
   const ignore = data.items.filter((it) => it.bucket === "ignore");
   const keep = real.filter((it) => it.bucket === "keep");
-  const counts = { fix: data.counts.fix, fight: data.counts.fight + data.counts.check, ignore: data.counts.ignore };
+  const counts = { fix: data.counts.fix, fight: data.counts.fight + data.counts.check, ignore: data.counts.ignore, keep: keep.length };
 
   const src = data.source || {};
   const name = src.title ? src.title + " · " : "";
   $("results-h").textContent = tr("results");
   $("summary").textContent = name + data.reviews + " " + tr("reviewsWord") + (data.star_avg ? " · " + data.star_avg + "★" : "");
-  $("tiles").replaceChildren(...TABS.map((k) => h("div", { class: "tile", "data-b": k }, h("span", { class: "n", text: counts[k] }), h("span", { class: "l", text: tr(k) }))));
 
   const notes = [];
   if (data.likely_fake) notes.push(h("div", { class: "callout hot", text: tr("noteFake", data.likely_fake) }));
@@ -491,7 +497,8 @@ function render(data, fresh) {
   $("notes").replaceChildren(...notes);
 
   $("tabs").replaceChildren(...TABS.map((k) => {
-    const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, "aria-controls": "panel-" + k, "data-b": k, text: tr(k) + " " + counts[k] });
+    const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, class: MAIN_TABS.includes(k) ? "main" : "", "aria-controls": "panel-" + k, "data-b": k },
+      h("span", { class: "n", text: counts[k] }), h("span", { class: "l", text: tr(k) }));
     tab.addEventListener("click", () => selectTab(k, false));
     return tab;
   }));
@@ -499,18 +506,13 @@ function render(data, fresh) {
   $("panels").replaceChildren(
     panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") })),
     panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") })),
-    panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })));
-
-  const themes = [...new Set(keep.map((k) => k.theme.replace(/^Praise: /, "")))];
-  $("keep").replaceChildren(...(keep.length ? [h("div", { class: "strip" },
-    h("h3", { text: tr("keepTitle") }), h("p", { class: "small muted", text: tr("keepSub") }),
-    h("div", { class: "chips" }, themes.map((t) => h("span", { class: "chip soft", text: themeName("Praise: " + t).replace(/^Pujian: |^Praise: /, "") }))),
-    keep.slice(0, 3).map(quote))] : []));
+    panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })),
+    panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })));
 
   const fromLink = src.kind === "url" ? tr("footFrom", src.count, src.mode === "complaints" ? tr("footLow") : "", src.cached ? tr("footCached") : "") : "";
   $("foot").textContent = fromLink + tr("footTail", data.model);
 
-  const first = fresh === false ? activeTab : (counts.fix ? "fix" : counts.fight ? "fight" : counts.ignore ? "ignore" : "fix");
+  const first = fresh === false ? activeTab : (counts.fix ? "fix" : counts.fight ? "fight" : counts.ignore ? "ignore" : counts.keep ? "keep" : "fix");
   selectTab(first, false);
   if (fresh !== false) {
     $("nav-results").disabled = false;

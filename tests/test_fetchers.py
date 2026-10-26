@@ -7,6 +7,7 @@ from decimal import Decimal
 from pathlib import Path
 from unittest import mock
 
+from bedahreview.fetchers.platforms import LinkRouter
 from bedahreview.fetchers import CachedFetcher, FetcherConfigError, FetchError, get_fetcher, to_review_dicts
 from bedahreview.fetchers.apify_shopee import ACTOR_ID, ApifyShopeeFetcher, estimated_cost_usd, review_from_item
 from bedahreview.fetchers.base import MAX_LIMIT, Review, check_shopee_product_url, clamp_limit, product_title_from_url
@@ -141,7 +142,7 @@ class MappingTests(unittest.TestCase):
     def test_reviewer_identity_never_reaches_review(self):
         r = review_from_item(ITEM)
         self.assertEqual({f.name for f in dataclasses.fields(Review)},
-                         {"star", "text", "variant", "date", "photo_count", "seller_reply"})
+                         {"star", "text", "variant", "date", "photo_count", "seller_reply", "product"})
         blob = json.dumps(dataclasses.asdict(r)) + repr(r)
         for leaked in (SECRET_NAME, "9911", "avatar.png"):
             self.assertNotIn(leaked, blob)
@@ -308,11 +309,11 @@ class GetFetcherTests(unittest.TestCase):
             with self.assertRaises(FetcherConfigError):
                 get_fetcher()
 
-    def test_apify_builds_a_cached_fetcher_with_the_default_cap(self):
+    def test_apify_builds_the_link_router_with_the_default_cap(self):
         with self.env(FETCHER="apify", APIFY_TOKEN="x"):
             f = get_fetcher()
-        self.assertIsInstance(f, CachedFetcher)
-        self.assertEqual(f.inner.max_cost_usd, 0.05)
+        self.assertIsInstance(f, LinkRouter)
+        self.assertEqual(f._caches["lazada"].inner._actors._cap, 0.05)
 
 
 if __name__ == "__main__":

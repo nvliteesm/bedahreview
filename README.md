@@ -82,23 +82,29 @@ The rate limits live in memory, so they reset when the instance restarts. That i
 
 ## Product-link box (demo only)
 
-Off by default. Paste is the main way to bring in reviews. To try fetching from a Shopee link:
+Off by default. Paste is the main way to bring in reviews. The box takes one link and picks the platform from it,
+so the seller never chooses. To switch it on:
 
 1. Create an Apify account and copy your API token (Apify Console > Settings > API & Integrations).
 2. In `.env` set `FETCHER=apify` and `APIFY_TOKEN=...` (never paste the token into code, chat or git).
 3. Restart the app. The terminal says "Product-link box (demo): ON" and a dashed "Demo only" box appears.
 
-It uses the Apify actor `zen-studio/shopee-product-reviews-scraper`, which costs roughly $0.004 per review plus
-$0.008 per run. `APIFY_MAX_COST_USD` (default 0.05, about 10 reviews) is a hard cap on each run, so asking for
-20 reviews at the default cap returns about 10. Results are saved in `fetch_cache/` so the same link is not
-paid for twice (per link and mode). Only `shopee.co.id` product links are accepted. Shopee's terms for this have not been checked,
-the service often returns nothing, and the app then tells the seller to paste instead. Reviewer names are
-never kept. Tokopedia is not supported.
+| Link | Actor (paid, third-party) | Tested 2026-10-26 (5 reviews) |
+|---|---|---|
+| Tokopedia product page | `shahidirfan/Tokopedia-Reviews-Scraper` | worked, 12.5 s |
+| Lazada Indonesia product page | `zen-studio/lazada-reviews-scraper` | worked, 8.9 s |
+| TikTok Shop (a `vt.tokopedia.com` share link, `shop-id.tokopedia.com`, or `tiktok.com/shop` link) | `web_wanderer/tiktok-reviews-scraper` | worked, 13.9 s |
+| Shopee Indonesia | none | blocked: the actor reports `reviews_blocked`. A Shopee link gets a message and costs nothing |
 
-The box has two modes. **Complaints first** (default) runs three small fetches in parallel, one each for 1, 2 and
-3 star reviews that have comments, and shows the worst first; for 10 reviews that is up to about $0.08 (three start
-fees), and each of the three runs has its own `APIFY_MAX_COST_USD` cap. **Latest reviews** is the single newest-first
-fetch, which is often mostly 5-star praise.
+Short links from the Share button are followed through plain redirects, only between known shop hosts. Each run has a
+hard spending cap (`APIFY_MAX_COST_USD`, default 0.05). Results are saved in `fetch_cache/` per platform so the same
+link is not paid for twice. Reviewer names are never kept. These are small third-party scrapers: any of them can
+break or be blocked without warning, the platforms' terms for this have not been checked, and the app then tells
+the seller to paste instead. The older Shopee fetcher (`apify_shopee.py`) is kept in the repo but is not used by
+the router.
+
+**Complaints first** (default) fetches 1-3 star reviews with comments, worst first. **Latest reviews** fetches the
+newest ones. A few spare reviews are requested because some have no text.
 
 ## Run the eval
 

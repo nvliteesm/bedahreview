@@ -255,10 +255,11 @@ class Handler(BaseHTTPRequestHandler):
             self._json(400, {"error": "The link box is switched off. Paste the reviews instead."})
             return None
         try:
-            url = check_shopee_product_url(url)
+            check_link = getattr(fetcher, "check_link", None)  # the link router knows every supported platform; older fetchers are Shopee-only
+            url = check_link(url) if check_link else check_shopee_product_url(url)
             limit = clamp_limit(limit)
             mode = check_mode(mode)
-        except FetchError as exc:
+        except FetchError as exc:  # includes LinkError
             self._json(400, {"error": str(exc)})
             return None
         try:
@@ -270,7 +271,9 @@ class Handler(BaseHTTPRequestHandler):
             sys.stderr.write("fetch failed: %s\n" % type(exc).__name__)
             self._json(502, {"error": "Could not fetch reviews from that link. You can paste the reviews instead.", "fallback": "paste"})
             return None
-        source = {"kind": "url", "url": url, "title": product_title_from_url(url), "mode": mode, "count": len(fetched), "cached": bool(getattr(fetcher, "last_from_cache", False))}
+        listing = next((r.product for r in fetched if getattr(r, "product", None)), None)
+        title = listing or ("" if check_link else product_title_from_url(url))  # the router's links carry no title; its reviews do
+        source = {"kind": "url", "url": url, "title": title[:MAX_PRODUCT_CHARS], "mode": mode, "count": len(fetched), "cached": bool(getattr(fetcher, "last_from_cache", False))}
         return to_review_dicts(fetched), source
 
     # -- routes ----------------------------------------------------------

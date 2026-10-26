@@ -19,6 +19,10 @@ class FetchError(Exception):
     """Reviews could not be fetched. The message is safe to show the seller."""
 
 
+class LinkError(FetchError):
+    """The pasted link cannot be used (wrong site, not a product page, blocked platform). The seller's fix is a different link."""
+
+
 class FetcherConfigError(Exception):
     """The fetcher is switched on in .env but not set up correctly."""
 
@@ -33,6 +37,7 @@ class Review:
     date: str
     photo_count: int
     seller_reply: Optional[str]
+    product: Optional[str] = None  # the listing title, when the source returns it (a hint for the classifier)
 
 
 class Fetcher:

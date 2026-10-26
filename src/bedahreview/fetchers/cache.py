@@ -7,15 +7,16 @@ import threading
 import time
 from dataclasses import asdict
 from pathlib import Path
-from typing import List, Tuple
+from typing import Callable, List, Tuple
 
 from .base import Fetcher, Review, check_mode, check_shopee_product_url, clamp_limit
 
 
 class CachedFetcher(Fetcher):
-    def __init__(self, inner: Fetcher, cache_dir: Path) -> None:
+    def __init__(self, inner: Fetcher, cache_dir: Path, check_url: Callable[[str], str] = check_shopee_product_url) -> None:
         self.inner = inner
         self.cache_dir = Path(cache_dir)
+        self._check_url = check_url  # the link router passes an already-checked link straight through
         self._local = threading.local()  # the server handles requests on several threads
 
     @property
@@ -36,7 +37,7 @@ class CachedFetcher(Fetcher):
         return []
 
     def fetch_reviews(self, url: str, limit: int, mode: str = "latest") -> List[Review]:
-        url = check_shopee_product_url(url)
+        url = self._check_url(url)
         limit = clamp_limit(limit)
         mode = check_mode(mode)
         cached = self._read(url, limit, mode)
