@@ -64,6 +64,11 @@ paste only (Safari > Share > Add to Home Screen to install). The Share route is 
 
 The app switches to public mode when `PORT` is set (Cloud Run does this). It then refuses to start without `BEDAHREVIEW_ACCESS_CODE`, shows a sign-in page, and caps analyses per visitor per hour (`BEDAHREVIEW_MAX_PER_HOUR`, default 30). The sign-in uses a shared code, so give it only to people you trust. Keys go in Secret Manager, never in the image or git. The link box stays off unless you also set `FETCHER=apify` and `APIFY_TOKEN` there, and that spends money.
 
+Spending limits for the link box (all paid calls: link fetch, finding competitors, comparing):
+- `APIFY_MAX_COST_USD` caps one run (default 0.05, max 1.00).
+- `APIFY_DAILY_BUDGET_USD` caps all runs per day (default 1.00, max 5.00, resets at midnight UTC). Each run counts at its worst-case cost the moment it starts and is never refunded, so the real bill is at most this. When it is used up the app says "Demo limit reached today" and offers paste. It is kept in memory, so a restart starts it at zero again: also set a monthly limit inside your Apify account.
+- `BEDAHREVIEW_PAID_PER_HOUR` (default 6) caps paid actions per visitor per hour in public mode, lower than the 30 for pasting. A link already saved on disk costs nothing but still counts.
+
 Not tested here (no Docker or gcloud on this Mac): the image build and the deploy itself. Steps, run by the owner:
 
 1. Create a Google Cloud project, link a billing account, and set a budget alert (it only warns; it does not stop spending).

@@ -20,6 +20,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urljoin, urlsplit
 
 from .apify_shopee import _per_star_limit
+from .budget import DailyBudget
 from .base import COMPLAINT_STARS, Fetcher, FetchError, LinkError, Review, check_mode, clamp_limit
 from .cache import CachedFetcher
 from .search import Candidate, search_products
@@ -170,8 +171,8 @@ def _iso_date(value: Any) -> str:
 class _Actors:
     """Runs an Apify actor with a hard spending cap and returns its rows. Errors name a type, never details or the token."""
 
-    def __init__(self, client: Any, max_cost_usd: float) -> None:
-        self._client, self._cap = client, max_cost_usd
+    def __init__(self, client: Any, max_cost_usd: float, budget: Optional[DailyBudget] = None) -> None:
+        self._client, self._cap, self._budget = client, max_cost_usd, budget
 
     def _start(self, actor_id: str, run_input: Dict[str, Any]) -> Any:
         """Start an actor and wait for it. A start the API itself rejects is tried once more; nothing else is retried, so a run is never paid for twice."""
@@ -188,6 +189,8 @@ class _Actors:
 
     def run(self, actor_id: str, run_input: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
+            if self._budget:
+                self._budget.reserve(self._cap)  # before the run, at its worst-case cost; a cache hit never gets here
             run = self._start(actor_id, run_input)
             if not run:
                 raise FetchError("The fetch service took too long.")
@@ -309,12 +312,12 @@ class TikTokShopFetcher(Fetcher):
 class LinkRouter(Fetcher):
     """One fetcher for every supported platform: the pasted link picks the actor, and each platform has its own cache."""
 
-    def __init__(self, token: str, max_cost_usd: float, cache_dir: Path, client: Optional[Any] = None, resolver: Callable[[str], str] = resolve_short_link) -> None:
+    def __init__(self, token: str, max_cost_usd: float, cache_dir: Path, client: Optional[Any] = None, resolver: Callable[[str], str] = resolve_short_link, budget: Optional[DailyBudget] = None) -> None:
         if client is None:
             from apify_client import ApifyClient
 
             client = ApifyClient(token)
-        actors = _Actors(client, max_cost_usd)
+        actors = _Actors(client, max_cost_usd, budget)
         self._actors = actors
         keep = lambda url: url  # links are checked by check_link before they reach a cache
         self._caches = {

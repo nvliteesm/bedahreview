@@ -35,7 +35,7 @@ from urllib.parse import parse_qs
 from .classifier import ClassificationError, classify, resolve_model
 from .competitors import MAX_COMPETITORS, compare_competitors, suggest_competitors
 from .env import has_api_key, load_dotenv
-from .fetchers import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, get_fetcher, product_title_from_url, to_review_dicts
+from .fetchers import MAX_LIMIT, BudgetError, Fetcher, FetcherConfigError, FetchError, get_fetcher, product_title_from_url, to_review_dicts
 from .fetchers.base import check_mode, check_shopee_product_url, clamp_limit
 from .fetchers.search import SEARCH_PLATFORMS
 from .parse import parse_reviews
@@ -52,6 +52,7 @@ MIN_ACCESS_CODE_CHARS = 8
 MAX_LOGIN_FAILS = 5  # per visitor, per LOGIN_WINDOW_SECS
 LOGIN_WINDOW_SECS = 15 * 60
 DEFAULT_MAX_PER_HOUR = 30  # analyses per visitor per hour in public mode
+DEFAULT_PAID_PER_HOUR = 6  # paid actions (link fetch, find or compare competitors) per visitor per hour in public mode: lower than plain pasting
 PUBLIC_ASSETS = {"/manifest.webmanifest", "/sw.js", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png"}
 # Files served from static/ (exact paths only; the query string is ignored, so /?text=... is the page).
 PAGES = {"/": "index.html", "/index.html": "index.html"}
@@ -184,6 +185,14 @@ class Handler(BaseHTTPRequestHandler):
     public = False  # public mode: any Host header is fine, cookies are Secure, per-visitor limits apply
     login_limiter: Optional[RateLimiter] = None
     use_limiter: Optional[RateLimiter] = None
+    paid_limiter: Optional[RateLimiter] = None
+
+    def _paid_ok(self) -> bool:
+        """Count one paid action for this visitor; send the 429 and return False when they are at the hourly limit."""
+        if self.paid_limiter and not self.paid_limiter.take(self._client()):
+            self._json(429, {"error": "Too many link look-ups this hour. Try again later.", "limit": "hour"})
+            return False
+        return True
     server_version = "BedahReview"
 
     # -- helpers ---------------------------------------------------------
@@ -266,8 +275,13 @@ class Handler(BaseHTTPRequestHandler):
         except FetchError as exc:  # includes LinkError
             self._json(400, {"error": str(exc)})
             return None
+        if not self._paid_ok():  # a saved copy costs nothing but is counted too; the limit is per visitor and generous enough
+            return None
         try:
             fetched = fetcher.fetch_reviews(url, limit, mode)
+        except BudgetError:
+            self._json(429, {"error": "Demo limit reached today. Paste the reviews instead.", "fallback": "paste", "limit": "budget"})
+            return None
         except FetchError as exc:
             self._json(502, {"error": "%s You can paste the reviews instead." % exc, "fallback": "paste"})
             return None
@@ -310,8 +324,12 @@ class Handler(BaseHTTPRequestHandler):
         platform = fetcher.last_platform
         if platform not in SEARCH_PLATFORMS:
             return self._json(400, {"error": "Finding competitors is not available for this platform yet. Paste competitor links instead.", "fallback": "paste"})
+        if not self._paid_ok():
+            return
         try:
             result = type(self).suggest_fn(search, platform, url, title)
+        except BudgetError:
+            return self._json(429, {"error": "Demo limit reached today. Try again tomorrow.", "limit": "budget"})
         except FetchError as exc:
             return self._json(502, {"error": "%s You can paste competitor links instead." % exc, "fallback": "paste"})
         except Exception as exc:  # model or network trouble: say what happened without a traceback
@@ -355,8 +373,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(400, {"error": str(exc)})
         if not competitors:
             return self._json(400, {"error": "Choose competitors other than your own product."})
+        if not self._paid_ok():
+            return
         try:
             result = type(self).compare_fn(fetch, type(self).classify_fn, own, title, competitors)
+        except BudgetError:
+            return self._json(429, {"error": "Demo limit reached today. Try again tomorrow.", "limit": "budget"})
         except FetchError as exc:
             return self._json(502, {"error": "%s You can try other competitors." % exc})
         except Exception as exc:  # model or network trouble: say what happened without a traceback
@@ -452,6 +474,7 @@ def make_server(
     access_code: Optional[str] = None,
     public: bool = False,
     max_per_hour: int = DEFAULT_MAX_PER_HOUR,
+    paid_per_hour: int = DEFAULT_PAID_PER_HOUR,
 ) -> ThreadingHTTPServer:
     handler = type("BoundHandler", (Handler,), {})
     if classify_fn is not None:
@@ -467,6 +490,7 @@ def make_server(
         handler.login_limiter = RateLimiter(MAX_LOGIN_FAILS, LOGIN_WINDOW_SECS)
     if public:
         handler.use_limiter = RateLimiter(max_per_hour, 3600)
+        handler.paid_limiter = RateLimiter(paid_per_hour, 3600)
     return ThreadingHTTPServer(("0.0.0.0" if public else "127.0.0.1", port), handler)
 
 
@@ -487,6 +511,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     except ValueError:
         print("BEDAHREVIEW_MAX_PER_HOUR must be a whole number.", file=sys.stderr)
         return 1
+    try:
+        paid_per_hour = int(os.environ.get("BEDAHREVIEW_PAID_PER_HOUR") or DEFAULT_PAID_PER_HOUR)
+    except ValueError:
+        print("BEDAHREVIEW_PAID_PER_HOUR must be a whole number.", file=sys.stderr)
+        return 1
     if not has_api_key():
         print("GEMINI_API_KEY is not set. Add it to .env (see .env.example).", file=sys.stderr)
         return 1
@@ -496,7 +525,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Setup problem: %s" % exc, file=sys.stderr)
         return 1
     try:
-        server = make_server(port, fetcher=fetcher, access_code=access_code, public=public, max_per_hour=max_per_hour)
+        server = make_server(port, fetcher=fetcher, access_code=access_code, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (port, exc.strerror), file=sys.stderr)
         return 1

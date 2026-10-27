@@ -7,13 +7,14 @@ from typing import Optional
 from ..classifier import ROOT
 from .apify_shopee import DEFAULT_MAX_COST_USD
 from .base import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, LinkError, Review, product_title_from_url, to_review_dicts
+from .budget import DAILY_BUDGET_CEILING_USD, DEFAULT_DAILY_BUDGET_USD, BudgetError, DailyBudget
 from .cache import CachedFetcher
 from .platforms import LinkRouter
 
 CACHE_DIR = ROOT / "fetch_cache"
 MAX_COST_CEILING_USD = 1.0  # refuse an APIFY_MAX_COST_USD typo like 50
 
-__all__ = ["get_fetcher", "Fetcher", "FetchError", "LinkError", "FetcherConfigError", "Review", "MAX_LIMIT", "product_title_from_url", "to_review_dicts"]
+__all__ = ["get_fetcher", "Fetcher", "FetchError", "LinkError", "FetcherConfigError", "BudgetError", "Review", "MAX_LIMIT", "product_title_from_url", "to_review_dicts"]
 
 
 def get_fetcher() -> Optional[Fetcher]:
@@ -32,4 +33,10 @@ def get_fetcher() -> Optional[Fetcher]:
         raise FetcherConfigError("APIFY_MAX_COST_USD must be a number like 0.05.")
     if not 0 < cap <= MAX_COST_CEILING_USD:
         raise FetcherConfigError("APIFY_MAX_COST_USD must be above 0 and at most %.2f." % MAX_COST_CEILING_USD)
-    return LinkRouter(token, cap, CACHE_DIR)
+    try:
+        daily = float(os.environ.get("APIFY_DAILY_BUDGET_USD") or DEFAULT_DAILY_BUDGET_USD)
+    except ValueError:
+        raise FetcherConfigError("APIFY_DAILY_BUDGET_USD must be a number like 1.00.")
+    if not 0 < daily <= DAILY_BUDGET_CEILING_USD:
+        raise FetcherConfigError("APIFY_DAILY_BUDGET_USD must be above 0 and at most %.2f." % DAILY_BUDGET_CEILING_USD)
+    return LinkRouter(token, cap, CACHE_DIR, budget=DailyBudget(daily))

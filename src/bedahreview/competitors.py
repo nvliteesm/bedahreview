@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from .classifier import _call, classify, make_client, resolve_model
 from .fetchers.base import FetchError, Review, to_review_dicts
+from .fetchers.budget import BudgetError
 from .fetchers.search import Candidate, shortlist
 
 MAX_PICKED = 3
@@ -212,13 +213,15 @@ def compare_competitors(
         try:
             return analyse_competitor(fetch, classify_fn, entry["url"], entry.get("title", ""))
         except FetchError as exc:
-            return {"failed": True, "title": entry.get("title", ""), "url": entry["url"], "error": str(exc)}
+            return {"failed": True, "budget": isinstance(exc, BudgetError), "title": entry.get("title", ""), "url": entry["url"], "error": str(exc)}
 
     with ThreadPoolExecutor(max_workers=len(chosen) or 1) as pool:
         done = list(pool.map(one, chosen))
     rivals = [d for d in done if not d.get("failed")]
     failed = [{"title": d["title"], "url": d["url"], "error": d["error"]} for d in done if d.get("failed")]
     if not rivals:
+        if any(d.get("budget") for d in done):
+            raise BudgetError("Demo limit reached today.")
         raise FetchError(failed[0]["error"] if failed else "No competitors to compare.")
     # No own reviews (the seller skipped Bedah ulasan): show the rivals side by side, and make no statement about "you".
     you = dict(tally(own_items), title=own_title, absent=not own_items)

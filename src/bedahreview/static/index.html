@@ -522,6 +522,7 @@ const TEXT = {
     step1T: "Tempel tautan", step1D: "dari Tokopedia, TikTok Shop, atau Lazada", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
     step3T: "Kamu dapat daftar tugas", step3D: "urut, plus draf balasan siap salin",
     linkHint: "Kami membaca hingga 10 ulasan terbaru yang berisi teks. Nama pembeli tidak disimpan.", linkOpts: "Pilihan lain", trySample: "Belum punya tautan? Coba dengan contoh",
+    limitBudget: "Batas demo hari ini tercapai. Tempel ulasannya saja.", limitBudgetRival: "Batas demo hari ini tercapai. Coba lagi besok.", limitHour: "Terlalu banyak pengambilan lewat tautan dalam satu jam. Coba lagi nanti, atau tempel ulasannya.",
     fbTitle: "Cara lain: tempel ulasannya", fbSteps: ["Buka produk di marketplace, lalu buka Ulasan.", "Salin teks ulasannya.", "Tempel di bawah, satu ulasan per baris."], fbRetry: "Coba tautan lagi",
     errFetchTitle: "Ulasan dari tautan ini tidak bisa dibaca", backResults: "← Kembali ke hasil", pastedName: "Ulasan yang ditempel",
     change: "Ubah", shown: "Ditampilkan", themeDark: "Mode gelap", themeLight: "Mode terang",
@@ -600,6 +601,7 @@ const TEXT = {
     step1T: "Paste a link", step1D: "from Tokopedia, TikTok Shop or Lazada", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
     step3T: "You get a task list", step3D: "in order, with reply drafts ready to copy",
     linkHint: "We read up to 10 of the newest reviews that have text. Buyer names are not saved.", linkOpts: "More options", trySample: "No link yet? Try an example",
+    limitBudget: "Demo limit reached today. Paste the reviews instead.", limitBudgetRival: "Demo limit reached today. Try again tomorrow.", limitHour: "Too many link look-ups this hour. Try again later, or paste the reviews.",
     fbTitle: "Another way: paste the reviews", fbSteps: ["Open the product on the marketplace, then open Reviews.", "Copy the review text.", "Paste it below, one review per line."], fbRetry: "Try the link again",
     errFetchTitle: "The reviews from this link could not be read", backResults: "← Back to results", pastedName: "Pasted reviews",
     change: "Change", shown: "Showing", themeDark: "Dark mode", themeLight: "Light mode",
@@ -906,6 +908,11 @@ async function postJson(path, payload) {
   if (res.status === 401) { location.reload(); return null; }
   return { ok: res.ok, data };
 }
+function errText(data, fallback, rival) {  // the server sends a limit code; the words come from our own Bahasa / English text
+  if (data && data.limit === "budget") return tr(rival ? "limitBudgetRival" : "limitBudget");
+  if (data && data.limit === "hour") return tr("limitHour");
+  return (data && data.error) || fallback;
+}
 function pastedLinks(text) { return (text.match(/https?:\/\/[^\s<>"']+/g) || []).map((u) => ({ url: u })); }
 function rivalChosen(st) { return st.checked.map((i) => ({ url: st.candidates[i].url, title: st.candidates[i].title })).concat(pastedLinks(st.extra)).slice(0, MAX_RIVALS); }
 function rivalSpinner(title, sub) {
@@ -1069,7 +1076,7 @@ async function rivalFind(target) {
     const out = await postJson("/api/competitors/suggest", { url: t.url, title: t.title });
     if (!out || run !== rivalRun) return;
     const cands = out.ok ? out.data.candidates : [];
-    next = { step: "pick", target: t, candidates: cands, checked: cands.map((c, i) => (c.picked ? i : -1)).filter((i) => i >= 0), extra: "", error: out.ok ? "" : ((out.data && out.data.error) || tr("errGeneric", "")) };
+    next = { step: "pick", target: t, candidates: cands, checked: cands.map((c, i) => (c.picked ? i : -1)).filter((i) => i >= 0), extra: "", error: out.ok ? "" : errText(out.data, tr("errGeneric", ""), true) };
   } catch (e) {
     if (run !== rivalRun) return;
     next = { step: "pick", target: t, candidates: [], checked: [], extra: "", error: tr("errNetwork") };
@@ -1085,7 +1092,7 @@ async function rivalCompare() {
   try {
     const out = await postJson("/api/competitors/compare", { url: t.url, title: t.title, own, competitors: chosen });
     if (!out || run !== rivalRun) return;
-    next = out.ok ? { step: "result", target: t, data: out.data } : Object.assign(pick, { step: "pick", error: (out.data && out.data.error) || tr("errGeneric", "") });
+    next = out.ok ? { step: "result", target: t, data: out.data } : Object.assign(pick, { step: "pick", error: errText(out.data, tr("errGeneric", ""), true) });
   } catch (e) {
     if (run !== rivalRun) return;
     next = Object.assign(pick, { step: "pick", error: tr("errNetwork") });
@@ -1171,8 +1178,10 @@ async function send(payload, title) {
     if (!res.ok || !data) {
       show("input");
       const toPaste = data && data.fallback === "paste";
-      if (toPaste) { selectInput("paste", false); setFallback(true); }  // first: switching tabs clears the error box
-      showError((data && data.error) || tr("errGeneric", res.status), toPaste ? tr("errFetchTitle") : "");
+      const unreadable = toPaste && !data.limit;  // a daily limit is not "this link cannot be read"
+      if (toPaste) selectInput("paste", false);  // first: switching tabs clears the error box
+      if (unreadable) setFallback(true);
+      showError(errText(data, tr("errGeneric", res.status)), unreadable ? tr("errFetchTitle") : "");
       return;
     }
     render(data, true);
