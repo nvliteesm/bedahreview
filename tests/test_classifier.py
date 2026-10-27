@@ -1,5 +1,7 @@
 import copy
 import json
+import threading
+import time
 import re
 import unittest
 from types import SimpleNamespace
@@ -171,14 +173,39 @@ class ClassifyTests(unittest.TestCase):
         with self.assertRaises(ClassificationError):
             classify(self.reviews, client=StubClient("x", finish_reason="SAFETY"))
 
+    def _by_batch_client(self, many, hold=None):
+        """Answers each call with results for exactly the ids it was sent, whatever order the calls arrive in."""
+        good, state = self.good[2], {"now": 0, "peak": 0}
+        lock = threading.Lock()
+
+        class ByBatch(StubClient):
+            def generate_content(inner, model, contents, config):
+                with lock:
+                    state["now"] += 1
+                    state["peak"] = max(state["peak"], state["now"])
+                if hold:
+                    time.sleep(hold)
+                text = _sent_text({"contents": contents})
+                ids = [r["id"] for r in many if '"id": "%s"' % r["id"] in text or "'id': '%s'" % r["id"] in text or r["id"] in text.split()]
+                with lock:
+                    state["now"] -= 1
+                inner.replies = [json.dumps([dict(good, id=i) for i in ids])]
+                return StubClient.generate_content(inner, model, contents, config)
+        return ByBatch(), state
+
     def test_batches_split_by_batch_size(self):
-        many = [dict(self.reviews[2], id=str(i)) for i in range(classifier.BATCH_SIZE + 1)]
-        replies = []
-        for chunk in (many[: classifier.BATCH_SIZE], many[classifier.BATCH_SIZE :]):
-            replies.append(json.dumps([dict(self.good[2], id=r["id"]) for r in chunk]))
-        client = StubClient(*replies)
-        self.assertEqual(len(classify(many, client=client)), len(many))
+        many = [dict(self.reviews[2], id="r%d" % i) for i in range(classifier.BATCH_SIZE + 1)]
+        client, _ = self._by_batch_client(many)
+        out = classify(many, client=client)
+        self.assertEqual([r["id"] for r in out], [r["id"] for r in many])  # input order survives parallel batches
         self.assertEqual(len(client.calls), 2)
+
+    def test_parallel_batches_are_capped(self):
+        many = [dict(self.reviews[2], id="r%d" % i) for i in range(classifier.BATCH_SIZE * 5)]
+        client, state = self._by_batch_client(many, hold=0.05)
+        self.assertEqual(len(classify(many, client=client)), len(many))
+        self.assertLessEqual(state["peak"], classifier.MAX_PARALLEL)
+        self.assertGreater(state["peak"], 1)  # they really do overlap
 
     def test_transient_error_is_retried(self):
         class Overloaded(Exception):

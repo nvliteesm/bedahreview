@@ -5,6 +5,7 @@ import json
 import os
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -16,6 +17,7 @@ SCHEMA_PATH = ROOT / "prompts" / "output_schema.json"
 
 DEFAULT_MODEL = "gemini-3.5-flash-lite"
 BATCH_SIZE = 15  # reviews per API call; fake-review signals only work inside one batch
+MAX_PARALLEL = 3  # batches in flight at once: 50 reviews must finish inside the Cloud Run timeout, and a small cap keeps rate limits calm
 REQUEST_TIMEOUT_MS = 180_000  # SDK-level timeout; it did not stop a hung connection in practice
 REQUEST_DEADLINE_S = 120  # hard wall-clock cap per attempt, enforced by us
 RETRY_DELAYS_S = (2, 6)  # waits before retrying a temporary API error (503, 429, timeout)
@@ -256,8 +258,12 @@ def classify(
     blank = {r["id"] for r in reviews if not (r.get("text") or "").strip()}
     texted = [r for r in reviews if r["id"] not in blank]
     by_id: Dict[str, Dict[str, Any]] = {r["id"]: no_text_result(r) for r in reviews if r["id"] in blank}
-    for i in range(0, len(texted), BATCH_SIZE):
-        for result in _classify_batch(client, model, system, texted[i : i + BATCH_SIZE], product):
-            by_id[result["id"]] = result
+    batches = [texted[i : i + BATCH_SIZE] for i in range(0, len(texted), BATCH_SIZE)]
+    if batches:
+        with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(batches))) as pool:
+            # map keeps batch order and re-raises the first failure, as the old sequential loop did
+            for results in pool.map(lambda batch: _classify_batch(client, model, system, batch, product), batches):
+                for result in results:
+                    by_id[result["id"]] = result
     # Input order; a review whose quote could not be verified is missing from the list.
     return [by_id[r["id"]] for r in reviews if r["id"] in by_id]

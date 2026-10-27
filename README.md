@@ -57,7 +57,7 @@ optional: `★★★☆☆  Putih, M   warna tulisannya ijo`.
 ## Install on a phone (PWA)
 
 A phone needs https to install it, so the local app only installs on the same computer (Chrome's install icon).
-Hosting is not chosen yet. Android Chrome can then add a Share-menu entry; iPhone cannot (as far as we know) and uses
+The app is hosted on Google Cloud Run (see below), which gives it https. Android Chrome can add a Share-menu entry; iPhone cannot (as far as we know) and uses
 paste only (Safari > Share > Add to Home Screen to install). The Share route is untested with Shopee and Tokopedia.
 
 ## Put it online (Google Cloud Run)
@@ -74,8 +74,8 @@ Not tested here (no Docker or gcloud on this Mac): the image build and the deplo
    `printf '%s' 'A_LONG_ACCESS_CODE' | gcloud secrets create bedahreview-access-code --data-file=-`
 5. Let Cloud Run read them: grant the role `roles/secretmanager.secretAccessor` on both secrets to the service account Cloud Run uses (the default is `PROJECT_NUMBER-compute@developer.gserviceaccount.com`).
 6. Deploy from the repo folder (pick the region closest to your users; `asia-southeast2` is Jakarta, check that it is offered to you):
-   `gcloud run deploy bedahreview --source . --region asia-southeast2 --allow-unauthenticated --max-instances 1 --set-secrets GEMINI_API_KEY=gemini-api-key:latest,BEDAHREVIEW_ACCESS_CODE=bedahreview-access-code:latest`
-   `--allow-unauthenticated` is needed because the app does its own sign-in. `--max-instances 1` keeps the cost cap and the in-memory rate limits meaningful.
+   `gcloud run deploy bedahreview --source . --region asia-southeast2 --allow-unauthenticated --max-instances 1 --timeout 300 --set-secrets GEMINI_API_KEY=gemini-api-key:latest,BEDAHREVIEW_ACCESS_CODE=bedahreview-access-code:latest`
+   `--allow-unauthenticated` is needed because the app does its own sign-in. `--max-instances 1` keeps the cost cap and the in-memory rate limits meaningful. `--timeout 300` gives one analysis five minutes; 50 reviews are read in batches of 15, up to 3 at a time.
 7. Open the URL it prints, sign in, and install it on your phone.
 
 The rate limits live in memory, so they reset when the instance restarts. That is fine for a demo with one instance.

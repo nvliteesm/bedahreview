@@ -1,5 +1,13 @@
 .env
+.env.*
 .git
 .venv
 venv
 __pycache__
+*.pyc
+.DS_Store
+eval/
+fetch_cache/
+tests/
+samples/
+scripts/
