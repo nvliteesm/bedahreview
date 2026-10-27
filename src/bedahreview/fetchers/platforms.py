@@ -21,6 +21,7 @@ from urllib.parse import urljoin, urlsplit
 from .apify_shopee import _per_star_limit
 from .base import COMPLAINT_STARS, Fetcher, FetchError, LinkError, Review, check_mode, clamp_limit
 from .cache import CachedFetcher
+from .search import Candidate, search_products
 
 TOKOPEDIA_ACTOR = "shahidirfan/Tokopedia-Reviews-Scraper"
 LAZADA_ACTOR = "zen-studio/lazada-reviews-scraper"
@@ -299,6 +300,7 @@ class LinkRouter(Fetcher):
 
             client = ApifyClient(token)
         actors = _Actors(client, max_cost_usd)
+        self._actors = actors
         keep = lambda url: url  # links are checked by check_link before they reach a cache
         self._caches = {
             "tokopedia": CachedFetcher(TokopediaFetcher(actors), cache_dir, keep),
@@ -329,3 +331,7 @@ class LinkRouter(Fetcher):
         self._local.platform = platform
         self._local.cache = self._caches[platform]
         return self._caches[platform].fetch_reviews(clean, limit, mode)
+
+    def search(self, platform: str, query: str) -> List[Candidate]:
+        """Competing listings for a search phrase (paid actor run, spend-capped, never cached)."""
+        return search_products(self._actors, platform, query)

@@ -98,6 +98,14 @@ def validate_results(reviews: List[Dict[str, Any]], results: List[Any]) -> List[
     return problems
 
 
+def make_client() -> Any:
+    from google import genai
+    from google.genai import types
+
+    # reads GEMINI_API_KEY (or GOOGLE_API_KEY) from the environment
+    return genai.Client(http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS))
+
+
 def resolve_model(model: Optional[str] = None) -> str:
     return model or os.environ.get("BEDAHREVIEW_MODEL", DEFAULT_MODEL)
 
@@ -240,12 +248,7 @@ def classify(
         raise ValueError("review ids must be unique")
     reviews = [dict(r, id=str(r["id"])) for r in reviews]
 
-    if client is None:
-        from google import genai
-        from google.genai import types
-
-        # reads GEMINI_API_KEY (or GOOGLE_API_KEY) from the environment
-        client = genai.Client(http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS))
+    client = client or make_client()
     model = resolve_model(model)
     system = build_system_prompt()
 

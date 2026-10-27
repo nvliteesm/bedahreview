@@ -33,9 +33,11 @@ from typing import Any, Callable, Deque, Dict, List, Optional
 from urllib.parse import parse_qs
 
 from .classifier import ClassificationError, classify, resolve_model
+from .competitors import suggest_competitors
 from .env import has_api_key, load_dotenv
 from .fetchers import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, get_fetcher, product_title_from_url, to_review_dicts
 from .fetchers.base import check_mode, check_shopee_product_url, clamp_limit
+from .fetchers.search import SEARCH_PLATFORMS
 from .parse import parse_reviews
 
 STATIC = Path(__file__).resolve().parent / "static"
@@ -175,6 +177,7 @@ def build_response(
 
 class Handler(BaseHTTPRequestHandler):
     classify_fn: Callable[..., List[Dict[str, Any]]] = staticmethod(classify)  # replaced in tests
+    suggest_fn: Callable[..., Dict[str, Any]] = staticmethod(suggest_competitors)  # replaced in tests
     fetcher: Optional[Fetcher] = None  # set when FETCHER=apify; None keeps the link box switched off
     access_code: Optional[str] = None  # set in public mode: visitors must sign in with it
     public = False  # public mode: any Host header is fine, cookies are Secure, per-visitor limits apply
@@ -276,6 +279,45 @@ class Handler(BaseHTTPRequestHandler):
         source = {"kind": "url", "url": url, "title": title[:MAX_PRODUCT_CHARS], "mode": mode, "count": len(fetched), "cached": bool(getattr(fetcher, "last_from_cache", False))}
         return to_review_dicts(fetched), source
 
+    def _suggest(self) -> None:
+        """Competitor analysis, step 1: from the seller's own link, suggest comparable products to confirm. Paid search, so it counts as an analysis."""
+        if not self._authed():
+            return self._json(401, {"error": "Please sign in again.", "login": True})
+        if self.use_limiter and not self.use_limiter.take(self._client()):
+            return self._json(429, {"error": "Too many analyses this hour. Try again later."})
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            if "application/json" not in (self.headers.get("Content-Type") or "") or not 0 < length <= MAX_BODY_BYTES:
+                raise ValueError
+            body = json.loads(self.rfile.read(length).decode("utf-8"))
+            url, title = body.get("url", ""), body.get("title", "")
+            if not isinstance(url, str) or not isinstance(title, str):
+                raise ValueError
+        except (ValueError, UnicodeDecodeError, AttributeError):
+            return self._json(400, {"error": "Body must be JSON like {\"url\": \"...\", \"title\": \"...\"}"})
+        fetcher = type(self).fetcher
+        search = getattr(fetcher, "search", None)
+        if search is None:
+            return self._json(400, {"error": "Finding competitors needs the link box. Paste competitor links instead.", "fallback": "paste"})
+        title = " ".join(title.split())[:MAX_PRODUCT_CHARS]
+        if not title:
+            return self._json(400, {"error": "The product title is missing, so competitors cannot be searched."})
+        try:
+            url = fetcher.check_link(url)
+        except FetchError as exc:
+            return self._json(400, {"error": str(exc)})
+        platform = fetcher.last_platform
+        if platform not in SEARCH_PLATFORMS:
+            return self._json(400, {"error": "Finding competitors is not available for this platform yet. Paste competitor links instead.", "fallback": "paste"})
+        try:
+            result = type(self).suggest_fn(search, platform, url, title)
+        except FetchError as exc:
+            return self._json(502, {"error": "%s You can paste competitor links instead." % exc, "fallback": "paste"})
+        except Exception as exc:  # model or network trouble: say what happened without a traceback
+            sys.stderr.write("suggest failed: %s\n" % type(exc).__name__)
+            return self._json(502, {"error": "Could not look for competitors (%s). You can paste competitor links instead." % type(exc).__name__, "fallback": "paste"})
+        self._json(200, result)
+
     # -- routes ----------------------------------------------------------
     def do_GET(self) -> None:
         if not self._host_ok():
@@ -300,6 +342,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(403, {"error": "Host not allowed"})
         if self.path == "/login":
             return self._login()
+        if self.path == "/api/competitors/suggest":
+            return self._suggest()
         if self.path != "/api/classify":
             return self._json(404, {"error": "Not found"})
         if not self._authed():
@@ -354,6 +398,7 @@ class Handler(BaseHTTPRequestHandler):
 def make_server(
     port: int = 8000,
     classify_fn: Optional[Callable[..., Any]] = None,
+    suggest_fn: Optional[Callable[..., Any]] = None,
     fetcher: Optional[Fetcher] = None,
     access_code: Optional[str] = None,
     public: bool = False,
@@ -362,6 +407,8 @@ def make_server(
     handler = type("BoundHandler", (Handler,), {})
     if classify_fn is not None:
         handler.classify_fn = staticmethod(classify_fn)
+    if suggest_fn is not None:
+        handler.suggest_fn = staticmethod(suggest_fn)
     handler.fetcher = fetcher
     handler.access_code = access_code or None
     handler.public = public
