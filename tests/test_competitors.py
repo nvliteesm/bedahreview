@@ -418,6 +418,12 @@ class CompareTests(unittest.TestCase):
         self.assertEqual(out["you"]["complaints"], {"Sizing & fit": 2})
         self.assertNotIn("text", json.dumps(out["competitors"]))  # quotes only, never whole reviews
 
+    def test_without_own_reviews_there_is_no_statement_about_you(self):
+        out = compare_competitors(self.fetch, self.classify_fn, [], "", [{"url": "https://ok", "title": ""}])
+        self.assertTrue(out["you"]["absent"])
+        self.assertEqual(out["insights"], [])
+        self.assertEqual(out["competitors"][0]["complaints"], {"Sizing & fit": 1})
+
     def test_every_rival_failing_is_an_error(self):
         with self.assertRaises(FetchError):
             compare_competitors(self.fetch, self.classify_fn, [item("Sizing & fit")], "x", [{"url": "https://bad", "title": ""}])
@@ -456,10 +462,15 @@ class CompareEndpointTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(self.seen[0][2], [{"url": rival, "title": "Kaos B"}])
 
+    def test_comparing_without_own_reviews_is_allowed(self):
+        rival = "https://www.tokopedia.com/toko-b/kaos-b-1"
+        for body in ({"own": [], "competitors": [{"url": rival}]}, {"competitors": [{"url": rival}]}):
+            self.assertEqual(self.post(body)[0], 200, body)
+
     def test_bad_requests_are_clean_400s_before_any_paid_run(self):
         own = [{"theme": "Sizing & fit", "bucket": "fix", "fake": False}]
-        for body in ({"own": own, "competitors": []}, {"own": [], "competitors": [{"url": TOKO}]}, {"own": own, "competitors": [{"url": TOKO}] * 4},
-                     {"own": own, "competitors": [{"url": "https://shopee.co.id/Kaos-i.450430857.27207810374"}]}, {"competitors": [{"url": TOKO}]},
+        for body in ({"own": own, "competitors": []}, {"own": own, "competitors": [{"url": TOKO}] * 4},
+                     {"own": own, "competitors": [{"url": "https://shopee.co.id/Kaos-i.450430857.27207810374"}]},
                      {"url": TOKO, "own": own, "competitors": [{"url": TOKO}]}):
             self.assertEqual(self.post(body)[0], 400, body)
         self.assertEqual(self.seen, [])

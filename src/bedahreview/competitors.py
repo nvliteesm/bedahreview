@@ -220,6 +220,7 @@ def compare_competitors(
     failed = [{"title": d["title"], "url": d["url"], "error": d["error"]} for d in done if d.get("failed")]
     if not rivals:
         raise FetchError(failed[0]["error"] if failed else "No competitors to compare.")
-    you = dict(tally(own_items), title=own_title)
+    # No own reviews (the seller skipped Bedah ulasan): show the rivals side by side, and make no statement about "you".
+    you = dict(tally(own_items), title=own_title, absent=not own_items)
     rows = comparison_rows(you, rivals)
-    return {"you": you, "competitors": rivals, "failed": failed, "rows": rows, "insights": insights(rows, rivals)}
+    return {"you": you, "competitors": rivals, "failed": failed, "rows": rows, "insights": [] if you["absent"] else insights(rows, rivals)}

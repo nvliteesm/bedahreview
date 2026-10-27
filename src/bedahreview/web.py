@@ -334,8 +334,8 @@ class Handler(BaseHTTPRequestHandler):
             if "application/json" not in (self.headers.get("Content-Type") or "") or not 0 < length <= MAX_BODY_BYTES:
                 raise ValueError
             body = json.loads(self.rfile.read(length).decode("utf-8"))
-            own = [{"theme": i["theme"], "bucket": i["bucket"], "fake": bool(i["fake"])} for i in body["own"]]
-            if not own or len(own) > MAX_REVIEWS or not all(isinstance(i["theme"], str) and isinstance(i["bucket"], str) for i in own):
+            own = [{"theme": i["theme"], "bucket": i["bucket"], "fake": bool(i["fake"])} for i in body.get("own", [])]
+            if len(own) > MAX_REVIEWS or not all(isinstance(i["theme"], str) and isinstance(i["bucket"], str) for i in own):
                 raise ValueError
             title = " ".join(str(body.get("title") or "").split())[:MAX_PRODUCT_CHARS]
             wanted = [{"url": str(c["url"]), "title": " ".join(str(c.get("title") or "").split())[:MAX_PRODUCT_CHARS]} for c in body["competitors"]]

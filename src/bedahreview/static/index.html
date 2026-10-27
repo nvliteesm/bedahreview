@@ -22,14 +22,23 @@
   --font-ui: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --gutter: 16px; --radius: 14px;
+  --bar: #ffffff; --shadow: none; --rival: #4338ca; --rival-soft: #eceafc;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --quote: #222a26;
     --accent: #4fc2a8; --on-accent: #0b1411; --accent-soft: #163a33;
     --fix: #f0a24a; --fix-soft: #33261a; --fight: #f27088; --fight-soft: #351c22;
     --ignore: #a3aca8; --ignore-soft: #242b28; --check: #a5b4fc; --keep: #86efac; --keep-soft: #12281a;
+    --bar: #1a211e; --rival: #a5b4fc; --rival-soft: #232647;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --quote: #222a26;
+  --accent: #4fc2a8; --on-accent: #0b1411; --accent-soft: #163a33;
+  --fix: #f0a24a; --fix-soft: #33261a; --fight: #f27088; --fight-soft: #351c22;
+  --ignore: #a3aca8; --ignore-soft: #242b28; --check: #a5b4fc; --keep: #86efac; --keep-soft: #12281a;
+  --bar: #1a211e; --rival: #a5b4fc; --rival-soft: #232647;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -46,13 +55,17 @@ svg.i { width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: n
 h2[tabindex="-1"]:focus, .error:focus { outline: none; }
 
 /* ---------- frame ---------- */
-.topbar { position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 1px solid var(--line);
+.topbar { position: sticky; top: 0; z-index: 10; background: var(--bar); border-bottom: 1px solid var(--line);
   padding: env(safe-area-inset-top) max(var(--gutter), env(safe-area-inset-right)) 0 max(var(--gutter), env(safe-area-inset-left)); }
 .topbar-in { max-width: 480px; margin: 0 auto; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.brand { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.01em; }
-.brand span { color: var(--accent); }
-.lang { min-height: 44px; min-width: 64px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
-.lang b { color: var(--accent); }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; }
+.brand .wm span { color: var(--accent); }
+.logo { width: 30px; height: 30px; color: var(--ink); flex: none; }
+.tools { display: flex; align-items: center; gap: 8px; }
+.lang { display: inline-flex; gap: 2px; min-height: 44px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; align-items: center; }
+.lang .o { padding: 6px 14px; border-radius: 999px; }
+.lang .o.on { background: var(--ink); color: var(--surface); }
+.theme { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
 main { max-width: 480px; margin: 0 auto; display: grid; gap: 14px; align-content: start;
   padding: 16px max(var(--gutter), env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left)); }
 .bottombar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); border-top: 1px solid var(--line);
@@ -114,6 +127,7 @@ details pre { margin: 0 0 4px; padding: 12px; background: var(--quote); border-r
 .board button[aria-selected="true"][data-b="keep"] { background: var(--keep-soft); border-color: var(--keep); }
 .board button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .panel, .stack { display: grid; gap: 12px; }
+.board button .ic { display: none; }
 .board button.rival { grid-column: 1 / -1; min-height: 56px; grid-auto-flow: column; justify-content: center; gap: 10px; }
 .board button.rival .n { font-size: 1rem; color: var(--check); }
 .board button[aria-selected="true"][data-b="rival"] { background: var(--accent-soft); border-color: var(--check); }
@@ -149,6 +163,138 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
 .ignore-list li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 0.92rem; overflow-wrap: anywhere; }
 .foot { font-size: 0.8rem; color: var(--muted); }
 
+
+/* ---------- shared pieces (new) ---------- */
+.workspace { display: block; }
+.col-2, .dsk { display: none; }
+.demo { margin-left: 4px; }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.card-head .chips { justify-content: flex-end; }
+.lbl-b { font-weight: 800; color: var(--ink); }
+.actions { display: grid; gap: 10px; }
+.plain { border: 0; background: none; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; padding: 0 0 0 4px; min-height: 36px; }
+.plain.strong { padding: 0; }
+.opts summary { font-size: 0.9rem; }
+.fallback { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg); display: grid; gap: 8px; }
+.error strong { display: block; font-size: 1.05rem; margin-bottom: 2px; }
+.error > div { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.legend { padding: 0 2px; }
+#legend { display: grid; gap: 6px; font-size: 0.9rem; color: var(--muted); padding-bottom: 6px; }
+#legend b { margin-right: 6px; }
+.stepper { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 0; padding: 6px; list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
+.stepper li { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-size: 0.88rem; font-weight: 600; color: var(--muted); min-width: 0; }
+.stepper .dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line); font-size: 0.78rem; flex: none; }
+.stepper li.on { color: var(--ink); } .stepper li.on .dot { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.stepper li.done .dot { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.stepper .dot svg { width: 14px; height: 14px; }
+.rcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 12px; }
+.rcard h2 { font-size: 1.25rem; }
+.ownbox { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; min-width: 0; }
+.ownbox small { display: block; color: var(--muted); font-size: 0.78rem; }
+.ownbox span { min-width: 0; overflow-wrap: anywhere; }
+.btn.pill { border-radius: 999px; background: var(--surface); color: var(--accent); border-color: var(--line); min-height: 40px; padding: 0 16px; font-size: 0.88rem; }
+.cand.on { border: 2px solid var(--accent); padding: 11px; }
+.cand .chips { margin-top: 4px; }
+.cand .chip { color: var(--ink); background: var(--bg); }
+.group-lbl { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+.ins { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; }
+.ins .big { display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ins .big b { font-size: 2rem; line-height: 1; font-weight: 800; }
+.ins .big i { font-style: normal; font-size: 0.8rem; color: var(--muted); }
+.ins .bad { color: var(--fight); font-weight: 800; } .ins .good { color: var(--keep); font-weight: 800; }
+.dots { display: flex; gap: 3px; justify-content: center; min-height: 8px; margin-bottom: 2px; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.dots.bad i { background: var(--fight); } .dots.good i { background: var(--keep); }
+table.cmp td.top { font-weight: 800; }
+table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem; }
+.dnote { display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.dnote p { font-size: 0.9rem; overflow-wrap: anywhere; }
+.dnote code { display: block; font: 0.78rem var(--font-mono); color: var(--muted); }
+.tag { display: inline-block; margin-right: 6px; padding: 0 9px; border-radius: 999px; border: 1px solid currentColor; font-size: 0.72rem; font-weight: 700; }
+.tag.small { color: var(--fix); background: var(--fix-soft); } .tag.fail { color: var(--fight); background: var(--fight-soft); } .tag.skip { color: var(--muted); background: var(--ignore-soft); }
+.pcard-more summary { font-size: 0.85rem; }
+.drafts { display: grid; gap: 12px; }
+.ins.bad .big b:first-child { color: var(--fight); } .ins.good .big b:first-child { color: var(--keep); }
+.cand .meta { display: block; }
+.cmp-title { padding: 14px 10px 4px; }
+#legend .lg-fix { color: var(--fix); } #legend .lg-fight { color: var(--fight); } #legend .lg-ignore { color: var(--ignore); } #legend .lg-keep { color: var(--keep); }
+
+@media (min-width: 1100px) {
+  :root { --radius: 22px; --bar: #e6eae7; --shadow: 0 1px 2px rgba(23, 32, 28, 0.05), 0 8px 24px rgba(23, 32, 28, 0.04); }
+  :root[data-theme="dark"] { --bar: #1a211e; --shadow: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bar: #1a211e; --shadow: none; } }
+  html, body { height: 100%; }
+  body { overflow: hidden; display: flex; flex-direction: column; }
+  .topbar { position: static; flex: none; padding: 0 36px; }
+  .topbar-in { max-width: none; min-height: 72px; }
+  .workspace { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; }
+  .col { min-width: 0; overflow-y: auto; padding: 28px 36px 56px; }
+  main.col { max-width: none; margin: 0; gap: 18px; }
+  .col-2 { display: block; border-left: 2px solid var(--line); }
+  .bottombar, .mob { display: none !important; }
+  .dsk { display: block; }
+  .dsk.f:not([hidden]) { display: flex; } .dsk.g:not([hidden]) { display: grid; } .dsk.i:not([hidden]) { display: inline-flex; }
+  .fhead { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+  main .fhead { margin-bottom: 0; }
+  .ftile { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); flex: none; }
+  .ftile.rival { background: var(--rival-soft); color: var(--rival); }
+  .ftile svg { width: 22px; height: 22px; }
+  .ftext { flex: 1 1 250px; min-width: 0; }
+  .eyebrow { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; color: var(--accent); }
+  .eyebrow.rival { color: var(--rival); }
+  .fhead h1 { margin: 0; font-size: 1.8rem; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; }
+  .fside { display: flex; align-items: center; gap: 8px; flex: 0 1 auto; max-width: 100%; margin-left: auto; }
+  .pchip { display: flex; align-items: center; gap: 6px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 8px 6px 16px; font-size: 0.92rem; box-shadow: var(--shadow); }
+  .pchip b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pchip span { white-space: nowrap; color: var(--muted); }
+  .steps { grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 0; padding: 0; list-style: none; }
+  .steps li { display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); font-size: 0.9rem; color: var(--muted); }
+  .steps b { display: block; color: var(--ink); }
+  .steps .num { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 800; flex: none; }
+  .card-box, .card, .rcard, .ins, .dnote { box-shadow: var(--shadow); }
+  .card-box { padding: 24px; gap: 16px; }
+  .rcard { padding: 24px; gap: 14px; background-image: linear-gradient(160deg, var(--rival-soft), transparent 45%); }
+  .rcard h2 { font-size: 1.5rem; letter-spacing: -0.01em; }
+  .seg { display: inline-grid; grid-auto-columns: auto; justify-self: start; border-radius: 999px; padding: 5px; }
+  .seg button { border-radius: 999px; padding: 0 22px; }
+  .seg button[aria-selected="true"] { background: var(--ink); color: var(--surface); box-shadow: none; }
+  .btn { border-radius: 999px; min-height: 52px; }
+  .btn.primary { width: auto; padding: 0 30px; justify-self: start; }
+  .actions { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  #paste { min-height: 160px; }
+  .error { border-radius: var(--radius); padding: 18px 20px; order: -1; }
+  .error strong { font-size: 1.25rem; }
+  .board { gap: 14px; }
+  .board button, .board button.main { grid-template-columns: auto 1fr auto; grid-template-areas: "ic l badge" "n n n"; justify-items: start; align-items: center; column-gap: 12px; row-gap: 8px; min-height: 118px; padding: 16px 18px; border-radius: var(--radius); box-shadow: var(--shadow); text-align: left; }
+  .board button .ic { grid-area: ic; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--ignore-soft); color: var(--ignore); }
+  .board button .ic svg { width: 17px; height: 17px; }
+  .board button[data-b="fix"] .ic { background: var(--fix-soft); color: var(--fix); } .board button[data-b="fight"] .ic { background: var(--fight-soft); color: var(--fight); } .board button[data-b="keep"] .ic { background: var(--keep-soft); color: var(--keep); }
+  .board .l, .board button.main .l { grid-area: l; font-size: 1.05rem; color: var(--ink); }
+  .board .n, .board button.main .n { grid-area: n; display: flex; align-items: baseline; gap: 10px; font-size: 2.3rem; }
+  .board .n::after { content: attr(data-d); font-size: 0.92rem; font-weight: 500; color: var(--muted); }
+  .board button[aria-selected="true"]::after { content: attr(data-shown); grid-area: badge; font-size: 0.75rem; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 2px 12px; }
+  .board button[aria-selected="true"] { border-width: 2px; padding: 15px 17px; }
+  .phead { font-size: 1.5rem; line-height: 1.2; font-weight: 800; letter-spacing: -0.01em; }
+  .lead { color: var(--muted); margin-top: -8px; }
+  .panel { gap: 14px; }
+  .card { border-top: 1px solid var(--line); padding: 20px 22px; }
+  .callout { font-weight: 500; } .callout b { font-weight: 800; }
+  .card h3 { font-size: 1.15rem; }
+  .why b { color: var(--ink); }
+  blockquote { border-left-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font: 0.92rem/1.5 var(--font-mono); }
+  blockquote .src { font-size: 0.72rem; }
+  .drafts { display: grid; gap: 12px; }
+  .drafts .draft { display: none; }
+  .drafts[data-active="side"] .draft[data-k="side"], .drafts[data-active="chat"] .draft[data-k="chat"], .drafts[data-active="public"] .draft[data-k="public"], .drafts[data-active="report"] .draft[data-k="report"] { display: block; }
+  #feature2 .stack { gap: 14px; }
+  .cmp-wrap { border-radius: var(--radius); box-shadow: var(--shadow); }
+  table.cmp { font-size: 0.95rem; }
+}
+@media print {
+  body { display: block; height: auto; overflow: visible; }
+  .workspace { display: block; } .col { overflow: visible; padding: 0; }
+  #feature2, .fhead, .steps, .legend { display: none !important; }
+}
 @media (pointer: fine) and (min-width: 481px) { main { padding-top: 24px; } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } * { transition-duration: 0.01ms !important; } }
 @media print {
@@ -164,23 +310,74 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand">Bedah<span>Review</span></div>
-    <button class="lang" id="lang" type="button" aria-label="Bahasa / Language"></button>
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="13" cy="13" r="9" fill="none" stroke="currentColor" stroke-width="3"/><path d="M20 20l8 8" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/><path d="M13 8.2l1.5 3.1 3.4.5-2.5 2.4.6 3.4-3-1.6-3 1.6.6-3.4-2.5-2.4 3.4-.5z" fill="var(--accent)"/></svg>
+      <span class="wm">bedah<span>review</span></span>
+    </div>
+    <div class="tools">
+      <button class="lang" id="lang" type="button" aria-label="Bahasa / Language"></button>
+      <button class="theme" id="theme" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="theme-icon" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+    </div>
   </div>
 </header>
 
-<main id="main">
+<div class="workspace">
+<main id="main" class="col col-1">
+
+  <div class="fhead dsk f">
+    <span class="ftile" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 13l2 2 4-4"/></svg></span>
+    <div class="ftext"><p class="eyebrow" data-i18n="f1Eyebrow"></p><h1 id="f1-h" data-i18n="f1Title"></h1><p class="muted" data-i18n="f1Sub"></p></div>
+    <div class="fside">
+      <div class="pchip" id="pchip" hidden><b id="pchip-name"></b><span id="pchip-meta"></span><button class="plain" id="pchip-change" type="button"></button></div>
+      <button class="btn ghost" id="print-d" type="button" hidden></button>
+    </div>
+  </div>
+
+  <ol class="steps dsk g" id="view-steps">
+    <li><span class="num">1</span><div><b data-i18n="step1T"></b><span data-i18n="step1D"></span></div></li>
+    <li><span class="num">2</span><div><b data-i18n="step2T"></b><span data-i18n="step2D"></span></div></li>
+    <li><span class="num">3</span><div><b data-i18n="step3T"></b><span data-i18n="step3D"></span></div></li>
+  </ol>
 
   <!-- input -->
   <section id="view-input" aria-label="Ulasan baru" data-i18n-label="newReviews">
+    <button class="plain dsk" id="back-results" type="button" hidden></button>
     <div class="card-box">
       <div class="seg" role="tablist" id="intabs">
+        <button role="tab" id="intab-link" aria-controls="in-link" aria-selected="false" tabindex="-1" type="button" data-t="link" hidden><span data-i18n="tabLink"></span> <span class="chip fix demo">Demo</span></button>
         <button role="tab" id="intab-paste" aria-controls="in-paste" aria-selected="true" type="button" data-t="paste" data-i18n="tabPaste"></button>
         <button role="tab" id="intab-share" aria-controls="in-share" aria-selected="false" tabindex="-1" type="button" data-t="share" data-i18n="tabShare"></button>
-        <button role="tab" id="intab-link" aria-controls="in-link" aria-selected="false" tabindex="-1" type="button" data-t="link" hidden><span data-i18n="tabLink"></span> <span class="chip fix">Demo</span></button>
+      </div>
+
+      <div id="in-link" role="tabpanel" aria-labelledby="intab-link" style="display:grid;gap:12px" hidden>
+        <div class="callout warn mob" data-i18n="linkDemo"></div>
+        <label class="field" for="url"><span data-i18n="linkLabel"></span>
+          <input id="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" data-i18n-ph="linkPh" placeholder="It supports Tokopedia, Lazada, TikTok Shop">
+        </label>
+        <p class="small muted dsk" data-i18n="linkHint"></p>
+        <details class="opts">
+          <summary data-i18n="linkOpts"></summary>
+          <div class="row" style="padding-bottom:8px">
+            <label class="fld" for="mode" style="flex:1 1 150px"><span data-i18n="modeLabel"></span>
+              <select id="mode"><option value="complaints" data-i18n="modeComplaints"></option><option value="latest" data-i18n="modeLatest"></option></select>
+            </label>
+            <label class="fld" for="limit" style="flex:0 0 96px"><span data-i18n="limitLabel"></span>
+              <input id="limit" type="number" min="1" max="20" value="10" inputmode="numeric">
+            </label>
+          </div>
+        </details>
+        <div class="actions">
+          <button class="btn primary" id="fetch" type="button" data-i18n="fetchRun"></button>
+          <button class="plain strong dsk i" id="try-sample" type="button" data-i18n="trySample"></button>
+        </div>
+        <p class="small muted" data-i18n="linkNote"></p>
       </div>
 
       <div id="in-paste" role="tabpanel" aria-labelledby="intab-paste" style="display:grid;gap:12px">
+        <div class="fallback" id="fallback" hidden>
+          <h3 data-i18n="fbTitle"></h3>
+          <ol class="steps-list" id="fb-steps"></ol>
+        </div>
         <p class="muted" data-i18n="pasteHint"></p>
         <div class="callout" id="shared-note" hidden></div>
         <label class="field" for="product"><span data-i18n="productLabel"></span>
@@ -195,6 +392,7 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
         </details>
         <button class="btn primary" id="run" type="button" data-i18n="run"></button>
         <div class="row">
+          <button class="btn ghost" id="fb-retry" type="button" hidden data-i18n="fbRetry"></button>
           <button class="btn ghost" id="sample" type="button" data-i18n="sample"></button>
           <button class="btn ghost" id="clear" type="button" data-i18n="clear"></button>
         </div>
@@ -208,26 +406,9 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
         <button class="btn ghost" id="install" type="button" hidden data-i18n="install"></button>
       </div>
 
-      <div id="in-link" role="tabpanel" aria-labelledby="intab-link" style="display:grid;gap:12px" hidden>
-        <div class="callout warn" data-i18n="linkDemo"></div>
-        <label class="field" for="url"><span data-i18n="linkLabel"></span>
-          <input id="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" data-i18n-ph="linkPh" placeholder="It supports Tokopedia, Lazada, TikTok Shop">
-        </label>
-        <div class="row">
-          <label class="fld" for="mode" style="flex:1 1 150px"><span data-i18n="modeLabel"></span>
-            <select id="mode"><option value="complaints" data-i18n="modeComplaints"></option><option value="latest" data-i18n="modeLatest"></option></select>
-          </label>
-          <label class="fld" for="limit" style="flex:0 0 96px"><span data-i18n="limitLabel"></span>
-            <input id="limit" type="number" min="1" max="20" value="10" inputmode="numeric">
-          </label>
-        </div>
-        <button class="btn primary" id="fetch" type="button" data-i18n="fetchRun"></button>
-        <p class="small muted" data-i18n="linkNote"></p>
-      </div>
-
       <div class="error" id="error" role="alert" tabindex="-1" hidden>
         <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-        <span id="error-text"></span>
+        <div><strong id="error-title" hidden></strong><span id="error-text"></span></div>
       </div>
     </div>
   </section>
@@ -242,7 +423,7 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
 
   <!-- results -->
   <section id="view-results" hidden aria-labelledby="results-h" style="display:grid;gap:12px">
-    <div class="res-head">
+    <div class="res-head mob">
       <div>
         <h2 id="results-h" tabindex="-1"></h2>
         <p class="small muted" id="summary"></p>
@@ -255,12 +436,25 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
       <button class="btn ghost" id="rival-ask-btn" type="button"></button>
     </div>
     <div class="board" id="tabs" role="tablist"></div>
+    <details class="legend dsk">
+      <summary data-i18n="legendSummary"></summary>
+      <div id="legend"></div>
+    </details>
     <div id="panels"></div>
     <p class="foot" id="foot"></p>
   </section>
 
   <span class="vh" id="toast" role="status" aria-live="polite"></span>
 </main>
+
+<aside id="feature2" class="col col-2" aria-labelledby="f2-h">
+  <div class="fhead">
+    <span class="ftile rival" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg></span>
+    <div class="ftext"><p class="eyebrow rival" data-i18n="f2Eyebrow"></p><h1 id="f2-h" data-i18n="f2Title"></h1><p class="muted" data-i18n="f2Sub"></p></div>
+  </div>
+  <div id="rival-home" class="stack"></div>
+</aside>
+</div>
 
 <nav class="bottombar" aria-label="Menu">
   <div class="bottombar-in">
@@ -299,7 +493,7 @@ const TEXT = {
     fightRule: "Buktikan penyebabnya, ajukan klaim ke kurir, dan balas di publik. Ini bukan cara menghapus ulasan: Shopee hanya menghapus ulasan untuk alasan tertentu.",
     ignoreRule: "Bintang tanpa teks atau komentar tanpa isi. Dihitung, tidak dianalisis.",
     chipOf: "%s dari %s keluhan", chipCourier: "Kurir? Cek dulu", chipCheck: "Cek sendiri", chipFake: "Diduga palsu", chipLow: "Keyakinan rendah",
-    dFix: "Saran perbaikan", dCheckSide: "Cek di sisi toko", dChat: "Chat ke pembeli", dPublic: "Balasan publik", dReport: "Teks laporan ulasan",
+    dFix: "Yang bisa dilakukan", dCheckSide: "Cek di sisi toko", dChat: "Chat ke pembeli", dPublic: "Balasan publik", dReport: "Teks laporan ulasan",
     copy: "Salin", copied: "Tersalin", selectIt: "Teks dipilih, salin manual", copiedAnn: "Disalin: %s",
     fullReview: "Ulasan lengkap", noText: "(tanpa teks)",
     emptyFix: "Tidak ada keluhan yang bisa kamu perbaiki di sini.", emptyFight: "Tidak ada ulasan yang perlu ditanggapi.", emptyIgnore: "Tidak ada ulasan yang diabaikan.",
@@ -318,11 +512,38 @@ const TEXT = {
     rivalNone: "Tidak ada produk yang jelas sebanding. Tempel tautan pesaing di bawah.", rivalPaste: "Atau tempel tautan pesaing (satu per baris)",
     rivalGo: "Bandingkan", rivalCost: "perkiraan biaya ±Rp%s", rivalNeedOne: "Pilih atau tempel minimal satu pesaing.", rivalMax: "Maksimal 3 pesaing.",
     rivalComparing: "Membandingkan ulasan…", rivalCompareSub: "Mengambil ulasan tiap toko lalu membedahnya. Sekitar 30-90 detik.",
-    rivalSample: "Contoh kecil: sekitar 7 ulasan per toko (4 keluhan, 3 terbaru), bukan seluruh pasar. Angka adalah jumlah ulasan, bukan persen. Ulasan pesaing tidak disimpan.",
+    rivalSampleHead: "Contoh kecil:", rivalSampleBody: "sekitar 7 ulasan per toko (4 keluhan, 3 terbaru), bukan seluruh pasar. Angka adalah jumlah ulasan, bukan persen. Ulasan pesaing tidak disimpan.",
     rivalFake: "%s ulasan pesaing diduga palsu dan tidak dihitung.", rivalFailed: "Tidak bisa diambil: %s Layanan pengambil ulasan gagal, atau toko ini belum punya ulasan. Coba lagi.", rivalYou: "Kamu", rivalComplaints: "Keluhan", rivalPraise: "Pujian",
     rivalWorse: "Keluhan “%s”: %s di produkmu, di pesaing terbaik %s.", rivalOpp: "%s kena %s keluhan “%s” (kamu: %s). Peluang untuk menonjol.",
     rivalPraiseGap: "Pembeli lebih sering memuji “%s” di %s (%s, kamu: %s).", rivalNoInsight: "Belum ada selisih yang jelas. Contohnya masih kecil.", rivalSmall: "%s: kurang dari 5 ulasan yang bisa dipercaya, jadi tidak dipakai untuk kesimpulan.",
     rivalQuotes: "Kutipan ulasan", rivalAgain: "Mulai ulang", rivalShop: "Toko %s", rivalSold: "%s+ terjual",
+    f1Eyebrow: "FITUR 1", f1Title: "Bedah ulasan", f1Sub: "Pilah ulasan produkmu jadi daftar tindakan",
+    f2Eyebrow: "FITUR 2", f2Title: "Analisis pesaing", f2Sub: "Bandingkan keluhan & pujian dengan toko lain",
+    step1T: "Tempel tautan", step1D: "dari Tokopedia, TikTok Shop, atau Lazada", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
+    step3T: "Kamu dapat daftar tugas", step3D: "urut, plus draf balasan siap salin",
+    linkHint: "Kami membaca hingga 10 ulasan terbaru yang berisi teks. Nama pembeli tidak disimpan.", linkOpts: "Pilihan lain", trySample: "Belum punya tautan? Coba dengan contoh",
+    fbTitle: "Cara lain: tempel ulasannya", fbSteps: ["Buka produk di marketplace, lalu buka Ulasan.", "Salin teks ulasannya.", "Tempel di bawah, satu ulasan per baris."], fbRetry: "Coba tautan lagi",
+    errFetchTitle: "Ulasan dari tautan ini tidak bisa dibaca", backResults: "← Kembali ke hasil", pastedName: "Ulasan yang ditempel",
+    change: "Ubah", shown: "Ditampilkan", themeDark: "Mode gelap", themeLight: "Mode terang",
+    boardFix: "ulasan bisa kamu perbaiki sendiri", boardFight: "ulasan perlu kamu balas", boardIgnore: "ulasan tanpa isi, lewati saja", boardKeep: "ulasan memuji produkmu",
+    legendSummary: "Apa arti 4 kelompok ini?", legendFix: "Keluhan yang asalnya dari tokomu, misalnya ukuran atau foto. Bisa kamu ubah sendiri.", legendFight: "Bukan salahmu (kurir, diduga palsu), tapi tetap perlu dibalas.",
+    legendIgnore: "Hanya bintang tanpa isi. Tidak ada yang perlu dilakukan.", legendKeep: "Hal yang dipuji pembeli. Tonjolkan di halaman produk.",
+    leadFix: "Keluhan dari tokomu sendiri. Tiap kartu berisi saran dan kutipan asli pembeli.", leadFight: "Bukan salahmu, tapi perlu dibalas. Pilih draf, lalu salin.",
+    leadIgnore: "Hanya bintang atau komentar tanpa isi. Dihitung, tidak dianalisis.", leadKeep: "Hal yang dipuji pembeli. Tonjolkan di halaman produk.",
+    noRemove: "BedahReview tidak bisa menghapus ulasan.", noRemoveBody: "Laporan hanya meminta %s meninjau; keputusan tetap ada di %s. Balasan yang sopan tetap terlihat oleh calon pembeli.", platformWord: "marketplace",
+    whyLbl: "Kenapa di sini: ", moreQuotes: "Lihat %s kutipan lainnya",
+    rivalOwnLbl: "Produkmu, dari Bedah ulasan", rivalOther: "Pakai produk lain", rivalBackOwn: "Pakai produk dari Bedah ulasan", rivalTitleAlone: "Bandingkan produkmu dengan pesaing",
+    rivalIntroS: "Kami cari 2–3 produk serupa di platform yang sama. Kamu pilih yang cocok, lalu kami hitung keluhan dan pujian di ulasan mereka.",
+    rivalYourLink: "Tautan produkmu", rivalYourName: "Nama produk (membantu pencarian)", rivalYourNamePh: "mis. Kaos Boxy Retro", rivalFindLink: "Cari pesaing",
+    rivalFreeNote: "Bisa dipakai tanpa Bedah ulasan. Belum ada biaya sampai kamu menekan Bandingkan.", rivalNeedLink: "Tempel tautan produkmu dulu.", rivalNeedName: "Isi nama produkmu supaya kami bisa mencari yang serupa.",
+    stepFind: "Cari", stepPick: "Pilih", stepCompare: "Bandingkan",
+    rivalFound: "Kami menemukan %s produk mirip. %s yang paling mirip sudah dicentang, hapus centang kalau tidak cocok.", rivalMost: "Paling mirip", rivalMoreN: "Produk lain yang ditemukan · %s", rivalShopLbl: "Toko: %s",
+    rivalSeen: "Yang terlihat dari angka", rivalByTheme: "Jumlah ulasan per tema", rivalThemeCol: "Tema", nReviewsCol: "%s ulasan", rivalNote: "Catatan data",
+    tagSmall: "terlalu sedikit", tagFail: "gagal", tagSkip: "tidak dihitung",
+    rivalSmallLine: "%s hanya punya %s ulasan kredibel (perlu minimal 5), jadi tidak dipakai untuk kesimpulan.", rivalFailLine: "Satu tautan pesaing tidak bisa dibuka (produk mungkin dihapus).",
+    rivalFakeLine: "%s ulasan pesaing diduga palsu dan tidak dihitung (%s).", rivalFakeEach: "%s: %s dibaca, %s dihitung", rivalSmallNote: "%s tidak dipakai untuk kalimat di atas karena ulasannya terlalu sedikit.",
+    rivalLineWorse: "%s: %s di produkmu, di pesaing terbaik %s.", rivalLineOther: "%s: %s di produkmu, %s di %s.",
+    rivalAlone: "Tanpa Bedah ulasan, kami tidak membandingkan dengan produkmu. Jalankan Bedah ulasan untuk melihat selisihnya.", rivalLinkLbl: "Lihat ulasannya",
   },
   en: {
     navCheck: "Check", navNew: "New reviews", newReviews: "New reviews",
@@ -350,7 +571,7 @@ const TEXT = {
     fightRule: "Prove the cause, file a courier claim, and reply in public. This is not a way to get a review removed: Shopee only removes reviews for narrow reasons.",
     ignoreRule: "Star ratings with no text, or filler with nothing to act on. Counted, not analysed.",
     chipOf: "%s of %s complaints", chipCourier: "Courier? Check first", chipCheck: "Check it yourself", chipFake: "Likely fake", chipLow: "Low confidence",
-    dFix: "Fix suggestion", dCheckSide: "Check on your side", dChat: "Chat to buyer", dPublic: "Public reply", dReport: "Report text",
+    dFix: "What you can do", dCheckSide: "Check on your side", dChat: "Chat to buyer", dPublic: "Public reply", dReport: "Report text",
     copy: "Copy", copied: "Copied", selectIt: "Text selected, copy it manually", copiedAnn: "Copied: %s",
     fullReview: "Full review", noText: "(no text)",
     emptyFix: "Nothing here for you to fix.", emptyFight: "No reviews to answer.", emptyIgnore: "No reviews ignored.",
@@ -369,11 +590,38 @@ const TEXT = {
     rivalNone: "No product was clearly comparable. Paste competitor links below.", rivalPaste: "Or paste competitor links (one per line)",
     rivalGo: "Compare", rivalCost: "estimated cost ±Rp%s", rivalNeedOne: "Pick or paste at least one competitor.", rivalMax: "At most 3 competitors.",
     rivalComparing: "Comparing reviews…", rivalCompareSub: "Fetching each shop's reviews, then reading them. About 30-90 seconds.",
-    rivalSample: "A small sample: about 7 reviews per shop (4 complaints, 3 recent), not the whole market. Numbers are review counts, not percentages. Competitor reviews are not saved.",
+    rivalSampleHead: "Small sample:", rivalSampleBody: "about 7 reviews per shop (4 complaints, 3 recent), not the whole market. Numbers are review counts, not percentages. Competitor reviews are not saved.",
     rivalFake: "%s competitor review(s) look fake and are not counted.", rivalFailed: "Could not be read: %s The review service failed, or this shop has no reviews yet. Try again.", rivalYou: "You", rivalComplaints: "Complaints", rivalPraise: "Praise",
     rivalWorse: "Complaints about “%s”: %s for you vs %s for the best competitor.", rivalOpp: "%s has %s complaints about “%s” (you: %s). A chance to stand out.",
     rivalPraiseGap: "Buyers praise “%s” more at %s (%s, you: %s).", rivalNoInsight: "No clear gap yet. The sample is still small.", rivalSmall: "%s: fewer than 5 credible reviews, so it is not used for any conclusion.",
     rivalQuotes: "Review quotes", rivalAgain: "Start over", rivalShop: "Shop %s", rivalSold: "%s+ sold",
+    f1Eyebrow: "FEATURE 1", f1Title: "Review triage", f1Sub: "Sort your product's reviews into a to-do list",
+    f2Eyebrow: "FEATURE 2", f2Title: "Competitor analysis", f2Sub: "Compare complaints & praise with other shops",
+    step1T: "Paste a link", step1D: "from Tokopedia, TikTok Shop or Lazada", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
+    step3T: "You get a task list", step3D: "in order, with reply drafts ready to copy",
+    linkHint: "We read up to 10 of the newest reviews that have text. Buyer names are not saved.", linkOpts: "More options", trySample: "No link yet? Try an example",
+    fbTitle: "Another way: paste the reviews", fbSteps: ["Open the product on the marketplace, then open Reviews.", "Copy the review text.", "Paste it below, one review per line."], fbRetry: "Try the link again",
+    errFetchTitle: "The reviews from this link could not be read", backResults: "← Back to results", pastedName: "Pasted reviews",
+    change: "Change", shown: "Showing", themeDark: "Dark mode", themeLight: "Light mode",
+    boardFix: "reviews you can fix yourself", boardFight: "reviews to answer", boardIgnore: "reviews with no content, skip", boardKeep: "reviews praising your product",
+    legendSummary: "What do these 4 groups mean?", legendFix: "Complaints that come from your shop, such as sizing or photos. You can change these yourself.", legendFight: "Not your fault (courier, likely fake), but still worth answering.",
+    legendIgnore: "Stars only, no content. Nothing to do.", legendKeep: "What buyers praise. Show it off on the product page.",
+    leadFix: "Complaints from your own shop. Each card has a suggestion and the buyers' exact quotes.", leadFight: "Not your fault, but worth answering. Pick a draft, then copy it.",
+    leadIgnore: "Stars or comments with no content. Counted, not analysed.", leadKeep: "What buyers praise. Show it off on the product page.",
+    noRemove: "BedahReview cannot remove reviews.", noRemoveBody: "A report only asks %s to review it; the decision stays with %s. A polite reply stays visible to future buyers.", platformWord: "the marketplace",
+    whyLbl: "Why here: ", moreQuotes: "Show %s more quotes",
+    rivalOwnLbl: "Your product, from Review triage", rivalOther: "Use another product", rivalBackOwn: "Use the product from Review triage", rivalTitleAlone: "Compare your product with competitors",
+    rivalIntroS: "We look for 2–3 similar products on the same platform. You pick the ones that fit, then we count complaints and praise in their reviews.",
+    rivalYourLink: "Your product link", rivalYourName: "Product name (helps the search)", rivalYourNamePh: "e.g. Retro Boxy Tee", rivalFindLink: "Find competitors",
+    rivalFreeNote: "Works without Review triage. Nothing is charged until you press Compare.", rivalNeedLink: "Paste your product link first.", rivalNeedName: "Enter your product name so we can search for similar ones.",
+    stepFind: "Find", stepPick: "Pick", stepCompare: "Compare",
+    rivalFound: "We found %s similar products. The %s closest are already ticked; untick any that do not fit.", rivalMost: "Closest", rivalMoreN: "Other products found · %s", rivalShopLbl: "Shop: %s",
+    rivalSeen: "What the numbers show", rivalByTheme: "Reviews per theme", rivalThemeCol: "Theme", nReviewsCol: "%s reviews", rivalNote: "Data notes",
+    tagSmall: "too few", tagFail: "failed", tagSkip: "not counted",
+    rivalSmallLine: "%s has only %s credible reviews (at least 5 needed), so it is not used for conclusions.", rivalFailLine: "One competitor link could not be opened (the product may be deleted).",
+    rivalFakeLine: "%s competitor review(s) look fake and are not counted (%s).", rivalFakeEach: "%s: %s read, %s counted", rivalSmallNote: "%s is not used for the lines above because it has too few reviews.",
+    rivalLineWorse: "%s: %s for you, %s for the best competitor.", rivalLineOther: "%s: %s for you, %s at %s.",
+    rivalAlone: "Without Review triage we cannot compare against your product. Run Review triage to see the gap.", rivalLinkLbl: "See the reviews",
   },
 };
 const THEME_ID = {
@@ -391,6 +639,7 @@ let lang = "id";
 try { if (localStorage.getItem("bedahreview-lang") === "en") lang = "en"; } catch (e) { /* storage can be blocked */ }
 const tr = (key, ...args) => { let s = (TEXT[lang][key] != null ? TEXT[lang][key] : TEXT.id[key]); args.forEach((a) => { s = s.replace("%s", a); }); return s; };
 const themeName = (t) => (lang === "id" && THEME_ID[t]) || t;
+const plainTheme = (t) => { const n = themeName(t).replace(/^Pujian: |^Praise: /, ""); return n.charAt(0).toUpperCase() + n.slice(1); };  // praise themes without their prefix, capitalised
 const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // Build DOM without innerHTML: review text and model output are never parsed as HTML.
@@ -419,6 +668,48 @@ function copyIcon() {
 }
 const starsText = (n) => (n ? "★".repeat(n) + "☆".repeat(5 - n) : "");
 function announce(msg) { const t = $("toast"); t.textContent = ""; setTimeout(() => { t.textContent = msg; }, 30); }
+function svgIcon(paths) {
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("class", "i"); svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("aria-hidden", "true");
+  paths.forEach((d) => { const p = document.createElementNS(NS, "path"); p.setAttribute("d", d); svg.append(p); });
+  return svg;
+}
+const BOARD_ICON = {
+  fix: ["M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"],
+  fight: ["M21 11.5a8.4 8.4 0 01-9 8.4 8.5 8.5 0 01-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 1121 11.5z"],
+  ignore: ["M12 2a10 10 0 100 20 10 10 0 000-20z", "M8 12h8"],
+  keep: ["M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z"],
+};
+const desktopQuery = window.matchMedia("(min-width: 1100px)");  // two columns side by side: the competitor panel gets its own column
+const desktop = () => desktopQuery.matches;
+function toTop() { const opts = { top: 0, behavior: reduceMotion() ? "auto" : "smooth" }; if (desktop()) $("main").scrollTo(opts); else window.scrollTo(opts); }
+function platformName(url) {
+  try {
+    const host = new URL(url).hostname;
+    if (/lazada/.test(host)) return "Lazada";
+    if (/^(shop-id|vt)\.tokopedia|tiktok/.test(host)) return "TikTok Shop";
+    if (/tokopedia/.test(host)) return "Tokopedia";
+  } catch (e) { /* not a link */ }
+  return tr("platformWord");
+}
+
+/* ---------- light / dark ---------- */
+const MOON = "M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z";
+const SUN = "M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3L4.9 4.9M19.1 19.1l-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4M12 8a4 4 0 100 8 4 4 0 000-8z";
+const darkNow = () => (document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches);
+function themeLabel() {
+  const dark = darkNow();
+  $("theme").setAttribute("aria-label", tr(dark ? "themeLight" : "themeDark")); $("theme").title = tr(dark ? "themeLight" : "themeDark");
+  $("theme-icon").setAttribute("d", dark ? SUN : MOON);
+}
+function setTheme(mode) { document.documentElement.dataset.theme = mode; document.documentElement.style.colorScheme = mode; themeLabel(); }
+try { const saved = localStorage.getItem("bedahreview-theme"); if (saved === "dark" || saved === "light") setTheme(saved); } catch (e) { /* storage can be blocked */ }
+$("theme").addEventListener("click", () => {
+  const next = darkNow() ? "light" : "dark";
+  setTheme(next);
+  try { localStorage.setItem("bedahreview-theme", next); } catch (e) { /* ignore */ }
+});
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", themeLabel);
 
 /* ---------- static text for the current language ---------- */
 function applyLang() {
@@ -427,9 +718,13 @@ function applyLang() {
   document.querySelectorAll("[data-i18n-ph]").forEach((el) => { el.placeholder = tr(el.dataset.i18nPh); });
   document.querySelectorAll("[data-i18n-label]").forEach((el) => { el.setAttribute("aria-label", tr(el.dataset.i18nLabel)); });
   $("share-steps").replaceChildren(...TEXT[lang].shareSteps.map((s) => h("li", { text: s })));
-  $("lang").replaceChildren(h("b", { text: lang === "id" ? "ID" : "EN" }), " | ", lang === "id" ? "EN" : "ID");
+  $("fb-steps").replaceChildren(...TEXT[lang].fbSteps.map((t) => h("li", { text: t })));
+  $("lang").replaceChildren(h("span", { class: "o" + (lang === "id" ? " on" : ""), text: "ID" }), h("span", { class: "o" + (lang === "en" ? " on" : ""), text: "EN" }));
+  $("pchip-change").textContent = tr("change"); $("back-results").textContent = tr("backResults"); $("print-d").textContent = tr("print");
+  $("legend").replaceChildren(...["fix", "fight", "ignore", "keep"].map((k) => h("p", {}, h("b", { class: "lg-" + k, text: tr(k) }), tr("legend" + k[0].toUpperCase() + k.slice(1)))));
+  themeLabel();
   if (!$("run").disabled) $("run").textContent = tr("run");
-  if (lastData) render(lastData, false);
+  if (lastData) render(lastData, false); else { placeRival(); renderRival(); }
 }
 $("lang").addEventListener("click", () => {
   lang = lang === "id" ? "en" : "id";
@@ -450,12 +745,12 @@ async function copyText(text, btn, label, textNode) {
   try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
   btn.classList.add("done"); btn.replaceChildren(ok ? tr("copied") : tr("selectIt")); announce(ok ? tr("copiedAnn", label) : tr("selectIt")); reset();
 }
-function draft(label, text) {
+function draft(label, text, key) {
   if (!text) return null;
   const body = h("p", { class: "bahasa", lang: "id", text });
   const btn = h("button", { class: "copy", type: "button", "aria-label": tr("copy") + ": " + label }, copyIcon(), tr("copy"));
   btn.addEventListener("click", () => copyText(text, btn, label, body));
-  return h("div", { class: "draft" }, h("div", { class: "draft-head" }, h("span", { class: "lbl", text: label }), btn), body);
+  return h("div", { class: "draft", "data-k": key }, h("div", { class: "draft-head" }, h("span", { class: "lbl", text: label }), btn), body);
 }
 
 /* ---------- cards ---------- */
@@ -472,30 +767,42 @@ function fullText(item) {
 function replyCard(item) {
   const kit = item.fight || {};
   const fake = item.likely_fake && item.likely_fake.flag;
+  const drafts = [["side", tr("dCheckSide"), item.bucket === "check" ? item.fix_suggestion_id : null], ["chat", tr("dChat"), kit.chat_to_buyer],
+    ["public", tr("dPublic"), kit.public_reply], ["report", tr("dReport"), kit.report_text]].filter((d) => d[2]);
+  const box = h("div", { class: "drafts", "data-active": drafts.length ? drafts[0][0] : "" });
+  if (drafts.length > 1) {  // one draft at a time on a wide screen; stacked on a phone
+    const tabs = h("div", { class: "seg dsk", role: "tablist" }, drafts.map(([k, label], i) => h("button", { type: "button", role: "tab", "aria-selected": i === 0 ? "true" : "false", "data-k": k, text: label })));
+    tabs.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      box.dataset.active = b.dataset.k;
+      tabs.querySelectorAll("button").forEach((t) => t.setAttribute("aria-selected", t === b ? "true" : "false"));
+    });
+    box.append(tabs);
+  }
+  drafts.forEach(([k, label, text]) => box.append(draft(label, text, k)));
   return h("article", { class: "card" },
-    h("div", { class: "chips" },
-      fake ? h("span", { class: "chip hot", text: tr("chipFake") }) : null,
-      item.bucket === "check" ? h("span", { class: "chip soft", text: tr("chipCheck") }) : null,
-      item.check_first ? h("span", { class: "chip hot", text: tr("chipCourier") }) : null,
-      item.variant ? h("span", { class: "chip soft", text: item.variant }) : null,
-      item.confidence === "low" ? h("span", { class: "chip", text: tr("chipLow") }) : null),
-    h("h3", { text: themeName(item.theme) }),
+    h("div", { class: "card-head" }, h("h3", { text: themeName(item.theme) }),
+      h("div", { class: "chips" },
+        fake ? h("span", { class: "chip hot", text: tr("chipFake") }) : null,
+        item.bucket === "check" ? h("span", { class: "chip soft", text: tr("chipCheck") }) : null,
+        item.check_first ? h("span", { class: "chip hot", text: tr("chipCourier") }) : null,
+        item.variant ? h("span", { class: "chip soft", text: item.variant }) : null,
+        item.confidence === "low" ? h("span", { class: "chip", text: tr("chipLow") }) : null)),
     quote(item), fullText(item),
-    kit.why ? h("p", { class: "why", text: kit.why }) : null,
+    kit.why ? h("p", { class: "why" }, h("b", { text: tr("whyLbl") }), kit.why) : null,
     kit.steps && kit.steps.length ? h("ol", { class: "steps-list" }, kit.steps.map((s) => h("li", { text: s }))) : null,
-    item.bucket === "check" ? draft(tr("dCheckSide"), item.fix_suggestion_id) : null,
-    draft(tr("dChat"), kit.chat_to_buyer), draft(tr("dPublic"), kit.public_reply), draft(tr("dReport"), kit.report_text));
+    box);
 }
 function fixCard(group, byId) {
   const members = group.ids.map((id) => byId[id]);
   const suggestions = [...new Set(members.map((m) => m.fix_suggestion_id).filter(Boolean))];
+  const shown = members.slice(0, 2), more = members.slice(2);
   return h("article", { class: "card" },
-    h("div", { class: "chips" },
-      h("span", { class: "chip fix", text: tr("chipOf", group.n, group.of) }),
-      group.variant ? h("span", { class: "chip soft", text: group.variant }) : null),
-    h("h3", { text: themeName(group.theme) }),
-    members.map((m) => [quote(m), fullText(m)]),
-    suggestions.map((s) => draft(tr("dFix"), s)));
+    h("div", { class: "card-head" }, h("h3", { text: themeName(group.theme) }),
+      h("div", { class: "chips" }, h("span", { class: "chip fix", text: tr("chipOf", group.n, group.of) }), group.variant ? h("span", { class: "chip soft", text: group.variant }) : null)),
+    suggestions.map((s) => draft(tr("dFix"), s, "fix")),
+    shown.map((m) => [quote(m), fullText(m)]),
+    more.length ? h("details", { class: "full" }, h("summary", { text: tr("moreQuotes", more.length) }), h("div", { class: "stack" }, more.map((m) => [quote(m), fullText(m)]))) : null);
 }
 function keepBody(keep) {
   const themes = [...new Set(keep.map((k) => k.theme.replace(/^Praise: /, "")))];
@@ -522,7 +829,7 @@ function selectTab(key, focus) {
 }
 function render(data, fresh) {
   lastData = data;
-  if (fresh !== false) { rival = { step: "idle" }; rivalRun += 1; }
+  if (fresh !== false && !(rival.target && !rival.target.mine)) { rival = { step: "idle" }; rivalRun += 1; }  // a comparison started from some other link survives a new analysis
   const byId = {}; data.items.forEach((it) => { byId[it.id] = it; });
   const real = data.items.filter((it) => !(it.likely_fake && it.likely_fake.flag));
   const fixItems = data.groups;
@@ -543,39 +850,55 @@ function render(data, fresh) {
   if (data.dropped) notes.push(h("div", { class: "callout warn", text: tr("noteDropped", data.dropped) }));
   $("notes").replaceChildren(...notes);
 
+  const cap = (k) => k[0].toUpperCase() + k.slice(1);
+  $("pchip-name").textContent = src.title || tr("pastedName");
+  $("pchip-meta").textContent = " · " + data.reviews + " " + tr("reviewsWord") + (data.star_avg ? " · " + data.star_avg + "★" : "");
   $("tabs").replaceChildren(...TABS.map((k) => {
-    const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, class: MAIN_TABS.includes(k) ? "main" : k === "rival" ? "rival" : "", "aria-controls": "panel-" + k, "data-b": k },
-      h("span", { class: "n", text: counts[k] }), h("span", { class: "l", text: tr(k) }));
+    const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, class: MAIN_TABS.includes(k) ? "main" : k === "rival" ? "rival" : "", "aria-controls": "panel-" + k, "data-b": k, "data-shown": tr("shown") },
+      k === "rival" ? null : h("span", { class: "ic", "aria-hidden": "true" }, svgIcon(BOARD_ICON[k])),
+      h("span", { class: "n", text: counts[k], "data-d": k === "rival" ? null : tr("board" + cap(k)) }), h("span", { class: "l", text: tr(k) }));
     tab.addEventListener("click", () => selectTab(k, false));
     return tab;
   }));
-  const panel = (k, body) => h("div", { class: "panel", role: "tabpanel", id: "panel-" + k, "aria-labelledby": "tab-" + k, "data-b": k, hidden: true }, h("p", { class: "rule", text: tr(k + "Rule") }), body);
+  const plat = platformName(src.url || "");
+  const panel = (k, body, extra) => h("div", { class: "panel", role: "tabpanel", id: "panel-" + k, "aria-labelledby": "tab-" + k, "data-b": k, hidden: true },
+    h("p", { class: "rule mob", text: tr(k + "Rule") }),
+    k === "rival" ? null : [h("h3", { class: "phead dsk", text: tr(k) + " · " + counts[k] + " " + tr("reviewsWord") }), h("p", { class: "lead dsk", text: tr("lead" + cap(k)) })],
+    extra, body);
   $("panels").replaceChildren(
     panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") })),
-    panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") })),
+    panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") }), h("div", { class: "callout hot dsk" }, h("b", { text: tr("noRemove") + " " }), tr("noRemoveBody", plat, plat))),
     panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })),
     panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })),
-    panel("rival", h("div", { class: "stack", id: "rival-body" })));
-  $("tab-rival").hidden = !(src.kind === "url");  // competitors are found from a product link, not from pasted text
-  renderRival();
+    panel("rival", null));
+  $("tab-rival").hidden = !(src.kind === "url") || desktop();  // competitors are found from a product link, not from pasted text; on a wide screen they have their own column
+  placeRival(); renderRival();
 
   const fromLink = src.kind === "url" ? tr("footFrom", src.count, src.mode === "complaints" ? tr("footLow") : "", src.cached ? tr("footCached") : "") : "";
   $("foot").textContent = fromLink + tr("footTail", data.model);
 
-  const first = fresh === false ? activeTab : (counts.fix ? "fix" : counts.fight ? "fight" : counts.ignore ? "ignore" : counts.keep ? "keep" : "fix");
+  const first = fresh === false ? (activeTab === "rival" && $("tab-rival").hidden ? "fix" : activeTab) : (counts.fix ? "fix" : counts.fight ? "fight" : counts.ignore ? "ignore" : counts.keep ? "keep" : "fix");
   selectTab(first, false);
   if (fresh !== false) {
     $("nav-results").disabled = false;
     show("results");
     $("results-h").focus({ preventScroll: true });
-    window.scrollTo({ top: 0, behavior: reduceMotion() ? "auto" : "smooth" });
+    toTop();
   }
 }
 
 /* ---------- competitor analysis ---------- */
 const RIVAL_COST_IDR = 500;  // about 3 US cents per competitor, shown while we test
 const MAX_RIVALS = 3;
+const MIN_CREDIBLE = 5;  // same rule as the server: fewer credible reviews than this and a shop is shown but not used for a statement
 const fmtNum = (n) => Number(n).toLocaleString("id-ID");
+const rivalBodyEl = h("div", { class: "stack", id: "rival-body" });  // one node: it sits in the right-hand column on a wide screen, in the Rivals tab on a phone
+let rivalForm = { url: "", name: "" };
+const ownSource = () => (lastData && lastData.source && lastData.source.kind === "url" ? lastData.source : null);
+function placeRival() {
+  const host = desktop() ? $("rival-home") : $("panel-rival");
+  if (host && rivalBodyEl.parentNode !== host) host.append(rivalBodyEl);
+}
 async function postJson(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   let data = null;
@@ -588,6 +911,51 @@ function rivalChosen(st) { return st.checked.map((i) => ({ url: st.candidates[i]
 function rivalSpinner(title, sub) {
   return h("div", { class: "loading", role: "status" }, h("div", { class: "spinner", "aria-hidden": "true" }), h("h2", { text: title }), h("p", { class: "muted", text: sub }));
 }
+function slugTitle(url) {  // a rough product name from the link's last path part, only to start the search
+  try {
+    const parts = new URL(url).pathname.split("/").filter(Boolean);
+    const last = decodeURIComponent(parts[parts.length - 1] || "").replace(/\.html?$/i, "");
+    if (!/[a-z]/i.test(last) || /^pdp-/i.test(last) || !/[-_+]/.test(last)) return "";
+    return last.replace(/[-_+]+/g, " ").replace(/\s+/g, " ").trim();
+  } catch (e) { return ""; }
+}
+function stepper(active) {  // 1 Find, 2 Pick, 3 Compare, 4 all done
+  const names = [tr("stepFind"), tr("stepPick"), tr("stepCompare")];
+  return h("ol", { class: "stepper" }, names.map((n, i) => h("li", { class: i + 1 < active ? "done" : i + 1 === active ? "on" : "", "aria-current": i + 1 === active ? "step" : null },
+    h("span", { class: "dot" }, i + 1 < active ? svgIcon(["M5 12l5 5 9-10"]) : String(i + 1)), n)));
+}
+function rivalIdle() {
+  const own = ownSource();
+  if (own && !rival.other) {
+    const find = h("button", { class: "btn primary", type: "button" }, tr("rivalAskBtn"));
+    find.addEventListener("click", () => rivalFind());
+    const other = h("button", { class: "btn pill", type: "button" }, tr("rivalOther"));
+    other.addEventListener("click", () => { rival = { step: "idle", other: true }; renderRival(); });
+    return h("div", { class: "rcard" }, h("h2", { text: tr("rivalAsk") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
+      h("div", { class: "ownbox" }, h("span", {}, h("small", { text: tr("rivalOwnLbl") }), h("b", { lang: "id", text: own.title || own.url }), " · " + platformName(own.url)), other),
+      find, h("p", { class: "small muted", text: tr("rivalFreeNote") }));
+  }
+  const url = h("input", { id: "rival-url", type: "url", inputmode: "url", autocomplete: "off", spellcheck: "false", placeholder: tr("linkPh") });
+  const name = h("input", { id: "rival-name", type: "text", maxlength: "150", autocomplete: "off", placeholder: tr("rivalYourNamePh") });
+  url.value = rivalForm.url; name.value = rivalForm.name;
+  url.addEventListener("input", () => { rivalForm.url = url.value; }); name.addEventListener("input", () => { rivalForm.name = name.value; });
+  const err = h("div", { class: "callout warn", role: "alert", hidden: true });
+  const fail = (msg, field) => { err.textContent = msg; err.hidden = false; field.focus(); };
+  const go = h("button", { class: "btn primary", type: "button" }, tr("rivalFindLink"));
+  go.addEventListener("click", () => {
+    const u = url.value.trim(), title = name.value.trim() || slugTitle(u);
+    if (!u) return fail(tr("rivalNeedLink"), url);
+    if (!title) return fail(tr("rivalNeedName"), name);
+    rivalFind({ url: u, title, mine: !!(own && own.url === u) });
+  });
+  [url, name].forEach((f) => f.addEventListener("keydown", (e) => { if (e.key === "Enter") go.click(); }));
+  const back = own ? h("button", { class: "plain", type: "button", text: tr("rivalBackOwn") }) : null;
+  if (back) back.addEventListener("click", () => { rival = { step: "idle" }; renderRival(); });
+  return h("div", { class: "rcard" }, h("h2", { text: tr("rivalTitleAlone") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
+    h("label", { class: "field", for: "rival-url" }, h("span", { text: tr("rivalYourLink") }), url),
+    h("label", { class: "field", for: "rival-name" }, h("span", { text: tr("rivalYourName") }), name),
+    err, go, h("p", { class: "small muted", text: tr("rivalFreeNote") }), back);
+}
 function candidateCard(st, i) {
   const c = st.candidates[i];
   const box = h("input", { type: "checkbox", "aria-label": c.title });
@@ -597,130 +965,152 @@ function candidateCard(st, i) {
     st.checked = box.checked ? st.checked.concat(i) : st.checked.filter((x) => x !== i);
     renderRival();
   });
-  const meta = [c.price ? "Rp" + fmtNum(c.price) : null, c.rating ? "★" + c.rating : null, c.sold ? tr("rivalSold", fmtNum(c.sold)) : null, c.shop].filter(Boolean).join(" · ");
-  return h("label", { class: "cand" }, box, h("span", {}, h("span", { class: "t", lang: "id", text: c.title }), h("br"), h("span", { class: "meta", text: meta })));
+  const facts = [c.price ? "Rp" + fmtNum(c.price) : null, c.rating ? c.rating + "★" : null, c.sold ? tr("rivalSold", fmtNum(c.sold)) : null].filter(Boolean);
+  return h("label", { class: "cand" + (box.checked ? " on" : "") }, box, h("span", {},
+    h("span", { class: "t", lang: "id", text: c.title }),
+    facts.length ? h("span", { class: "chips" }, facts.map((t) => h("span", { class: "chip", text: t }))) : null,
+    c.shop ? h("span", { class: "meta", text: tr("rivalShopLbl", c.shop) }) : null));
 }
 function rivalPick(st) {
-  const firstOther = st.candidates.findIndex((c) => !c.picked);
-  const chosen = rivalChosen(st);
-  const go = h("button", { class: "btn primary", type: "button", id: "rival-go" }, tr("rivalGo") + " · " + tr("rivalCost", fmtNum(Math.max(chosen.length, 1) * RIVAL_COST_IDR)));
+  const goText = () => tr("rivalGo") + " · " + tr("rivalCost", fmtNum(Math.max(rivalChosen(st).length, 1) * RIVAL_COST_IDR));
+  const go = h("button", { class: "btn primary", type: "button", id: "rival-go" }, goText());
   go.addEventListener("click", rivalCompare);
-  const area = h("textarea", { id: "rival-paste", spellcheck: "false", rows: "3", style: "min-height:80px" });
+  const area = h("textarea", { id: "rival-paste", spellcheck: "false", rows: "3", placeholder: "https://tokopedia.link/…", style: "min-height:80px" });
   area.value = st.extra;
-  area.addEventListener("input", () => { st.extra = area.value; const n = Math.max(rivalChosen(st).length, 1); go.textContent = tr("rivalGo") + " · " + tr("rivalCost", fmtNum(n * RIVAL_COST_IDR)); });
-  const cards = [];
-  st.candidates.forEach((c, i) => {
-    if (i === firstOther && i > 0) cards.push(h("p", { class: "small muted", text: tr("rivalMoreLbl") }));
-    cards.push(candidateCard(st, i));
-  });
+  area.addEventListener("input", () => { st.extra = area.value; go.textContent = goText(); });
+  const best = [], other = [];
+  st.candidates.forEach((c, i) => (c.picked ? best : other).push(candidateCard(st, i)));
+  const more = other.length ? h("details", { class: "pcard-more", open: st.moreOpen || !best.length }, h("summary", { text: tr("rivalMoreN", other.length) }), h("div", { class: "stack" }, other)) : null;
+  if (more) more.addEventListener("toggle", () => { st.moreOpen = more.open; });
   return [
+    stepper(2),
     st.error ? h("div", { class: "callout warn", role: "alert", text: st.error }) : null,
-    st.candidates.length ? h("p", { class: "rule", text: tr("rivalPick") }) : h("div", { class: "callout", text: tr("rivalNone") }),
-    cards,
+    !st.candidates.length ? h("div", { class: "callout", text: tr("rivalNone") })
+      : h("p", { class: "rule", text: best.length ? tr("rivalFound", st.candidates.length, best.length) : tr("rivalPick") }),
+    best.length ? h("p", { class: "group-lbl", text: tr("rivalMost") }) : null, best, more,
     h("label", { class: "field", for: "rival-paste" }, h("span", { text: tr("rivalPaste") }), area),
     go,
   ];
 }
 function rivalResult(d) {
+  const absent = !!d.you.absent;
   const names = d.competitors.map((c, i) => tr("rivalShop", String.fromCharCode(65 + i)));
-  const heads = [tr("rivalYou") + " (" + d.you.credible + ")"].concat(d.competitors.map((c, i) => names[i] + " (" + c.credible + ")"));
-  const section = (label) => h("tr", { class: "sec" }, h("th", { colspan: heads.length + 1, text: label }));
+  const nameOf = (who) => names[d.competitors.findIndex((c) => c.title === who)] || who;
+  const heads = (absent ? [] : [[tr("rivalYou"), d.you.credible]]).concat(d.competitors.map((c, i) => [names[i], c.credible]));
   const body = [];
   for (const kind of ["complaint", "praise"]) {
     const rows = d.rows.filter((r) => r.kind === kind);
     if (!rows.length) continue;
-    body.push(section(tr(kind === "complaint" ? "rivalComplaints" : "rivalPraise")));
+    const cls = kind === "complaint" ? "bad" : "good";
+    body.push(h("tr", { class: "sec" }, h("th", { colspan: heads.length + 1, text: tr(kind === "complaint" ? "rivalComplaints" : "rivalPraise") })));
     rows.forEach((r) => {
-      const all = [r.you].concat(r.others), top = Math.max(...all);
-      body.push(h("tr", {}, h("th", { scope: "row", text: themeName(r.theme).replace(/^Pujian: |^Praise: /, "") }),
-        all.map((n) => h("td", { class: n && n === top ? "top " + (kind === "complaint" ? "bad" : "good") : "", text: n }))));
+      const all = absent ? r.others : [r.you].concat(r.others), top = Math.max(...all);
+      body.push(h("tr", {}, h("th", { scope: "row", text: plainTheme(r.theme) }), all.map((n) => {
+        const hot = n > 0 && n === top && all.some((x) => x !== n);
+        return h("td", { class: hot ? "top " + cls : "" }, h("div", { class: "dots " + (hot ? cls : "") }, Array.from({ length: Math.min(n, 6) }, () => h("i"))), h("span", { text: n + (hot ? " ↑" : "") }));
+      })));
     });
   }
-  const fake = d.competitors.reduce((a, c) => a + c.fake, 0);
+  const say = d.insights.map((x) => {
+    const theme = plainTheme(x.theme);
+    if (x.kind === "worse") return { kind: "complaint", a: x.you, b: x.best, text: tr("rivalLineWorse", theme, x.you, x.best) };
+    return { kind: x.kind === "opportunity" ? "complaint" : "praise", a: x.you, b: x.them, text: tr("rivalLineOther", theme, x.you, x.them, nameOf(x.who)) };
+  });
   const small = names.filter((n, i) => d.competitors[i].small);
-  const say = d.insights.map((x) => x.kind === "worse" ? tr("rivalWorse", themeName(x.theme), x.you, x.best)
-    : x.kind === "opportunity" ? tr("rivalOpp", names[d.competitors.findIndex((c) => c.title === x.who)] || x.who, x.them, themeName(x.theme), x.you)
-    : tr("rivalPraiseGap", themeName(x.theme).replace(/^Pujian: |^Praise: /, ""), names[d.competitors.findIndex((c) => c.title === x.who)] || x.who, x.them, x.you));
+  const fake = d.competitors.reduce((a, c) => a + c.fake, 0);
+  const notes = [];
+  d.competitors.forEach((c, i) => { if (c.small) notes.push(["small", tr("rivalSmallLine", names[i], c.credible), null]); });
+  d.failed.forEach((f) => notes.push(["fail", tr("rivalFailLine"), f.title || f.url]));
+  if (fake) notes.push(["skip", tr("rivalFakeLine", fake, d.competitors.filter((c) => c.fake).map((c) => tr("rivalFakeEach", names[d.competitors.indexOf(c)], c.reviews, c.credible)).join("; ")), null]);
   const again = h("button", { class: "btn ghost", type: "button" }, tr("rivalAgain"));
   again.addEventListener("click", () => { rival = { step: "idle" }; rivalRun += 1; renderRival(); });
   return [
-    h("div", { class: "callout warn", text: tr("rivalSample") }),
-    fake ? h("div", { class: "callout hot", text: tr("rivalFake", fake) }) : null,
-    h("div", { class: "cmp-wrap" }, h("table", { class: "cmp" },
-      h("thead", {}, h("tr", {}, h("th", { scope: "col" }), heads.map((t) => h("th", { scope: "col", text: t })))), h("tbody", {}, body))),
-    small.length ? h("div", { class: "callout warn", text: tr("rivalSmall", small.join(", ")) }) : null,
-    say.length ? say.map((t) => h("div", { class: "callout", text: t })) : h("div", { class: "callout", text: tr("rivalNoInsight") }),
+    stepper(4),
+    h("div", { class: "callout" }, h("b", { text: tr("rivalSampleHead") + " " }), tr("rivalSampleBody")),
+    h("h3", { text: tr("rivalSeen") }),
+    absent ? h("div", { class: "callout" , text: tr("rivalAlone") })
+      : say.length ? say.map((t) => h("div", { class: "ins " + (t.kind === "complaint" ? "bad" : "good") }, h("div", { class: "big" }, h("b", { text: t.a }), h("i", { text: "vs" }), h("b", { text: t.b })),
+          h("p", {}, h("span", { class: t.kind === "complaint" ? "bad" : "good", text: tr(t.kind === "complaint" ? "rivalComplaints" : "rivalPraise") }), " · " + t.text)))
+      : h("div", { class: "callout", text: tr("rivalNoInsight") }),
+    small.length && !absent ? h("p", { class: "small muted", text: tr("rivalSmallNote", small.join(", ")) }) : null,
+    h("div", { class: "cmp-wrap" }, h("h3", { class: "cmp-title", text: tr("rivalByTheme") }), h("table", { class: "cmp" },
+      h("thead", {}, h("tr", {}, h("th", { scope: "col", text: tr("rivalThemeCol") }), heads.map(([n, c]) => h("th", { scope: "col" }, n, h("small", { text: tr("nReviewsCol", c) })))), ), h("tbody", {}, body))),
+    notes.length ? h("div", { class: "dnote" }, h("h3", { text: tr("rivalNote") }),
+      notes.map(([k, text, code]) => h("p", {}, h("span", { class: "tag " + k, text: tr(k === "small" ? "tagSmall" : k === "fail" ? "tagFail" : "tagSkip") }), text, code ? h("code", { text: code }) : null))) : null,
     d.competitors.map((c, i) => h("details", { class: "full" },
-      h("summary", { text: tr("rivalQuotes") + " · " + names[i] }),
+      h("summary", { text: tr("rivalLinkLbl") + " · " + names[i] }),
       h("p", { lang: "id", text: c.title }),
       Object.entries(c.quotes).map(([theme, q]) => h("blockquote", {}, h("span", { lang: "id" }, q.stars ? h("span", { class: "stars", text: starsText(q.stars) + " " }) : null, "“" + q.quote + "”"), h("span", { class: "src", text: themeName(theme) }))),
       c.url.startsWith("https://") ? h("a", { href: c.url, target: "_blank", rel: "noopener noreferrer", class: "small", text: c.url }) : null)),
-    d.failed.map((f) => h("div", { class: "callout warn", text: tr("rivalFailed", f.title || f.url) })),
     again,
   ];
 }
 function rivalBody() {
-  if (rival.step === "searching") return rivalSpinner(tr("rivalSearching"), tr("rivalSearchSub"));
-  if (rival.step === "comparing") return rivalSpinner(tr("rivalComparing"), tr("rivalCompareSub"));
+  if (rival.step === "searching") return [stepper(1), rivalSpinner(tr("rivalSearching"), tr("rivalSearchSub"))];
+  if (rival.step === "comparing") return [stepper(3), rivalSpinner(tr("rivalComparing"), tr("rivalCompareSub"))];
   if (rival.step === "pick") return rivalPick(rival);
   if (rival.step === "result") return rivalResult(rival.data);
-  const find = h("button", { class: "btn primary", type: "button" }, tr("rivalFind"));
-  find.addEventListener("click", rivalFind);
-  return [h("p", { class: "muted", text: tr("rivalIntro") }), find];
+  return rivalIdle();
 }
 function renderRival() {
-  const box = $("rival-body");
-  if (!box) return;
-  box.replaceChildren(...[rivalBody()].flat(Infinity).filter(Boolean));
-  const src = (lastData && lastData.source) || {};
-  $("rival-ask").hidden = !(src.kind === "url" && rival.step === "idle");
+  rivalBodyEl.replaceChildren(...[rivalBody()].flat(Infinity).filter(Boolean));
+  $("rival-ask").hidden = desktop() || !(ownSource() && rival.step === "idle");
   $("rival-ask-text").textContent = tr("rivalAsk"); $("rival-ask-btn").textContent = tr("rivalAskBtn");
 }
-async function rivalFind() {
-  const src = lastData.source, run = ++rivalRun;
-  rival = { step: "searching" }; renderRival(); selectTab("rival", false);
-  $("tabs").scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
+async function rivalFind(target) {
+  const own = ownSource();
+  const t = target || (own ? { url: own.url, title: own.title || "", mine: true } : null);
+  if (!t) return;
+  const run = ++rivalRun;
+  rival = { step: "searching", target: t }; renderRival();
+  if (lastData && !desktop() && !$("tab-rival").hidden) { selectTab("rival", false); $("tabs").scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" }); }
   let next;
   try {
-    const out = await postJson("/api/competitors/suggest", { url: src.url, title: src.title });
+    const out = await postJson("/api/competitors/suggest", { url: t.url, title: t.title });
     if (!out || run !== rivalRun) return;
     const cands = out.ok ? out.data.candidates : [];
-    next = { step: "pick", candidates: cands, checked: cands.map((c, i) => (c.picked ? i : -1)).filter((i) => i >= 0), extra: "", error: out.ok ? "" : ((out.data && out.data.error) || tr("errGeneric", "")) };
+    next = { step: "pick", target: t, candidates: cands, checked: cands.map((c, i) => (c.picked ? i : -1)).filter((i) => i >= 0), extra: "", error: out.ok ? "" : ((out.data && out.data.error) || tr("errGeneric", "")) };
   } catch (e) {
     if (run !== rivalRun) return;
-    next = { step: "pick", candidates: [], checked: [], extra: "", error: tr("errNetwork") };
+    next = { step: "pick", target: t, candidates: [], checked: [], extra: "", error: tr("errNetwork") };
   }
   rival = next; renderRival();
 }
 async function rivalCompare() {
-  const pick = rival, chosen = rivalChosen(pick), run = ++rivalRun;
+  const pick = rival, t = pick.target, chosen = rivalChosen(pick), run = ++rivalRun;
   if (!chosen.length) { pick.error = tr("rivalNeedOne"); renderRival(); return; }
-  const src = lastData.source;
-  const own = lastData.items.map((i) => ({ theme: i.theme, bucket: i.bucket, fake: !!(i.likely_fake && i.likely_fake.flag) }));
-  rival = { step: "comparing" }; renderRival();
+  const own = t.mine && lastData ? lastData.items.map((i) => ({ theme: i.theme, bucket: i.bucket, fake: !!(i.likely_fake && i.likely_fake.flag) })) : [];  // no Bedah ulasan for this link: compare the rivals only
+  rival = { step: "comparing", target: t }; renderRival();
   let next;
   try {
-    const out = await postJson("/api/competitors/compare", { url: src.url, title: src.title, own, competitors: chosen });
+    const out = await postJson("/api/competitors/compare", { url: t.url, title: t.title, own, competitors: chosen });
     if (!out || run !== rivalRun) return;
-    next = out.ok ? { step: "result", data: out.data } : Object.assign(pick, { step: "pick", error: (out.data && out.data.error) || tr("errGeneric", "") });
+    next = out.ok ? { step: "result", target: t, data: out.data } : Object.assign(pick, { step: "pick", error: (out.data && out.data.error) || tr("errGeneric", "") });
   } catch (e) {
     if (run !== rivalRun) return;
     next = Object.assign(pick, { step: "pick", error: tr("errNetwork") });
   }
   rival = next; renderRival();
 }
-$("rival-ask-btn").addEventListener("click", rivalFind);
+$("rival-ask-btn").addEventListener("click", () => rivalFind());
+desktopQuery.addEventListener("change", () => { if (lastData) render(lastData, false); else { placeRival(); renderRival(); } });
 
 /* ---------- views ---------- */
 function show(view) {
   $("view-input").hidden = view !== "input";
   $("view-loading").hidden = view !== "loading";
   $("view-results").hidden = view !== "results";
+  $("view-steps").hidden = view !== "input";
+  $("pchip").hidden = !(lastData && view === "results"); $("print-d").hidden = view !== "results";
+  $("back-results").hidden = !(lastData && view === "input");
   $("nav-input").setAttribute("aria-current", view === "input" || view === "loading" ? "page" : "false");
   $("nav-results").setAttribute("aria-current", view === "results" ? "page" : "false");
 }
-$("nav-input").addEventListener("click", () => { show("input"); window.scrollTo(0, 0); });
-$("nav-results").addEventListener("click", () => { if (lastData) { show("results"); window.scrollTo(0, 0); } });
+$("nav-input").addEventListener("click", () => { show("input"); toTop(); });
+$("nav-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
+$("pchip-change").addEventListener("click", () => { show("input"); toTop(); });
+$("back-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
+$("print-d").addEventListener("click", () => window.print());
 
 function tabKeys(listEl, selector, onSelect) {
   listEl.addEventListener("keydown", (e) => {
@@ -745,11 +1135,15 @@ function selectInput(which, focus) {
   }
   showError("");
 }
-document.querySelectorAll("#intabs button").forEach((b) => b.addEventListener("click", () => selectInput(b.dataset.t, false)));
+function setFallback(on) { $("fallback").hidden = !on; $("fb-retry").hidden = !on; }  // shown after a link could not be read: the paste route, with steps
+document.querySelectorAll("#intabs button").forEach((b) => b.addEventListener("click", () => { setFallback(false); selectInput(b.dataset.t, false); }));
+$("fb-retry").addEventListener("click", () => { setFallback(false); selectInput("link", true); });
+$("try-sample").addEventListener("click", () => { setFallback(false); selectInput("paste", false); $("sample").click(); });
 tabKeys($("intabs"), "button", (t) => selectInput(t.dataset.t, true));
 
-function showError(msg) {
+function showError(msg, title) {
   const e = $("error");
+  $("error-title").textContent = title || ""; $("error-title").hidden = !title;
   $("error-text").textContent = msg; e.hidden = !msg;
   if (msg) e.focus();
 }
@@ -765,7 +1159,7 @@ function startLoading(title) {
 function stopLoading() { clearInterval(timer); timer = null; }
 
 async function send(payload, title) {
-  showError("");
+  showError(""); setFallback(false);
   const buttons = [$("run"), $("fetch")]; buttons.forEach((b) => { b.disabled = true; });
   startLoading(title);
   try {
@@ -776,8 +1170,9 @@ async function send(payload, title) {
     if (res.status === 401) { location.reload(); return; }  // signed out: the server shows the access-code page
     if (!res.ok || !data) {
       show("input");
-      if (data && data.fallback === "paste") selectInput("paste", false);  // first: switching tabs clears the error box
-      showError((data && data.error) || tr("errGeneric", res.status));
+      const toPaste = data && data.fallback === "paste";
+      if (toPaste) { selectInput("paste", false); setFallback(true); }  // first: switching tabs clears the error box
+      showError((data && data.error) || tr("errGeneric", res.status), toPaste ? tr("errFetchTitle") : "");
       return;
     }
     render(data, true);
@@ -860,7 +1255,7 @@ async function loadConfig() {
     if (!cfg.url_box) return;
     $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
     $("intab-link").hidden = false;
-    $("intabs").style.gridAutoColumns = "1fr";
+    if (desktop() && !$("paste").value && !location.search) selectInput("link", false);  // on a wide screen the link comes first
   } catch (e) { /* the link tab simply stays hidden */ }
 }
 

@@ -80,6 +80,21 @@ window.__probe = (async () => {
     out.enLang = document.documentElement.lang;
     out.draftStillBahasa = (document.querySelector("#panel-fix .bahasa") || {}).textContent;
   }
+  if (location.hash === "#desktop") {
+    out.cols = getComputedStyle(document.querySelector(".workspace")).gridTemplateColumns.split(" ").length;
+    out.hostBefore = document.getElementById("rival-body").parentNode.id;  // the competitor panel has its own column, usable before any analysis
+    out.formBefore = !!document.getElementById("rival-url");
+    document.getElementById("sample").click();
+    document.getElementById("run").click();
+    for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
+    out.hostAfter = document.getElementById("rival-body").parentNode.id;
+    out.rivalTabHidden = document.getElementById("tab-rival").hidden;
+    out.board = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
+    out.chip = document.getElementById("pchip").hidden;
+    const before = document.documentElement.dataset.theme || "";
+    document.getElementById("theme").click();
+    out.themeChanged = (document.documentElement.dataset.theme || "") !== before;
+  }
   return out;
 })();
 </script>
@@ -187,11 +202,11 @@ class BrowserTests(unittest.TestCase):
         web.STATIC = cls.real_static
         shutil.rmtree(cls.tmp, ignore_errors=True)
 
-    def probe(self, path):
+    def probe(self, path, width=500):
         profile = tempfile.mkdtemp(dir=self.tmp)
         url = "http://127.0.0.1:%d%s" % (self.port, path)
         chrome = subprocess.Popen([CHROME, "--headless=new", "--disable-gpu", "--no-first-run", "--remote-debugging-port=0",
-                                   "--user-data-dir=" + profile, "--window-size=500,900", url],
+                                   "--user-data-dir=" + profile, "--window-size=%d,900" % width, url],
                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             return _read_probe(profile, url)
@@ -238,6 +253,16 @@ class BrowserTests(unittest.TestCase):
         self.assertTrue(out["enTabs"][3].endswith("Keep"), out["enTabs"])
         self.assertEqual(out["enLang"], "en")
         self.assertEqual(out["draftStillBahasa"], "Ganti foto varian.")  # drafts stay Bahasa in English mode
+
+    def test_wide_screen_puts_the_competitor_panel_in_its_own_column(self):
+        out = self.probe("/#desktop", width=1300)
+        self.assertEqual(out["cols"], 2)
+        self.assertEqual((out["hostBefore"], out["formBefore"]), ("rival-home", True))
+        self.assertEqual(out["hostAfter"], "rival-home")  # it stays put when results arrive
+        self.assertTrue(out["rivalTabHidden"])
+        self.assertEqual(out["board"][:2], ["2Perbaiki", "1Tanggapi"])  # the board texts are unchanged by the card layout
+        self.assertFalse(out["chip"])  # the product chip shows once results are in
+        self.assertTrue(out["themeChanged"])
 
 
 if __name__ == "__main__":
