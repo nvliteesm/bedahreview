@@ -7,8 +7,10 @@ from pathlib import Path
 from unittest import mock
 
 from bedahreview import competitors
-from bedahreview.competitors import pick_comparable, plain_query, plan_search, suggest_competitors
-from bedahreview.fetchers import FetchError
+from bedahreview.competitors import (
+    compare_competitors, comparison_rows, fetch_sample, insights, pick_comparable, plain_query, plan_search, suggest_competitors, tally,
+)
+from bedahreview.fetchers import FetchError, Review
 from bedahreview.fetchers.platforms import LinkRouter
 from bedahreview.fetchers.search import (
     LAZADA_SEARCH_ACTOR, TOKOPEDIA_SEARCH_ACTOR, Candidate, lazada_candidate, own_key, search_products, shortlist, tokopedia_candidate,
@@ -209,6 +211,258 @@ class SuggestEndpointTests(unittest.TestCase):
             server.shutdown()
             server.server_close()
         self.assertEqual((status, out["fallback"]), (400, "paste"))
+
+
+def item(theme, bucket="fix", fake=False):
+    return {"theme": theme, "bucket": bucket, "fake": fake}
+
+
+def review(star, text, product=None):
+    return Review(star=star, text=text, variant=None, date="", photo_count=0, seller_reply=None, product=product)
+
+
+def result(rid, theme, bucket, quote, fake=False):
+    return {"id": rid, "theme": theme, "bucket": bucket, "proof_quote": quote, "likely_fake": {"flag": fake, "signals": []}}
+
+
+class TallyTests(unittest.TestCase):
+    def test_fakes_no_text_and_other_are_left_out_of_the_counts(self):
+        out = tally([item("Sizing & fit"), item("Sizing & fit", "fight"), item("Sizing & fit", fake=True), item("No text", "ignore"),
+                     item("Other", "ignore"), item("Praise: taste", "keep"), item("Praise: taste", "keep", fake=True)])
+        self.assertEqual(out["complaints"], {"Sizing & fit": 2})
+        self.assertEqual(out["praise"], {"Praise: taste": 1})
+        self.assertEqual((out["reviews"], out["credible"], out["fake"]), (7, 5, 2))
+
+
+class FetchSampleTests(unittest.TestCase):
+    def test_a_mix_of_worst_and_newest_without_repeats(self):
+        calls = []
+
+        def fetch(url, limit, mode):
+            calls.append((limit, mode))
+            return [review(1, "rusak"), review(1, "rusak")] if mode == "complaints" else [review(5, "bagus"), review(1, "rusak")]
+
+        mixed = fetch_sample(fetch, "u")
+        self.assertEqual(sorted(calls), [(3, "latest"), (4, "complaints")])
+        self.assertEqual(sorted((r.star, r.text) for r in mixed), [(1, "rusak"), (5, "bagus")])
+
+    def test_one_half_failing_still_gives_a_sample_but_both_failing_raises(self):
+        def only_latest(url, limit, mode):
+            if mode == "complaints":
+                raise FetchError("No low-rated reviews")
+            return [review(5, "bagus")]
+
+        self.assertEqual(len(fetch_sample(only_latest, "u")), 1)
+
+        def nothing(url, limit, mode):
+            raise FetchError("took too long")
+
+        with self.assertRaises(FetchError):
+            fetch_sample(nothing, "u")
+
+
+    def test_when_both_halves_fail_the_latest_error_is_the_one_reported(self):
+        def fetch(url, limit, mode):
+            raise FetchError("No low-rated reviews" if mode == "complaints" else "The fetch service failed (ApifyApiError).")
+
+        with self.assertRaises(FetchError) as ctx:
+            fetch_sample(fetch, "u")
+        self.assertIn("ApifyApiError", str(ctx.exception))
+
+
+class StartRetryTests(unittest.TestCase):
+    class ApifyApiError(Exception):  # the real class is looked up by name, so the fake only needs the same name
+        pass
+
+    def client(self, failures, error):
+        calls = []
+
+        class Client:
+            def actor(self, actor_id):
+                class Actor:
+                    def call(self, **kwargs):
+                        calls.append(1)
+                        if len(calls) <= failures:
+                            raise error("rejected")
+                        return {"status": "SUCCEEDED", "defaultDatasetId": "d"}
+                return Actor()
+
+            def dataset(self, dataset_id):
+                class Dataset:
+                    def iterate_items(self):
+                        return iter([{"a": 1}])
+                return Dataset()
+
+        return Client(), calls
+
+    def go(self, failures, error):
+        from bedahreview.fetchers.platforms import _Actors
+
+        client, calls = self.client(failures, error)
+        with mock.patch("bedahreview.fetchers.platforms.START_RETRY_DELAY_S", 0):
+            try:
+                return _Actors(client, 0.05).run("a", {}), len(calls)
+            except FetchError as exc:
+                return exc, len(calls)
+
+    def test_a_start_the_api_rejects_is_tried_once_more(self):
+        rows, calls = self.go(1, self.ApifyApiError)
+        self.assertEqual((rows, calls), ([{"a": 1}], 2))
+
+    def test_two_rejections_give_up_with_a_plain_error(self):
+        out, calls = self.go(2, self.ApifyApiError)
+        self.assertIsInstance(out, FetchError)
+        self.assertEqual(calls, 2)
+
+    def test_anything_else_is_never_retried_so_a_run_is_not_paid_for_twice(self):
+        out, calls = self.go(1, ConnectionError)
+        self.assertIsInstance(out, FetchError)
+        self.assertEqual(calls, 1)
+
+
+class RunSlotTests(unittest.TestCase):
+    def test_no_more_than_the_allowed_runs_are_in_flight_at_once(self):
+        import time
+        from concurrent.futures import ThreadPoolExecutor
+        from bedahreview.fetchers.platforms import MAX_CONCURRENT_RUNS, _Actors
+
+        state = {"now": 0, "peak": 0}
+        lock = threading.Lock()
+
+        class Client:
+            def actor(self, actor_id):
+                class Actor:
+                    def call(self, **kwargs):
+                        with lock:
+                            state["now"] += 1
+                            state["peak"] = max(state["peak"], state["now"])
+                        time.sleep(0.05)
+                        with lock:
+                            state["now"] -= 1
+                        return {"status": "SUCCEEDED", "defaultDatasetId": "d"}
+                return Actor()
+
+            def dataset(self, dataset_id):
+                class Dataset:
+                    def iterate_items(self):
+                        return iter([])
+                return Dataset()
+
+        actors = _Actors(Client(), 0.05)
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            list(pool.map(lambda _: actors.run("a", {}), range(8)))
+        self.assertLessEqual(state["peak"], MAX_CONCURRENT_RUNS)
+        self.assertGreater(state["peak"], 1)
+
+
+class InsightTests(unittest.TestCase):
+    def test_rows_and_plain_statements_come_from_the_counts_only(self):
+        you = {"complaints": {"Sizing & fit": 4, "Colour vs photo": 1}, "praise": {"Praise: taste": 0}}
+        a = {"title": "Toko A", "complaints": {"Sizing & fit": 1, "Fabric & material quality": 3}, "praise": {"Praise: taste": 3}}
+        b = {"title": "Toko B", "complaints": {"Fabric & material quality": 2}, "praise": {}}
+        rows = comparison_rows(you, [a, b])
+        by_theme = {r["theme"]: r for r in rows}
+        self.assertEqual(by_theme["Sizing & fit"]["you"], 4)
+        self.assertEqual(by_theme["Sizing & fit"]["others"], [1, 0])
+        found = {(i["kind"], i["theme"]): i for i in insights(rows, [a, b])}
+        self.assertEqual(found[("worse", "Sizing & fit")]["best"], 0)
+        self.assertEqual(found[("opportunity", "Fabric & material quality")]["who"], "Toko A")
+        self.assertEqual(found[("praise_gap", "Praise: taste")]["them"], 3)
+        self.assertNotIn(("worse", "Colour vs photo"), found)  # a gap of one is not worth a statement
+
+
+class SmallSampleTests(unittest.TestCase):
+    def test_a_small_shop_is_shown_but_never_used_for_a_statement(self):
+        you = {"complaints": {"Sizing & fit": 4}, "praise": {}}
+        small = {"title": "Tiny", "small": True, "complaints": {}, "praise": {}}
+        big = {"title": "Big", "small": False, "complaints": {"Sizing & fit": 3}, "praise": {}}
+        rows = comparison_rows(you, [small, big])
+        self.assertEqual(rows[0]["others"], [0, 3])
+        self.assertEqual(insights(rows, [small, big]), [])  # against Big alone the gap is 1, and Tiny's zero must not count as "best"
+        self.assertEqual(insights(rows, [small]), [])
+
+    def test_compare_marks_shops_with_fewer_than_five_credible_reviews(self):
+        def fetch(url, limit, mode):
+            return [review(1, "ukuran kekecilan %d" % i) for i in range(6 if "big" in url else 1)] if mode == "complaints" else []
+
+        def classify_fn(reviews, product=None):
+            return [result(r["id"], "Sizing & fit", "fix", "ukuran kekecilan") for r in reviews]
+
+        out = compare_competitors(fetch, classify_fn, [item("Sizing & fit")], "x", [{"url": "https://big"}, {"url": "https://tiny"}])
+        self.assertEqual({c["url"]: c["small"] for c in out["competitors"]}, {"https://big": False, "https://tiny": True})
+
+
+class CompareTests(unittest.TestCase):
+    def setUp(self):
+        self.fetched = []
+
+        def fetch(url, limit, mode):
+            self.fetched.append((url, limit, mode))
+            if "bad" in url:
+                raise FetchError("The fetch service took too long.")
+            return [review(1, "ukuran kekecilan"), review(5, "bahan adem", product="Kaos Rival")]
+
+        def classify_fn(reviews, product=None):
+            return [result(r["id"], "Sizing & fit", "fix", "ukuran kekecilan") if "ukuran" in r["text"] else result(r["id"], "Praise: quality / material", "keep", "bahan adem") for r in reviews]
+
+        self.fetch, self.classify_fn = fetch, classify_fn
+
+    def test_counts_quotes_and_a_failed_rival_are_reported_separately(self):
+        own = [item("Sizing & fit"), item("Sizing & fit"), item("Praise: quality / material", "keep")]
+        out = compare_competitors(self.fetch, self.classify_fn, own, "Kaos Saya", [{"url": "https://ok", "title": ""}, {"url": "https://bad", "title": "Toko Bad"}])
+        self.assertEqual(len(out["competitors"]), 1)
+        rival = out["competitors"][0]
+        self.assertEqual((rival["title"], rival["reviews"], rival["complaints"]), ("Kaos Rival", 2, {"Sizing & fit": 1}))
+        self.assertEqual(rival["quotes"]["Sizing & fit"], {"quote": "ukuran kekecilan", "stars": 1})
+        self.assertEqual(out["failed"][0]["title"], "Toko Bad")
+        self.assertEqual(out["you"]["complaints"], {"Sizing & fit": 2})
+        self.assertNotIn("text", json.dumps(out["competitors"]))  # quotes only, never whole reviews
+
+    def test_every_rival_failing_is_an_error(self):
+        with self.assertRaises(FetchError):
+            compare_competitors(self.fetch, self.classify_fn, [item("Sizing & fit")], "x", [{"url": "https://bad", "title": ""}])
+
+
+class CompareEndpointTests(unittest.TestCase):
+    def setUp(self):
+        self.seen = []
+        self.client = FakeActors([])
+        self.router = LinkRouter("t", 0.05, Path(tempfile.mkdtemp()), client=self.client, resolver=_no_resolve)
+
+        def compare(fetch, classify_fn, own, title, competitors):
+            self.seen.append((own, title, competitors))
+            return {"you": {}, "competitors": [], "failed": [], "rows": [], "insights": []}
+
+        self.server = make_server(0, compare_fn=compare, fetcher=self.router)
+        self.port = self.server.server_address[1]
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+
+    def post(self, payload):
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
+        conn.request("POST", "/api/competitors/compare", json.dumps(payload).encode(), {"Content-Type": "application/json"})
+        resp = conn.getresponse()
+        data = json.loads(resp.read())
+        conn.close()
+        return resp.status, data
+
+    def test_links_are_cleaned_and_the_sellers_own_product_is_never_a_rival(self):
+        own = [{"theme": "Sizing & fit", "bucket": "fix", "fake": False}]
+        rival = "https://www.tokopedia.com/toko-b/kaos-b-1"
+        status, _ = self.post({"url": TOKO, "title": "Hijab", "own": own, "competitors": [{"url": TOKO + "?x=1"}, {"url": rival + "?utm=1", "title": "Kaos B"}, {"url": rival}]})
+        self.assertEqual(status, 200)
+        self.assertEqual(self.seen[0][2], [{"url": rival, "title": "Kaos B"}])
+
+    def test_bad_requests_are_clean_400s_before_any_paid_run(self):
+        own = [{"theme": "Sizing & fit", "bucket": "fix", "fake": False}]
+        for body in ({"own": own, "competitors": []}, {"own": [], "competitors": [{"url": TOKO}]}, {"own": own, "competitors": [{"url": TOKO}] * 4},
+                     {"own": own, "competitors": [{"url": "https://shopee.co.id/Kaos-i.450430857.27207810374"}]}, {"competitors": [{"url": TOKO}]},
+                     {"url": TOKO, "own": own, "competitors": [{"url": TOKO}]}):
+            self.assertEqual(self.post(body)[0], 400, body)
+        self.assertEqual(self.seen, [])
 
 
 if __name__ == "__main__":

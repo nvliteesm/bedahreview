@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 import threading
+import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -28,6 +29,9 @@ LAZADA_ACTOR = "zen-studio/lazada-reviews-scraper"
 TIKTOK_ACTOR = "web_wanderer/tiktok-reviews-scraper"
 RUN_TIMEOUT_SECS = 90  # the three actors finished in 9-14 seconds when tested on 2026-10-26
 SPARE_REVIEWS = 3  # ask for a few more than needed: some reviews have no text and are dropped
+MAX_CONCURRENT_RUNS = 3  # Apify refused the 6th of 6 simultaneous runs on 2026-10-27, so wait our turn instead
+_RUN_SLOTS = threading.BoundedSemaphore(MAX_CONCURRENT_RUNS)
+START_RETRY_DELAY_S = 4  # one retry when Apify's API rejects a run before it starts (busy, rate limit); such a run is never billed
 
 TOKOPEDIA_HOSTS = ("tokopedia.com", "www.tokopedia.com")
 TIKTOK_SHOP_HOST = "shop-id.tokopedia.com"  # what a vt.tokopedia.com share link lands on
@@ -169,11 +173,22 @@ class _Actors:
     def __init__(self, client: Any, max_cost_usd: float) -> None:
         self._client, self._cap = client, max_cost_usd
 
+    def _start(self, actor_id: str, run_input: Dict[str, Any]) -> Any:
+        """Start an actor and wait for it. A start the API itself rejects is tried once more; nothing else is retried, so a run is never paid for twice."""
+        for attempt in (1, 2):
+            try:
+                with _RUN_SLOTS:  # the server handles requests on several threads, and one comparison starts up to six runs
+                    return self._client.actor(actor_id).call(
+                        run_input=run_input, max_total_charge_usd=Decimal(str(self._cap)), timeout_secs=RUN_TIMEOUT_SECS, wait_secs=RUN_TIMEOUT_SECS
+                    )
+            except Exception as exc:
+                if attempt == 2 or type(exc).__name__ != "ApifyApiError":
+                    raise
+                time.sleep(START_RETRY_DELAY_S)
+
     def run(self, actor_id: str, run_input: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
-            run = self._client.actor(actor_id).call(
-                run_input=run_input, max_total_charge_usd=Decimal(str(self._cap)), timeout_secs=RUN_TIMEOUT_SECS, wait_secs=RUN_TIMEOUT_SECS
-            )
+            run = self._start(actor_id, run_input)
             if not run:
                 raise FetchError("The fetch service took too long.")
             if run.get("status") not in (None, "SUCCEEDED"):
@@ -331,6 +346,12 @@ class LinkRouter(Fetcher):
         self._local.platform = platform
         self._local.cache = self._caches[platform]
         return self._caches[platform].fetch_reviews(clean, limit, mode)
+
+    def fetch_fresh(self, url: str, limit: int, mode: str = "latest") -> List[Review]:
+        """Like fetch_reviews but never reads or writes the disk cache: competitor reviews are not kept."""
+        limit, mode = clamp_limit(limit), check_mode(mode)
+        platform, clean = identify_link(url, self._resolver)
+        return self._caches[platform].inner.fetch_reviews(clean, limit, mode)
 
     def search(self, platform: str, query: str) -> List[Candidate]:
         """Competing listings for a search phrase (paid actor run, spend-capped, never cached)."""

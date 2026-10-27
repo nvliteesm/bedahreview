@@ -33,7 +33,7 @@ from typing import Any, Callable, Deque, Dict, List, Optional
 from urllib.parse import parse_qs
 
 from .classifier import ClassificationError, classify, resolve_model
-from .competitors import suggest_competitors
+from .competitors import MAX_COMPETITORS, compare_competitors, suggest_competitors
 from .env import has_api_key, load_dotenv
 from .fetchers import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, get_fetcher, product_title_from_url, to_review_dicts
 from .fetchers.base import check_mode, check_shopee_product_url, clamp_limit
@@ -178,6 +178,7 @@ def build_response(
 class Handler(BaseHTTPRequestHandler):
     classify_fn: Callable[..., List[Dict[str, Any]]] = staticmethod(classify)  # replaced in tests
     suggest_fn: Callable[..., Dict[str, Any]] = staticmethod(suggest_competitors)  # replaced in tests
+    compare_fn: Callable[..., Dict[str, Any]] = staticmethod(compare_competitors)  # replaced in tests
     fetcher: Optional[Fetcher] = None  # set when FETCHER=apify; None keeps the link box switched off
     access_code: Optional[str] = None  # set in public mode: visitors must sign in with it
     public = False  # public mode: any Host header is fine, cookies are Secure, per-visitor limits apply
@@ -318,6 +319,51 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(502, {"error": "Could not look for competitors (%s). You can paste competitor links instead." % type(exc).__name__, "fallback": "paste"})
         self._json(200, result)
 
+    def _compare(self) -> None:
+        """Competitor analysis, step 2: fetch a small mix of reviews from the confirmed competitors and compare themes. Paid, so it counts as an analysis; nothing is cached or kept."""
+        if not self._authed():
+            return self._json(401, {"error": "Please sign in again.", "login": True})
+        if self.use_limiter and not self.use_limiter.take(self._client()):
+            return self._json(429, {"error": "Too many analyses this hour. Try again later."})
+        fetcher = type(self).fetcher
+        fetch, check_link = getattr(fetcher, "fetch_fresh", None), getattr(fetcher, "check_link", None)
+        if fetch is None or check_link is None:
+            return self._json(400, {"error": "Comparing needs the link box. Paste competitor links instead.", "fallback": "paste"})
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            if "application/json" not in (self.headers.get("Content-Type") or "") or not 0 < length <= MAX_BODY_BYTES:
+                raise ValueError
+            body = json.loads(self.rfile.read(length).decode("utf-8"))
+            own = [{"theme": i["theme"], "bucket": i["bucket"], "fake": bool(i["fake"])} for i in body["own"]]
+            if not own or len(own) > MAX_REVIEWS or not all(isinstance(i["theme"], str) and isinstance(i["bucket"], str) for i in own):
+                raise ValueError
+            title = " ".join(str(body.get("title") or "").split())[:MAX_PRODUCT_CHARS]
+            wanted = [{"url": str(c["url"]), "title": " ".join(str(c.get("title") or "").split())[:MAX_PRODUCT_CHARS]} for c in body["competitors"]]
+            if not wanted or len(wanted) > MAX_COMPETITORS:
+                raise ValueError
+            own_url = body.get("url") or ""
+        except (ValueError, UnicodeDecodeError, KeyError, TypeError, AttributeError):
+            return self._json(400, {"error": "Choose 1 to %d competitors to compare." % MAX_COMPETITORS})
+        try:
+            mine = check_link(own_url) if own_url else ""
+            competitors = []
+            for entry in wanted:
+                clean = check_link(entry["url"])
+                if clean != mine and all(clean != c["url"] for c in competitors):
+                    competitors.append({"url": clean, "title": entry["title"]})
+        except FetchError as exc:
+            return self._json(400, {"error": str(exc)})
+        if not competitors:
+            return self._json(400, {"error": "Choose competitors other than your own product."})
+        try:
+            result = type(self).compare_fn(fetch, type(self).classify_fn, own, title, competitors)
+        except FetchError as exc:
+            return self._json(502, {"error": "%s You can try other competitors." % exc})
+        except Exception as exc:  # model or network trouble: say what happened without a traceback
+            sys.stderr.write("compare failed: %s\n" % type(exc).__name__)
+            return self._json(502, {"error": "Could not compare (%s). Try again in a moment." % type(exc).__name__})
+        self._json(200, result)
+
     # -- routes ----------------------------------------------------------
     def do_GET(self) -> None:
         if not self._host_ok():
@@ -344,6 +390,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._login()
         if self.path == "/api/competitors/suggest":
             return self._suggest()
+        if self.path == "/api/competitors/compare":
+            return self._compare()
         if self.path != "/api/classify":
             return self._json(404, {"error": "Not found"})
         if not self._authed():
@@ -399,6 +447,7 @@ def make_server(
     port: int = 8000,
     classify_fn: Optional[Callable[..., Any]] = None,
     suggest_fn: Optional[Callable[..., Any]] = None,
+    compare_fn: Optional[Callable[..., Any]] = None,
     fetcher: Optional[Fetcher] = None,
     access_code: Optional[str] = None,
     public: bool = False,
@@ -409,6 +458,8 @@ def make_server(
         handler.classify_fn = staticmethod(classify_fn)
     if suggest_fn is not None:
         handler.suggest_fn = staticmethod(suggest_fn)
+    if compare_fn is not None:
+        handler.compare_fn = staticmethod(compare_fn)
     handler.fetcher = fetcher
     handler.access_code = access_code or None
     handler.public = public

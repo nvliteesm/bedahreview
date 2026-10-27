@@ -113,7 +113,22 @@ details pre { margin: 0 0 4px; padding: 12px; background: var(--quote); border-r
 .board button[aria-selected="true"][data-b="ignore"] { background: var(--ignore-soft); border-color: var(--ignore); }
 .board button[aria-selected="true"][data-b="keep"] { background: var(--keep-soft); border-color: var(--keep); }
 .board button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.panel { display: grid; gap: 12px; }
+.panel, .stack { display: grid; gap: 12px; }
+.board button.rival { grid-column: 1 / -1; min-height: 56px; grid-auto-flow: column; justify-content: center; gap: 10px; }
+.board button.rival .n { font-size: 1rem; color: var(--check); }
+.board button[aria-selected="true"][data-b="rival"] { background: var(--accent-soft); border-color: var(--check); }
+.panel[data-b="rival"] { --c: var(--check); }
+.cand { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; }
+.cand input { width: 22px; height: 22px; min-height: 22px; margin: 2px 0 0; padding: 0; accent-color: var(--accent); }
+.cand .t { font-size: 0.92rem; overflow-wrap: anywhere; }
+.cand .meta { font-size: 0.8rem; color: var(--muted); }
+.cmp-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table.cmp { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+table.cmp th, table.cmp td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: center; font-variant-numeric: tabular-nums; }
+table.cmp th:first-child { text-align: left; font-weight: 600; min-width: 130px; }
+table.cmp thead th { font-size: 0.78rem; color: var(--muted); }
+table.cmp tr.sec th { background: var(--ignore-soft); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+table.cmp td.top.bad { color: var(--fight); font-weight: 800; } table.cmp td.top.good { color: var(--keep); font-weight: 800; }
 .rule { font-size: 0.9rem; color: var(--muted); }
 .card { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: var(--radius); padding: 14px; display: grid; gap: 10px; min-width: 0; }
 .panel[data-b="fix"] { --c: var(--fix); } .panel[data-b="fight"] { --c: var(--fight); } .panel[data-b="ignore"] { --c: var(--ignore); } .panel[data-b="keep"] { --c: var(--keep); }
@@ -235,6 +250,10 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
       <button class="btn ghost" id="print" type="button" data-i18n="print"></button>
     </div>
     <div id="notes" style="display:grid;gap:8px"></div>
+    <div class="card-box" id="rival-ask" hidden>
+      <p id="rival-ask-text"></p>
+      <button class="btn ghost" id="rival-ask-btn" type="button"></button>
+    </div>
     <div class="board" id="tabs" role="tablist"></div>
     <div id="panels"></div>
     <p class="foot" id="foot"></p>
@@ -291,6 +310,19 @@ const TEXT = {
     footFrom: "Demo: %s ulasan%s diambil dari tautan produk lewat layanan pihak ketiga%s. ", footLow: " bintang rendah", footCached: " (salinan tersimpan, tanpa biaya baru)",
     footTail: "Model: %s. Saran dan draf ditulis mesin: baca dulu, dan minta penutur Bahasa memeriksa sebelum dikirim ke pembeli. Penjelasan dan langkah di kartu Tanggapi masih berbahasa Inggris.",
     stars: "%s dari 5 bintang",
+    rival: "Pesaing", rivalRule: "Bandingkan keluhan dan pujian produkmu dengan produk serupa. Ini contoh kecil, bukan seluruh pasar.",
+    rivalAsk: "Mau sekalian membandingkan dengan pesaing?", rivalAskBtn: "Ya, cari pesaing",
+    rivalIntro: "Kami cari produk serupa di platform yang sama, kamu cek, lalu ketuk sekali. Kami ambil sekitar 7 ulasan per toko: 4 keluhan dan 3 terbaru.", rivalFind: "Cari pesaing",
+    rivalSearching: "Mencari produk serupa…", rivalSearchSub: "Sekitar 10-40 detik.",
+    rivalPick: "Centang yang memang sebanding dengan produkmu (maks. 3):", rivalMoreLbl: "Produk lain yang ditemukan",
+    rivalNone: "Tidak ada produk yang jelas sebanding. Tempel tautan pesaing di bawah.", rivalPaste: "Atau tempel tautan pesaing (satu per baris)",
+    rivalGo: "Bandingkan", rivalCost: "perkiraan biaya ±Rp%s", rivalNeedOne: "Pilih atau tempel minimal satu pesaing.", rivalMax: "Maksimal 3 pesaing.",
+    rivalComparing: "Membandingkan ulasan…", rivalCompareSub: "Mengambil ulasan tiap toko lalu membedahnya. Sekitar 30-90 detik.",
+    rivalSample: "Contoh kecil: sekitar 7 ulasan per toko (4 keluhan, 3 terbaru), bukan seluruh pasar. Angka adalah jumlah ulasan, bukan persen. Ulasan pesaing tidak disimpan.",
+    rivalFake: "%s ulasan pesaing diduga palsu dan tidak dihitung.", rivalFailed: "Tidak bisa diambil: %s Layanan pengambil ulasan gagal, atau toko ini belum punya ulasan. Coba lagi.", rivalYou: "Kamu", rivalComplaints: "Keluhan", rivalPraise: "Pujian",
+    rivalWorse: "Keluhan “%s”: %s di produkmu, di pesaing terbaik %s.", rivalOpp: "%s kena %s keluhan “%s” (kamu: %s). Peluang untuk menonjol.",
+    rivalPraiseGap: "Pembeli lebih sering memuji “%s” di %s (%s, kamu: %s).", rivalNoInsight: "Belum ada selisih yang jelas. Contohnya masih kecil.", rivalSmall: "%s: kurang dari 5 ulasan yang bisa dipercaya, jadi tidak dipakai untuk kesimpulan.",
+    rivalQuotes: "Kutipan ulasan", rivalAgain: "Mulai ulang", rivalShop: "Toko %s", rivalSold: "%s+ terjual",
   },
   en: {
     navCheck: "Check", navNew: "New reviews", newReviews: "New reviews",
@@ -329,6 +361,19 @@ const TEXT = {
     footFrom: "Demo: %s%s review(s) fetched from the product link via a third-party service%s. ", footLow: " low-star", footCached: " (saved copy, no new charge)",
     footTail: "Model: %s. Suggestions and drafts are machine-written: read them, and have a Bahasa speaker check any text before you send it to a buyer. Drafts are always in Bahasa Indonesia; the explanations and steps on Fight it cards are in English.",
     stars: "%s of 5 stars",
+    rival: "Rivals", rivalRule: "Compare your complaints and praise with similar products. This is a small sample, not the whole market.",
+    rivalAsk: "Also compare with competitors?", rivalAskBtn: "Yes, find competitors",
+    rivalIntro: "We look for similar products on the same platform, you check them, then tap once. We read about 7 reviews per shop: 4 complaints and 3 recent ones.", rivalFind: "Find competitors",
+    rivalSearching: "Looking for similar products…", rivalSearchSub: "About 10-40 seconds.",
+    rivalPick: "Tick the ones that are really comparable to yours (max 3):", rivalMoreLbl: "Other products found",
+    rivalNone: "No product was clearly comparable. Paste competitor links below.", rivalPaste: "Or paste competitor links (one per line)",
+    rivalGo: "Compare", rivalCost: "estimated cost ±Rp%s", rivalNeedOne: "Pick or paste at least one competitor.", rivalMax: "At most 3 competitors.",
+    rivalComparing: "Comparing reviews…", rivalCompareSub: "Fetching each shop's reviews, then reading them. About 30-90 seconds.",
+    rivalSample: "A small sample: about 7 reviews per shop (4 complaints, 3 recent), not the whole market. Numbers are review counts, not percentages. Competitor reviews are not saved.",
+    rivalFake: "%s competitor review(s) look fake and are not counted.", rivalFailed: "Could not be read: %s The review service failed, or this shop has no reviews yet. Try again.", rivalYou: "You", rivalComplaints: "Complaints", rivalPraise: "Praise",
+    rivalWorse: "Complaints about “%s”: %s for you vs %s for the best competitor.", rivalOpp: "%s has %s complaints about “%s” (you: %s). A chance to stand out.",
+    rivalPraiseGap: "Buyers praise “%s” more at %s (%s, you: %s).", rivalNoInsight: "No clear gap yet. The sample is still small.", rivalSmall: "%s: fewer than 5 credible reviews, so it is not used for any conclusion.",
+    rivalQuotes: "Review quotes", rivalAgain: "Start over", rivalShop: "Shop %s", rivalSold: "%s+ sold",
   },
 };
 const THEME_ID = {
@@ -462,9 +507,10 @@ function ignoreList(items) {
 }
 
 /* ---------- results ---------- */
-const TABS = ["fix", "fight", "ignore", "keep"];
+const TABS = ["fix", "fight", "ignore", "keep", "rival"];
 const MAIN_TABS = ["fix", "fight"];
 let lastData = null, activeTab = "fix";
+let rival = { step: "idle" }, rivalRun = 0;  // competitor analysis state; rivalRun lets a late reply notice that a new analysis has started
 function selectTab(key, focus) {
   activeTab = key;
   for (const k of TABS) {
@@ -476,6 +522,7 @@ function selectTab(key, focus) {
 }
 function render(data, fresh) {
   lastData = data;
+  if (fresh !== false) { rival = { step: "idle" }; rivalRun += 1; }
   const byId = {}; data.items.forEach((it) => { byId[it.id] = it; });
   const real = data.items.filter((it) => !(it.likely_fake && it.likely_fake.flag));
   const fixItems = data.groups;
@@ -483,7 +530,7 @@ function render(data, fresh) {
     .sort((a, b) => (a.likely_fake.flag - b.likely_fake.flag) || (a.bucket === b.bucket ? 0 : a.bucket === "fight" ? -1 : 1));
   const ignore = data.items.filter((it) => it.bucket === "ignore");
   const keep = real.filter((it) => it.bucket === "keep");
-  const counts = { fix: data.counts.fix, fight: data.counts.fight + data.counts.check, ignore: data.counts.ignore, keep: keep.length };
+  const counts = { fix: data.counts.fix, fight: data.counts.fight + data.counts.check, ignore: data.counts.ignore, keep: keep.length, rival: "VS" };
 
   const src = data.source || {};
   const name = src.title ? src.title + " · " : "";
@@ -497,7 +544,7 @@ function render(data, fresh) {
   $("notes").replaceChildren(...notes);
 
   $("tabs").replaceChildren(...TABS.map((k) => {
-    const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, class: MAIN_TABS.includes(k) ? "main" : "", "aria-controls": "panel-" + k, "data-b": k },
+    const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, class: MAIN_TABS.includes(k) ? "main" : k === "rival" ? "rival" : "", "aria-controls": "panel-" + k, "data-b": k },
       h("span", { class: "n", text: counts[k] }), h("span", { class: "l", text: tr(k) }));
     tab.addEventListener("click", () => selectTab(k, false));
     return tab;
@@ -507,7 +554,10 @@ function render(data, fresh) {
     panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") })),
     panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") })),
     panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })),
-    panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })));
+    panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })),
+    panel("rival", h("div", { class: "stack", id: "rival-body" })));
+  $("tab-rival").hidden = !(src.kind === "url");  // competitors are found from a product link, not from pasted text
+  renderRival();
 
   const fromLink = src.kind === "url" ? tr("footFrom", src.count, src.mode === "complaints" ? tr("footLow") : "", src.cached ? tr("footCached") : "") : "";
   $("foot").textContent = fromLink + tr("footTail", data.model);
@@ -521,6 +571,145 @@ function render(data, fresh) {
     window.scrollTo({ top: 0, behavior: reduceMotion() ? "auto" : "smooth" });
   }
 }
+
+/* ---------- competitor analysis ---------- */
+const RIVAL_COST_IDR = 500;  // about 3 US cents per competitor, shown while we test
+const MAX_RIVALS = 3;
+const fmtNum = (n) => Number(n).toLocaleString("id-ID");
+async function postJson(path, payload) {
+  const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  let data = null;
+  try { data = await res.json(); } catch (e) { /* not JSON */ }
+  if (res.status === 401) { location.reload(); return null; }
+  return { ok: res.ok, data };
+}
+function pastedLinks(text) { return (text.match(/https?:\/\/[^\s<>"']+/g) || []).map((u) => ({ url: u })); }
+function rivalChosen(st) { return st.checked.map((i) => ({ url: st.candidates[i].url, title: st.candidates[i].title })).concat(pastedLinks(st.extra)).slice(0, MAX_RIVALS); }
+function rivalSpinner(title, sub) {
+  return h("div", { class: "loading", role: "status" }, h("div", { class: "spinner", "aria-hidden": "true" }), h("h2", { text: title }), h("p", { class: "muted", text: sub }));
+}
+function candidateCard(st, i) {
+  const c = st.candidates[i];
+  const box = h("input", { type: "checkbox", "aria-label": c.title });
+  box.checked = st.checked.includes(i);
+  box.addEventListener("change", () => {
+    if (box.checked && st.checked.length >= MAX_RIVALS) { box.checked = false; announce(tr("rivalMax")); return; }
+    st.checked = box.checked ? st.checked.concat(i) : st.checked.filter((x) => x !== i);
+    renderRival();
+  });
+  const meta = [c.price ? "Rp" + fmtNum(c.price) : null, c.rating ? "★" + c.rating : null, c.sold ? tr("rivalSold", fmtNum(c.sold)) : null, c.shop].filter(Boolean).join(" · ");
+  return h("label", { class: "cand" }, box, h("span", {}, h("span", { class: "t", lang: "id", text: c.title }), h("br"), h("span", { class: "meta", text: meta })));
+}
+function rivalPick(st) {
+  const firstOther = st.candidates.findIndex((c) => !c.picked);
+  const chosen = rivalChosen(st);
+  const go = h("button", { class: "btn primary", type: "button", id: "rival-go" }, tr("rivalGo") + " · " + tr("rivalCost", fmtNum(Math.max(chosen.length, 1) * RIVAL_COST_IDR)));
+  go.addEventListener("click", rivalCompare);
+  const area = h("textarea", { id: "rival-paste", spellcheck: "false", rows: "3", style: "min-height:80px" });
+  area.value = st.extra;
+  area.addEventListener("input", () => { st.extra = area.value; const n = Math.max(rivalChosen(st).length, 1); go.textContent = tr("rivalGo") + " · " + tr("rivalCost", fmtNum(n * RIVAL_COST_IDR)); });
+  const cards = [];
+  st.candidates.forEach((c, i) => {
+    if (i === firstOther && i > 0) cards.push(h("p", { class: "small muted", text: tr("rivalMoreLbl") }));
+    cards.push(candidateCard(st, i));
+  });
+  return [
+    st.error ? h("div", { class: "callout warn", role: "alert", text: st.error }) : null,
+    st.candidates.length ? h("p", { class: "rule", text: tr("rivalPick") }) : h("div", { class: "callout", text: tr("rivalNone") }),
+    cards,
+    h("label", { class: "field", for: "rival-paste" }, h("span", { text: tr("rivalPaste") }), area),
+    go,
+  ];
+}
+function rivalResult(d) {
+  const names = d.competitors.map((c, i) => tr("rivalShop", String.fromCharCode(65 + i)));
+  const heads = [tr("rivalYou") + " (" + d.you.credible + ")"].concat(d.competitors.map((c, i) => names[i] + " (" + c.credible + ")"));
+  const section = (label) => h("tr", { class: "sec" }, h("th", { colspan: heads.length + 1, text: label }));
+  const body = [];
+  for (const kind of ["complaint", "praise"]) {
+    const rows = d.rows.filter((r) => r.kind === kind);
+    if (!rows.length) continue;
+    body.push(section(tr(kind === "complaint" ? "rivalComplaints" : "rivalPraise")));
+    rows.forEach((r) => {
+      const all = [r.you].concat(r.others), top = Math.max(...all);
+      body.push(h("tr", {}, h("th", { scope: "row", text: themeName(r.theme).replace(/^Pujian: |^Praise: /, "") }),
+        all.map((n) => h("td", { class: n && n === top ? "top " + (kind === "complaint" ? "bad" : "good") : "", text: n }))));
+    });
+  }
+  const fake = d.competitors.reduce((a, c) => a + c.fake, 0);
+  const small = names.filter((n, i) => d.competitors[i].small);
+  const say = d.insights.map((x) => x.kind === "worse" ? tr("rivalWorse", themeName(x.theme), x.you, x.best)
+    : x.kind === "opportunity" ? tr("rivalOpp", names[d.competitors.findIndex((c) => c.title === x.who)] || x.who, x.them, themeName(x.theme), x.you)
+    : tr("rivalPraiseGap", themeName(x.theme).replace(/^Pujian: |^Praise: /, ""), names[d.competitors.findIndex((c) => c.title === x.who)] || x.who, x.them, x.you));
+  const again = h("button", { class: "btn ghost", type: "button" }, tr("rivalAgain"));
+  again.addEventListener("click", () => { rival = { step: "idle" }; rivalRun += 1; renderRival(); });
+  return [
+    h("div", { class: "callout warn", text: tr("rivalSample") }),
+    fake ? h("div", { class: "callout hot", text: tr("rivalFake", fake) }) : null,
+    h("div", { class: "cmp-wrap" }, h("table", { class: "cmp" },
+      h("thead", {}, h("tr", {}, h("th", { scope: "col" }), heads.map((t) => h("th", { scope: "col", text: t })))), h("tbody", {}, body))),
+    small.length ? h("div", { class: "callout warn", text: tr("rivalSmall", small.join(", ")) }) : null,
+    say.length ? say.map((t) => h("div", { class: "callout", text: t })) : h("div", { class: "callout", text: tr("rivalNoInsight") }),
+    d.competitors.map((c, i) => h("details", { class: "full" },
+      h("summary", { text: tr("rivalQuotes") + " · " + names[i] }),
+      h("p", { lang: "id", text: c.title }),
+      Object.entries(c.quotes).map(([theme, q]) => h("blockquote", {}, h("span", { lang: "id" }, q.stars ? h("span", { class: "stars", text: starsText(q.stars) + " " }) : null, "“" + q.quote + "”"), h("span", { class: "src", text: themeName(theme) }))),
+      c.url.startsWith("https://") ? h("a", { href: c.url, target: "_blank", rel: "noopener noreferrer", class: "small", text: c.url }) : null)),
+    d.failed.map((f) => h("div", { class: "callout warn", text: tr("rivalFailed", f.title || f.url) })),
+    again,
+  ];
+}
+function rivalBody() {
+  if (rival.step === "searching") return rivalSpinner(tr("rivalSearching"), tr("rivalSearchSub"));
+  if (rival.step === "comparing") return rivalSpinner(tr("rivalComparing"), tr("rivalCompareSub"));
+  if (rival.step === "pick") return rivalPick(rival);
+  if (rival.step === "result") return rivalResult(rival.data);
+  const find = h("button", { class: "btn primary", type: "button" }, tr("rivalFind"));
+  find.addEventListener("click", rivalFind);
+  return [h("p", { class: "muted", text: tr("rivalIntro") }), find];
+}
+function renderRival() {
+  const box = $("rival-body");
+  if (!box) return;
+  box.replaceChildren(...[rivalBody()].flat(Infinity).filter(Boolean));
+  const src = (lastData && lastData.source) || {};
+  $("rival-ask").hidden = !(src.kind === "url" && rival.step === "idle");
+  $("rival-ask-text").textContent = tr("rivalAsk"); $("rival-ask-btn").textContent = tr("rivalAskBtn");
+}
+async function rivalFind() {
+  const src = lastData.source, run = ++rivalRun;
+  rival = { step: "searching" }; renderRival(); selectTab("rival", false);
+  $("tabs").scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
+  let next;
+  try {
+    const out = await postJson("/api/competitors/suggest", { url: src.url, title: src.title });
+    if (!out || run !== rivalRun) return;
+    const cands = out.ok ? out.data.candidates : [];
+    next = { step: "pick", candidates: cands, checked: cands.map((c, i) => (c.picked ? i : -1)).filter((i) => i >= 0), extra: "", error: out.ok ? "" : ((out.data && out.data.error) || tr("errGeneric", "")) };
+  } catch (e) {
+    if (run !== rivalRun) return;
+    next = { step: "pick", candidates: [], checked: [], extra: "", error: tr("errNetwork") };
+  }
+  rival = next; renderRival();
+}
+async function rivalCompare() {
+  const pick = rival, chosen = rivalChosen(pick), run = ++rivalRun;
+  if (!chosen.length) { pick.error = tr("rivalNeedOne"); renderRival(); return; }
+  const src = lastData.source;
+  const own = lastData.items.map((i) => ({ theme: i.theme, bucket: i.bucket, fake: !!(i.likely_fake && i.likely_fake.flag) }));
+  rival = { step: "comparing" }; renderRival();
+  let next;
+  try {
+    const out = await postJson("/api/competitors/compare", { url: src.url, title: src.title, own, competitors: chosen });
+    if (!out || run !== rivalRun) return;
+    next = out.ok ? { step: "result", data: out.data } : Object.assign(pick, { step: "pick", error: (out.data && out.data.error) || tr("errGeneric", "") });
+  } catch (e) {
+    if (run !== rivalRun) return;
+    next = Object.assign(pick, { step: "pick", error: tr("errNetwork") });
+  }
+  rival = next; renderRival();
+}
+$("rival-ask-btn").addEventListener("click", rivalFind);
 
 /* ---------- views ---------- */
 function show(view) {
