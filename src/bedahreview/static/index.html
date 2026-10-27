@@ -65,7 +65,7 @@ h2[tabindex="-1"]:focus, .error:focus { outline: none; }
 .lang { display: inline-flex; gap: 2px; min-height: 44px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; align-items: center; }
 .lang .o { padding: 6px 14px; border-radius: 999px; }
 .lang .o.on { background: var(--ink); color: var(--surface); }
-.theme { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.theme { position: relative; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
 main { max-width: 480px; margin: 0 auto; display: grid; gap: 14px; align-content: start;
   padding: 16px max(var(--gutter), env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left)); }
 .bottombar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); border-top: 1px solid var(--line);
@@ -213,6 +213,16 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
 .tag { display: inline-block; margin-right: 6px; padding: 0 9px; border-radius: 999px; border: 1px solid currentColor; font-size: 0.72rem; font-weight: 700; }
 .tag.small { color: var(--fix); background: var(--fix-soft); } .tag.fail { color: var(--fight); background: var(--fight-soft); } .tag.skip { color: var(--muted); background: var(--ignore-soft); }
 .pcard-more summary { font-size: 0.85rem; }
+.badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--accent); color: var(--on-accent); font-size: 0.72rem; font-weight: 800; display: grid; place-items: center; }
+.track { display: grid; gap: 8px; background: var(--keep-soft); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 0.92rem; }
+.track .when { font-weight: 800; color: var(--keep); }
+.nums { display: grid; gap: 4px; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
+.nums .small-warn { font-size: 0.82rem; color: var(--muted); }
+.nums .small-warn.strong { color: var(--fix); font-weight: 700; }
+.fixform { display: grid; gap: 8px; }
+.fixitem { display: grid; gap: 10px; }
+.fixitem .note { overflow-wrap: anywhere; }
+.btn.danger { color: var(--fight); border-color: currentColor; }
 .drafts { display: grid; gap: 12px; }
 .ins.bad .big b:first-child { color: var(--fight); } .ins.good .big b:first-child { color: var(--keep); }
 .cand .meta { display: block; }
@@ -316,6 +326,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
     </div>
     <div class="tools">
       <button class="lang" id="lang" type="button" aria-label="Bahasa / Language"></button>
+      <button class="theme" id="fixes-btn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><span class="badge" id="fixes-count" hidden></span></button>
       <button class="theme" id="theme" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="theme-icon" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
     </div>
   </div>
@@ -421,6 +432,23 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
     <p class="small muted" id="elapsed" aria-hidden="true"></p>
   </section>
 
+  <!-- fixes the seller logged (saved in this browser only) -->
+  <section id="view-fixes" hidden aria-labelledby="fixes-h" style="display:grid;gap:12px">
+    <div class="res-head">
+      <div><h2 id="fixes-h" tabindex="-1" data-i18n="fixesTitle"></h2><p class="small muted" data-i18n="fixesSub"></p></div>
+      <button class="btn ghost" id="fixes-back" type="button" data-i18n="back"></button>
+    </div>
+    <div class="callout warn" data-i18n="fixesWarn"></div>
+    <div class="callout hot" id="fixes-nostore" hidden data-i18n="fixesNoStore"></div>
+    <div class="row">
+      <button class="btn ghost" id="fixes-export" type="button" data-i18n="fixesExport"></button>
+      <button class="btn ghost" id="fixes-import" type="button" data-i18n="fixesImport"></button>
+      <input type="file" id="fixes-file" accept="application/json,.json" hidden aria-label="JSON">
+    </div>
+    <div class="callout" id="fixes-msg" role="status" hidden></div>
+    <div id="fixes-list" class="stack"></div>
+  </section>
+
   <!-- results -->
   <section id="view-results" hidden aria-labelledby="results-h" style="display:grid;gap:12px">
     <div class="res-head mob">
@@ -522,6 +550,18 @@ const TEXT = {
     step1T: "Tempel tautan", step1D: "dari Tokopedia, TikTok Shop, atau Lazada", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
     step3T: "Kamu dapat daftar tugas", step3D: "urut, plus draf balasan siap salin",
     linkHint: "Kami membaca hingga 10 ulasan terbaru yang berisi teks. Nama pembeli tidak disimpan.", linkOpts: "Pilihan lain", trySample: "Belum punya tautan? Coba dengan contoh",
+    back: "Kembali", fixesBtn: "Perbaikan", fixesTitle: "Perbaikan yang kamu catat", fixesSub: "Disimpan di browser ini saja. Tidak ada yang dikirim ke server.",
+    fixesWarn: "Hitungan dari contoh kecil bisa menyesatkan. Keluhan yang berkurang satu bisa kebetulan, dan bukan bukti perbaikanmu berhasil. Analisis baru juga bisa memuat ulasan lama yang sama.",
+    fixesNoStore: "Browser ini tidak bisa menyimpan data, jadi catatan hilang saat halaman ditutup. Ekspor ke file JSON supaya tidak hilang.",
+    fixesExport: "Ekspor JSON", fixesImport: "Impor JSON", fixesEmpty: "Belum ada perbaikan. Di tab Perbaiki, ketuk “Tandai sudah diperbaiki” pada sebuah kartu.",
+    fixMark: "Tandai sudah diperbaiki", fixNoteLbl: "Catatan singkat (opsional)", fixNotePh: "mis. size chart diganti ke cm", fixSave: "Simpan", fixCancel: "Batal",
+    fixMarked: "Ditandai diperbaiki %s", fixBefore: "Sebelum: %s dari %s ulasan mengeluhkan ini.", fixAfter: "Sesudah (%s): %s dari %s ulasan.",
+    fixWaiting: "Belum ada analisis baru untuk dibandingkan. Bedah ulasan terbaru produk yang sama nanti.",
+    fixSmallStrong: "Contoh sangat kecil (kurang dari 10 ulasan): selisih ini bisa kebetulan.", fixSmall: "Ini jumlah ulasan, bukan persen. Contoh kecil bisa menyesatkan.",
+    fixEdit: "Ubah", fixDelete: "Hapus", fixDeleteSure: "Yakin hapus?", fixDate: "Tanggal", fixProduct: "Produk: %s", fixNoProduct: "(tanpa nama produk)",
+    fixNoName: "Tanpa nama produk: perbaikan ini dicocokkan dengan analisis lain yang juga tanpa nama. Isi nama produk di kotak Tempel agar tepat.",
+    fixesCompared: "%s perbaikan yang kamu catat dibandingkan dengan ulasan baru ini.", fixesSee: "Lihat",
+    importOk: "Diimpor: %s perbaikan. Dilewati karena tidak valid: %s.", importBad: "File ini tidak bisa dibaca sebagai daftar perbaikan BedahReview.", importBig: "File terlalu besar.", fixSaveFail: "Tidak bisa menyimpan di browser ini. Ekspor JSON supaya catatan tidak hilang.",
     limitBudget: "Batas demo hari ini tercapai. Tempel ulasannya saja.", limitBudgetRival: "Batas demo hari ini tercapai. Coba lagi besok.", limitHour: "Terlalu banyak pengambilan lewat tautan dalam satu jam. Coba lagi nanti, atau tempel ulasannya.",
     fbTitle: "Cara lain: tempel ulasannya", fbSteps: ["Buka produk di marketplace, lalu buka Ulasan.", "Salin teks ulasannya.", "Tempel di bawah, satu ulasan per baris."], fbRetry: "Coba tautan lagi",
     errFetchTitle: "Ulasan dari tautan ini tidak bisa dibaca", backResults: "← Kembali ke hasil", pastedName: "Ulasan yang ditempel",
@@ -601,6 +641,18 @@ const TEXT = {
     step1T: "Paste a link", step1D: "from Tokopedia, TikTok Shop or Lazada", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
     step3T: "You get a task list", step3D: "in order, with reply drafts ready to copy",
     linkHint: "We read up to 10 of the newest reviews that have text. Buyer names are not saved.", linkOpts: "More options", trySample: "No link yet? Try an example",
+    back: "Back", fixesBtn: "Fixes", fixesTitle: "Fixes you logged", fixesSub: "Saved in this browser only. Nothing is sent to the server.",
+    fixesWarn: "Counts from small samples can mislead. One complaint fewer can be chance, not proof that your fix worked. A new analysis may also include some of the same old reviews.",
+    fixesNoStore: "This browser cannot save data, so your log is lost when the page closes. Export it to a JSON file to keep it.",
+    fixesExport: "Export JSON", fixesImport: "Import JSON", fixesEmpty: "No fixes yet. In the Fix it tab, tap “Mark as fixed” on a card.",
+    fixMark: "Mark as fixed", fixNoteLbl: "Short note (optional)", fixNotePh: "e.g. size chart changed to cm", fixSave: "Save", fixCancel: "Cancel",
+    fixMarked: "Marked as fixed %s", fixBefore: "Before: %s of %s reviews complained about this.", fixAfter: "After (%s): %s of %s reviews.",
+    fixWaiting: "No newer analysis to compare with yet. Analyse the latest reviews of the same product later.",
+    fixSmallStrong: "Very small sample (under 10 reviews): this difference can be chance.", fixSmall: "These are review counts, not percentages. Small samples can mislead.",
+    fixEdit: "Edit", fixDelete: "Delete", fixDeleteSure: "Really delete?", fixDate: "Date", fixProduct: "Product: %s", fixNoProduct: "(no product name)",
+    fixNoName: "No product name: this fix is matched with other analyses that also have no name. Fill in the product name in the Paste box to be exact.",
+    fixesCompared: "%s fix(es) you logged were compared with these new reviews.", fixesSee: "See",
+    importOk: "Imported: %s fix(es). Skipped as invalid: %s.", importBad: "This file could not be read as a BedahReview fixes list.", importBig: "The file is too large.", fixSaveFail: "Could not save in this browser. Export JSON so your log is not lost.",
     limitBudget: "Demo limit reached today. Paste the reviews instead.", limitBudgetRival: "Demo limit reached today. Try again tomorrow.", limitHour: "Too many link look-ups this hour. Try again later, or paste the reviews.",
     fbTitle: "Another way: paste the reviews", fbSteps: ["Open the product on the marketplace, then open Reviews.", "Copy the review text.", "Paste it below, one review per line."], fbRetry: "Try the link again",
     errFetchTitle: "The reviews from this link could not be read", backResults: "← Back to results", pastedName: "Pasted reviews",
@@ -724,7 +776,8 @@ function applyLang() {
   $("lang").replaceChildren(h("span", { class: "o" + (lang === "id" ? " on" : ""), text: "ID" }), h("span", { class: "o" + (lang === "en" ? " on" : ""), text: "EN" }));
   $("pchip-change").textContent = tr("change"); $("back-results").textContent = tr("backResults"); $("print-d").textContent = tr("print");
   $("legend").replaceChildren(...["fix", "fight", "ignore", "keep"].map((k) => h("p", {}, h("b", { class: "lg-" + k, text: tr(k) }), tr("legend" + k[0].toUpperCase() + k.slice(1)))));
-  themeLabel();
+  themeLabel(); renderFixBadge();
+  if (currentView === "fixes") renderFixes();
   if (!$("run").disabled) $("run").textContent = tr("run");
   if (lastData) render(lastData, false); else { placeRival(); renderRival(); }
 }
@@ -804,7 +857,8 @@ function fixCard(group, byId) {
       h("div", { class: "chips" }, h("span", { class: "chip fix", text: tr("chipOf", group.n, group.of) }), group.variant ? h("span", { class: "chip soft", text: group.variant }) : null)),
     suggestions.map((s) => draft(tr("dFix"), s, "fix")),
     shown.map((m) => [quote(m), fullText(m)]),
-    more.length ? h("details", { class: "full" }, h("summary", { text: tr("moreQuotes", more.length) }), h("div", { class: "stack" }, more.map((m) => [quote(m), fullText(m)]))) : null);
+    more.length ? h("details", { class: "full" }, h("summary", { text: tr("moreQuotes", more.length) }), h("div", { class: "stack" }, more.map((m) => [quote(m), fullText(m)]))) : null,
+    fixTracker(group));
 }
 function keepBody(keep) {
   const themes = [...new Set(keep.map((k) => k.theme.replace(/^Praise: /, "")))];
@@ -815,8 +869,179 @@ function ignoreList(items) {
   return h("ul", { class: "ignore-list" }, items.map((it) => h("li", { lang: "id", text: "#" + it.id + (it.stars ? " · " + starsText(it.stars) : "") + " · " + (it.text || tr("noText")) })));
 }
 
+/* ---------- fix tracking ----------
+   Saved in this browser only (localStorage, with an in-memory fallback). A record holds the theme, variant, the seller's own
+   note, the date and complaint counts with the sample size. Never review text, never a reviewer name, nothing sent to the server. */
+const FIX_KEY = "bedahreview-fixes-v1", MAX_FIXES = 200, NOTE_MAX = 200, SMALL_SAMPLE = 10, MAX_IMPORT_BYTES = 500000;
+let memFixes = [], fixStorageOk = true, memOnly = false;  // memOnly: the last save failed, so the in-memory list is newer than storage
+const fxStr = (s, max) => (typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, max) : "");
+const fxInt = (n) => (Number.isInteger(n) && n >= 0 && n <= 100000 ? n : null);
+const fxDate = (s) => (typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "");
+function today() { const d = new Date(), p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
+function cleanCounts(c, withDate) {
+  if (!c || typeof c !== "object") return null;
+  const count = fxInt(c.count), total = fxInt(c.total);
+  if (count == null || total == null || count > total) return null;
+  return { count, total, sig: fxStr(c.sig, 40), date: withDate ? fxDate(c.date) : "" };
+}
+function cleanFix(f) {  // anything read back from storage or an imported file passes through here
+  if (!f || typeof f !== "object") return null;
+  const theme = fxStr(f.theme, 80), id = fxStr(f.id, 40), before = cleanCounts(f.before, false), date = fxDate(f.date);
+  if (!theme || !id || !before || !date) return null;
+  return { id, theme, variant: fxStr(f.variant, 60), product: fxStr(f.product, 300), productLabel: fxStr(f.productLabel, 150), note: fxStr(f.note, NOTE_MAX), date, before, after: cleanCounts(f.after, true) };
+}
+const cleanFixes = (list) => (Array.isArray(list) ? list : []).map(cleanFix).filter(Boolean).slice(0, MAX_FIXES);
+function loadFixes() {
+  if (memOnly) return memFixes;
+  try { const raw = localStorage.getItem(FIX_KEY); if (raw != null) memFixes = cleanFixes(JSON.parse(raw)); fixStorageOk = true; } catch (e) { fixStorageOk = false; }
+  return memFixes;
+}
+function saveFixes(list) {
+  memFixes = list;
+  try { localStorage.setItem(FIX_KEY, JSON.stringify(list)); fixStorageOk = true; memOnly = false; } catch (e) { fixStorageOk = false; memOnly = true; }
+  renderFixBadge();
+  return fixStorageOk;
+}
+const baseVariant = (v) => String(v || "").split(",")[0].trim();
+const isFake = (it) => !!(it.likely_fake && it.likely_fake.flag);
+function productKey(src) { src = src || {}; return src.kind === "url" ? String(src.url || "") : fxStr(src.title, 150).toLowerCase(); }
+function reviewSig(items) {  // tells two analyses apart without keeping any review text
+  let hash = 5381;
+  for (const s of items.map((i) => i.id + "|" + (i.text || "")).sort()) for (let k = 0; k < s.length; k++) hash = ((hash * 33) ^ s.charCodeAt(k)) >>> 0;
+  return hash.toString(36) + "." + items.length;
+}
+function countTheme(items, theme, variant) {  // complaints on this theme (and variant, when the fix names one) out of all credible reviews
+  const real = items.filter((it) => !isFake(it));
+  const count = real.filter((it) => it.theme === theme && ["fix", "fight", "check"].includes(it.bucket) && (!variant || baseVariant(it.variant) === variant)).length;
+  return { count, total: real.length };
+}
+function makeFix(group, note, src, items) {
+  const now = countTheme(items, group.theme, group.variant || "");
+  return {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), theme: group.theme, variant: group.variant || "", note: fxStr(note, NOTE_MAX), date: today(),
+    product: productKey(src), productLabel: fxStr((src || {}).title || (src || {}).url, 150), before: { count: now.count, total: now.total, sig: reviewSig(items), date: "" }, after: null,
+  };
+}
+function applyAnalysis(fixes, key, items) {  // set the "after" counts on every saved fix for this product, unless these are the very reviews it was marked on
+  const sig = reviewSig(items), changed = [];
+  const next = fixes.map((f) => {
+    if (f.product !== key || f.before.sig === sig || (f.after && f.after.sig === sig)) return f;
+    const now = countTheme(items, f.theme, f.variant);
+    if (!now.total) return f;
+    const upd = Object.assign({}, f, { after: { count: now.count, total: now.total, sig, date: today() } });
+    changed.push(upd);
+    return upd;
+  });
+  return { fixes: next, changed };
+}
+const sameFix = (f, key, theme, variant) => f.product === key && f.theme === theme && f.variant === (variant || "");
+function mergeImport(current, text) {  // a file in, strictly checked; same id replaces, new ids are added
+  if (typeof text !== "string" || text.length > MAX_IMPORT_BYTES) return { error: "big" };
+  let parsed;
+  try { parsed = JSON.parse(text); } catch (e) { return { error: "bad" }; }
+  const raw = Array.isArray(parsed) ? parsed : parsed && Array.isArray(parsed.fixes) ? parsed.fixes : null;
+  if (!raw) return { error: "bad" };
+  const good = cleanFixes(raw);
+  const byId = new Map(current.map((f) => [f.id, f]));
+  good.forEach((f) => byId.set(f.id, f));
+  return { fixes: [...byId.values()].slice(0, MAX_FIXES), added: good.length, skipped: raw.length - good.length };
+}
+function fmtDate(iso) { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(lang === "id" ? "id-ID" : "en-GB", { day: "numeric", month: "short", year: "numeric" }); }
+function renderFixBadge() {
+  const n = loadFixes().length;
+  $("fixes-count").textContent = n; $("fixes-count").hidden = !n;
+  $("fixes-btn").setAttribute("aria-label", tr("fixesBtn") + (n ? " (" + n + ")" : "")); $("fixes-btn").title = tr("fixesBtn");
+}
+function trackLines(f) {  // before and after, counts with their sample size, and the plain warning about small samples
+  const small = f.after && Math.min(f.before.total, f.after.total) < SMALL_SAMPLE;
+  return h("div", { class: "nums" },
+    h("span", { text: tr("fixBefore", f.before.count, f.before.total) }),
+    f.after ? h("span", { text: tr("fixAfter", fmtDate(f.after.date), f.after.count, f.after.total) }) : h("span", { class: "muted", text: tr("fixWaiting") }),
+    f.after ? h("span", { class: "small-warn" + (small ? " strong" : ""), text: small ? tr("fixSmallStrong") : tr("fixSmall") }) : null);
+}
+function fixTracker(group) {  // under a Fix card: the "mark as fixed" action, or the saved fix with its before and after
+  if (!lastData) return null;
+  const src = lastData.source || {}, key = productKey(src);
+  const saved = loadFixes().find((f) => sameFix(f, key, group.theme, group.variant));
+  if (saved) {
+    return h("div", { class: "track" }, h("span", { class: "when", text: tr("fixMarked", fmtDate(saved.date)) }),
+      saved.note ? h("span", { class: "note", text: saved.note }) : null, trackLines(saved),
+      h("button", { class: "plain", type: "button", text: tr("fixesBtn") + " →", onclick: () => openFixes() }));
+  }
+  const open = h("button", { class: "btn ghost", type: "button", text: tr("fixMark") });
+  const form = h("div", { class: "fixform", hidden: true });
+  const note = h("input", { type: "text", maxlength: String(NOTE_MAX), autocomplete: "off", placeholder: tr("fixNotePh"), id: "fixnote-" + group.theme.length + "-" + (group.variant || "").length });
+  const err = h("div", { class: "callout hot", role: "alert", hidden: true, text: tr("fixSaveFail") });
+  const save = h("button", { class: "btn primary", type: "button", text: tr("fixSave") });
+  const cancel = h("button", { class: "btn ghost", type: "button", text: tr("fixCancel") });
+  open.addEventListener("click", () => { form.hidden = false; open.hidden = true; note.focus(); });
+  cancel.addEventListener("click", () => { form.hidden = true; open.hidden = false; });
+  save.addEventListener("click", () => {
+    const ok = saveFixes(loadFixes().concat(makeFix(group, note.value, src, lastData.items)));
+    if (!ok) { err.hidden = false; return; }
+    render(lastData, false);
+  });
+  form.append(...[h("label", { class: "field", for: note.id }, h("span", { text: tr("fixNoteLbl") }), note), key ? null : h("p", { class: "small muted", text: tr("fixNoName") }), err, h("div", { class: "row" }, save, cancel)].filter(Boolean));
+  return h("div", { class: "fixform" }, open, form);
+}
+let currentView = "input", viewBeforeFixes = "input", lastChanged = [];
+function openFixes() { if (currentView !== "fixes") viewBeforeFixes = currentView; renderFixes(); show("fixes"); toTop(); $("fixes-h").focus({ preventScroll: true }); }
+function fixItem(f) {
+  const body = h("div", { class: "fixitem" });
+  const draw = (editing, sure) => {
+    const head = h("div", { class: "card-head" }, h("h3", { text: themeName(f.theme) }),
+      h("div", { class: "chips" }, f.variant ? h("span", { class: "chip soft", text: f.variant }) : null, h("span", { class: "chip", text: fmtDate(f.date) })));
+    const meta = h("p", { class: "small muted", text: tr("fixProduct", f.productLabel || tr("fixNoProduct")) });
+    if (editing) {
+      const note = h("input", { type: "text", maxlength: String(NOTE_MAX), value: f.note, "aria-label": tr("fixNoteLbl") });
+      const date = h("input", { type: "date", value: f.date, "aria-label": tr("fixDate") });
+      const save = h("button", { class: "btn primary", type: "button", text: tr("fixSave") });
+      save.addEventListener("click", () => {
+        const d = fxDate(date.value) || f.date;
+        saveFixes(loadFixes().map((x) => (x.id === f.id ? Object.assign({}, x, { note: fxStr(note.value, NOTE_MAX), date: d }) : x)));
+        renderFixes();
+      });
+      const cancel = h("button", { class: "btn ghost", type: "button", text: tr("fixCancel") });
+      cancel.addEventListener("click", () => draw(false, false));
+      body.replaceChildren(head, meta, h("label", { class: "field" }, h("span", { text: tr("fixNoteLbl") }), note), h("label", { class: "field" }, h("span", { text: tr("fixDate") }), date), h("div", { class: "row" }, save, cancel));
+      return;
+    }
+    const edit = h("button", { class: "btn ghost", type: "button", text: tr("fixEdit") });
+    edit.addEventListener("click", () => draw(true, false));
+    const del = h("button", { class: "btn ghost" + (sure ? " danger" : ""), type: "button", text: sure ? tr("fixDeleteSure") : tr("fixDelete") });
+    del.addEventListener("click", () => {
+      if (!sure) { draw(false, true); return; }
+      saveFixes(loadFixes().filter((x) => x.id !== f.id));
+      renderFixes();
+    });
+    body.replaceChildren(head, meta, f.note ? h("p", { class: "note", text: f.note }) : null, trackLines(f), h("div", { class: "row" }, edit, del));
+  };
+  draw(false, false);
+  return h("article", { class: "card", style: "--c: var(--keep)" }, body);
+}
+function renderFixes(message) {
+  const list = loadFixes();
+  $("fixes-nostore").hidden = fixStorageOk;
+  $("fixes-list").replaceChildren(...(list.length ? list.slice().reverse().map(fixItem) : [h("div", { class: "empty", text: tr("fixesEmpty") })]));
+  const msg = $("fixes-msg"); msg.textContent = message || ""; msg.hidden = !message;
+}
+function exportFixes() {
+  const blob = new Blob([JSON.stringify({ app: "bedahreview", version: 1, exported: today(), fixes: loadFixes() }, null, 2)], { type: "application/json" });
+  const a = h("a", { href: URL.createObjectURL(blob), download: "bedahreview-fixes-" + today() + ".json" });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function importFixes(file) {
+  if (!file) return;
+  if (file.size > MAX_IMPORT_BYTES) { renderFixes(tr("importBig")); return; }
+  const out = mergeImport(loadFixes(), await file.text());
+  if (out.error) { renderFixes(tr(out.error === "big" ? "importBig" : "importBad")); return; }
+  saveFixes(out.fixes);
+  renderFixes(tr("importOk", out.added, out.skipped));
+}
+
 /* ---------- results ---------- */
-const TABS = ["fix", "fight", "ignore", "keep", "rival"];
+const TABS =["fix", "fight", "ignore", "keep", "rival"];
 const MAIN_TABS = ["fix", "fight"];
 let lastData = null, activeTab = "fix";
 let rival = { step: "idle" }, rivalRun = 0;  // competitor analysis state; rivalRun lets a late reply notice that a new analysis has started
@@ -846,7 +1071,15 @@ function render(data, fresh) {
   $("results-h").textContent = tr("results");
   $("summary").textContent = name + data.reviews + " " + tr("reviewsWord") + (data.star_avg ? " · " + data.star_avg + "★" : "");
 
+  if (fresh !== false) {  // new reviews: compare them with every fix saved for this product
+    const out = applyAnalysis(loadFixes(), productKey(src), data.items);
+    lastChanged = out.changed;
+    if (out.changed.length) saveFixes(out.fixes);
+  }
   const notes = [];
+  if (lastChanged.length) {
+    notes.push(h("div", { class: "callout" }, tr("fixesCompared", lastChanged.length) + " ", h("button", { class: "plain strong", type: "button", text: tr("fixesSee"), onclick: () => openFixes() })));
+  }
   if (data.likely_fake) notes.push(h("div", { class: "callout hot", text: tr("noteFake", data.likely_fake) }));
   if (data.no_text) notes.push(h("div", { class: "callout", text: tr("noteNoText", data.no_text) }));
   if (data.dropped) notes.push(h("div", { class: "callout warn", text: tr("noteDropped", data.dropped) }));
@@ -1104,6 +1337,8 @@ desktopQuery.addEventListener("change", () => { if (lastData) render(lastData, f
 
 /* ---------- views ---------- */
 function show(view) {
+  currentView = view;
+  $("view-fixes").hidden = view !== "fixes";
   $("view-input").hidden = view !== "input";
   $("view-loading").hidden = view !== "loading";
   $("view-results").hidden = view !== "results";
@@ -1118,6 +1353,11 @@ $("nav-results").addEventListener("click", () => { if (lastData) { show("results
 $("pchip-change").addEventListener("click", () => { show("input"); toTop(); });
 $("back-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
 $("print-d").addEventListener("click", () => window.print());
+$("fixes-btn").addEventListener("click", () => { if (currentView === "fixes") { $("fixes-back").click(); } else openFixes(); });
+$("fixes-back").addEventListener("click", () => { show(viewBeforeFixes === "loading" || (viewBeforeFixes === "results" && !lastData) ? "input" : viewBeforeFixes); toTop(); });
+$("fixes-export").addEventListener("click", exportFixes);
+$("fixes-import").addEventListener("click", () => $("fixes-file").click());
+$("fixes-file").addEventListener("change", async (e) => { await importFixes(e.target.files[0]); e.target.value = ""; });
 
 function tabKeys(listEl, selector, onSelect) {
   listEl.addEventListener("keydown", (e) => {

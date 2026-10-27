@@ -95,6 +95,67 @@ window.__probe = (async () => {
     document.getElementById("theme").click();
     out.themeChanged = (document.documentElement.dataset.theme || "") !== before;
   }
+
+  if (location.hash === "#fixes") {
+    const KEY = "bedahreview-fixes-v1";
+    const mk = (id, theme, bucket, variant, fake, text) => ({ id, theme, bucket, variant, text, likely_fake: { flag: !!fake } });
+    const items = [mk("1", "Sizing & fit", "fix", "Putih, L", 0, "rahasia satu"), mk("2", "Sizing & fit", "fix", "Hitam, M", 0, "rahasia dua"), mk("3", "Sizing & fit", "fix", "Putih, S", 1, "rahasia palsu"),
+      mk("4", "Colour vs photo", "fix", "Putih, L", 0, "rahasia empat"), mk("5", "Praise: quality / material", "keep", null, 0, "rahasia lima")];
+    out.fx = { all: countTheme(items, "Sizing & fit", ""), putih: countTheme(items, "Sizing & fit", "Putih"), colour: countTheme(items, "Colour vs photo", "") };
+    const fix = makeFix({ theme: "Sizing & fit", variant: "" }, "size chart diganti", { kind: "paste", title: "Kaos  Boxy" }, items);
+    out.fx.made = [fix.before.count, fix.before.total, fix.product, fix.date.length];
+    out.fx.noText = JSON.stringify(fix).indexOf("rahasia") < 0;
+    out.fx.same = applyAnalysis([fix], "kaos boxy", items).changed.length;  // the very reviews it was marked on: nothing to compare
+    const later = [mk("1", "Sizing & fit", "fix", "Putih, L", 0, "baru satu"), mk("2", "Praise: quality / material", "keep", null, 0, "baru dua"), mk("3", "Praise: quality / material", "keep", null, 0, "baru tiga")];
+    const next = applyAnalysis([fix], "kaos boxy", later);
+    out.fx.later = [next.changed.length, next.fixes[0].after.count, next.fixes[0].after.total, JSON.stringify(next.fixes).indexOf("baru") < 0];
+    out.fx.otherProduct = applyAnalysis([fix], "kemeja", later).changed.length;
+    out.fx.sameFix = [sameFix(fix, "kaos boxy", "Sizing & fit", null), sameFix(fix, "kaos boxy", "Sizing & fit", "Putih")];
+    const good = JSON.stringify({ fixes: [next.fixes[0], { id: "x", theme: "", date: "nope" }, "junk"] });
+    const merged = mergeImport([fix], good);
+    out.fx.imp = [merged.added, merged.skipped, merged.fixes.length, merged.fixes[0].after.count];
+    out.fx.badImport = [mergeImport([], "{not json").error, mergeImport([], "{}").error, mergeImport([], "x".repeat(600000)).error];
+    out.fx.longNote = cleanFix(Object.assign({}, fix, { note: "n".repeat(500) })).note.length;
+    out.fx.negative = cleanFix(Object.assign({}, fix, { before: { count: 5, total: 2 } }));
+    const realSet = Storage.prototype.setItem;
+    Storage.prototype.setItem = function () { throw new Error("blocked"); };
+    out.fx.saveWhenBlocked = [saveFixes([fix]), loadFixes().length];  // the list survives in memory and says it could not be stored
+    Storage.prototype.setItem = realSet;
+    saveFixes([]);
+  }
+  if (location.hash === "#fixflow") {
+    localStorage.removeItem("bedahreview-fixes-v1");
+    const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
+    const resultsUp = () => !document.getElementById("view-results").hidden;
+    document.getElementById("sample").click();
+    document.getElementById("run").click();
+    await until(resultsUp);
+    const card = document.querySelector("#panel-fix .card");
+    const noNull = card.textContent.indexOf("null") < 0;
+    [...card.querySelectorAll("button")].find((b) => b.textContent === "Tandai sudah diperbaiki").click();
+    card.querySelector("input[type=text]").value = "foto varian diganti";
+    [...card.querySelectorAll("button")].find((b) => b.textContent === "Simpan").click();
+    const raw = localStorage.getItem("bedahreview-fixes-v1");
+    const saved = JSON.parse(raw)[0];
+    out.fl = { noNull, n: JSON.parse(raw).length, theme: saved.theme, variant: saved.variant, note: saved.note, before: [saved.before.count, saved.before.total], noText: raw.indexOf("ijo") < 0 && raw.indexOf("koyak") < 0 };
+    out.fl.cardAfterSave = document.querySelector("#panel-fix .card .track").textContent.indexOf("Ditandai diperbaiki") >= 0;
+    out.fl.badge = document.getElementById("fixes-count").textContent;
+    out.fl.sameAgain = "";
+    document.getElementById("nav-input").click();
+    document.getElementById("paste").value = "★★☆☆☆  Putih, M   warna tulisan ijo jadi hitam" + String.fromCharCode(10) + "★★★★★  bagus sekali bahannya";
+    document.getElementById("run").click();
+    await until(() => !document.getElementById("view-loading").hidden || resultsUp());
+    await until(resultsUp);
+    out.fl.comparedNote = document.getElementById("notes").textContent.indexOf("dibandingkan") >= 0;
+    const after = JSON.parse(localStorage.getItem("bedahreview-fixes-v1"))[0].after;
+    out.fl.after = [after.count, after.total];
+    document.getElementById("fixes-btn").click();
+    const list = document.getElementById("fixes-list").textContent;
+    out.fl.listShows = [list.indexOf("Sebelum: 2 dari 5") >= 0, list.indexOf("1 dari 2") >= 0, list.indexOf("foto varian diganti") >= 0, list.indexOf("kurang dari 10") >= 0];
+    const del = () => [...document.querySelectorAll("#fixes-list button")].find((b) => b.textContent === "Hapus" || b.textContent === "Yakin hapus?");
+    del().click(); del().click();
+    out.fl.afterDelete = [JSON.parse(localStorage.getItem("bedahreview-fixes-v1")).length, document.getElementById("fixes-count").hidden];
+  }
   return out;
 })();
 </script>
@@ -263,6 +324,35 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(out["board"][:2], ["2Perbaiki", "1Tanggapi"])  # the board texts are unchanged by the card layout
         self.assertFalse(out["chip"])  # the product chip shows once results are in
         self.assertTrue(out["themeChanged"])
+
+    def test_fix_tracking_logic(self):
+        fx = self.probe("/#fixes")["fx"]
+        self.assertEqual(fx["all"], {"count": 2, "total": 4})  # the likely-fake review is left out of both numbers
+        self.assertEqual(fx["putih"]["count"], 1)
+        self.assertEqual(fx["colour"]["count"], 1)
+        self.assertEqual(fx["made"][:3], [2, 4, "kaos boxy"])
+        self.assertTrue(fx["noText"])
+        self.assertEqual(fx["same"], 0)
+        self.assertEqual(fx["later"], [1, 1, 3, True])
+        self.assertEqual(fx["otherProduct"], 0)
+        self.assertEqual(fx["sameFix"], [True, False])
+        self.assertEqual(fx["imp"], [1, 2, 1, 1])  # one valid, two skipped; the same id replaces the old record
+        self.assertEqual(fx["badImport"], ["bad", "bad", "big"])
+        self.assertEqual(fx["longNote"], 200)
+        self.assertIsNone(fx["negative"])  # more complaints than reviews cannot be true
+        self.assertEqual(fx["saveWhenBlocked"], [False, 1])
+
+    def test_marking_a_fix_then_analysing_new_reviews_shows_before_and_after(self):
+        fl = self.probe("/#fixflow")["fl"]
+        self.assertEqual((fl["n"], fl["theme"], fl["variant"], fl["note"], fl["before"]), (1, "Colour vs photo", "Putih", "foto varian diganti", [2, 5]))
+        self.assertTrue(fl["noNull"])
+        self.assertTrue(fl["noText"])  # only counts and the seller's own note are stored, no review text
+        self.assertTrue(fl["cardAfterSave"])
+        self.assertEqual(fl["badge"], "1")
+        self.assertTrue(fl["comparedNote"])
+        self.assertEqual(fl["after"], [1, 2])
+        self.assertEqual(fl["listShows"], [True, True, True, True])
+        self.assertEqual(fl["afterDelete"], [0, True])
 
 
 if __name__ == "__main__":
