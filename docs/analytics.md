@@ -23,7 +23,7 @@ Every event carries `event`, `device` and a server timestamp `ts`, plus the fiel
 |---|---|---|
 | `opened` | the page loads | none |
 | `analysed` | an analysis finishes | `reviews` (a number, 0 to 50), `source` (`paste` or `link`), `lang` (`id` or `en`) |
-| `tab_viewed` | the tester opens a results tab | `tab` (`fix`, `fight`, `ignore`, `keep` or `rivals`) |
+| `tab_viewed` | the tester opens a results tab, or the Competitors section (`rivals`) | `tab` (`fix`, `fight`, `ignore`, `keep` or `rivals`) |
 | `draft_copied` | the tester taps Copy | `kind` (`fix`, `side`, `chat`, `public` or `report`). The draft text is not sent. |
 | `fix_marked` | "Mark as fixed" is saved | none. The theme, note and counts stay in the browser. |
 | `rivals_started` | a competitor search starts | none |

@@ -90,7 +90,7 @@ window.__probe = (async () => {
     document.getElementById("run").click();
     for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
     out.hostAfter = document.getElementById("rival-body").parentNode.id;
-    out.rivalTabHidden = document.getElementById("tab-rival").hidden;
+    out.rivalTab = !!document.getElementById("tab-rival");
     out.board = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
     out.chip = document.getElementById("pchip").hidden;
     const before = document.documentElement.dataset.theme || "";
@@ -143,7 +143,7 @@ window.__probe = (async () => {
     out.fl.cardAfterSave = document.querySelector("#panel-fix .card .track").textContent.indexOf("Ditandai diperbaiki") >= 0;
     out.fl.badge = document.getElementById("fixes-count").textContent;
     out.fl.sameAgain = "";
-    document.getElementById("nav-input").click();
+    document.getElementById("new-mob").click();
     document.getElementById("paste").value = "★★☆☆☆  Putih, M   warna tulisan ijo jadi hitam" + String.fromCharCode(10) + "★★★★★  bagus sekali bahannya";
     document.getElementById("run").click();
     await until(() => !document.getElementById("view-loading").hidden || resultsUp());
@@ -182,6 +182,34 @@ window.__probe = (async () => {
     await until(() => fb.textContent.indexOf("Terima kasih") >= 0);
     out.ev.thanks = fb.textContent.indexOf("Terima kasih") >= 0;
     await wait(500);
+  }
+
+  if (location.hash === "#sections") {
+    const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
+    await until(() => linkBoxOn === false);
+    document.getElementById("sample").click();
+    document.getElementById("run").click();
+    await until(() => !document.getElementById("view-results").hidden);
+    out.sec = { boardTabs: document.querySelectorAll("#tabs button").length, openVisible: getComputedStyle(document.getElementById("rivals-open")).display !== "none" };
+    document.getElementById("rivals-open").click();
+    out.sec.section = document.getElementById("workspace").dataset.section;
+    out.sec.mainHidden = getComputedStyle(document.getElementById("main")).display === "none";
+    out.sec.asideShown = getComputedStyle(document.getElementById("feature2")).display !== "none";
+    out.sec.nameFilled = document.getElementById("rival-name").value;
+    out.sec.noBox = document.getElementById("rival-body").textContent.indexOf("kotak tautan") >= 0;
+    out.sec.wantButtons = document.querySelectorAll("#rival-body .want button").length;
+    out.sec.nav = [document.getElementById("nav-rivals").getAttribute("aria-current"), document.getElementById("nav-check").getAttribute("aria-current")];
+    [...document.querySelectorAll("#rival-body button")].find((b) => b.textContent.indexOf("contoh") >= 0).click();
+    const body = document.getElementById("rival-body").textContent;
+    out.sec.example = ["Contoh, bukan data nyata", "Pelajari dari pesaing", "Hindari", "Abaikan"].map((w) => body.indexOf(w) >= 0);
+    out.sec.groupCards = [...document.querySelectorAll("#rival-body .group")].map((g) => g.querySelectorAll(".ins").length);
+    out.sec.chips = document.querySelectorAll("#rival-body .group.ignore .chip").length;
+    document.getElementById("nav-check").click();
+    out.sec.back = [document.getElementById("workspace").dataset.section, !document.getElementById("view-results").hidden];
+    const g = groupInsights(EXAMPLE_COMPARE.insights, EXAMPLE_COMPARE.rows);
+    out.sec.groups = [g.learn.length, g.avoid.length, g.ignore];
+    const st = { checked: [0, 1, 2], candidates: [0, 1, 2].map((i) => ({ url: "https://www.tokopedia.com/s/p" + i, title: "t" + i })), extra: "https://www.tokopedia.com/x/y" };
+    out.sec.chosen = [rivalChosen(Object.assign({ want: 1 }, st)).length, rivalChosen(Object.assign({ want: 2 }, st)).length, rivalChosen(st).length];
   }
   return out;
 })();
@@ -347,7 +375,7 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(out["cols"], 2)
         self.assertEqual((out["hostBefore"], out["formBefore"]), ("rival-home", True))
         self.assertEqual(out["hostAfter"], "rival-home")  # it stays put when results arrive
-        self.assertTrue(out["rivalTabHidden"])
+        self.assertFalse(out["rivalTab"])  # the competitor section is not a tab of the results any more
         self.assertEqual(out["board"][:2], ["2Perbaiki", "1Tanggapi"])  # the board texts are unchanged by the card layout
         self.assertFalse(out["chip"])  # the product chip shows once results are in
         self.assertTrue(out["themeChanged"])
@@ -398,6 +426,21 @@ class BrowserTests(unittest.TestCase):
         everything = buf.getvalue()
         for word in ("tulisannya", "Kaos Boxy Retro", "bahannya"):  # no review text and no product name anywhere in the log
             self.assertNotIn(word, everything)
+
+    def test_phone_has_two_sections_and_the_example_is_free_and_labelled(self):
+        sec = self.probe("/#sections")["sec"]
+        self.assertEqual((sec["boardTabs"], sec["openVisible"]), (4, True))  # Rivals is not a results tab any more
+        self.assertEqual((sec["section"], sec["mainHidden"], sec["asideShown"]), ("rivals", True, True))
+        self.assertEqual(sec["nameFilled"], "Kaos Boxy Retro")  # the product from the checker is filled in
+        self.assertTrue(sec["noBox"])  # no link box on this server: it says so, and still offers the example
+        self.assertEqual(sec["nav"], ["page", "false"])
+        self.assertEqual(sec["example"], [True, True, True, True])
+        self.assertEqual(sec["groupCards"], [3, 1, 0])  # learn from 3, avoid 1, nothing to act on is just a list of themes
+        self.assertEqual(sec["chips"], 1)
+        self.assertEqual(sec["back"], ["checker", True])
+        self.assertEqual(sec["groups"], [3, 1, ["Praise: quality / material"]])
+        self.assertEqual(sec["chosen"], [1, 2, 3])  # 1 to 3 competitors, pasted links count towards the same number
+        self.assertEqual(sec["wantButtons"], 3)
 
 
 if __name__ == "__main__":

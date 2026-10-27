@@ -128,10 +128,6 @@ details pre { margin: 0 0 4px; padding: 12px; background: var(--quote); border-r
 .board button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .panel, .stack { display: grid; gap: 12px; }
 .board button .ic { display: none; }
-.board button.rival { grid-column: 1 / -1; min-height: 56px; grid-auto-flow: column; justify-content: center; gap: 10px; }
-.board button.rival .n { font-size: 1rem; color: var(--check); }
-.board button[aria-selected="true"][data-b="rival"] { background: var(--accent-soft); border-color: var(--check); }
-.panel[data-b="rival"] { --c: var(--check); }
 .cand { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; }
 .cand input { width: 22px; height: 22px; min-height: 22px; margin: 2px 0 0; padding: 0; accent-color: var(--accent); }
 .cand .t { font-size: 0.92rem; overflow-wrap: anywhere; }
@@ -167,6 +163,17 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
 /* ---------- shared pieces (new) ---------- */
 .workspace { display: block; }
 .col-2, .dsk { display: none; }
+/* phone: the two sections take turns; the bottom bar switches between them */
+.workspace[data-section="rivals"] > main { display: none; }
+.workspace[data-section="rivals"] > .col-2 { display: grid; gap: 14px; align-content: start; max-width: 480px; margin: 0 auto;
+  padding: 16px max(var(--gutter), env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left)); }
+@media (max-width: 1099px) { .col-2 .ftile, .col-2 .eyebrow { display: none; } .col-2 .fhead h1 { font-size: 1.3rem; margin: 0; } }
+.want { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.85rem; font-weight: 700; color: var(--muted); }
+.want .seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 52px; }
+.group { display: grid; gap: 10px; }
+.group h3 { display: flex; align-items: baseline; gap: 8px; }
+.group h3 small { font-weight: 500; color: var(--muted); font-size: 0.85rem; }
+.group.learn h3 { color: var(--keep); } .group.avoid h3 { color: var(--fix); } .group.ignore h3 { color: var(--ignore); }
 .demo { margin-left: 4px; }
 .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .card-head .chips { justify-content: flex-end; }
@@ -241,6 +248,9 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   .col { min-width: 0; overflow-y: auto; padding: 28px 36px 56px; }
   main.col { max-width: none; margin: 0; gap: 18px; }
   .col-2 { display: block; border-left: 2px solid var(--line); }
+  .workspace[data-section] > main.col { display: grid; }
+  .workspace[data-section] > .col-2 { display: block; max-width: none; margin: 0; padding: 28px 36px 56px; }
+  .col-2 .ftile { display: grid; } .col-2 .eyebrow { display: block; }
   .bottombar, .mob { display: none !important; }
   .dsk { display: block; }
   .dsk.f:not([hidden]) { display: flex; } .dsk.g:not([hidden]) { display: grid; } .dsk.i:not([hidden]) { display: inline-flex; }
@@ -332,7 +342,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   </div>
 </header>
 
-<div class="workspace">
+<div class="workspace" id="workspace" data-section="checker">
 <main id="main" class="col col-1">
 
   <div class="fhead dsk f">
@@ -456,13 +466,13 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
         <h2 id="results-h" tabindex="-1"></h2>
         <p class="small muted" id="summary"></p>
       </div>
-      <button class="btn ghost" id="print" type="button" data-i18n="print"></button>
+      <div class="row" style="flex:none">
+        <button class="btn ghost" id="new-mob" type="button" data-i18n="newMob"></button>
+        <button class="btn ghost" id="print" type="button" data-i18n="print"></button>
+      </div>
     </div>
     <div id="notes" style="display:grid;gap:8px"></div>
-    <div class="card-box" id="rival-ask" hidden>
-      <p id="rival-ask-text"></p>
-      <button class="btn ghost" id="rival-ask-btn" type="button"></button>
-    </div>
+    <button class="btn ghost mob" id="rivals-open" type="button" data-i18n="rivalsOpen"></button>
     <div class="board" id="tabs" role="tablist"></div>
     <details class="legend dsk">
       <summary data-i18n="legendSummary"></summary>
@@ -488,8 +498,8 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
 
 <nav class="bottombar" aria-label="Menu">
   <div class="bottombar-in">
-    <button class="nav" id="nav-results" type="button" disabled><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg><span data-i18n="navCheck"></span></button>
-    <button class="nav" id="nav-input" type="button" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="navNew"></span></button>
+    <button class="nav" id="nav-check" type="button" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg><span data-i18n="navChecker"></span></button>
+    <button class="nav" id="nav-rivals" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg><span data-i18n="navRivals"></span></button>
   </div>
 </nav>
 
@@ -538,9 +548,9 @@ const TEXT = {
     rivalAsk: "Mau sekalian membandingkan dengan pesaing?", rivalAskBtn: "Ya, cari pesaing",
     rivalIntro: "Kami cari produk serupa di platform yang sama, kamu cek, lalu ketuk sekali. Kami ambil sekitar 7 ulasan per toko: 4 keluhan dan 3 terbaru.", rivalFind: "Cari pesaing",
     rivalSearching: "Mencari produk serupa…", rivalSearchSub: "Sekitar 10-40 detik.",
-    rivalPick: "Centang yang memang sebanding dengan produkmu (maks. 3):", rivalMoreLbl: "Produk lain yang ditemukan",
+    rivalPick: "Centang yang memang sebanding dengan produkmu (maks. %s):", rivalMoreLbl: "Produk lain yang ditemukan",
     rivalNone: "Tidak ada produk yang jelas sebanding. Tempel tautan pesaing di bawah.", rivalPaste: "Atau tempel tautan pesaing (satu per baris)",
-    rivalGo: "Bandingkan", rivalCost: "perkiraan biaya ±Rp%s", rivalNeedOne: "Pilih atau tempel minimal satu pesaing.", rivalMax: "Maksimal 3 pesaing.",
+    rivalGo: "Bandingkan", rivalCost: "perkiraan biaya ±Rp%s", rivalNeedOne: "Pilih atau tempel minimal satu pesaing.", rivalMax: "Maksimal %s pesaing.",
     rivalComparing: "Membandingkan ulasan…", rivalCompareSub: "Mengambil ulasan tiap toko lalu membedahnya. Sekitar 30-90 detik.",
     rivalSampleHead: "Contoh kecil:", rivalSampleBody: "sekitar 7 ulasan per toko (4 keluhan, 3 terbaru), bukan seluruh pasar. Angka adalah jumlah ulasan, bukan persen. Ulasan pesaing tidak disimpan.",
     rivalFake: "%s ulasan pesaing diduga palsu dan tidak dihitung.", rivalFailed: "Tidak bisa diambil: %s Layanan pengambil ulasan gagal, atau toko ini belum punya ulasan. Coba lagi.", rivalYou: "Kamu", rivalComplaints: "Keluhan", rivalPraise: "Pujian",
@@ -552,6 +562,12 @@ const TEXT = {
     step1T: "Tempel tautan", step1D: "dari Tokopedia, TikTok Shop, atau Lazada", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
     step3T: "Kamu dapat daftar tugas", step3D: "urut, plus draf balasan siap salin",
     linkHint: "Kami membaca hingga 10 ulasan terbaru yang berisi teks. Nama pembeli tidak disimpan.", linkOpts: "Pilihan lain", trySample: "Belum punya tautan? Coba dengan contoh",
+    navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Bandingkan dengan pesaing",
+    rivalWantLbl: "Berapa pesaing?", rivalExampleBtn: "Lihat contoh (gratis)", rivalExampleHead: "Contoh, bukan data nyata.",
+    rivalExampleBody: "Angka dan kutipan di bawah dibuat untuk contoh. Tidak ada toko atau pembeli sungguhan, dan tidak ada biaya.",
+    rivalNoBox: "Pencarian pesaing butuh kotak tautan, yang belum menyala di sini. Kamu masih bisa melihat contoh.",
+    groupLearn: "Pelajari dari pesaing", groupLearnSub: "Mereka lebih baik di sini, atau lebih sering dipuji.", groupAvoid: "Hindari", groupAvoidSub: "Pesaing kena keluhan ini, kamu tidak. Jangan ikuti, dan jadikan alasan orang memilihmu.",
+    groupIgnore: "Abaikan", groupIgnoreSub: "Selisihnya kecil atau sama saja: tidak perlu ditindak.", groupNone: "Belum ada.",
     fbQ: "Apakah hasil ini berguna?", fbYes: "Ya", fbPartly: "Sebagian", fbNo: "Tidak", fbComment: "Mau menambahkan sesuatu? (opsional)",
     fbNote: "Komentar hanya disimpan kalau kamu menulisnya. Jangan tulis nama orang atau menempel teks ulasan.", fbSend: "Kirim", fbThanks: "Terima kasih. Jawabanmu membantu.",
     fbReview: "Komentarmu tampak memuat teks ulasan. Hapus bagian itu dulu, supaya tidak ada teks ulasan yang tersimpan.", fbFail: "Tidak terkirim. Coba lagi nanti.",
@@ -633,9 +649,9 @@ const TEXT = {
     rivalAsk: "Also compare with competitors?", rivalAskBtn: "Yes, find competitors",
     rivalIntro: "We look for similar products on the same platform, you check them, then tap once. We read about 7 reviews per shop: 4 complaints and 3 recent ones.", rivalFind: "Find competitors",
     rivalSearching: "Looking for similar products…", rivalSearchSub: "About 10-40 seconds.",
-    rivalPick: "Tick the ones that are really comparable to yours (max 3):", rivalMoreLbl: "Other products found",
+    rivalPick: "Tick the ones that are really comparable to yours (max %s):", rivalMoreLbl: "Other products found",
     rivalNone: "No product was clearly comparable. Paste competitor links below.", rivalPaste: "Or paste competitor links (one per line)",
-    rivalGo: "Compare", rivalCost: "estimated cost ±Rp%s", rivalNeedOne: "Pick or paste at least one competitor.", rivalMax: "At most 3 competitors.",
+    rivalGo: "Compare", rivalCost: "estimated cost ±Rp%s", rivalNeedOne: "Pick or paste at least one competitor.", rivalMax: "At most %s competitors.",
     rivalComparing: "Comparing reviews…", rivalCompareSub: "Fetching each shop's reviews, then reading them. About 30-90 seconds.",
     rivalSampleHead: "Small sample:", rivalSampleBody: "about 7 reviews per shop (4 complaints, 3 recent), not the whole market. Numbers are review counts, not percentages. Competitor reviews are not saved.",
     rivalFake: "%s competitor review(s) look fake and are not counted.", rivalFailed: "Could not be read: %s The review service failed, or this shop has no reviews yet. Try again.", rivalYou: "You", rivalComplaints: "Complaints", rivalPraise: "Praise",
@@ -647,6 +663,12 @@ const TEXT = {
     step1T: "Paste a link", step1D: "from Tokopedia, TikTok Shop or Lazada", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
     step3T: "You get a task list", step3D: "in order, with reply drafts ready to copy",
     linkHint: "We read up to 10 of the newest reviews that have text. Buyer names are not saved.", linkOpts: "More options", trySample: "No link yet? Try an example",
+    navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Compare with competitors",
+    rivalWantLbl: "How many competitors?", rivalExampleBtn: "See an example (free)", rivalExampleHead: "Example, not live data.",
+    rivalExampleBody: "The numbers and quotes below were made up for this example. No real shops or buyers, and no cost.",
+    rivalNoBox: "Finding competitors needs the link box, which is not switched on here. You can still see an example.",
+    groupLearn: "Learn from", groupLearnSub: "They do better here, or get praised more.", groupAvoid: "Avoid", groupAvoidSub: "Competitors get this complaint and you do not. Do not copy it, and make it a reason to choose you.",
+    groupIgnore: "Ignore", groupIgnoreSub: "A small gap or no gap: nothing to act on.", groupNone: "None yet.",
     fbQ: "Was this useful?", fbYes: "Yes", fbPartly: "Partly", fbNo: "No", fbComment: "Anything to add? (optional)",
     fbNote: "A comment is saved only if you write one. Please do not write names or paste review text.", fbSend: "Send", fbThanks: "Thank you. Your answer helps.",
     fbReview: "Your comment looks like it contains review text. Please remove that part, so no review text is stored.", fbFail: "Could not send. Try again later.",
@@ -789,7 +811,7 @@ function applyLang() {
   themeLabel(); renderFixBadge();
   if (currentView === "fixes") renderFixes();
   if (!$("run").disabled) $("run").textContent = tr("run");
-  if (lastData) render(lastData, false); else { placeRival(); renderRival(); }
+  if (lastData) render(lastData, false); else renderRival();
 }
 $("lang").addEventListener("click", () => {
   lang = lang === "id" ? "en" : "id";
@@ -1048,7 +1070,13 @@ function fixTracker(group) {  // under a Fix card: the "mark as fixed" action, o
   form.append(...[h("label", { class: "field", for: note.id }, h("span", { text: tr("fixNoteLbl") }), note), key ? null : h("p", { class: "small muted", text: tr("fixNoName") }), err, h("div", { class: "row" }, save, cancel)].filter(Boolean));
   return h("div", { class: "fixform" }, open, form);
 }
-let currentView = "input", viewBeforeFixes = "input", lastChanged = [];
+let currentView = "input", viewBeforeFixes = "input", checkerView = "input", lastChanged = [];
+function openRivals(fromResults) {  // from the results button (product already filled in) or the bottom bar; a wide screen already shows the section
+  if (fromResults && lastData) { const src = lastData.source || {}; if (src.kind !== "url" && src.title && !rivalForm.name) rivalForm.name = src.title; }
+  track("tab_viewed", { tab: "rivals" });
+  if (desktop()) { renderRival(); $("feature2").scrollTo({ top: 0, behavior: reduceMotion() ? "auto" : "smooth" }); return; }
+  renderRival(); show("rivals"); toTop();
+}
 function openFixes() { if (currentView !== "fixes") viewBeforeFixes = currentView; renderFixes(); show("fixes"); toTop(); $("fixes-h").focus({ preventScroll: true }); }
 function fixItem(f) {
   const body = h("div", { class: "fixitem" });
@@ -1105,7 +1133,7 @@ async function importFixes(file) {
 }
 
 /* ---------- results ---------- */
-const TABS =["fix", "fight", "ignore", "keep", "rival"];
+const TABS = ["fix", "fight", "ignore", "keep"];
 const MAIN_TABS = ["fix", "fight"];
 let lastData = null, activeTab = "fix";
 let rival = { step: "idle" }, rivalRun = 0;  // competitor analysis state; rivalRun lets a late reply notice that a new analysis has started
@@ -1128,7 +1156,7 @@ function render(data, fresh) {
     .sort((a, b) => (a.likely_fake.flag - b.likely_fake.flag) || (a.bucket === b.bucket ? 0 : a.bucket === "fight" ? -1 : 1));
   const ignore = data.items.filter((it) => it.bucket === "ignore");
   const keep = real.filter((it) => it.bucket === "keep");
-  const counts = { fix: data.counts.fix, fight: data.counts.fight + data.counts.check, ignore: data.counts.ignore, keep: keep.length, rival: "VS" };
+  const counts = { fix: data.counts.fix, fight: data.counts.fight + data.counts.check, ignore: data.counts.ignore, keep: keep.length };
 
   const src = data.source || {};
   const name = src.title ? src.title + " · " : "";
@@ -1155,33 +1183,30 @@ function render(data, fresh) {
   $("pchip-name").textContent = src.title || tr("pastedName");
   $("pchip-meta").textContent = " · " + data.reviews + " " + tr("reviewsWord") + (data.star_avg ? " · " + data.star_avg + "★" : "");
   $("tabs").replaceChildren(...TABS.map((k) => {
-    const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, class: MAIN_TABS.includes(k) ? "main" : k === "rival" ? "rival" : "", "aria-controls": "panel-" + k, "data-b": k, "data-shown": tr("shown") },
-      k === "rival" ? null : h("span", { class: "ic", "aria-hidden": "true" }, svgIcon(BOARD_ICON[k])),
-      h("span", { class: "n", text: counts[k], "data-d": k === "rival" ? null : tr("board" + cap(k)) }), h("span", { class: "l", text: tr(k) }));
-    tab.addEventListener("click", () => { selectTab(k, false); track("tab_viewed", { tab: k === "rival" ? "rivals" : k }); });
+    const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, class: MAIN_TABS.includes(k) ? "main" : "", "aria-controls": "panel-" + k, "data-b": k, "data-shown": tr("shown") },
+      h("span", { class: "ic", "aria-hidden": "true" }, svgIcon(BOARD_ICON[k])),
+      h("span", { class: "n", text: counts[k], "data-d": tr("board" + cap(k)) }), h("span", { class: "l", text: tr(k) }));
+    tab.addEventListener("click", () => { selectTab(k, false); track("tab_viewed", { tab: k }); });
     return tab;
   }));
   const plat = platformName(src.url || "");
   const panel = (k, body, extra) => h("div", { class: "panel", role: "tabpanel", id: "panel-" + k, "aria-labelledby": "tab-" + k, "data-b": k, hidden: true },
     h("p", { class: "rule mob", text: tr(k + "Rule") }),
-    k === "rival" ? null : [h("h3", { class: "phead dsk", text: tr(k) + " · " + counts[k] + " " + tr("reviewsWord") }), h("p", { class: "lead dsk", text: tr("lead" + cap(k)) })],
+    [h("h3", { class: "phead dsk", text: tr(k) + " · " + counts[k] + " " + tr("reviewsWord") }), h("p", { class: "lead dsk", text: tr("lead" + cap(k)) })],
     extra, body);
   $("panels").replaceChildren(
     panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") })),
     panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") }), h("div", { class: "callout hot dsk" }, h("b", { text: tr("noRemove") + " " }), tr("noRemoveBody", plat, plat))),
     panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })),
-    panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })),
-    panel("rival", null));
-  $("tab-rival").hidden = !(src.kind === "url") || desktop();  // competitors are found from a product link, not from pasted text; on a wide screen they have their own column
-  placeRival(); renderRival(); renderFeedback();
+    panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })));
+  renderRival(); renderFeedback();
 
   const fromLink = src.kind === "url" ? tr("footFrom", src.count, src.mode === "complaints" ? tr("footLow") : "", src.cached ? tr("footCached") : "") : "";
   $("foot").textContent = fromLink + tr("footTail", data.model);
 
-  const first = fresh === false ? (activeTab === "rival" && $("tab-rival").hidden ? "fix" : activeTab) : (counts.fix ? "fix" : counts.fight ? "fight" : counts.ignore ? "ignore" : counts.keep ? "keep" : "fix");
+  const first = fresh === false ? activeTab : (counts.fix ? "fix" : counts.fight ? "fight" : counts.ignore ? "ignore" : counts.keep ? "keep" : "fix");
   selectTab(first, false);
   if (fresh !== false) {
-    $("nav-results").disabled = false;
     show("results");
     $("results-h").focus({ preventScroll: true });
     toTop();
@@ -1191,15 +1216,34 @@ function render(data, fresh) {
 /* ---------- competitor analysis ---------- */
 const RIVAL_COST_IDR = 500;  // about 3 US cents per competitor, shown while we test
 const MAX_RIVALS = 3;
+let rivalWant = 3, linkBoxOn = null;  // how many competitors the seller wants (1 to 3); linkBoxOn is null until the server says
 const MIN_CREDIBLE = 5;  // same rule as the server: fewer credible reviews than this and a shop is shown but not used for a statement
+// The free example comparison. Everything here is made up: no real shop, product, buyer or review. Same shape as /api/competitors/compare.
+const EXAMPLE_COMPARE = {
+  you: { reviews: 10, credible: 10, fake: 0, absent: false, title: "Contoh Kaos Boxy", complaints: { "Sizing & fit": 4, "Colour vs photo": 2 }, praise: { "Praise: quality / material": 3 } },
+  competitors: [
+    { title: "Contoh Kaos Oversize A", url: "", reviews: 7, credible: 7, fake: 0, small: false, complaints: { "Sizing & fit": 1, "Fabric & material quality": 3 }, praise: { "Praise: value for money": 3, "Praise: quality / material": 2 },
+      quotes: { "Sizing & fit": { quote: "Ukurannya agak kecil di bahu", stars: 3 }, "Fabric & material quality": { quote: "Bahannya tipis, cepat melar", stars: 2 } } },
+    { title: "Contoh Kaos Polos B", url: "", reviews: 8, credible: 7, fake: 1, small: false, complaints: { "Sizing & fit": 1, "Fabric & material quality": 2 }, praise: { "Praise: value for money": 3 },
+      quotes: { "Sizing & fit": { quote: "Pas, tapi lengan sedikit panjang", stars: 4 }, "Fabric & material quality": { quote: "Setelah dicuci jadi kasar", stars: 2 } } },
+  ],
+  failed: [],
+  rows: [
+    { theme: "Sizing & fit", kind: "complaint", you: 4, others: [1, 1] }, { theme: "Fabric & material quality", kind: "complaint", you: 0, others: [3, 2] },
+    { theme: "Colour vs photo", kind: "complaint", you: 2, others: [0, 0] }, { theme: "Praise: value for money", kind: "praise", you: 0, others: [3, 3] },
+    { theme: "Praise: quality / material", kind: "praise", you: 3, others: [2, 0] },
+  ],
+  insights: [
+    { kind: "worse", theme: "Sizing & fit", you: 4, best: 1 }, { kind: "worse", theme: "Colour vs photo", you: 2, best: 0 },
+    { kind: "opportunity", theme: "Fabric & material quality", you: 0, them: 3, who: "Contoh Kaos Oversize A" },
+    { kind: "praise_gap", theme: "Praise: value for money", you: 0, them: 3, who: "Contoh Kaos Oversize A" },
+  ],
+};
 const fmtNum = (n) => Number(n).toLocaleString("id-ID");
 const rivalBodyEl = h("div", { class: "stack", id: "rival-body" });  // one node: it sits in the right-hand column on a wide screen, in the Rivals tab on a phone
 let rivalForm = { url: "", name: "" };
 const ownSource = () => (lastData && lastData.source && lastData.source.kind === "url" ? lastData.source : null);
-function placeRival() {
-  const host = desktop() ? $("rival-home") : $("panel-rival");
-  if (host && rivalBodyEl.parentNode !== host) host.append(rivalBodyEl);
-}
+$("rival-home").append(rivalBodyEl);
 async function postJson(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   let data = null;
@@ -1213,7 +1257,7 @@ function errText(data, fallback, rival) {  // the server sends a limit code; the
   return (data && data.error) || fallback;
 }
 function pastedLinks(text) { return (text.match(/https?:\/\/[^\s<>"']+/g) || []).map((u) => ({ url: u })); }
-function rivalChosen(st) { return st.checked.map((i) => ({ url: st.candidates[i].url, title: st.candidates[i].title })).concat(pastedLinks(st.extra)).slice(0, MAX_RIVALS); }
+function rivalChosen(st) { return st.checked.map((i) => ({ url: st.candidates[i].url, title: st.candidates[i].title })).concat(pastedLinks(st.extra)).slice(0, st.want || MAX_RIVALS); }
 function rivalSpinner(title, sub) {
   return h("div", { class: "loading", role: "status" }, h("div", { class: "spinner", "aria-hidden": "true" }), h("h2", { text: title }), h("p", { class: "muted", text: sub }));
 }
@@ -1230,6 +1274,14 @@ function stepper(active) {  // 1 Find, 2 Pick, 3 Compare, 4 all done
   return h("ol", { class: "stepper" }, names.map((n, i) => h("li", { class: i + 1 < active ? "done" : i + 1 === active ? "on" : "", "aria-current": i + 1 === active ? "step" : null },
     h("span", { class: "dot" }, i + 1 < active ? svgIcon(["M5 12l5 5 9-10"]) : String(i + 1)), n)));
 }
+function wantSelector() {
+  return h("div", { class: "want" }, h("span", { text: tr("rivalWantLbl") }), h("div", { class: "seg", role: "group", "aria-label": tr("rivalWantLbl") },
+    [1, 2, 3].map((n) => h("button", { type: "button", "aria-pressed": rivalWant === n ? "true" : "false", text: String(n), onclick: () => { rivalWant = n; renderRival(); } }))));
+}
+const noBoxNote = () => (linkBoxOn === false ? h("div", { class: "callout warn", text: tr("rivalNoBox") }) : null);
+function exampleLink() {  // a built-in comparison, free for every visitor, clearly labelled as made up
+  return h("button", { class: "plain strong", type: "button", text: tr("rivalExampleBtn"), onclick: () => { rival = { step: "result", data: Object.assign({ example: true }, EXAMPLE_COMPARE) }; rivalRun += 1; renderRival(); } });
+}
 function rivalIdle() {
   const own = ownSource();
   if (own && !rival.other) {
@@ -1237,9 +1289,9 @@ function rivalIdle() {
     find.addEventListener("click", () => rivalFind());
     const other = h("button", { class: "btn pill", type: "button" }, tr("rivalOther"));
     other.addEventListener("click", () => { rival = { step: "idle", other: true }; renderRival(); });
-    return h("div", { class: "rcard" }, h("h2", { text: tr("rivalAsk") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
+    return h("div", { class: "rcard" }, noBoxNote(), h("h2", { text: tr("rivalAsk") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
       h("div", { class: "ownbox" }, h("span", {}, h("small", { text: tr("rivalOwnLbl") }), h("b", { lang: "id", text: own.title || own.url }), " · " + platformName(own.url)), other),
-      find, h("p", { class: "small muted", text: tr("rivalFreeNote") }));
+      wantSelector(), find, h("p", { class: "small muted", text: tr("rivalFreeNote") }), exampleLink());
   }
   const url = h("input", { id: "rival-url", type: "url", inputmode: "url", autocomplete: "off", spellcheck: "false", placeholder: tr("linkPh") });
   const name = h("input", { id: "rival-name", type: "text", maxlength: "150", autocomplete: "off", placeholder: tr("rivalYourNamePh") });
@@ -1257,17 +1309,17 @@ function rivalIdle() {
   [url, name].forEach((f) => f.addEventListener("keydown", (e) => { if (e.key === "Enter") go.click(); }));
   const back = own ? h("button", { class: "plain", type: "button", text: tr("rivalBackOwn") }) : null;
   if (back) back.addEventListener("click", () => { rival = { step: "idle" }; renderRival(); });
-  return h("div", { class: "rcard" }, h("h2", { text: tr("rivalTitleAlone") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
+  return h("div", { class: "rcard" }, noBoxNote(), h("h2", { text: tr("rivalTitleAlone") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
     h("label", { class: "field", for: "rival-url" }, h("span", { text: tr("rivalYourLink") }), url),
     h("label", { class: "field", for: "rival-name" }, h("span", { text: tr("rivalYourName") }), name),
-    err, go, h("p", { class: "small muted", text: tr("rivalFreeNote") }), back);
+    wantSelector(), err, go, h("p", { class: "small muted", text: tr("rivalFreeNote") }), exampleLink(), back);
 }
 function candidateCard(st, i) {
   const c = st.candidates[i];
   const box = h("input", { type: "checkbox", "aria-label": c.title });
   box.checked = st.checked.includes(i);
   box.addEventListener("change", () => {
-    if (box.checked && st.checked.length >= MAX_RIVALS) { box.checked = false; announce(tr("rivalMax")); return; }
+    if (box.checked && st.checked.length >= (st.want || MAX_RIVALS)) { box.checked = false; announce(tr("rivalMax", st.want || MAX_RIVALS)); return; }
     st.checked = box.checked ? st.checked.concat(i) : st.checked.filter((x) => x !== i);
     renderRival();
   });
@@ -1292,11 +1344,15 @@ function rivalPick(st) {
     stepper(2),
     st.error ? h("div", { class: "callout warn", role: "alert", text: st.error }) : null,
     !st.candidates.length ? h("div", { class: "callout", text: tr("rivalNone") })
-      : h("p", { class: "rule", text: best.length ? tr("rivalFound", st.candidates.length, best.length) : tr("rivalPick") }),
+      : h("p", { class: "rule", text: best.length ? tr("rivalFound", st.candidates.length, best.length) : tr("rivalPick", st.want || MAX_RIVALS) }),
     best.length ? h("p", { class: "group-lbl", text: tr("rivalMost") }) : null, best, more,
     h("label", { class: "field", for: "rival-paste" }, h("span", { text: tr("rivalPaste") }), area),
     go,
   ];
+}
+function groupInsights(insights, rows) {  // learn from: rivals do better or are praised more. Avoid: rivals get complaints you do not. Ignore: no real gap.
+  const named = new Set(insights.map((x) => x.theme));
+  return { learn: insights.filter((x) => x.kind === "worse" || x.kind === "praise_gap"), avoid: insights.filter((x) => x.kind === "opportunity"), ignore: rows.filter((r) => !named.has(r.theme)).map((r) => r.theme) };
 }
 function rivalResult(d) {
   const absent = !!d.you.absent;
@@ -1317,11 +1373,15 @@ function rivalResult(d) {
       })));
     });
   }
-  const say = d.insights.map((x) => {
-    const theme = plainTheme(x.theme);
-    if (x.kind === "worse") return { kind: "complaint", a: x.you, b: x.best, text: tr("rivalLineWorse", theme, x.you, x.best) };
-    return { kind: x.kind === "opportunity" ? "complaint" : "praise", a: x.you, b: x.them, text: tr("rivalLineOther", theme, x.you, x.them, nameOf(x.who)) };
-  });
+  const card = (x) => {
+    const theme = plainTheme(x.theme), complaint = x.kind !== "praise_gap";
+    const text = x.kind === "worse" ? tr("rivalLineWorse", theme, x.you, x.best) : tr("rivalLineOther", theme, x.you, x.them, nameOf(x.who));
+    return h("div", { class: "ins " + (complaint ? "bad" : "good") }, h("div", { class: "big" }, h("b", { text: x.you }), h("i", { text: "vs" }), h("b", { text: x.kind === "worse" ? x.best : x.them })),
+      h("p", {}, h("span", { class: complaint ? "bad" : "good", text: tr(complaint ? "rivalComplaints" : "rivalPraise") }), " · " + text));
+  };
+  const groups = groupInsights(d.insights, d.rows);
+  const section = (key, Key, body) => h("div", { class: "group " + key }, h("h3", {}, tr("group" + Key), h("small", { text: tr("group" + Key + "Sub") })), body);
+  const none = () => h("p", { class: "small muted", text: tr("groupNone") });
   const small = names.filter((n, i) => d.competitors[i].small);
   const fake = d.competitors.reduce((a, c) => a + c.fake, 0);
   const notes = [];
@@ -1332,12 +1392,15 @@ function rivalResult(d) {
   again.addEventListener("click", () => { rival = { step: "idle" }; rivalRun += 1; renderRival(); });
   return [
     stepper(4),
+    d.example ? h("div", { class: "callout warn", role: "note" }, h("b", { text: tr("rivalExampleHead") + " " }), tr("rivalExampleBody")) : null,
     h("div", { class: "callout" }, h("b", { text: tr("rivalSampleHead") + " " }), tr("rivalSampleBody")),
     h("h3", { text: tr("rivalSeen") }),
-    absent ? h("div", { class: "callout" , text: tr("rivalAlone") })
-      : say.length ? say.map((t) => h("div", { class: "ins " + (t.kind === "complaint" ? "bad" : "good") }, h("div", { class: "big" }, h("b", { text: t.a }), h("i", { text: "vs" }), h("b", { text: t.b })),
-          h("p", {}, h("span", { class: t.kind === "complaint" ? "bad" : "good", text: tr(t.kind === "complaint" ? "rivalComplaints" : "rivalPraise") }), " · " + t.text)))
-      : h("div", { class: "callout", text: tr("rivalNoInsight") }),
+    absent ? h("div", { class: "callout", text: tr("rivalAlone") }) : [
+      !groups.learn.length && !groups.avoid.length ? h("div", { class: "callout", text: tr("rivalNoInsight") }) : null,
+      section("learn", "Learn", groups.learn.length ? groups.learn.map(card) : none()),
+      section("avoid", "Avoid", groups.avoid.length ? groups.avoid.map(card) : none()),
+      section("ignore", "Ignore", groups.ignore.length ? h("div", { class: "chips" }, groups.ignore.map((t) => h("span", { class: "chip soft", text: plainTheme(t) }))) : none()),
+    ],
     small.length && !absent ? h("p", { class: "small muted", text: tr("rivalSmallNote", small.join(", ")) }) : null,
     h("div", { class: "cmp-wrap" }, h("h3", { class: "cmp-title", text: tr("rivalByTheme") }), h("table", { class: "cmp" },
       h("thead", {}, h("tr", {}, h("th", { scope: "col", text: tr("rivalThemeCol") }), heads.map(([n, c]) => h("th", { scope: "col" }, n, h("small", { text: tr("nReviewsCol", c) })))), ), h("tbody", {}, body))),
@@ -1360,8 +1423,6 @@ function rivalBody() {
 }
 function renderRival() {
   rivalBodyEl.replaceChildren(...[rivalBody()].flat(Infinity).filter(Boolean));
-  $("rival-ask").hidden = desktop() || !(ownSource() && rival.step === "idle");
-  $("rival-ask-text").textContent = tr("rivalAsk"); $("rival-ask-btn").textContent = tr("rivalAskBtn");
 }
 async function rivalFind(target) {
   const own = ownSource();
@@ -1369,17 +1430,16 @@ async function rivalFind(target) {
   if (!t) return;
   const run = ++rivalRun;
   track("rivals_started");
-  rival = { step: "searching", target: t }; renderRival();
-  if (lastData && !desktop() && !$("tab-rival").hidden) { selectTab("rival", false); $("tabs").scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" }); }
+  rival = { step: "searching", target: t, want: rivalWant }; renderRival();
   let next;
   try {
     const out = await postJson("/api/competitors/suggest", { url: t.url, title: t.title });
     if (!out || run !== rivalRun) return;
     const cands = out.ok ? out.data.candidates : [];
-    next = { step: "pick", target: t, candidates: cands, checked: cands.map((c, i) => (c.picked ? i : -1)).filter((i) => i >= 0), extra: "", error: out.ok ? "" : errText(out.data, tr("errGeneric", ""), true) };
+    next = { step: "pick", target: t, want: rivalWant, candidates: cands, checked: cands.map((c, i) => (c.picked ? i : -1)).filter((i) => i >= 0).slice(0, rivalWant), extra: "", error: out.ok ? "" : errText(out.data, tr("errGeneric", ""), true) };
   } catch (e) {
     if (run !== rivalRun) return;
-    next = { step: "pick", target: t, candidates: [], checked: [], extra: "", error: tr("errNetwork") };
+    next = { step: "pick", target: t, want: rivalWant, candidates: [], checked: [], extra: "", error: tr("errNetwork") };
   }
   rival = next; renderRival();
 }
@@ -1399,12 +1459,14 @@ async function rivalCompare() {
   }
   rival = next; renderRival();
 }
-$("rival-ask-btn").addEventListener("click", () => rivalFind());
-desktopQuery.addEventListener("change", () => { if (lastData) render(lastData, false); else { placeRival(); renderRival(); } });
+$("rivals-open").addEventListener("click", () => openRivals(true));
+desktopQuery.addEventListener("change", () => { if (desktop() && currentView === "rivals") show(checkerView); if (lastData) render(lastData, false); else renderRival(); });
 
 /* ---------- views ---------- */
 function show(view) {
   currentView = view;
+  if (view !== "rivals") checkerView = view;
+  $("workspace").dataset.section = view === "rivals" ? "rivals" : "checker";  // on a phone the two sections take turns; a wide screen shows both
   $("view-fixes").hidden = view !== "fixes";
   $("view-input").hidden = view !== "input";
   $("view-loading").hidden = view !== "loading";
@@ -1412,11 +1474,12 @@ function show(view) {
   $("view-steps").hidden = view !== "input";
   $("pchip").hidden = !(lastData && view === "results"); $("print-d").hidden = view !== "results";
   $("back-results").hidden = !(lastData && view === "input");
-  $("nav-input").setAttribute("aria-current", view === "input" || view === "loading" ? "page" : "false");
-  $("nav-results").setAttribute("aria-current", view === "results" ? "page" : "false");
+  $("nav-check").setAttribute("aria-current", view === "rivals" ? "false" : "page");
+  $("nav-rivals").setAttribute("aria-current", view === "rivals" ? "page" : "false");
 }
-$("nav-input").addEventListener("click", () => { show("input"); toTop(); });
-$("nav-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
+$("nav-check").addEventListener("click", () => { show(currentView === "rivals" || currentView === "fixes" ? (checkerView === "loading" ? "input" : checkerView) : currentView); toTop(); });
+$("nav-rivals").addEventListener("click", () => openRivals(false));
+$("new-mob").addEventListener("click", () => { show("input"); toTop(); });
 $("pchip-change").addEventListener("click", () => { show("input"); toTop(); });
 $("back-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
 $("print-d").addEventListener("click", () => window.print());
@@ -1438,7 +1501,7 @@ function tabKeys(listEl, selector, onSelect) {
     e.preventDefault(); onSelect(tabs[j]);
   });
 }
-tabKeys($("tabs"), "button", (t) => { selectTab(t.dataset.b, true); track("tab_viewed", { tab: t.dataset.b === "rival" ? "rivals" : t.dataset.b }); });
+tabKeys($("tabs"), "button", (t) => { selectTab(t.dataset.b, true); track("tab_viewed", { tab: t.dataset.b }); });
 
 function selectInput(which, focus) {
   for (const t of ["paste", "share", "link"]) {
@@ -1568,6 +1631,7 @@ if ("serviceWorker" in navigator) {
 async function loadConfig() {
   try {
     const cfg = await (await fetch("/api/config")).json();
+    linkBoxOn = !!cfg.url_box; renderRival();
     if (!cfg.url_box) return;
     $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
     $("intab-link").hidden = false;
