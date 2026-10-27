@@ -135,6 +135,6 @@ agreement with the sheet, not ground truth.
 ## Steps
 
 1. Skeleton + classifier prompt (done)
-2. `classify()` function: prompt + Gemini API, validated against the schema (done; not yet run against the live API; Gemini is the main provider, Groq/Qwen are a possible backup)
+2. `classify()` function: prompt + Gemini API, validated against the schema (done and run against the live API: see docs/eval-results.md; Gemini is the main provider, Groq/Qwen are a possible backup)
 3. Eval script scoring against the labelled Review log (done; needs your CSV export to run)
 4. Minimal paste-in web UI (done)

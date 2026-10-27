@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from bedahreview.classifier import ClassificationError
-from bedahreview.evaluate import format_report, gold_bucket, gold_fake, load_rows, predict, score
+from bedahreview.evaluate import count_labels, format_report, gold_bucket, gold_fake, load_rows, markdown_report, predict, rank_mismatches, score
 
 HEADER = [
     "#", "Product ID", "Stars", "Review date", "Variant bought", "Review text (exact)", "Sentiment",
@@ -92,6 +92,35 @@ class ScoreTests(unittest.TestCase):
         self.assertEqual(m["check_first_vs_courier"]["tp"], 1)
         self.assertEqual(m["mismatches"][0]["id"], "6")
         self.assertIn("Bucket accuracy: 83%", format_report(m))
+
+    def _imperfect(self):
+        preds = {
+            "1": _pred("1", "keep", "Praise: quality / material"), "2": _pred("2", "fight"),  # sheet: fix
+            "3": _pred("3", "fight", "Packaging / damaged on arrival", check_first=True), "4": _pred("4", "fight", "Praise: works as described", fake=True),
+            "5": _pred("5", "keep", "Praise: works as described"), "6": _pred("6", "check", "Taste / subjective"),  # sheet: fight
+        }
+        return score(self.rows, preds, {})
+
+    def test_count_says_how_many_rows_and_which_buckets_are_empty(self):
+        text = count_labels(self.rows)
+        self.assertIn("Rows with an id: 6", text)
+        self.assertIn("ignore 0", text)
+        self.assertIn("No sheet rows for: ignore", text)
+
+    def test_fix_fight_swaps_rank_before_check_and_others(self):
+        order = [x["id"] for x in rank_mismatches([
+            {"id": "9", "gold": "fight", "pred": "check"}, {"id": "8", "gold": "keep", "pred": "ignore"},
+            {"id": "7", "gold": "fix", "pred": "fight"}, {"id": "6", "gold": "fix", "pred": "keep"}])]
+        self.assertEqual(order, ["7", "6", "8", "9"])
+
+    def test_the_markdown_report_has_the_tables_the_caveat_and_no_review_text(self):
+        m = self._imperfect()
+        m["model"] = "gemini-test"
+        md = markdown_report(m)
+        for part in ("Model: `gemini-test`", "agreement with the sheet, not truth", "## Confusion matrix", "## Likely-fake and courier flags", "Your comment"):
+            self.assertIn(part, md)
+        for row in self.rows:  # the page is meant to be committed: no review text may be in it
+            self.assertNotIn(row["text"], md)
 
     def test_fix_suggestion_coverage_counts_fight_cards_with_a_hint(self):
         # gold=fix rows are 2 (Colour vs photo) -> one fix card, one fight card that carries a hint

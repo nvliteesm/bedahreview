@@ -17,6 +17,7 @@ warnings.filterwarnings("ignore")
 import argparse
 import csv
 import json
+import re
 import sys
 import time
 from collections import Counter, defaultdict
@@ -189,6 +190,7 @@ def score(rows: List[Dict[str, str]], preds: Dict[str, Dict[str, Any]], failures
     correct = sum(confusion[(b, b)] for b in BUCKETS)
     return {
         "reviews": len(rows),
+        "gold_counts": dict(Counter(gold_bucket(r) or "unclear" for r in rows)),
         "scored": scored,
         "failed": len(failures),
         "bucket_accuracy": correct / scored if scored else None,
@@ -253,14 +255,90 @@ def format_report(m: Dict[str, Any], max_mismatches: int = 15) -> str:
     return "\n".join(lines)
 
 
+def count_labels(rows: List[Dict[str, str]]) -> str:
+    """How many labelled reviews there really are. No model call."""
+    gold = Counter(gold_bucket(r) or "unclear" for r in rows)
+    fakes = Counter("yes" if gold_fake(r) else "unsure" if gold_fake(r) is None else "no" for r in rows)
+    lines = ["Rows with an id: %d (with text: %d, in %d products)" % (len(rows), sum(1 for r in rows if r.get("text")), len({r["product"] for r in rows})),
+             "Bucket the sheet implies: " + ", ".join("%s %d" % (b, gold.get(b, 0)) for b in BUCKETS + ["unclear"]),
+             "Likely-fake in the sheet: yes %d, unsure (Check) %d, no %d" % (fakes["yes"], fakes["unsure"], fakes["no"])]
+    empty = [b for b in BUCKETS if not gold.get(b)]
+    if empty:
+        lines.append("No sheet rows for: %s, so those buckets cannot be scored." % ", ".join(empty))
+    return "\n".join(lines)
+
+
+# Which wrong answers matter most: sending the seller the wrong way on a real complaint comes first.
+_SEVERITY = {("fix", "fight"): 0, ("fight", "fix"): 0, ("fix", "keep"): 1, ("fight", "keep"): 1, ("keep", "fix"): 1, ("keep", "fight"): 1,
+             ("fix", "ignore"): 1, ("fight", "ignore"): 1, ("keep", "ignore"): 2, ("ignore", "fix"): 2, ("ignore", "fight"): 2, ("ignore", "keep"): 2}
+
+
+def rank_mismatches(mismatches: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Most important first: fix<->fight swaps, then other committed wrong answers, then reviews the model set aside as 'check'."""
+    def key(x: Dict[str, Any]):
+        if x["pred"] == "check":
+            return (3, x["id"])
+        return (_SEVERITY.get((x["gold"], x["pred"]), 2), x["id"])
+    return sorted(mismatches, key=key)
+
+
+def markdown_report(m: Dict[str, Any], top: int = 10) -> str:
+    """A results page that is safe to commit: it names reviews by their sheet number and carries no review text."""
+    pct = _pct
+    g = m.get("gold_counts", {})
+    lines = [
+        "# Evaluation results", "",
+        "Model: `%s`. Run on %s. Scored %d of %d labelled reviews (%d failed to classify)." % (m.get("model", "unknown"), time.strftime("%Y-%m-%d"), m["scored"], m["reviews"], m["failed"]),
+        "", "> **How to read this.** The labels in the sheet are drafts (written with Claude's help, and the prompt was tuned on the same rows), and the fix/fight bucket is derived from them (`gold_bucket` in `evaluate.py`). So this is **agreement with the sheet, not truth**, and it is probably optimistic. Run-to-run noise is a few points.",
+        "", "Sheet rows by derived bucket: " + ", ".join("%s %d" % (b, g.get(b, 0)) for b in BUCKETS) + ". "
+        + ("Buckets with no rows (%s) cannot be scored." % ", ".join(b for b in BUCKETS if not g.get(b)) if any(not g.get(b) for b in BUCKETS) else ""),
+        "", "## Headline", "",
+        "| Measure | Result |", "|---|---|",
+        "| Bucket accuracy (all five model buckets) | %s |" % pct(m["bucket_accuracy"]),
+        "| Accuracy on reviews the model committed to (not set aside as check) | %s |" % pct(m["accuracy_when_committed"]),
+        "| Theme accuracy | %s |" % pct(m["theme_accuracy"]),
+        "| Sheet-fixable reviews that got a fix suggestion | %s |" % pct(m["fix_suggestion_coverage"]),
+        "", "## Per bucket", "", "| Bucket | Precision | Recall | Reviews in sheet |", "|---|---|---|---|",
+    ]
+    for b in BUCKETS:
+        s = m["per_bucket"][b]
+        lines.append("| %s | %s | %s | %d |" % (b, pct(s["precision"]), pct(s["recall"]), s["support"]))
+    lines += ["", "## Confusion matrix", "", "Rows are the sheet's bucket, columns are the model's.", "",
+              "| sheet → model | " + " | ".join(PRED_BUCKETS) + " |", "|---|" + "---|" * len(PRED_BUCKETS)]
+    for b in BUCKETS:
+        lines.append("| **%s** | " % b + " | ".join(str(m["confusion"][b][p]) for p in PRED_BUCKETS) + " |")
+    f, c = m["likely_fake"], m["check_first_vs_courier"]
+    lines += ["", "## Likely-fake and courier flags", "", "| Flag | Precision | Recall | TP | FP | FN |", "|---|---|---|---|---|---|",
+              "| Likely fake | %s | %s | %d | %d | %d |" % (pct(f["precision"]), pct(f["recall"]), f["tp"], f["fp"], f["fn"]),
+              "| Courier, check first | %s | %s | %d | %d | %d |" % (pct(c["precision"]), pct(c["recall"]), c["tp"], c["fp"], c["fn"]),
+              "", "Few rows are marked fake in the sheet, so those percentages rest on very small numbers."]
+    ranked = rank_mismatches(m["mismatches"])
+    lines += ["", "## The %d most important disagreements" % min(top, len(ranked)), "",
+              "%d disagreements in total. Look up each # in the sheet and write your verdict in the last column (was the sheet wrong, or the model?). Review text is left out on purpose." % len(ranked), "",
+              "| # | Sheet says | Model says | Sheet theme | Model theme | Model's cause | Your comment |", "|---|---|---|---|---|---|---|"]
+    for x in ranked[:top]:
+        lines.append("| %s | %s | %s | %s | %s | %s |  |" % (x["id"], x["gold"], x["pred"], x["gold_theme"], x["pred_theme"], x["cause"]))
+    if m["failures"]:
+        lines += ["", "## Failed to classify", ""] + ["- #%s" % rid for rid in list(m["failures"])[:20]]
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Score the classifier against the labelled Review log CSV.")
     parser.add_argument("csv", type=Path)
     parser.add_argument("--limit", type=int, help="only the first N reviews (cheap smoke test)")
-    parser.add_argument("--model", help="override the Gemini model")
+    parser.add_argument("--model", help="override the Gemini model (run twice with different models to compare them on the same rows)")
+    parser.add_argument("--count", action="store_true", help="only count the labelled reviews; no model call, no key needed")
+    parser.add_argument("--report", nargs="?", const="docs/eval-results.md", metavar="PATH", help="also write a markdown results page with no review text (default docs/eval-results.md)")
     args = parser.parse_args(argv)
 
     load_dotenv()
+    if args.count:
+        if not args.csv.exists():
+            print("%s not found." % args.csv, file=sys.stderr)
+            return 1
+        print(count_labels(load_rows(args.csv)))
+        return 0
     if not has_api_key():
         print("GEMINI_API_KEY is not set. Add it to .env (see .env.example).", file=sys.stderr)
         return 1
@@ -281,9 +359,15 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     out_dir = ROOT / "eval" / "results"
     out_dir.mkdir(parents=True, exist_ok=True)
-    out = out_dir / ("%s.json" % time.strftime("%Y%m%d-%H%M%S"))
+    model_tag = re.sub(r"[^A-Za-z0-9._-]", "_", metrics["model"])
+    out = out_dir / ("%s-%s.json" % (time.strftime("%Y%m%d-%H%M%S"), model_tag))
     out.write_text(json.dumps({"metrics": metrics, "predictions": preds}, ensure_ascii=False, indent=2), encoding="utf-8")
     print("\nFull results: %s" % out.relative_to(ROOT))
+    if args.report:
+        report = Path(args.report) if Path(args.report).is_absolute() else ROOT / args.report
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text(markdown_report(metrics), encoding="utf-8")
+        print("Results page (no review text): %s" % report.relative_to(ROOT))
     return 0
 
 
