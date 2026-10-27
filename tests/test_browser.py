@@ -5,6 +5,8 @@ appended to a temp copy of index.html and leaves what the page did in window.__p
 DevTools socket in real time (a service worker needs real time to install), with a tiny stdlib WebSocket client.
 """
 import base64
+import contextlib
+import io
 import json
 import os
 import shutil
@@ -155,6 +157,31 @@ window.__probe = (async () => {
     const del = () => [...document.querySelectorAll("#fixes-list button")].find((b) => b.textContent === "Hapus" || b.textContent === "Yakin hapus?");
     del().click(); del().click();
     out.fl.afterDelete = [JSON.parse(localStorage.getItem("bedahreview-fixes-v1")).length, document.getElementById("fixes-count").hidden];
+  }
+
+  if (location.hash === "#events") {
+    const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
+    document.getElementById("sample").click();
+    document.getElementById("run").click();
+    await until(() => !document.getElementById("view-results").hidden);
+    document.getElementById("tab-fight").click();
+    document.querySelector("#panel-fix .copy").click();
+    const fb = document.getElementById("feedback");
+    out.ev = { askShown: !fb.hidden, textareaBeforeAnswer: !!fb.querySelector("textarea") };
+    [...fb.querySelectorAll("button")].find((b) => b.dataset.a === "partly").click();
+    let area = fb.querySelector("textarea");
+    area.value = "warna tulisannya ijo, pas dateng warna tulisannya hitem";  // copied from a review: must be refused
+    area.dispatchEvent(new Event("input"));
+    [...fb.querySelectorAll("button")].find((b) => b.textContent === "Kirim").click();
+    await wait(200);
+    out.ev.refused = fb.textContent.indexOf("teks ulasan") >= 0;
+    area = fb.querySelector("textarea");
+    area.value = "cukup berguna";
+    area.dispatchEvent(new Event("input"));
+    [...fb.querySelectorAll("button")].find((b) => b.textContent === "Kirim").click();
+    await until(() => fb.textContent.indexOf("Terima kasih") >= 0);
+    out.ev.thanks = fb.textContent.indexOf("Terima kasih") >= 0;
+    await wait(500);
   }
   return out;
 })();
@@ -353,6 +380,24 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(fl["after"], [1, 2])
         self.assertEqual(fl["listShows"], [True, True, True, True])
         self.assertEqual(fl["afterDelete"], [0, True])
+
+    def test_usage_events_and_the_feedback_question(self):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            out = self.probe("/#events")
+        ev = out["ev"]
+        self.assertEqual((ev["askShown"], ev["textareaBeforeAnswer"], ev["refused"], ev["thanks"]), (True, False, True, True))
+        logged = [json.loads(line) for line in buf.getvalue().splitlines() if line.startswith("{")]
+        names = [e["event"] for e in logged]
+        for name in ("opened", "analysed", "tab_viewed", "draft_copied", "feedback"):
+            self.assertIn(name, names)
+        self.assertEqual(len({e["device"] for e in logged}), 1)  # one browser, one random id
+        by = {e["event"]: e for e in logged}
+        self.assertEqual((by["analysed"]["source"], by["analysed"]["lang"], by["tab_viewed"]["tab"], by["draft_copied"]["kind"]), ("paste", "id", "fight", "fix"))
+        self.assertEqual([e["comment"] for e in logged if e["event"] == "feedback"], ["cukup berguna"])  # the refused comment never left the page
+        everything = buf.getvalue()
+        for word in ("tulisannya", "Kaos Boxy Retro", "bahannya"):  # no review text and no product name anywhere in the log
+            self.assertNotIn(word, everything)
 
 
 if __name__ == "__main__":

@@ -69,6 +69,8 @@ Spending limits for the link box (all paid calls: link fetch, finding competitor
 - `APIFY_DAILY_BUDGET_USD` caps all runs per day (default 1.00, max 5.00, resets at midnight UTC). Each run counts at its worst-case cost the moment it starts and is never refunded, so the real bill is at most this. When it is used up the app says "Demo limit reached today" and offers paste. It is kept in memory, so a restart starts it at zero again: also set a monthly limit inside your Apify account.
 - `BEDAHREVIEW_PAID_PER_HOUR` (default 6) caps paid actions per visitor per hour in public mode, lower than the 30 for pasting. A link already saved on disk costs nothing but still counts.
 
+Usage events: the app logs a short fixed list of anonymous events (which tab was opened, how many reviews, Yes / Partly / No on "Was this useful?") as one JSON line each on standard output, so Cloud Logging collects them. No review text, names or IP addresses. Every event and field is listed in `docs/analytics.md`, and `python -m bedahreview.events_report FILE` turns the lines into a table.
+
 Not tested here (no Docker or gcloud on this Mac): the image build and the deploy itself. Steps, run by the owner:
 
 1. Create a Google Cloud project, link a billing account, and set a budget alert (it only warns; it does not stop spending).

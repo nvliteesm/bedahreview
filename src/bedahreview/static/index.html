@@ -79,7 +79,7 @@ main { max-width: 480px; margin: 0 auto; display: grid; gap: 14px; align-content
 .card-box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: grid; gap: 12px; }
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; background: var(--ignore-soft); border-radius: 12px; }
 .seg button { min-height: 44px; padding: 0 8px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 0.92rem; cursor: pointer; }
-.seg button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+.seg button[aria-selected="true"], .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
 label.field, .fld { display: grid; gap: 4px; font-size: 0.82rem; font-weight: 700; color: var(--muted); }
 textarea, input, select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; width: 100%; }
 textarea { min-height: 190px; resize: vertical; font: 0.9rem/1.6 var(--font-mono); padding: 12px; }
@@ -267,7 +267,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   .rcard h2 { font-size: 1.5rem; letter-spacing: -0.01em; }
   .seg { display: inline-grid; grid-auto-columns: auto; justify-self: start; border-radius: 999px; padding: 5px; }
   .seg button { border-radius: 999px; padding: 0 22px; }
-  .seg button[aria-selected="true"] { background: var(--ink); color: var(--surface); box-shadow: none; }
+  .seg button[aria-selected="true"], .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); box-shadow: none; }
   .btn { border-radius: 999px; min-height: 52px; }
   .btn.primary { width: auto; padding: 0 30px; justify-self: start; }
   .actions { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
@@ -469,7 +469,9 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
       <div id="legend"></div>
     </details>
     <div id="panels"></div>
+    <div class="card-box" id="feedback" hidden></div>
     <p class="foot" id="foot"></p>
+    <p class="foot" data-i18n="privNote"></p>
   </section>
 
   <span class="vh" id="toast" role="status" aria-live="polite"></span>
@@ -550,6 +552,10 @@ const TEXT = {
     step1T: "Tempel tautan", step1D: "dari Tokopedia, TikTok Shop, atau Lazada", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
     step3T: "Kamu dapat daftar tugas", step3D: "urut, plus draf balasan siap salin",
     linkHint: "Kami membaca hingga 10 ulasan terbaru yang berisi teks. Nama pembeli tidak disimpan.", linkOpts: "Pilihan lain", trySample: "Belum punya tautan? Coba dengan contoh",
+    fbQ: "Apakah hasil ini berguna?", fbYes: "Ya", fbPartly: "Sebagian", fbNo: "Tidak", fbComment: "Mau menambahkan sesuatu? (opsional)",
+    fbNote: "Komentar hanya disimpan kalau kamu menulisnya. Jangan tulis nama orang atau menempel teks ulasan.", fbSend: "Kirim", fbThanks: "Terima kasih. Jawabanmu membantu.",
+    fbReview: "Komentarmu tampak memuat teks ulasan. Hapus bagian itu dulu, supaya tidak ada teks ulasan yang tersimpan.", fbFail: "Tidak terkirim. Coba lagi nanti.",
+    privNote: "Kami mencatat kejadian anonim (misalnya tab yang dibuka), tanpa teks ulasan, nama, atau alamat IP. Kalau browsermu mengirim “Do Not Track”, kejadian itu tidak dikirim. Daftar lengkapnya ada di docs/analytics.md.",
     back: "Kembali", fixesBtn: "Perbaikan", fixesTitle: "Perbaikan yang kamu catat", fixesSub: "Disimpan di browser ini saja. Tidak ada yang dikirim ke server.",
     fixesWarn: "Hitungan dari contoh kecil bisa menyesatkan. Keluhan yang berkurang satu bisa kebetulan, dan bukan bukti perbaikanmu berhasil. Analisis baru juga bisa memuat ulasan lama yang sama.",
     fixesNoStore: "Browser ini tidak bisa menyimpan data, jadi catatan hilang saat halaman ditutup. Ekspor ke file JSON supaya tidak hilang.",
@@ -641,6 +647,10 @@ const TEXT = {
     step1T: "Paste a link", step1D: "from Tokopedia, TikTok Shop or Lazada", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
     step3T: "You get a task list", step3D: "in order, with reply drafts ready to copy",
     linkHint: "We read up to 10 of the newest reviews that have text. Buyer names are not saved.", linkOpts: "More options", trySample: "No link yet? Try an example",
+    fbQ: "Was this useful?", fbYes: "Yes", fbPartly: "Partly", fbNo: "No", fbComment: "Anything to add? (optional)",
+    fbNote: "A comment is saved only if you write one. Please do not write names or paste review text.", fbSend: "Send", fbThanks: "Thank you. Your answer helps.",
+    fbReview: "Your comment looks like it contains review text. Please remove that part, so no review text is stored.", fbFail: "Could not send. Try again later.",
+    privNote: "We log anonymous events (for example which tab was opened), with no review text, names or IP address. If your browser sends “Do Not Track”, those events are not sent. The full list is in docs/analytics.md.",
     back: "Back", fixesBtn: "Fixes", fixesTitle: "Fixes you logged", fixesSub: "Saved in this browser only. Nothing is sent to the server.",
     fixesWarn: "Counts from small samples can mislead. One complaint fewer can be chance, not proof that your fix worked. A new analysis may also include some of the same old reviews.",
     fixesNoStore: "This browser cannot save data, so your log is lost when the page closes. Export it to a JSON file to keep it.",
@@ -804,7 +814,7 @@ function draft(label, text, key) {
   if (!text) return null;
   const body = h("p", { class: "bahasa", lang: "id", text });
   const btn = h("button", { class: "copy", type: "button", "aria-label": tr("copy") + ": " + label }, copyIcon(), tr("copy"));
-  btn.addEventListener("click", () => copyText(text, btn, label, body));
+  btn.addEventListener("click", () => { if (key) track("draft_copied", { kind: key }); copyText(text, btn, label, body); });
   return h("div", { class: "draft", "data-k": key }, h("div", { class: "draft-head" }, h("span", { class: "lbl", text: label }), btn), body);
 }
 
@@ -867,6 +877,59 @@ function keepBody(keep) {
 }
 function ignoreList(items) {
   return h("ul", { class: "ignore-list" }, items.map((it) => h("li", { lang: "id", text: "#" + it.id + (it.stars ? " · " + starsText(it.stars) : "") + " · " + (it.text || tr("noText")) })));
+}
+
+/* ---------- anonymous usage events and the feedback question ----------
+   A fixed list (see docs/analytics.md): counts and choices only. A random id kept in this browser tells devices apart; no review text,
+   product name, name or address is ever sent. The one free-text field is the optional feedback comment, which the page warns about. */
+const DEVICE_KEY = "bedahreview-device", MAX_COMMENT = 300;
+let deviceId = "";
+function device() {
+  if (deviceId) return deviceId;
+  try { deviceId = localStorage.getItem(DEVICE_KEY) || ""; } catch (e) { deviceId = ""; }
+  if (!/^[a-z0-9-]{8,40}$/.test(deviceId)) {
+    const bytes = new Uint8Array(12);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(bytes); else bytes.forEach((_, i) => { bytes[i] = Math.floor(Math.random() * 256); });
+    deviceId = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+    try { localStorage.setItem(DEVICE_KEY, deviceId); } catch (e) { /* a new id each visit, which is fine */ }
+  }
+  return deviceId;
+}
+const doNotTrack = () => navigator.doNotTrack === "1" || window.doNotTrack === "1";
+function track(event, props, explicit) {  // fire and forget; "explicit" is the tester pressing Send, so Do Not Track does not apply
+  if (doNotTrack() && !explicit) return Promise.resolve(false);
+  return fetch("/api/event", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event, device: device(), props: props || {} }), keepalive: true })
+    .then((res) => res.ok).catch(() => false);
+}
+function looksLikeReviewText(comment, items) {  // a comment that repeats 20 characters of any analysed review is not sent
+  const c = comment.toLowerCase();
+  return items.some((it) => { const t = String(it.text || "").toLowerCase(); for (let i = 0; i + 20 <= t.length; i += 5) if (c.includes(t.slice(i, i + 20))) return true; return false; });
+}
+let feedbackState = { answer: null, sent: false, comment: "", error: "" };
+function renderFeedback() {
+  const box = $("feedback"), st = feedbackState;
+  if (!lastData) { box.hidden = true; return; }
+  box.hidden = false;
+  if (st.sent) { box.replaceChildren(h("p", { class: "lbl-b", role: "status", text: tr("fbThanks") })); return; }
+  const answers = h("div", { class: "seg", role: "group", "aria-label": tr("fbQ") }, [["yes", "fbYes"], ["partly", "fbPartly"], ["no", "fbNo"]].map(([a, k]) =>
+    h("button", { type: "button", "data-a": a, "aria-pressed": st.answer === a ? "true" : "false", text: tr(k), onclick: () => { st.answer = a; st.error = ""; renderFeedback(); } })));
+  const kids = [h("p", { class: "lbl-b", text: tr("fbQ") }), answers];
+  if (st.answer) {
+    const comment = h("textarea", { maxlength: String(MAX_COMMENT), rows: "2", style: "min-height:64px", "aria-label": tr("fbComment"), placeholder: tr("fbComment") });
+    comment.value = st.comment;
+    comment.addEventListener("input", () => { st.comment = comment.value; });
+    const send = h("button", { class: "btn primary", type: "button", text: tr("fbSend") });
+    send.addEventListener("click", async () => {
+      const text = st.comment.trim();
+      if (text && looksLikeReviewText(text, lastData.items)) { st.error = tr("fbReview"); renderFeedback(); return; }
+      send.disabled = true;
+      const ok = await track("feedback", text ? { answer: st.answer, comment: text } : { answer: st.answer }, true);
+      if (ok) st.sent = true; else st.error = tr("fbFail");
+      renderFeedback();
+    });
+    kids.push(comment, h("p", { class: "small muted", text: tr("fbNote") }), st.error ? h("div", { class: "callout warn", role: "alert", text: st.error }) : null, send);
+  }
+  box.replaceChildren(...kids.filter(Boolean));
 }
 
 /* ---------- fix tracking ----------
@@ -979,6 +1042,7 @@ function fixTracker(group) {  // under a Fix card: the "mark as fixed" action, o
   save.addEventListener("click", () => {
     const ok = saveFixes(loadFixes().concat(makeFix(group, note.value, src, lastData.items)));
     if (!ok) { err.hidden = false; return; }
+    track("fix_marked");
     render(lastData, false);
   });
   form.append(...[h("label", { class: "field", for: note.id }, h("span", { text: tr("fixNoteLbl") }), note), key ? null : h("p", { class: "small muted", text: tr("fixNoName") }), err, h("div", { class: "row" }, save, cancel)].filter(Boolean));
@@ -1075,6 +1139,8 @@ function render(data, fresh) {
     const out = applyAnalysis(loadFixes(), productKey(src), data.items);
     lastChanged = out.changed;
     if (out.changed.length) saveFixes(out.fixes);
+    feedbackState = { answer: null, sent: false, comment: "", error: "" };
+    track("analysed", { reviews: Math.min(data.reviews, 50), source: src.kind === "url" ? "link" : "paste", lang });
   }
   const notes = [];
   if (lastChanged.length) {
@@ -1092,7 +1158,7 @@ function render(data, fresh) {
     const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, class: MAIN_TABS.includes(k) ? "main" : k === "rival" ? "rival" : "", "aria-controls": "panel-" + k, "data-b": k, "data-shown": tr("shown") },
       k === "rival" ? null : h("span", { class: "ic", "aria-hidden": "true" }, svgIcon(BOARD_ICON[k])),
       h("span", { class: "n", text: counts[k], "data-d": k === "rival" ? null : tr("board" + cap(k)) }), h("span", { class: "l", text: tr(k) }));
-    tab.addEventListener("click", () => selectTab(k, false));
+    tab.addEventListener("click", () => { selectTab(k, false); track("tab_viewed", { tab: k === "rival" ? "rivals" : k }); });
     return tab;
   }));
   const plat = platformName(src.url || "");
@@ -1107,7 +1173,7 @@ function render(data, fresh) {
     panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })),
     panel("rival", null));
   $("tab-rival").hidden = !(src.kind === "url") || desktop();  // competitors are found from a product link, not from pasted text; on a wide screen they have their own column
-  placeRival(); renderRival();
+  placeRival(); renderRival(); renderFeedback();
 
   const fromLink = src.kind === "url" ? tr("footFrom", src.count, src.mode === "complaints" ? tr("footLow") : "", src.cached ? tr("footCached") : "") : "";
   $("foot").textContent = fromLink + tr("footTail", data.model);
@@ -1302,6 +1368,7 @@ async function rivalFind(target) {
   const t = target || (own ? { url: own.url, title: own.title || "", mine: true } : null);
   if (!t) return;
   const run = ++rivalRun;
+  track("rivals_started");
   rival = { step: "searching", target: t }; renderRival();
   if (lastData && !desktop() && !$("tab-rival").hidden) { selectTab("rival", false); $("tabs").scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" }); }
   let next;
@@ -1371,7 +1438,7 @@ function tabKeys(listEl, selector, onSelect) {
     e.preventDefault(); onSelect(tabs[j]);
   });
 }
-tabKeys($("tabs"), "button", (t) => selectTab(t.dataset.b, true));
+tabKeys($("tabs"), "button", (t) => { selectTab(t.dataset.b, true); track("tab_viewed", { tab: t.dataset.b === "rival" ? "rivals" : t.dataset.b }); });
 
 function selectInput(which, focus) {
   for (const t of ["paste", "share", "link"]) {
@@ -1511,6 +1578,7 @@ async function loadConfig() {
 applyLang();
 takeShared();
 loadConfig();
+track("opened");
 </script>
 </body>
 </html>

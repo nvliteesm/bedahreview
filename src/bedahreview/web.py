@@ -35,6 +35,7 @@ from urllib.parse import parse_qs
 from .classifier import ClassificationError, classify, resolve_model
 from .competitors import MAX_COMPETITORS, compare_competitors, suggest_competitors
 from .env import has_api_key, load_dotenv
+from .events import clean_event, log_line
 from .fetchers import MAX_LIMIT, BudgetError, Fetcher, FetcherConfigError, FetchError, get_fetcher, product_title_from_url, to_review_dicts
 from .fetchers.base import check_mode, check_shopee_product_url, clamp_limit
 from .fetchers.search import SEARCH_PLATFORMS
@@ -52,7 +53,9 @@ MIN_ACCESS_CODE_CHARS = 8
 MAX_LOGIN_FAILS = 5  # per visitor, per LOGIN_WINDOW_SECS
 LOGIN_WINDOW_SECS = 15 * 60
 DEFAULT_MAX_PER_HOUR = 30  # analyses per visitor per hour in public mode
-DEFAULT_PAID_PER_HOUR = 6  # paid actions (link fetch, find or compare competitors) per visitor per hour in public mode: lower than plain pasting
+MAX_EVENT_BYTES = 2000
+EVENTS_PER_HOUR = 600  # per visitor in public mode: a stuck page cannot flood the log
+DEFAULT_PAID_PER_HOUR = 6 # paid actions (link fetch, find or compare competitors) per visitor per hour in public mode: lower than plain pasting
 PUBLIC_ASSETS = {"/manifest.webmanifest", "/sw.js", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png"}
 # Files served from static/ (exact paths only; the query string is ignored, so /?text=... is the page).
 PAGES = {"/": "index.html", "/index.html": "index.html"}
@@ -186,6 +189,24 @@ class Handler(BaseHTTPRequestHandler):
     login_limiter: Optional[RateLimiter] = None
     use_limiter: Optional[RateLimiter] = None
     paid_limiter: Optional[RateLimiter] = None
+    event_limiter: Optional[RateLimiter] = None
+
+    def _event(self) -> None:
+        """One anonymous usage event (fixed list, fixed fields: see events.py). Behind the access code; written to stdout as one JSON line."""
+        if not self._authed():
+            return self._json(401, {"error": "Please sign in again.", "login": True})
+        if self.event_limiter and not self.event_limiter.take(self._client()):
+            return self._json(429, {"error": "Too many events."})
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            if "application/json" not in (self.headers.get("Content-Type") or "") or not 0 < length <= MAX_EVENT_BYTES:
+                raise ValueError
+            event = clean_event(json.loads(self.rfile.read(length).decode("utf-8")))
+        except (ValueError, UnicodeDecodeError):
+            return self._json(400, {"error": "Not an allowed event."})
+        sys.stdout.write(log_line(event) + "\n")
+        sys.stdout.flush()
+        self._json(200, {"ok": True})
 
     def _paid_ok(self) -> bool:
         """Count one paid action for this visitor; send the 429 and return False when they are at the hourly limit."""
@@ -410,6 +431,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(403, {"error": "Host not allowed"})
         if self.path == "/login":
             return self._login()
+        if self.path == "/api/event":
+            return self._event()
         if self.path == "/api/competitors/suggest":
             return self._suggest()
         if self.path == "/api/competitors/compare":
@@ -491,6 +514,7 @@ def make_server(
     if public:
         handler.use_limiter = RateLimiter(max_per_hour, 3600)
         handler.paid_limiter = RateLimiter(paid_per_hour, 3600)
+        handler.event_limiter = RateLimiter(EVENTS_PER_HOUR, 3600)
     return ThreadingHTTPServer(("0.0.0.0" if public else "127.0.0.1", port), handler)
 
 
