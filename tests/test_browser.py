@@ -35,7 +35,7 @@ def _stub_classify(reviews, product=None):
         base = {"id": r["id"], "variant": r["variant"] or None, "cause": "none", "check_first": False, "proof_quote": r["text"] or None,
                 "likely_fake": {"flag": False, "signals": []}, "fix_suggestion_id": None, "fight": None, "confidence": "high"}
         if "koyak" in r["text"]:
-            kit = {"why": "Likely transit damage.", "steps": ["Ask for photos."], "chat_to_buyer": "Halo Kak, mohon maaf 🙏", "public_reply": "Mohon maaf, Kak.", "report_text": None}
+            kit = {"why": "Likely transit damage.", "steps": ["Ask for photos."], "why_id": "Kemungkinan rusak di pengiriman.", "steps_id": ["Minta foto."], "chat_to_buyer": "Halo Kak, mohon maaf 🙏", "public_reply": "Mohon maaf, Kak.", "report_text": None}
             out.append(dict(base, bucket="fight", theme="Packaging / damaged on arrival", cause="courier", check_first=True, fight=kit))
         elif any(w in r["text"] for w in ("ijo", "hitem", "hijau")):
             out.append(dict(base, bucket="fix", theme="Colour vs photo", cause="listing", fix_suggestion_id="Ganti foto varian."))
@@ -81,6 +81,12 @@ window.__probe = (async () => {
     out.enTabs = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
     out.enLang = document.documentElement.lang;
     out.draftStillBahasa = (document.querySelector("#panel-fix .bahasa") || {}).textContent;
+    out.whyEn = (document.querySelector("#panel-fight .why") || {}).textContent;
+    out.stepsEn = [...document.querySelectorAll("#panel-fight .steps-list li")].map((li) => li.textContent);
+    document.getElementById("lang").click();
+    out.whyId = (document.querySelector("#panel-fight .why") || {}).textContent;
+    out.stepsId = [...document.querySelectorAll("#panel-fight .steps-list li")].map((li) => li.textContent);
+    out.draftAfterBack = (document.querySelector("#panel-fight .draft .bahasa") || {}).textContent;
   }
   if (location.hash === "#desktop") {
     out.cols = getComputedStyle(document.querySelector(".workspace")).gridTemplateColumns.split(" ").length;
@@ -369,6 +375,11 @@ class BrowserTests(unittest.TestCase):
         self.assertTrue(out["enTabs"][3].endswith("Keep"), out["enTabs"])
         self.assertEqual(out["enLang"], "en")
         self.assertEqual(out["draftStillBahasa"], "Ganti foto varian.")  # drafts stay Bahasa in English mode
+        self.assertIn("Likely transit damage.", out["whyEn"])  # the explanation and steps follow the page language...
+        self.assertEqual(out["stepsEn"], ["Ask for photos."])
+        self.assertIn("Kemungkinan rusak di pengiriman.", out["whyId"])
+        self.assertEqual(out["stepsId"], ["Minta foto."])
+        self.assertTrue(out["draftAfterBack"].startswith("Halo Kak"))  # ...while the reply to the buyer is always Bahasa
 
     def test_wide_screen_puts_the_competitor_panel_in_its_own_column(self):
         out = self.probe("/#desktop", width=1300)

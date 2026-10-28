@@ -46,6 +46,14 @@ class ClassifyTests(unittest.TestCase):
     def test_prompt_example_passes_validation(self):
         self.assertEqual(validate_results(self.all_reviews, self.all_good), [])
 
+    def test_fight_kit_needs_the_explanation_and_steps_in_both_languages(self):
+        kit = self.good[1]["fight"]
+        self.assertEqual(len(kit["steps"]), len(kit["steps_id"]))  # the prompt's own example shows the model the same steps in both
+        for missing in ("why_id", "steps_id", "why", "steps"):
+            broken = copy.deepcopy(self.good)
+            del broken[1]["fight"][missing]
+            self.assertTrue(validate_results(self.reviews, broken), missing)
+
     def test_product_title_is_sent_only_when_known(self):
         client = StubClient(json.dumps(self.good), json.dumps(self.good))
         classify(self.reviews, client=client)

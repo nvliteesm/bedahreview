@@ -114,6 +114,8 @@
       "required": [
         "why",
         "steps",
+        "why_id",
+        "steps_id",
         "chat_to_buyer",
         "public_reply",
         "report_text"
@@ -121,13 +123,26 @@
       "additionalProperties": false,
       "properties": {
         "why": {
-          "type": "string"
+          "type": "string",
+          "description": "English."
         },
         "steps": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "English."
+        },
+        "why_id": {
+          "type": "string",
+          "description": "Bahasa Indonesia. The same explanation as why, so the page can show either language."
+        },
+        "steps_id": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Bahasa Indonesia. The same steps as steps, in the same order."
         },
         "chat_to_buyer": {
           "type": [

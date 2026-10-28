@@ -542,7 +542,7 @@ const TEXT = {
     noteDropped: "%s ulasan dilewati karena kutipan buktinya tidak bisa diverifikasi.",
     noteNoText: "%s ulasan hanya bintang tanpa teks. Dihitung di Abaikan, tidak dianalisis.",
     footFrom: "Demo: %s ulasan%s diambil dari tautan produk lewat layanan pihak ketiga%s. ", footLow: " bintang rendah", footCached: " (salinan tersimpan, tanpa biaya baru)",
-    footTail: "Model: %s. Saran dan draf ditulis mesin: baca dulu, dan minta penutur Bahasa memeriksa sebelum dikirim ke pembeli. Penjelasan dan langkah di kartu Tanggapi masih berbahasa Inggris.",
+    footTail: "Model: %s. Saran dan draf ditulis mesin: baca dulu, dan minta penutur Bahasa memeriksa sebelum dikirim ke pembeli.",
     stars: "%s dari 5 bintang",
     rival: "Pesaing", rivalRule: "Bandingkan keluhan dan pujian produkmu dengan produk serupa. Ini contoh kecil, bukan seluruh pasar.",
     rivalAsk: "Mau sekalian membandingkan dengan pesaing?", rivalAskBtn: "Ya, cari pesaing",
@@ -643,7 +643,7 @@ const TEXT = {
     noteDropped: "%s review(s) were skipped because the model's proof quote could not be verified.",
     noteNoText: "%s review(s) are star-only, with no text. Counted under Ignore, not analysed.",
     footFrom: "Demo: %s%s review(s) fetched from the product link via a third-party service%s. ", footLow: " low-star", footCached: " (saved copy, no new charge)",
-    footTail: "Model: %s. Suggestions and drafts are machine-written: read them, and have a Bahasa speaker check any text before you send it to a buyer. Drafts are always in Bahasa Indonesia; the explanations and steps on Fight it cards are in English.",
+    footTail: "Model: %s. Suggestions and drafts are machine-written: read them, and have a Bahasa speaker check any text before you send it to a buyer. Drafts are always in Bahasa Indonesia; the explanations and steps on Fight it cards follow the page language.",
     stars: "%s of 5 stars",
     rival: "Rivals", rivalRule: "Compare your complaints and praise with similar products. This is a small sample, not the whole market.",
     rivalAsk: "Also compare with competitors?", rivalAskBtn: "Yes, find competitors",
@@ -851,8 +851,15 @@ function fullText(item) {
   if (!item.text || item.text === item.proof_quote) return null;
   return h("details", { class: "full" }, h("summary", { text: tr("fullReview") }), h("p", { lang: "id", text: item.text }));
 }
+function kitText(kit) {  // the explanation and steps follow the page language; the drafts to buyers stay in Bahasa either way
+  const id = lang === "id";
+  const why = (id ? kit.why_id || kit.why : kit.why || kit.why_id) || "";
+  const mine = id ? kit.steps_id : kit.steps, other = id ? kit.steps : kit.steps_id;
+  return { why, steps: (mine && mine.length ? mine : other) || [] };
+}
 function replyCard(item) {
   const kit = item.fight || {};
+  const { why, steps } = kitText(kit);
   const fake = item.likely_fake && item.likely_fake.flag;
   const drafts = [["side", tr("dCheckSide"), item.bucket === "check" ? item.fix_suggestion_id : null], ["chat", tr("dChat"), kit.chat_to_buyer],
     ["public", tr("dPublic"), kit.public_reply], ["report", tr("dReport"), kit.report_text]].filter((d) => d[2]);
@@ -876,8 +883,8 @@ function replyCard(item) {
         item.variant ? h("span", { class: "chip soft", text: item.variant }) : null,
         item.confidence === "low" ? h("span", { class: "chip", text: tr("chipLow") }) : null)),
     quote(item), fullText(item),
-    kit.why ? h("p", { class: "why" }, h("b", { text: tr("whyLbl") }), kit.why) : null,
-    kit.steps && kit.steps.length ? h("ol", { class: "steps-list" }, kit.steps.map((s) => h("li", { text: s }))) : null,
+    why ? h("p", { class: "why", lang }, h("b", { text: tr("whyLbl") }), why) : null,
+    steps.length ? h("ol", { class: "steps-list", lang }, steps.map((s) => h("li", { text: s }))) : null,
     box);
 }
 function fixCard(group, byId) {
