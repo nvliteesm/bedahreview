@@ -48,8 +48,13 @@ class Fetcher:
         raise NotImplementedError
 
 
+def per_star_limit(limit: int) -> int:
+    """For a "complaints" fetch that runs once per low star: a little over a third each, so a thin star can be covered by the others."""
+    return max(1, -(-limit // len(COMPLAINT_STARS)) + 1)
+
+
 def check_shopee_product_url(url: str) -> str:
-    """Return the link reduced to https://<host>/<path>, or raise FetchError if it is not a Shopee Indonesia product link."""
+    """Legacy, Shopee-only. Not used by the link box (Shopee links are refused, see platforms.py); it stays as the default link check for a plain Fetcher that has no check_link. Return the link reduced to https://<host>/<path>, or raise FetchError if it is not a Shopee Indonesia product link."""
     try:
         parts = urlsplit((url or "").strip())
         host = (parts.hostname or "").lower()

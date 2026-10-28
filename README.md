@@ -109,8 +109,7 @@ Short links from the Share button are followed through plain redirects, only bet
 hard spending cap (`APIFY_MAX_COST_USD`, default 0.05). Results are saved in `fetch_cache/` per platform so the same
 link is not paid for twice, for 24 hours (`FETCH_CACHE_HOURS`, 0 = do not save): expired copies are deleted, and so are copies from older versions. Reviewer names are never kept, and neither are seller replies (only whether the shop replied: a reply can name the buyer). These are small third-party scrapers: any of them can
 break or be blocked without warning, the platforms' terms for this have not been checked, and the app then tells
-the seller to paste instead. The older Shopee fetcher (`apify_shopee.py`) is kept in the repo but is not used by
-the router.
+the seller to paste instead. The older Shopee-only fetcher (`apify_shopee.py`) has been removed; Shopee links are refused with a message.
 
 **Complaints first** (default) fetches 1-3 star reviews with comments, worst first. **Latest reviews** fetches the
 newest ones. A few spare reviews are requested because some have no text.

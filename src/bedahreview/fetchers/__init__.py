@@ -5,11 +5,10 @@ import os
 from typing import Optional
 
 from ..classifier import ROOT
-from .apify_shopee import DEFAULT_MAX_COST_USD
 from .base import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, LinkError, Review, product_title_from_url, to_review_dicts
 from .budget import DAILY_BUDGET_CEILING_USD, DEFAULT_DAILY_BUDGET_USD, BudgetError, DailyBudget
 from .cache import DEFAULT_TTL_HOURS, MAX_TTL_HOURS, CachedFetcher
-from .platforms import LinkRouter
+from .platforms import DEFAULT_MAX_COST_USD, LinkRouter
 
 CACHE_DIR = ROOT / "fetch_cache"
 MAX_COST_CEILING_USD = 1.0  # refuse an APIFY_MAX_COST_USD typo like 50

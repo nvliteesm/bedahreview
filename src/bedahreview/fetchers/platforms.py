@@ -19,15 +19,15 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urljoin, urlsplit
 
-from .apify_shopee import _per_star_limit
 from .budget import DailyBudget
-from .base import COMPLAINT_STARS, Fetcher, FetchError, LinkError, Review, check_mode, clamp_limit
+from .base import COMPLAINT_STARS, Fetcher, FetchError, LinkError, Review, check_mode, clamp_limit, per_star_limit
 from .cache import DEFAULT_TTL_HOURS, CachedFetcher
 from .search import Candidate, search_products
 
 TOKOPEDIA_ACTOR = "shahidirfan/Tokopedia-Reviews-Scraper"
 LAZADA_ACTOR = "zen-studio/lazada-reviews-scraper"
 TIKTOK_ACTOR = "web_wanderer/tiktok-reviews-scraper"
+DEFAULT_MAX_COST_USD = 0.05  # per run; APIFY_MAX_COST_USD overrides it
 RUN_TIMEOUT_SECS = 90  # the three actors finished in 9-14 seconds when tested on 2026-10-26
 SPARE_REVIEWS = 3  # ask for a few more than needed: some reviews have no text and are dropped
 MAX_CONCURRENT_RUNS = 3  # Apify refused the 6th of 6 simultaneous runs on 2026-10-27, so wait our turn instead
@@ -295,7 +295,7 @@ class TikTokShopFetcher(Fetcher):
         if mode != "complaints":
             return _finish(self._run(product_id, want, "all", "most_recent"), limit, mode)
         with ThreadPoolExecutor(max_workers=len(COMPLAINT_STARS)) as pool:  # the actor filters one star at a time
-            futures = [pool.submit(self._run, product_id, _per_star_limit(want), "%d_star" % star, "most_recent") for star in COMPLAINT_STARS]
+            futures = [pool.submit(self._run, product_id, per_star_limit(want), "%d_star" % star, "most_recent") for star in COMPLAINT_STARS]
         batches: List[List[Review]] = []
         errors: List[FetchError] = []
         for future in futures:
