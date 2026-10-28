@@ -46,6 +46,27 @@ class ClassifyTests(unittest.TestCase):
     def test_prompt_example_passes_validation(self):
         self.assertEqual(validate_results(self.all_reviews, self.all_good), [])
 
+    def test_check_first_is_kept_only_for_courier_or_unclear_fights_that_are_not_fake(self):
+        def result(**kw):
+            base = {"bucket": "fight", "cause": "courier", "check_first": True, "likely_fake": {"flag": False, "signals": []}}
+            base.update(kw)
+            return base
+
+        self.assertTrue(classifier.tidy_check_first(result())["check_first"])  # transit damage: the flag stays
+        self.assertTrue(classifier.tidy_check_first(result(cause="unclear"))["check_first"])
+        for why, odd in {"a suspected fake": result(cause="unclear", likely_fake={"flag": True, "signals": ["template"]}), "the check bucket": result(bucket="check", cause="unclear"),
+                         "a fix": result(bucket="fix", cause="listing"), "a buyer-caused fight": result(cause="buyer"), "praise": result(bucket="keep", cause="none")}.items():
+            self.assertFalse(classifier.tidy_check_first(odd)["check_first"], why)
+        untouched = result(check_first=False, cause="unclear")
+        self.assertIs(classifier.tidy_check_first(untouched), untouched)
+
+    def test_a_fake_filed_under_unclear_does_not_reach_the_seller_as_a_courier_question(self):
+        bad = copy.deepcopy(self.good)
+        bad[0].update(bucket="fight", cause="unclear", check_first=True, likely_fake={"flag": True, "signals": ["template"]},
+                      fix_suggestion_id=None, fight=dict(copy.deepcopy(self.good[1]["fight"]), report_text="Mohon tinjau ulasan ini, isinya tampak seragam."))
+        out = classify(self.reviews, client=StubClient(json.dumps(bad)))
+        self.assertEqual([r["check_first"] for r in out], [False, True, False])  # only the real transit complaint (id 34) keeps it
+
     def test_fight_kit_needs_the_explanation_and_steps_in_both_languages(self):
         kit = self.good[1]["fight"]
         self.assertEqual(len(kit["steps"]), len(kit["steps_id"]))  # the prompt's own example shows the model the same steps in both

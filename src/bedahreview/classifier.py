@@ -54,6 +54,17 @@ def no_text_result(review: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def tidy_check_first(result: Dict[str, Any]) -> Dict[str, Any]:
+    """`check_first` is only the question "courier or product?" on a fight card, so it is cleared everywhere else.
+
+    The prompt says so, but a model that files a fake review under cause "unclear" would otherwise get the flag from the prompt's own rule
+    (found in the evaluation: five suspected fakes got a "Courier? Check first" chip).
+    """
+    if result.get("check_first") and (result.get("bucket") != "fight" or result.get("cause") not in ("courier", "unclear") or result["likely_fake"]["flag"]):
+        return dict(result, check_first=False)
+    return result
+
+
 def validate_results(reviews: List[Dict[str, Any]], results: List[Any]) -> List[str]:
     """Return a list of problems; empty means the results are usable."""
     validator = Draft202012Validator(_load_schema())
@@ -211,7 +222,7 @@ def _classify_batch(
         except ValueError as exc:  # includes json.JSONDecodeError
             results, problems = [], ["reply was not valid JSON: %s" % exc]
         if not problems:
-            return results
+            return [tidy_check_first(r) for r in results]
         messages += [
             {"role": "assistant", "content": raw},
             {
@@ -224,7 +235,7 @@ def _classify_batch(
     if results and all(p.endswith(_BAD_QUOTE) for p in problems):
         # Only unverifiable quotes are left: drop those reviews rather than show an invented quote.
         bad = {p.split()[1].rstrip(":") for p in problems}
-        return [r for r in results if r["id"] not in bad]
+        return [tidy_check_first(r) for r in results if r["id"] not in bad]
     raise ClassificationError("invalid reply after retry:\n- " + "\n- ".join(problems[:20]))
 
 
