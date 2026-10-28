@@ -40,6 +40,13 @@ python -m unittest discover -s tests
 
 Set `BEDAHREVIEW_MODEL` to use a different Gemini model (default `gemini-3.5-flash-lite`).
 
+Real-model check: `tests/test_live_gemini.py` holds the schema and the page to a real Gemini reply recorded once from invented reviews (`samples/live_gemini_sample.json`, always checked offline). Its live half calls the API (a few US cents) and runs only when `GEMINI_API_KEY` is in the environment, which the normal command above does not do:
+
+```bash
+set -a; source .env; set +a; python -m unittest discover -s tests -p "test_live_gemini.py"
+PYTHONPATH=src python scripts/record_live_sample.py   # record a fresh sample, for example after a prompt change
+```
+
 The API key lives only in `.env` (gitignored).
 
 ## Run the app

@@ -1,0 +1,203 @@
+{
+  "note": "A real model reply to invented reviews, recorded once. See scripts/record_live_sample.py. No private reviews.",
+  "model": "gemini-3.5-flash-lite",
+  "recorded": "2026-10-28",
+  "product": "Kaos Boxy Retro",
+  "input": [
+    {
+      "id": "1",
+      "stars": 3,
+      "variant": "Putih, M",
+      "date": "2026-10-02",
+      "text": "di foto warna tulisannya ijo, pas dateng malah hitam"
+    },
+    {
+      "id": "2",
+      "stars": 1,
+      "variant": "Hitam, L",
+      "date": "2026-10-03",
+      "text": "kardusnya penyok parah dan kaosnya kotor kena oli, kecewa"
+    },
+    {
+      "id": "3",
+      "stars": 5,
+      "variant": "Putih, L",
+      "date": "2026-10-04",
+      "text": "bahannya tebal dan adem, suka banget"
+    },
+    {
+      "id": "4",
+      "stars": 2,
+      "variant": "Hitam, L",
+      "date": "2026-10-05",
+      "text": "size L rasa M, sempit di bahu, tolong cek size chart"
+    },
+    {
+      "id": "5",
+      "stars": 5,
+      "variant": "",
+      "date": "2026-10-06",
+      "text": ""
+    },
+    {
+      "id": "6",
+      "stars": 1,
+      "variant": "Putih, S",
+      "date": "2026-10-07",
+      "text": "kecewa, barangnya tidak sesuai deskripsi"
+    },
+    {
+      "id": "7",
+      "stars": 5,
+      "variant": "Hitam, M",
+      "date": "2026-10-08",
+      "text": "pengiriman cepat dan adminnya ramah"
+    }
+  ],
+  "output": [
+    {
+      "id": "1",
+      "bucket": "fix",
+      "theme": "Colour vs photo",
+      "variant": "Putih, M",
+      "cause": "listing",
+      "check_first": false,
+      "proof_quote": "di foto warna tulisannya ijo, pas dateng malah hitam",
+      "likely_fake": {
+        "flag": false,
+        "signals": []
+      },
+      "fix_suggestion_id": "Ganti foto katalog varian Putih dengan foto asli yang menunjukkan warna tulisan yang benar, atau perbarui deskripsi jika ada perubahan warna sablon.",
+      "fight": null,
+      "confidence": "high"
+    },
+    {
+      "id": "2",
+      "bucket": "fight",
+      "theme": "Packaging / damaged on arrival",
+      "variant": "Hitam, L",
+      "cause": "courier",
+      "check_first": true,
+      "proof_quote": "kardusnya penyok parah dan kaosnya kotor kena oli",
+      "likely_fake": {
+        "flag": false,
+        "signals": []
+      },
+      "fix_suggestion_id": null,
+      "fight": {
+        "why": "The review mentions a crushed box and oil stains which points to transit damage or mishandling by the courier, but proof is needed to confirm.",
+        "steps": [
+          "Ask the buyer for photos of the damaged box and the oil stain on the shirt.",
+          "File a claim with the courier if transit damage is confirmed.",
+          "Post a polite public reply showing the shop is handling the issue."
+        ],
+        "why_id": "Ulasan menyebut kardus penyok dan terkena oli yang mengindikasikan kerusakan di perjalanan, namun butuh bukti foto untuk memastikan.",
+        "steps_id": [
+          "Minta pembeli mengirim foto kardus yang rusak dan noda oli pada kaos.",
+          "Ajukan klaim ke pihak kurir jika terbukti rusak di pengiriman.",
+          "Kirim balasan publik yang sopan untuk menunjukkan toko sedang menangani masalah ini."
+        ],
+        "chat_to_buyer": "Halo Kak, mohon maaf atas kendala paketnya yang penyok dan kotor 🙏 Boleh kirimkan foto kondisi kardus luar dan noda oli pada kaosnya? Kami ingin bantu cek dan proses klaim ke pihak kurir.",
+        "public_reply": "Mohon maaf atas ketidaknyamannya, Kak. Kami sudah mengirim pesan untuk membantu pengecekan kendala pengiriman ini. Terima kasih infonya 🙏",
+        "report_text": null
+      },
+      "confidence": "high"
+    },
+    {
+      "id": "3",
+      "bucket": "keep",
+      "theme": "Praise: quality / material",
+      "variant": "Putih, L",
+      "cause": "none",
+      "check_first": false,
+      "proof_quote": "bahannya tebal dan adem, suka banget",
+      "likely_fake": {
+        "flag": false,
+        "signals": []
+      },
+      "fix_suggestion_id": null,
+      "fight": null,
+      "confidence": "high"
+    },
+    {
+      "id": "4",
+      "bucket": "fix",
+      "theme": "Sizing & fit",
+      "variant": "Hitam, L",
+      "cause": "listing",
+      "check_first": false,
+      "proof_quote": "size L rasa M, sempit di bahu, tolong cek size chart",
+      "likely_fake": {
+        "flag": false,
+        "signals": []
+      },
+      "fix_suggestion_id": "Perbarui tabel ukuran (size chart) di halaman produk untuk memastikan ukuran lebar bahu dan dada lebih akurat.",
+      "fight": null,
+      "confidence": "high"
+    },
+    {
+      "id": "5",
+      "bucket": "ignore",
+      "theme": "No text",
+      "variant": null,
+      "cause": "none",
+      "check_first": false,
+      "proof_quote": null,
+      "likely_fake": {
+        "flag": false,
+        "signals": []
+      },
+      "fix_suggestion_id": null,
+      "fight": null,
+      "confidence": "high"
+    },
+    {
+      "id": "6",
+      "bucket": "check",
+      "theme": "Not as described / claim vs reality",
+      "variant": "Putih, S",
+      "cause": "unclear",
+      "check_first": false,
+      "proof_quote": "barangnya tidak sesuai deskripsi",
+      "likely_fake": {
+        "flag": false,
+        "signals": []
+      },
+      "fix_suggestion_id": "Cek kembali deskripsi produk apakah ada spesifikasi atau ukuran yang kurang jelas dan berpotensi disalahpahami pembeli.",
+      "fight": {
+        "why": "The complaint is too vague (\"tidak sesuai deskripsi\") without stating what specifically is wrong, so the seller needs more details from the buyer.",
+        "steps": [
+          "Ask the buyer what part of the product did not match the description.",
+          "Review the product listing to ensure details are accurate.",
+          "Offer a solution or replacement once the specific issue is identified."
+        ],
+        "why_id": "Keluhan terlalu umum (\"tidak sesuai deskripsi\") tanpa menyebutkan bagian mana yang tidak sesuai, sehingga penjual perlu meminta detail dari pembeli.",
+        "steps_id": [
+          "Tanya kepada pembeli bagian mana dari produk yang tidak sesuai dengan deskripsi.",
+          "Periksa kembali informasi di halaman produk untuk memastikan keakuratannya.",
+          "Berikan solusi atau penggantian setelah masalah spesifiknya diketahui."
+        ],
+        "chat_to_buyer": "Halo Kak, mohon maaf atas ketidaknyamanannya 🙏 Boleh informasikan bagian mana dari produk yang tidak sesuai dengan deskripsi agar kami bisa bantu cek dan solusinya?",
+        "public_reply": "Mohon maaf atas ketidaknyamanannya, Kak. Kami sudah mengirim chat untuk menanyakan detail kendalanya agar bisa segera kami bantu selesaikan 🙏",
+        "report_text": null
+      },
+      "confidence": "medium"
+    },
+    {
+      "id": "7",
+      "bucket": "keep",
+      "theme": "Praise: seller service",
+      "variant": "Hitam, M",
+      "cause": "none",
+      "check_first": false,
+      "proof_quote": "pengiriman cepat dan adminnya ramah",
+      "likely_fake": {
+        "flag": false,
+        "signals": []
+      },
+      "fix_suggestion_id": null,
+      "fight": null,
+      "confidence": "high"
+    }
+  ]
+}
