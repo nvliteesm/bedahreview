@@ -691,7 +691,8 @@ class Handler(BaseHTTPRequestHandler):
         except ClassificationError as exc:
             return self._json(502, {"error": "The model's reply could not be used: %s" % str(exc).splitlines()[0]})
         except Exception as exc:  # timeout, rate limit, network: say what happened without a traceback
-            sys.stderr.write("classify failed: %s: %s\n" % (type(exc).__name__, exc))
+            code = getattr(exc, "code", None)  # an HTTP status such as 429 or 503 helps; the message could echo what was sent, so it is not logged
+            sys.stderr.write("classify failed: %s%s\n" % (type(exc).__name__, " (code %s)" % code if isinstance(code, int) else ""))
             return self._json(502, {"error": "Could not reach Gemini (%s). Try again in a moment." % type(exc).__name__})
         self._json(200, build_response(reviews, results, model, source))
 

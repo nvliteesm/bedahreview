@@ -142,7 +142,7 @@ class StubFetcher:
         self.calls += 1
         if self.error:
             raise self.error
-        return [Review(star=1, text="kekecilan", variant=None, date="", photo_count=0, seller_reply=None, product="Kaos")]
+        return [Review(star=1, text="kekecilan", variant=None, date="", photo_count=0, replied=False, product="Kaos")]
 
     fetch_fresh = fetch_reviews
 

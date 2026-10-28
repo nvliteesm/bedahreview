@@ -140,8 +140,8 @@ class FetchTests(unittest.TestCase):
         out = r.fetch_reviews(TOKO + "?utm=1", 5, "complaints")
         actor, run_input, cap = client.calls[0]
         self.assertEqual((actor, run_input["product_url"], run_input["sort_by"], run_input["results_wanted"], str(cap)), (TOKOPEDIA_ACTOR, TOKO, "rating asc", 8, "0.05"))
-        self.assertEqual([(x.star, x.text, x.variant, x.date, x.photo_count, x.seller_reply, x.product) for x in out],
-                         [(1, "wrna ny kurang sesuai", "Grey", "2024-11-04", 2, "maaf kak", "Hijab Segiempat")])  # blank and 5-star rows dropped
+        self.assertEqual([(x.star, x.text, x.variant, x.date, x.photo_count, x.replied, x.product) for x in out],
+                         [(1, "wrna ny kurang sesuai", "Grey", "2024-11-04", 2, True, "Hijab Segiempat")])  # blank and 5-star rows dropped
         self.assertEqual(r.last_platform, "tokopedia")
 
     def test_latest_mode_keeps_every_rating(self):
@@ -155,8 +155,8 @@ class FetchTests(unittest.TestCase):
         out = r.fetch_reviews(LAZADA, 5, "complaints")
         actor, run_input, _ = client.calls[0]
         self.assertEqual((actor, run_input["starRatings"], run_input["startUrls"], run_input["includeRatingSummary"]), (LAZADA_ACTOR, ["1", "2", "3"], [{"url": LAZADA}], False))
-        self.assertEqual([(x.star, x.variant, x.seller_reply, x.product) for x in out],
-                         [(1, "Biru", "terima kasih", None), (2, "Abu-abu, XXL", None, "Singlet Cowok")])  # worst star first
+        self.assertEqual([(x.star, x.variant, x.replied, x.product) for x in out],
+                         [(1, "Biru", True, None), (2, "Abu-abu, XXL", False, "Singlet Cowok")])  # worst star first
         self.assertEqual(r.last_platform, "lazada")
 
     def test_tiktok_complaints_run_once_per_low_star_and_never_ask_for_personal_data(self):

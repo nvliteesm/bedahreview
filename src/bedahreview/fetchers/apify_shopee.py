@@ -56,14 +56,13 @@ def _date(value: Any) -> str:
     return ""
 
 
-def _reply(value: Any) -> Optional[str]:
+def _replied(value: Any) -> bool:
+    """Whether the shop answered. The reply text is never kept: it can name the buyer."""
     if isinstance(value, str):
-        return value.strip() or None
+        return bool(value.strip())
     if isinstance(value, dict):
-        for key in ("comment", "text", "content", "reply"):
-            if isinstance(value.get(key), str) and value[key].strip():
-                return value[key].strip()
-    return None
+        return any(isinstance(value.get(key), str) and value[key].strip() for key in ("comment", "text", "content", "reply"))
+    return False
 
 
 def review_from_item(item: Dict[str, Any]) -> Review:
@@ -75,7 +74,7 @@ def review_from_item(item: Dict[str, Any]) -> Review:
         variant=_variant(item),
         date=_date(item.get("createdAt")),
         photo_count=len(item["images"]) if isinstance(item.get("images"), list) else 0,
-        seller_reply=_reply(item.get("shopReply")),
+        replied=_replied(item.get("shopReply")),
     )
 
 

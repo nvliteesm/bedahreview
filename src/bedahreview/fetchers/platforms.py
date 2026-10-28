@@ -22,7 +22,7 @@ from urllib.parse import urljoin, urlsplit
 from .apify_shopee import _per_star_limit
 from .budget import DailyBudget
 from .base import COMPLAINT_STARS, Fetcher, FetchError, LinkError, Review, check_mode, clamp_limit
-from .cache import CachedFetcher
+from .cache import DEFAULT_TTL_HOURS, CachedFetcher
 from .search import Candidate, search_products
 
 TOKOPEDIA_ACTOR = "shahidirfan/Tokopedia-Reviews-Scraper"
@@ -142,14 +142,13 @@ def _count(value: Any) -> int:
     return value if isinstance(value, int) and not isinstance(value, bool) and value > 0 else 0
 
 
-def _reply(value: Any) -> Optional[str]:
+def _replied(value: Any) -> bool:
+    """Whether the shop answered. Only yes or no is kept: a reply's text can name the buyer, so it is looked at and thrown away."""
     if isinstance(value, str):
-        return value.strip() or None
+        return bool(value.strip())
     if isinstance(value, dict):
-        for key in ("comment", "text", "content", "reply"):
-            if isinstance(value.get(key), str) and value[key].strip():
-                return value[key].strip()
-    return None
+        return any(isinstance(value.get(key), str) and value[key].strip() for key in ("comment", "text", "content", "reply"))
+    return False
 
 
 def _clean_variant(value: Any) -> Optional[str]:
@@ -223,7 +222,7 @@ def tokopedia_review(item: Dict[str, Any]) -> Review:
     return Review(
         star=_star(item.get("rating")), text=_text(item.get("review_text")), variant=_clean_variant(item.get("variant_name")),
         date=_iso_date(item.get("review_time_iso")), photo_count=_count(item.get("images_count")),
-        seller_reply=_reply(item.get("seller_reply_text")), product=_text(item.get("product_name")) or None,
+        replied=_replied(item.get("seller_reply_text")), product=_text(item.get("product_name")) or None,
     )
 
 
@@ -240,7 +239,7 @@ def lazada_review(item: Dict[str, Any]) -> Optional[Review]:
     return Review(
         star=_star(review.get("rating")), text=_text(review.get("content")), variant=variant,
         date=_text(review.get("review_time")), photo_count=_count(review.get("image_count")),
-        seller_reply=_reply(item.get("seller_reply")), product=(_text(product.get("title")) if isinstance(product, dict) else "") or None,
+        replied=_replied(item.get("seller_reply")), product=(_text(product.get("title")) if isinstance(product, dict) else "") or None,
     )
 
 
@@ -248,7 +247,7 @@ def tiktok_review(item: Dict[str, Any]) -> Review:
     return Review(
         star=_star(item.get("review_rating")), text=_text(item.get("review_text")), variant=_clean_variant(item.get("sku_specification")),
         date=_iso_date(item.get("review_time")), photo_count=_count(item.get("review_images")),
-        seller_reply=None, product=_text(item.get("product_name")) or None,
+        replied=False, product=_text(item.get("product_name")) or None,
     )
 
 
@@ -312,7 +311,7 @@ class TikTokShopFetcher(Fetcher):
 class LinkRouter(Fetcher):
     """One fetcher for every supported platform: the pasted link picks the actor, and each platform has its own cache."""
 
-    def __init__(self, token: str, max_cost_usd: float, cache_dir: Path, client: Optional[Any] = None, resolver: Callable[[str], str] = resolve_short_link, budget: Optional[DailyBudget] = None) -> None:
+    def __init__(self, token: str, max_cost_usd: float, cache_dir: Path, client: Optional[Any] = None, resolver: Callable[[str], str] = resolve_short_link, budget: Optional[DailyBudget] = None, cache_ttl_hours: float = DEFAULT_TTL_HOURS) -> None:
         if client is None:
             from apify_client import ApifyClient
 
@@ -321,9 +320,9 @@ class LinkRouter(Fetcher):
         self._actors = actors
         keep = lambda url: url  # links are checked by check_link before they reach a cache
         self._caches = {
-            "tokopedia": CachedFetcher(TokopediaFetcher(actors), cache_dir, keep),
-            "lazada": CachedFetcher(LazadaFetcher(actors), cache_dir, keep),
-            "tiktokshop": CachedFetcher(TikTokShopFetcher(actors), cache_dir, keep),
+            "tokopedia": CachedFetcher(TokopediaFetcher(actors), cache_dir, keep, cache_ttl_hours),
+            "lazada": CachedFetcher(LazadaFetcher(actors), cache_dir, keep, cache_ttl_hours),
+            "tiktokshop": CachedFetcher(TikTokShopFetcher(actors), cache_dir, keep, cache_ttl_hours),
         }
         self._resolver = resolver
         self._local = threading.local()  # the server handles requests on several threads

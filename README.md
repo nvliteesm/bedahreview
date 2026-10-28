@@ -107,7 +107,7 @@ so the seller never chooses. To switch it on:
 
 Short links from the Share button are followed through plain redirects, only between known shop hosts. Each run has a
 hard spending cap (`APIFY_MAX_COST_USD`, default 0.05). Results are saved in `fetch_cache/` per platform so the same
-link is not paid for twice. Reviewer names are never kept. These are small third-party scrapers: any of them can
+link is not paid for twice, for 24 hours (`FETCH_CACHE_HOURS`, 0 = do not save): expired copies are deleted, and so are copies from older versions. Reviewer names are never kept, and neither are seller replies (only whether the shop replied: a reply can name the buyer). These are small third-party scrapers: any of them can
 break or be blocked without warning, the platforms' terms for this have not been checked, and the app then tells
 the seller to paste instead. The older Shopee fetcher (`apify_shopee.py`) is kept in the repo but is not used by
 the router.

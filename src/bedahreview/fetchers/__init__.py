@@ -8,7 +8,7 @@ from ..classifier import ROOT
 from .apify_shopee import DEFAULT_MAX_COST_USD
 from .base import MAX_LIMIT, Fetcher, FetcherConfigError, FetchError, LinkError, Review, product_title_from_url, to_review_dicts
 from .budget import DAILY_BUDGET_CEILING_USD, DEFAULT_DAILY_BUDGET_USD, BudgetError, DailyBudget
-from .cache import CachedFetcher
+from .cache import DEFAULT_TTL_HOURS, MAX_TTL_HOURS, CachedFetcher
 from .platforms import LinkRouter
 
 CACHE_DIR = ROOT / "fetch_cache"
@@ -39,4 +39,10 @@ def get_fetcher() -> Optional[Fetcher]:
         raise FetcherConfigError("APIFY_DAILY_BUDGET_USD must be a number like 1.00.")
     if not 0 < daily <= DAILY_BUDGET_CEILING_USD:
         raise FetcherConfigError("APIFY_DAILY_BUDGET_USD must be above 0 and at most %.2f." % DAILY_BUDGET_CEILING_USD)
-    return LinkRouter(token, cap, CACHE_DIR, budget=DailyBudget(daily))
+    try:
+        hours = float(os.environ.get("FETCH_CACHE_HOURS") or DEFAULT_TTL_HOURS)
+    except ValueError:
+        raise FetcherConfigError("FETCH_CACHE_HOURS must be a number like 24.")
+    if not 0 <= hours <= MAX_TTL_HOURS:
+        raise FetcherConfigError("FETCH_CACHE_HOURS must be between 0 (do not save) and %d." % MAX_TTL_HOURS)
+    return LinkRouter(token, cap, CACHE_DIR, budget=DailyBudget(daily), cache_ttl_hours=hours)

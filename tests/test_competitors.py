@@ -218,7 +218,7 @@ def item(theme, bucket="fix", fake=False):
 
 
 def review(star, text, product=None):
-    return Review(star=star, text=text, variant=None, date="", photo_count=0, seller_reply=None, product=product)
+    return Review(star=star, text=text, variant=None, date="", photo_count=0, replied=False, product=product)
 
 
 def result(rid, theme, bucket, quote, fake=False):

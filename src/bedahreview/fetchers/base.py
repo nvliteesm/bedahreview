@@ -36,7 +36,7 @@ class Review:
     variant: Optional[str]
     date: str
     photo_count: int
-    seller_reply: Optional[str]
+    replied: bool  # the shop already answered. The answer itself is never kept: replies can contain buyer names
     product: Optional[str] = None  # the listing title, when the source returns it (a hint for the classifier)
 
 

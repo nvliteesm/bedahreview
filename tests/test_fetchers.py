@@ -94,7 +94,7 @@ class CountingInner:
 
 
 def _reviews(n):
-    return [Review(star=3, text="r%d" % i, variant=None, date="2026-10-01", photo_count=0, seller_reply=None) for i in range(n)]
+    return [Review(star=3, text="r%d" % i, variant=None, date="2026-10-01", photo_count=0, replied=False) for i in range(n)]
 
 
 class UrlCheckTests(unittest.TestCase):
@@ -136,20 +136,20 @@ class UrlCheckTests(unittest.TestCase):
 class MappingTests(unittest.TestCase):
     def test_fields_are_mapped(self):
         r = review_from_item(ITEM)
-        self.assertEqual((r.star, r.text, r.variant, r.date, r.photo_count, r.seller_reply),
-                         (2, "Pas sampe koyak bajunya", "Hitam, L", "2026-10-07", 2, "Mohon maaf Kak"))
+        self.assertEqual((r.star, r.text, r.variant, r.date, r.photo_count, r.replied),
+                         (2, "Pas sampe koyak bajunya", "Hitam, L", "2026-10-07", 2, True))  # only yes or no: the reply text is not kept
 
     def test_reviewer_identity_never_reaches_review(self):
         r = review_from_item(ITEM)
         self.assertEqual({f.name for f in dataclasses.fields(Review)},
-                         {"star", "text", "variant", "date", "photo_count", "seller_reply", "product"})
+                         {"star", "text", "variant", "date", "photo_count", "replied", "product"})
         blob = json.dumps(dataclasses.asdict(r)) + repr(r)
-        for leaked in (SECRET_NAME, "9911", "avatar.png"):
+        for leaked in (SECRET_NAME, "9911", "avatar.png", "Mohon maaf Kak"):
             self.assertNotIn(leaked, blob)
 
     def test_odd_items_do_not_crash(self):
         r = review_from_item({"ratingStar": 9, "comment": None, "variations": "x", "createdAt": 1760000000, "images": None, "shopReply": 5})
-        self.assertEqual((r.star, r.text, r.variant, r.photo_count, r.seller_reply), (None, "", None, 0, None))
+        self.assertEqual((r.star, r.text, r.variant, r.photo_count, r.replied), (None, "", None, 0, False))
         self.assertEqual(r.date, "2025-10-09")  # epoch seconds
         self.assertEqual(review_from_item({"createdAt": 1760000000000}).date, "2025-10-09")  # milliseconds
 
