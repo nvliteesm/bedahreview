@@ -573,7 +573,7 @@ const TEXT = {
     fbNote: "Komentar hanya disimpan kalau kamu menulisnya. Jangan tulis nama orang atau menempel teks ulasan.", fbSend: "Kirim", fbThanks: "Terima kasih. Jawabanmu membantu.",
     fbReview: "Komentarmu tampak memuat teks ulasan. Hapus bagian itu dulu, supaya tidak ada teks ulasan yang tersimpan.", fbFail: "Tidak terkirim. Coba lagi nanti.",
     privNote: "Kami mencatat kejadian anonim (misalnya tab yang dibuka), tanpa teks ulasan, nama, atau alamat IP. Kalau browsermu mengirim “Do Not Track”, kejadian itu tidak dikirim. Daftar lengkapnya ada di docs/analytics.md.",
-    logout: "Keluar", back: "Kembali", fixesBtn: "Perbaikan", fixesTitle: "Perbaikan yang kamu catat", fixesSub: "Disimpan di browser ini saja. Tidak ada yang dikirim ke server.",
+    limitBusy: "Server sedang sibuk. Coba lagi sebentar lagi.", logout: "Keluar", back: "Kembali", fixesBtn: "Perbaikan", fixesTitle: "Perbaikan yang kamu catat", fixesSub: "Disimpan di browser ini saja. Tidak ada yang dikirim ke server.",
     fixesWarn: "Hitungan dari contoh kecil bisa menyesatkan. Keluhan yang berkurang satu bisa kebetulan, dan bukan bukti perbaikanmu berhasil. Analisis baru juga bisa memuat ulasan lama yang sama.",
     fixesNoStore: "Browser ini tidak bisa menyimpan data, jadi catatan hilang saat halaman ditutup. Ekspor ke file JSON supaya tidak hilang.",
     fixesExport: "Ekspor JSON", fixesImport: "Impor JSON", fixesEmpty: "Belum ada perbaikan. Di tab Perbaiki, ketuk “Tandai sudah diperbaiki” pada sebuah kartu.",
@@ -674,7 +674,7 @@ const TEXT = {
     fbNote: "A comment is saved only if you write one. Please do not write names or paste review text.", fbSend: "Send", fbThanks: "Thank you. Your answer helps.",
     fbReview: "Your comment looks like it contains review text. Please remove that part, so no review text is stored.", fbFail: "Could not send. Try again later.",
     privNote: "We log anonymous events (for example which tab was opened), with no review text, names or IP address. If your browser sends “Do Not Track”, those events are not sent. The full list is in docs/analytics.md.",
-    logout: "Sign out", back: "Back", fixesBtn: "Fixes", fixesTitle: "Fixes you logged", fixesSub: "Saved in this browser only. Nothing is sent to the server.",
+    limitBusy: "The server is busy. Try again in a moment.", logout: "Sign out", back: "Back", fixesBtn: "Fixes", fixesTitle: "Fixes you logged", fixesSub: "Saved in this browser only. Nothing is sent to the server.",
     fixesWarn: "Counts from small samples can mislead. One complaint fewer can be chance, not proof that your fix worked. A new analysis may also include some of the same old reviews.",
     fixesNoStore: "This browser cannot save data, so your log is lost when the page closes. Export it to a JSON file to keep it.",
     fixesExport: "Export JSON", fixesImport: "Import JSON", fixesEmpty: "No fixes yet. In the Fix it tab, tap “Mark as fixed” on a card.",
@@ -1262,6 +1262,7 @@ async function postJson(path, payload) {
 function errText(data, fallback, rival) {  // the server sends a limit code; the words come from our own Bahasa / English text
   if (data && data.limit === "budget") return tr(rival ? "limitBudgetRival" : "limitBudget");
   if (data && data.limit === "hour") return tr("limitHour");
+  if (data && data.limit === "busy") return tr("limitBusy");
   return (data && data.error) || fallback;
 }
 function pastedLinks(text) { return (text.match(/https?:\/\/[^\s<>"']+/g) || []).map((u) => ({ url: u })); }

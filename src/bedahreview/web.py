@@ -25,6 +25,7 @@ import json
 import os
 import re
 import secrets
+import socket
 import sys
 import threading
 import time
@@ -60,6 +61,15 @@ MAX_LOGIN_FAILS = 5  # per visitor, per LOGIN_WINDOW_SECS
 LOGIN_WINDOW_SECS = 15 * 60
 DEFAULT_MAX_PER_HOUR = 30  # analyses per visitor per hour in public mode
 MAX_EVENT_BYTES = 2000
+READ_TIMEOUT_SECS = 20  # a visitor who stops sending (or sends one byte at a time) is cut off after this long
+MAX_CONNECTIONS = 64  # open connections at once; more get an immediate 503
+DEFAULT_MAX_CONCURRENT = 6  # analyses (model or paid-fetch work) running at once; more get a 503 and a Retry-After
+HEAVY_PATHS = ("/api/classify", "/api/competitors/suggest", "/api/competitors/compare")
+MAX_DRAIN_BYTES = 2_000_000  # an oversized upload is read and thrown away up to this much, so the error reply is not lost to a connection reset
+DRAIN_SECS = 5
+_BUSY_BODY = b'{"error": "Server is busy."}'
+BUSY_RESPONSE = (b"HTTP/1.0 503 Service Unavailable\r\nRetry-After: 5\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: "
+                 + str(len(_BUSY_BODY)).encode() + b"\r\n\r\n" + _BUSY_BODY)  # sent as is when the connection cap is hit
 EVENTS_PER_HOUR = 600  # per visitor in public mode: a stuck page cannot flood the log
 DEFAULT_PAID_PER_HOUR = 6 # paid actions (link fetch, find or compare competitors) per visitor per hour in public mode: lower than plain pasting
 PUBLIC_ASSETS = {"/manifest.webmanifest", "/sw.js", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png"}
@@ -248,6 +258,48 @@ def build_response(
     }
 
 
+class _CountingReader:
+    """Wraps the request stream and counts what was read, so any unread part of an upload can be thrown away afterwards."""
+
+    def __init__(self, raw: Any) -> None:
+        self._raw, self.count = raw, 0
+
+    def read(self, size: int = -1) -> bytes:
+        data = self._raw.read(size)
+        self.count += len(data)
+        return data
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._raw, name)
+
+
+class BoundedServer(ThreadingHTTPServer):
+    """A threading server that refuses new connections beyond a cap instead of starting threads without limit."""
+
+    daemon_threads = True
+
+    def __init__(self, address: Any, handler: Any, max_connections: int = MAX_CONNECTIONS) -> None:
+        super().__init__(address, handler)
+        self._slots = threading.BoundedSemaphore(max_connections)
+
+    def process_request(self, request: Any, client_address: Any) -> None:
+        if not self._slots.acquire(blocking=False):
+            try:
+                request.settimeout(1)
+                request.sendall(BUSY_RESPONSE)
+            except OSError:
+                pass
+            self.shutdown_request(request)
+            return
+        super().process_request(request, client_address)
+
+    def process_request_thread(self, request: Any, client_address: Any) -> None:
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._slots.release()
+
+
 class Handler(BaseHTTPRequestHandler):
     classify_fn: Callable[..., List[Dict[str, Any]]] = staticmethod(classify)  # replaced in tests
     suggest_fn: Callable[..., Dict[str, Any]] = staticmethod(suggest_competitors)  # replaced in tests
@@ -259,6 +311,8 @@ class Handler(BaseHTTPRequestHandler):
     use_limiter: Optional[RateLimiter] = None
     paid_limiter: Optional[RateLimiter] = None
     event_limiter: Optional[RateLimiter] = None
+    analysis_slots: Any = threading.BoundedSemaphore(DEFAULT_MAX_CONCURRENT)  # replaced per server in make_server
+    timeout = READ_TIMEOUT_SECS  # socketserver applies this to the connection: slow or silent visitors are dropped
 
     def _event(self) -> None:
         """One anonymous usage event (fixed list, fixed fields: see events.py). Behind the access code; written to stdout as one JSON line."""
@@ -296,10 +350,11 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'")
         self.end_headers()
-        self.wfile.write(body)
+        if self.command != "HEAD":  # a HEAD reply has the same headers, including Content-Length, and no body
+            self.wfile.write(body)
 
-    def _json(self, status: int, payload: Dict[str, Any]) -> None:
-        self._send(status, json.dumps(payload, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
+    def _json(self, status: int, payload: Dict[str, Any], extra: Optional[List[Any]] = None) -> None:
+        self._send(status, json.dumps(payload, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8", extra)
 
     def _client(self) -> str:
         forwarded = (self.headers.get("X-Forwarded-For") or "").split(",")[-1].strip()  # the proxy appends the real address last
@@ -503,7 +558,63 @@ class Handler(BaseHTTPRequestHandler):
         self._json(200, result)
 
     # -- routes ----------------------------------------------------------
+    def _guarded(self, work: Callable[[], None]) -> None:
+        """Run one request. A visitor who has gone away is ignored; any other failure becomes a plain 500 that names only the error type, never request content."""
+        try:
+            work()
+        except (ConnectionError, socket.timeout):
+            self.close_connection = True
+        except Exception as exc:
+            sys.stderr.write("request failed: %s\n" % type(exc).__name__)
+            try:
+                self._json(500, {"error": "Something went wrong on the server. Try again."})
+            except Exception:
+                self.close_connection = True
+
     def do_GET(self) -> None:
+        if self.path.split("?", 1)[0] == "/healthz":  # for the platform's health checks: public, cheap, says nothing about the app
+            return self._send(200, b'{"ok": true}', "application/json; charset=utf-8")
+        self._guarded(self._get)
+
+    def do_HEAD(self) -> None:
+        self.do_GET()
+
+    def do_POST(self) -> None:
+        reader = _CountingReader(self.rfile)
+        self.rfile = reader
+        try:
+            if self.path in HEAVY_PATHS:
+                if not self.analysis_slots.acquire(blocking=False):
+                    return self._json(503, {"error": "The server is busy. Try again in a moment.", "limit": "busy"}, [("Retry-After", "5")])
+                try:
+                    self._guarded(self._post)
+                finally:
+                    self.analysis_slots.release()
+            else:
+                self._guarded(self._post)
+        finally:
+            self._drain_unread(reader)
+
+    def _drain_unread(self, reader: _CountingReader) -> None:
+        """Read and discard the rest of an upload we answered early (too big, wrong type), so closing does not reset the connection and lose our reply."""
+        try:
+            left = min(int(self.headers.get("Content-Length") or 0) - reader.count, MAX_DRAIN_BYTES)
+            deadline = time.time() + DRAIN_SECS
+            self.connection.settimeout(2)
+            while left > 0 and time.time() < deadline:
+                data = reader.read(min(left, 65536))
+                if not data:
+                    break
+                left -= len(data)
+        except (OSError, ValueError):
+            pass
+
+    def _method_not_allowed(self) -> None:
+        self._json(405, {"error": "Method not allowed"}, [("Allow", "GET, HEAD, POST")])
+
+    do_PUT = do_DELETE = do_PATCH = do_OPTIONS = _method_not_allowed
+
+    def _get(self) -> None:
         if not self._host_ok():
             return self._json(403, {"error": "Host not allowed"})
         path = self.path.split("?", 1)[0]
@@ -521,7 +632,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes)})
         self._json(404, {"error": "Not found"})
 
-    def do_POST(self) -> None:
+    def _post(self) -> None:
         if not self._host_ok():
             return self._json(403, {"error": "Host not allowed"})
         if self.path == "/login":
@@ -596,6 +707,9 @@ def make_server(
     access_codes: Optional[Dict[str, str]] = None,
     max_per_hour: int = DEFAULT_MAX_PER_HOUR,
     paid_per_hour: int = DEFAULT_PAID_PER_HOUR,
+    max_concurrent: int = DEFAULT_MAX_CONCURRENT,
+    max_connections: int = MAX_CONNECTIONS,
+    read_timeout: float = READ_TIMEOUT_SECS,
 ) -> ThreadingHTTPServer:
     handler = type("BoundHandler", (Handler,), {})
     if classify_fn is not None:
@@ -605,6 +719,8 @@ def make_server(
     if compare_fn is not None:
         handler.compare_fn = staticmethod(compare_fn)
     handler.fetcher = fetcher
+    handler.analysis_slots = threading.BoundedSemaphore(max_concurrent)
+    handler.timeout = read_timeout
     codes = dict(access_codes or {})
     if access_code:
         codes.setdefault(SHARED_NAME, access_code)
@@ -616,7 +732,7 @@ def make_server(
         handler.use_limiter = RateLimiter(max_per_hour, 3600)
         handler.paid_limiter = RateLimiter(paid_per_hour, 3600)
         handler.event_limiter = RateLimiter(EVENTS_PER_HOUR, 3600)
-    return ThreadingHTTPServer(("0.0.0.0" if public else "127.0.0.1", port), handler)
+    return BoundedServer(("0.0.0.0" if public else "127.0.0.1", port), handler, max_connections)
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -649,6 +765,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     except ValueError:
         print("BEDAHREVIEW_PAID_PER_HOUR must be a whole number.", file=sys.stderr)
         return 1
+    try:
+        max_concurrent = int(os.environ.get("BEDAHREVIEW_MAX_CONCURRENT") or DEFAULT_MAX_CONCURRENT)
+        if max_concurrent < 1:
+            raise ValueError
+    except ValueError:
+        print("BEDAHREVIEW_MAX_CONCURRENT must be a whole number of 1 or more.", file=sys.stderr)
+        return 1
     if not has_api_key():
         print("GEMINI_API_KEY is not set. Add it to .env (see .env.example).", file=sys.stderr)
         return 1
@@ -658,7 +781,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Setup problem: %s" % exc, file=sys.stderr)
         return 1
     try:
-        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour)
+        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (port, exc.strerror), file=sys.stderr)
         return 1
