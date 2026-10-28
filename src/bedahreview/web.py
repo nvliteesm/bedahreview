@@ -23,6 +23,8 @@ import hmac
 import html
 import json
 import os
+import re
+import secrets
 import sys
 import threading
 import time
@@ -48,7 +50,11 @@ BUCKET_ORDER = ["fix", "fight", "check", "ignore", "keep"]
 DEFAULT_LIMIT = 10  # reviews fetched from a link when the seller does not choose
 MAX_PRODUCT_CHARS = 150
 COOKIE = "br_session"
-SESSION_SECS = 30 * 24 * 3600
+SESSION_SECS = 14 * 24 * 3600  # a sign-in lasts two weeks, then the tester enters the code again
+CSRF_COOKIE = "br_csrf"
+CSRF_SECS = 3600
+SHARED_NAME = "shared"  # the name of the single BEDAHREVIEW_ACCESS_CODE
+NAME_RE = re.compile(r"^[a-z0-9_-]{1,20}$")
 MIN_ACCESS_CODE_CHARS = 8
 MAX_LOGIN_FAILS = 5  # per visitor, per LOGIN_WINDOW_SECS
 LOGIN_WINDOW_SECS = 15 * 60
@@ -71,30 +77,44 @@ ASSETS = {
 class RateLimiter:
     """Allow at most `limit` events per key per `window` seconds. In memory, so it assumes one server instance."""
 
-    def __init__(self, limit: int, window: float) -> None:
-        self.limit, self.window = limit, window
+    def __init__(self, limit: int, window: float, clock: Callable[[], float] = time.time) -> None:
+        self.limit, self.window, self._clock = limit, window, clock
         self._hits: Dict[str, Deque[float]] = {}
+        self._last_prune = clock()
         self._lock = threading.Lock()
 
+    def _prune(self, now: float) -> None:
+        """Forget visitors with no recent events, so the table cannot grow for ever. Runs at most once per window."""
+        if now - self._last_prune < self.window:
+            return
+        self._last_prune = now
+        for key in [k for k, hits in self._hits.items() if not hits or now - hits[-1] > self.window]:
+            del self._hits[key]
+
     def _recent(self, key: str, now: float) -> Deque[float]:
+        self._prune(now)
         hits = self._hits.setdefault(key, deque())
         while hits and now - hits[0] > self.window:
             hits.popleft()
         return hits
 
+    def size(self) -> int:
+        with self._lock:
+            return len(self._hits)
+
     def blocked(self, key: str) -> bool:
         with self._lock:
-            return len(self._recent(key, time.time())) >= self.limit
+            return len(self._recent(key, self._clock())) >= self.limit
 
     def add(self, key: str) -> None:
         with self._lock:
-            now = time.time()
+            now = self._clock()
             self._recent(key, now).append(now)
 
     def take(self, key: str) -> bool:
         """Count one event; False when the key is already at its limit."""
         with self._lock:
-            now = time.time()
+            now = self._clock()
             hits = self._recent(key, now)
             if len(hits) >= self.limit:
                 return False
@@ -102,8 +122,56 @@ class RateLimiter:
             return True
 
 
-def session_token(access_code: str) -> str:
-    return hmac.new(access_code.encode("utf-8"), b"bedahreview-session", hashlib.sha256).hexdigest()
+def parse_access_codes(text: str) -> Dict[str, str]:
+    """'ani:code1234,budi:code5678' -> {'ani': 'code1234', 'budi': 'code5678'}. One entry per tester, so one tester can be cut off by removing theirs."""
+    codes: Dict[str, str] = {}
+    for part in (p.strip() for p in (text or "").split(",")):
+        if not part:
+            continue
+        name, sep, code = part.partition(":")
+        name = name.strip().lower()
+        if not sep or not NAME_RE.match(name):
+            raise ValueError("Each BEDAHREVIEW_ACCESS_CODES entry must look like name:code, with a name of 1 to 20 lowercase letters, digits, - or _.")
+        if len(code) < MIN_ACCESS_CODE_CHARS:
+            raise ValueError("The code for %r must be at least %d characters." % (name, MIN_ACCESS_CODE_CHARS))
+        if name in codes or code in codes.values():
+            raise ValueError("Each tester needs a different name and a different code (%r repeats)." % name)
+        codes[name] = code
+    return codes
+
+
+def session_token(name: str, code: str, expires: int) -> str:
+    """name.expiry.signature. The signature is made with that tester's code, so removing or changing the code ends every sign-in of theirs."""
+    sig = hmac.new(code.encode("utf-8"), ("session|%s|%d" % (name, expires)).encode("utf-8"), hashlib.sha256).hexdigest()
+    return "%s.%d.%s" % (name, expires, sig)
+
+
+def check_session(token: str, codes: Dict[str, str], now: float) -> Optional[str]:
+    """The tester's name when the token is genuine, unexpired and their code still exists; otherwise None."""
+    parts = token.split(".")
+    if len(parts) != 3 or not parts[1].isdigit():
+        return None
+    name, expires = parts[0], int(parts[1])
+    code = codes.get(name)
+    if not code or expires < now or expires - now > SESSION_SECS + 60:
+        return None
+    return name if hmac.compare_digest(token.encode("utf-8"), session_token(name, code, expires).encode("utf-8")) else None
+
+
+def _csrf_key(codes: Dict[str, str]) -> bytes:
+    return hashlib.sha256(("csrf|" + "|".join(sorted(codes.values()))).encode("utf-8")).digest()
+
+
+def make_csrf(codes: Dict[str, str]) -> str:
+    nonce = secrets.token_hex(16)
+    return nonce + "." + hmac.new(_csrf_key(codes), nonce.encode("utf-8"), hashlib.sha256).hexdigest()[:32]
+
+
+def csrf_ok(codes: Dict[str, str], cookie_value: str, form_value: str) -> bool:
+    """Signed double-submit: the form field must equal the cookie, and both must be one we issued."""
+    nonce, _, sig = cookie_value.partition(".")
+    good = hmac.new(_csrf_key(codes), nonce.encode("utf-8"), hashlib.sha256).hexdigest()[:32]
+    return bool(nonce) and hmac.compare_digest(sig.encode("utf-8"), good.encode("utf-8")) and hmac.compare_digest(cookie_value.encode("utf-8"), form_value.encode("utf-8"))
 
 
 def safe_next(value: str) -> str:
@@ -130,6 +198,7 @@ button{background:var(--accent);color:#fff;border-color:var(--accent);font-weigh
 <form method="post" action="/login">
 <input type="password" name="code" autocomplete="current-password" autofocus required aria-label="Access code">
 <input type="hidden" name="next" value="%(next)s">
+<input type="hidden" name="csrf" value="%(csrf)s">
 <button type="submit">Masuk / Sign in</button>
 </form></main></body></html>
 """
@@ -184,7 +253,7 @@ class Handler(BaseHTTPRequestHandler):
     suggest_fn: Callable[..., Dict[str, Any]] = staticmethod(suggest_competitors)  # replaced in tests
     compare_fn: Callable[..., Dict[str, Any]] = staticmethod(compare_competitors)  # replaced in tests
     fetcher: Optional[Fetcher] = None  # set when FETCHER=apify; None keeps the link box switched off
-    access_code: Optional[str] = None  # set in public mode: visitors must sign in with it
+    access_codes: Dict[str, str] = {}  # tester name -> code; empty means no sign-in (local use)
     public = False  # public mode: any Host header is fine, cookies are Secure, per-visitor limits apply
     login_limiter: Optional[RateLimiter] = None
     use_limiter: Optional[RateLimiter] = None
@@ -217,9 +286,11 @@ class Handler(BaseHTTPRequestHandler):
     server_version = "BedahReview"
 
     # -- helpers ---------------------------------------------------------
-    def _send(self, status: int, body: bytes, content_type: str) -> None:
+    def _send(self, status: int, body: bytes, content_type: str, extra: Optional[List[Any]] = None) -> None:
         self.send_response(status)
         self.send_header("Content-Type", content_type)
+        for key, value in extra or []:
+            self.send_header(key, value)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
@@ -234,19 +305,27 @@ class Handler(BaseHTTPRequestHandler):
         forwarded = (self.headers.get("X-Forwarded-For") or "").split(",")[-1].strip()  # the proxy appends the real address last
         return forwarded if self.public and forwarded else self.client_address[0]
 
-    def _authed(self) -> bool:
-        if not self.access_code:
-            return True
+    def _cookie(self, wanted: str) -> str:
         for part in (self.headers.get("Cookie") or "").split(";"):
             name, _, value = part.strip().partition("=")
-            if name == COOKIE and hmac.compare_digest(value, session_token(self.access_code)):
-                return True
-        return False
+            if name == wanted:
+                return value
+        return ""
+
+    def _cookie_flags(self) -> str:
+        return "Path=/; HttpOnly; SameSite=Lax%s" % ("; Secure" if self.public else "")
+
+    def _authed(self) -> bool:
+        if not self.access_codes:
+            return True
+        return check_session(self._cookie(COOKIE), self.access_codes, time.time()) is not None
 
     def _login_page(self, status: int, nxt: str, error: str = "") -> None:
         err = '<p class="err" role="alert">%s</p>' % html.escape(error) if error else ""
-        page = LOGIN_PAGE % {"error": err, "next": html.escape(safe_next(nxt), quote=True)}
-        self._send(status, page.encode("utf-8"), "text/html; charset=utf-8")  # not 200, so the service worker never caches it as the app
+        token = make_csrf(self.access_codes)
+        page = LOGIN_PAGE % {"error": err, "next": html.escape(safe_next(nxt), quote=True), "csrf": token}
+        # not 200, so the service worker never caches it as the app
+        self._send(status, page.encode("utf-8"), "text/html; charset=utf-8", [("Set-Cookie", "%s=%s; Max-Age=%d; %s" % (CSRF_COOKIE, token, CSRF_SECS, self._cookie_flags()))])
 
     def _login(self) -> None:
         try:
@@ -256,21 +335,37 @@ class Handler(BaseHTTPRequestHandler):
         if length <= 0 or length > 2000:
             return self._login_page(400, "/", "Bad request.")
         form = parse_qs(self.rfile.read(length).decode("utf-8", "replace"))
-        code, nxt = (form.get("code") or [""])[0], (form.get("next") or ["/"])[0]
+        code, nxt, csrf = (form.get("code") or [""])[0], (form.get("next") or ["/"])[0], (form.get("csrf") or [""])[0]
         who = self._client()
+        if not self.access_codes:
+            return self._login_page(400, nxt, "Bad request.")
+        if not csrf_ok(self.access_codes, self._cookie(CSRF_COOKIE), csrf):
+            return self._login_page(400, nxt, "This page expired. Try again. / Halaman kedaluwarsa, coba lagi.")
         if self.login_limiter and self.login_limiter.blocked(who):
             return self._login_page(429, nxt, "Too many tries. Wait 15 minutes. / Terlalu banyak percobaan, tunggu 15 menit.")
-        if not self.access_code or not hmac.compare_digest(code.encode("utf-8"), self.access_code.encode("utf-8")):
+        found = None
+        for name, known in self.access_codes.items():  # every code is compared, so the time taken does not say which one is close
+            if hmac.compare_digest(code.encode("utf-8"), known.encode("utf-8")):
+                found = name
+        if found is None:
             if self.login_limiter:
                 self.login_limiter.add(who)
             return self._login_page(401, nxt, "Wrong code. / Kode salah.")
-        cookie = "%s=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Lax%s" % (COOKIE, session_token(self.access_code), SESSION_SECS, "; Secure" if self.public else "")
+        token = session_token(found, self.access_codes[found], int(time.time()) + SESSION_SECS)
         self.send_response(303)
         self.send_header("Location", safe_next(nxt))
-        self.send_header("Set-Cookie", cookie)
+        self.send_header("Set-Cookie", "%s=%s; Max-Age=%d; %s" % (COOKIE, token, SESSION_SECS, self._cookie_flags()))
+        self.send_header("Set-Cookie", "%s=; Max-Age=0; %s" % (CSRF_COOKIE, self._cookie_flags()))
         self.send_header("Content-Length", "0")
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
+
+    def _logout(self) -> None:
+        """End this browser's sign-in. JSON only, so another website cannot trigger it with a plain form post."""
+        if "application/json" not in (self.headers.get("Content-Type") or ""):
+            return self._json(415, {"error": "Send JSON"})
+        body = json.dumps({"ok": True}).encode("utf-8")
+        self._send(200, body, "application/json; charset=utf-8", [("Set-Cookie", "%s=; Max-Age=0; %s" % (COOKIE, self._cookie_flags()))])
 
     def _host_ok(self) -> bool:
         if self.public:
@@ -423,7 +518,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, (STATIC / name).read_bytes(), content_type)
         if path == "/api/config":
             on = type(self).fetcher is not None
-            return self._json(200, {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT})
+            return self._json(200, {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes)})
         self._json(404, {"error": "Not found"})
 
     def do_POST(self) -> None:
@@ -431,6 +526,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(403, {"error": "Host not allowed"})
         if self.path == "/login":
             return self._login()
+        if self.path == "/logout":
+            return self._logout()
         if self.path == "/api/event":
             return self._event()
         if self.path == "/api/competitors/suggest":
@@ -496,6 +593,7 @@ def make_server(
     fetcher: Optional[Fetcher] = None,
     access_code: Optional[str] = None,
     public: bool = False,
+    access_codes: Optional[Dict[str, str]] = None,
     max_per_hour: int = DEFAULT_MAX_PER_HOUR,
     paid_per_hour: int = DEFAULT_PAID_PER_HOUR,
 ) -> ThreadingHTTPServer:
@@ -507,9 +605,12 @@ def make_server(
     if compare_fn is not None:
         handler.compare_fn = staticmethod(compare_fn)
     handler.fetcher = fetcher
-    handler.access_code = access_code or None
-    handler.public = public
+    codes = dict(access_codes or {})
     if access_code:
+        codes.setdefault(SHARED_NAME, access_code)
+    handler.access_codes = codes
+    handler.public = public
+    if codes:
         handler.login_limiter = RateLimiter(MAX_LOGIN_FAILS, LOGIN_WINDOW_SECS)
     if public:
         handler.use_limiter = RateLimiter(max_per_hour, 3600)
@@ -527,8 +628,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     public = bool(os.environ.get("PORT") or os.environ.get("BEDAHREVIEW_PUBLIC"))  # Cloud Run sets PORT
     port = args.port or int(os.environ.get("PORT") or 8000)
     access_code = os.environ.get("BEDAHREVIEW_ACCESS_CODE", "")
-    if public and len(access_code) < MIN_ACCESS_CODE_CHARS:
-        print("Public mode needs BEDAHREVIEW_ACCESS_CODE (at least %d characters), or anyone could spend your Gemini key." % MIN_ACCESS_CODE_CHARS, file=sys.stderr)
+    try:
+        access_codes = parse_access_codes(os.environ.get("BEDAHREVIEW_ACCESS_CODES", ""))
+    except ValueError as exc:
+        print("Setup problem: %s" % exc, file=sys.stderr)
+        return 1
+    if access_code and len(access_code) < MIN_ACCESS_CODE_CHARS:
+        print("BEDAHREVIEW_ACCESS_CODE must be at least %d characters." % MIN_ACCESS_CODE_CHARS, file=sys.stderr)
+        return 1
+    if public and not access_code and not access_codes:
+        print("Public mode needs BEDAHREVIEW_ACCESS_CODE or BEDAHREVIEW_ACCESS_CODES (codes of at least %d characters), or anyone could spend your Gemini key." % MIN_ACCESS_CODE_CHARS, file=sys.stderr)
         return 1
     try:
         max_per_hour = int(os.environ.get("BEDAHREVIEW_MAX_PER_HOUR") or DEFAULT_MAX_PER_HOUR)
@@ -549,7 +658,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Setup problem: %s" % exc, file=sys.stderr)
         return 1
     try:
-        server = make_server(port, fetcher=fetcher, access_code=access_code, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour)
+        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (port, exc.strerror), file=sys.stderr)
         return 1

@@ -2,6 +2,7 @@ import contextlib
 import http.client
 import io
 import json
+import re
 import threading
 import unittest
 
@@ -332,8 +333,10 @@ class PublicModeTests(unittest.TestCase):
         return resp, data
 
     def login(self, code, nxt="/"):
-        body = ("code=%s&next=%s" % (code, nxt)).encode()
-        return self.request("POST", "/login", body, {"Content-Type": "application/x-www-form-urlencoded"})
+        page, html_ = self.request("GET", "/")  # the sign-in page hands out the anti-forgery token (a cookie and a hidden field)
+        token = re.search(rb'name="csrf" value="([^"]+)"', html_).group(1).decode()
+        body = ("code=%s&next=%s&csrf=%s" % (code, nxt, token)).encode()
+        return self.request("POST", "/login", body, {"Content-Type": "application/x-www-form-urlencoded", "Cookie": page.getheader("Set-Cookie").split(";")[0]})
 
     def cookie(self):
         resp, _ = self.login(self.CODE)
@@ -366,7 +369,7 @@ class PublicModeTests(unittest.TestCase):
         for _ in range(5):
             resp, _ = self.login("nope")
             self.assertEqual(resp.status, 401)
-            self.assertIsNone(resp.getheader("Set-Cookie"))
+            self.assertFalse([h for h in resp.msg.get_all("Set-Cookie") or [] if h.startswith("br_session=")])  # only the anti-forgery cookie, never a sign-in
         resp, _ = self.login(self.CODE)  # even the right code waits out the lock
         self.assertEqual(resp.status, 429)
 
