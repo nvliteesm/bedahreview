@@ -1,4 +1,5 @@
-FROM python:3.12-slim
+# Exact version on purpose: a deploy must not pick up a new Python or Debian by surprise. To update, change the tag, run the tests, then deploy.
+FROM python:3.12.16-slim-trixie
 
 ENV PYTHONUNBUFFERED=1 PYTHONPATH=/app/src
 WORKDIR /app
