@@ -174,6 +174,8 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 .otp { display: flex; gap: 8px; justify-content: center; }
 .otp input { width: 46px; height: 56px; min-height: 56px; padding: 0; text-align: center; font-size: 1.5rem; font-weight: 800; border-radius: 12px; font-variant-numeric: tabular-nums; }
 .gate .btn.ghost { width: 100%; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 0.92rem; font-weight: 600; cursor: pointer; }
+.check input { width: 22px; height: 22px; min-height: 22px; padding: 0; margin: 0; accent-color: var(--accent); flex: none; }
 #start { display: grid; gap: 8px; }
 .gate-links { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
 .gate-links a { color: var(--accent); font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
@@ -373,6 +375,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   <div class="gate-card">
     <div class="gate-step" id="g-choose">
       <div><h1 id="gate-h" tabindex="-1" data-i18n="gTitle"></h1><p class="muted" data-i18n="gSub"></p></div>
+      <label class="check" for="g-keep"><input type="checkbox" id="g-keep" checked><span data-i18n="gKeep"></span></label>
       <button class="gbtn" id="g-google" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i18n="gGoogle"></span></button>
       <p class="or" data-i18n="gOr"></p>
       <label class="field" for="g-email"><span data-i18n="gEmail"></span>
@@ -380,6 +383,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
       </label>
       <button class="btn primary" id="g-send" type="button" data-i18n="gSend"></button>
       <p class="small muted" data-i18n="gConsent"></p>
+      <div class="callout" id="g-ios" hidden data-i18n="gIosNote"></div>
       <button class="btn ghost" id="g-example" type="button" data-i18n="gExample"></button>
       <div class="gate-links">
         <a id="g-codelink" href="/code" hidden data-i18n="gCode"></a>
@@ -680,6 +684,7 @@ const TEXT = {
     rivalLineWorseEx: "%s: %s di %s, di pesaing terbaik %s.", rivalLineOtherEx: "%s: %s di %s, %s di %s.",
     gTitle: "Masuk untuk membedah ulasanmu", gSub: "Gratis, tanpa kata sandi. Pakai Google atau email.", gGoogle: "Masuk dengan Google", gOr: "atau pakai email",
     gEmail: "Email", gEmailPh: "nama@email.com", gSend: "Kirim kode ke email", gConsent: "Kami mencatat pemakaian per akun (tanpa isi ulasan) untuk riset produk ini.",
+    gKeep: "Tetap masuk di HP ini", gIosNote: "Pasang ke layar utama dulu (Safari > Bagikan > Tambah ke Layar Utama), lalu masuk dari ikonnya. Aplikasi yang terpasang menyimpan sesi terpisah dari Safari.",
     gExample: "Coba contoh dulu", gCode: "Punya kode akses? Masuk di sini", gClose: "Nanti saja", signInShort: "Masuk",
     gCodeTitle: "Masukkan kode 6 digit", gCodeSub: "Kami kirim kode ke %s. Kalau belum masuk, cek folder spam.", gVerify: "Masuk", gResend: "Kirim ulang kode", gResendIn: "Kirim ulang kode (%s)",
     gSentAgain: "Kode baru sudah dikirim.", gChange: "Ganti email", gDigit: "Digit %s dari 6",
@@ -810,6 +815,7 @@ const TEXT = {
     rivalLineWorseEx: "%s: %s for %s, %s for the best competitor.", rivalLineOtherEx: "%s: %s for %s, %s at %s.",
     gTitle: "Sign in to analyse your reviews", gSub: "Free, no password. Use Google or email.", gGoogle: "Continue with Google", gOr: "or use email",
     gEmail: "Email", gEmailPh: "name@email.com", gSend: "Send code to my email", gConsent: "We record usage per account (never review text) for research on this product.",
+    gKeep: "Keep me signed in on this phone", gIosNote: "Add to the Home Screen first (Safari > Share > Add to Home Screen), then sign in from the icon. The installed app keeps its own session, apart from Safari.",
     gExample: "Try an example first", gCode: "Have an access code? Sign in here", gClose: "Not now", signInShort: "Sign in",
     gCodeTitle: "Enter the 6-digit code", gCodeSub: "We sent a code to %s. If it has not arrived, check your spam folder.", gVerify: "Sign in", gResend: "Send the code again", gResendIn: "Send the code again (%s)",
     gSentAgain: "A new code was sent.", gChange: "Change email", gDigit: "Digit %s of 6",
@@ -1777,6 +1783,23 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PLATFORMS = ["tokopedia", "lazada", "tiktokshop", "shopee", "other"], CATEGORIES = ["fashion", "beauty", "food", "electronics", "home", "other"];
 const PLATFORM_NAME = { tokopedia: "Tokopedia", lazada: "Lazada", tiktokshop: "TikTok Shop", shopee: "Shopee" };
 const OTP_LEN = 6, RESEND_SECS = 60;
+/* Where Supabase keeps the session. "Keep me signed in" on (the default): this device's storage, so the next visit is already signed in and the
+   token is renewed quietly. Off: this tab's storage, which the browser forgets when the tab is closed. If storage is blocked, memory only. */
+const KEEP_KEY = "bedahreview-keep", memStore = {};
+const keepFlag = () => { try { return localStorage.getItem(KEEP_KEY) !== "0"; } catch (e) { return true; } };
+function setKeep(on) { try { localStorage.setItem(KEEP_KEY, on ? "1" : "0"); } catch (e) { /* default stays on */ } }
+function storeFor(keep) { try { const st = keep ? localStorage : sessionStorage; st.getItem("probe"); return st; } catch (e) { return null; } }
+const authStorage = {
+  getItem(k) { const st = storeFor(keepFlag()); return st ? st.getItem(k) : (k in memStore ? memStore[k] : null); },
+  setItem(k, v) {
+    const keep = keepFlag(), st = storeFor(keep), other = storeFor(!keep);
+    if (st) { try { st.setItem(k, v); } catch (e) { memStore[k] = v; } } else memStore[k] = v;
+    try { if (other) other.removeItem(k); } catch (e) { /* ignore */ }  // never leave a second copy behind in the other place
+  },
+  removeItem(k) { delete memStore[k]; for (const keep of [true, false]) { try { const st = storeFor(keep); if (st) st.removeItem(k); } catch (e) { /* ignore */ } } },
+};
+const isIos = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isInstalled = () => navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
 async function authHeaders() {
   if (!sb) return {};
   try { const { data } = await sb.auth.getSession(); return data.session ? { Authorization: "Bearer " + data.session.access_token } : {}; } catch (e) { return {}; }
@@ -1817,6 +1840,8 @@ function renderGate() {
   fillSelect($("g-platform"), PLATFORMS, (v) => PLATFORM_NAME[v] || tr("gOther"));
   fillSelect($("g-category"), CATEGORIES, (v) => tr("cat_" + v));
   $("g-codelink").hidden = !cfgAccess; $("g-close").hidden = !exampleShown;
+  $("g-ios").hidden = !(isIos() && !isInstalled());  // an iPhone's installed app has its own storage, so signing in inside Safari would not carry over
+  $("g-keep").checked = keepFlag();
   tickResend();
 }
 function showGate(step, focus) {
@@ -1850,6 +1875,7 @@ for (let i = 0; i < OTP_LEN; i++) {
   otpBoxes.push(input); $("otp").append(input);
 }
 async function sendCode(again) {
+  setKeep($("g-keep").checked);
   const email = again ? gateEmail : $("g-email").value.trim();
   if (!EMAIL_RE.test(email)) { showGateError(tr("gErrEmail")); $("g-email").focus(); return; }
   const btn = again ? $("g-resend") : $("g-send"); btn.disabled = true; showGateError("");
@@ -1907,7 +1933,7 @@ function ensureSignedIn() { if (!sb || signedIn) return true; showGate("choose")
 async function startAuth(cfg) {
   if (!window.supabase) { try { await loadScript("vendor/supabase.js"); } catch (e) { /* handled below */ } }
   if (!window.supabase) { signedIn = !!cfg.signed_in; if (!signedIn) { showGate("choose", false); showGateError(tr("gErrLoad")); } else showApp(); return; }
-  sb = window.supabase.createClient(cfg.supabase.url, cfg.supabase.anon_key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "pkce" } });
+  sb = window.supabase.createClient(cfg.supabase.url, cfg.supabase.anon_key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "pkce", storage: authStorage } });
   sb.auth.onAuthStateChange((event, session) => { setTimeout(() => { if (event === "SIGNED_OUT") onSignedOut(); else if (session) enterApp(session); }, 0); });  // not awaited inside the callback: Supabase asks for that
   const params = new URLSearchParams(location.search), oauthFailed = params.has("error") || params.has("error_description");
   let session = null;
@@ -1919,8 +1945,9 @@ async function startAuth(cfg) {
   showGate("choose", false);
   if (oauthFailed) showGateError(tr("gErrOauth"));
 }
+$("g-keep").addEventListener("change", () => setKeep($("g-keep").checked));
 $("g-google").addEventListener("click", async () => {
-  showGateError("");
+  setKeep($("g-keep").checked); showGateError("");
   try {
     const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + "/" } });
     if (error) showGateError(authErrorText(error));

@@ -25,7 +25,7 @@ window.__sb = { calls: [], session: null, profile: null, listeners: [] };
   const hash = location.hash, user = { id: "user-1111-2222" };
   if (["#intro", "#returning", "#expired"].includes(hash)) window.__sb.session = { access_token: hash === "#expired" ? "junk" : "__TOKEN__", user };
   if (["#returning", "#expired"].includes(hash)) window.__sb.profile = { user_id: user.id };
-  window.supabase = { createClient: () => ({
+  window.supabase = { createClient: (url, key, opts) => { window.__sb.opts = opts; return ({
     auth: {
       getSession: async () => ({ data: { session: window.__sb.session } }),
       onAuthStateChange: (cb) => { window.__sb.listeners.push(cb); return { data: { subscription: { unsubscribe() {} } } }; },
@@ -44,7 +44,7 @@ window.__sb = { calls: [], session: null, profile: null, listeners: [] };
       select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: window.__sb.profile, error: null }) }) }),
       upsert: async (row) => { window.__sb.calls.push(["upsert", table, row]); window.__sb.profile = { user_id: row.user_id }; return { error: null }; },
     }),
-  }) };
+  }); } };
 })();
 </script>
 """
@@ -119,6 +119,23 @@ window.__probe = (async () => {
     out.gate = vis("gate"); out.workspaceHidden = byId("workspace").hidden; out.runEnabled = !byId("run").disabled; out.signedOutSession = window.__sb.session === null;
   }
 
+  if (hash === "#keep") {
+    await until(() => vis("gate"));
+    const store = window.__sb.opts.auth.storage;
+    out.defaultOn = byId("g-keep").checked; out.label = byId("g-keep").parentElement.textContent.trim();
+    store.setItem("t1", "a");
+    out.on = [localStorage.getItem("t1"), sessionStorage.getItem("t1")];
+    byId("g-keep").click();  // switch it off
+    store.setItem("t1", "b");
+    out.off = [localStorage.getItem("t1"), sessionStorage.getItem("t1"), store.getItem("t1")];
+    out.flagOff = localStorage.getItem("bedahreview-keep");
+    store.removeItem("t1"); out.removed = [localStorage.getItem("t1"), sessionStorage.getItem("t1")];
+    byId("g-email").value = "ani@example.com"; byId("g-send").click();
+    out.flagAfterSend = localStorage.getItem("bedahreview-keep");  // still off: sending a code does not undo the choice
+    byId("g-keep").click(); out.flagOn = localStorage.getItem("bedahreview-keep");
+    out.ios = vis("g-ios");
+  }
+
   if (hash === "#example") {
     await until(() => vis("gate"));
     byId("g-example").click();
@@ -164,11 +181,12 @@ class SignInBrowserTests(unittest.TestCase):
         web.STATIC = cls.real_static
         shutil.rmtree(cls.tmp, ignore_errors=True)
 
-    def probe(self, hash_):
+    def probe(self, hash_, user_agent=None):
         profile = tempfile.mkdtemp(dir=self.tmp)
         url = "http://127.0.0.1:%d/%s" % (self.port, hash_)
+        flags = ["--user-agent=" + user_agent] if user_agent else []
         chrome = subprocess.Popen([CHROME, "--headless=new", "--disable-gpu", "--no-first-run", "--remote-debugging-port=0", "--user-data-dir=" + profile,
-                                   "--window-size=500,900", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                   "--window-size=500,900"] + flags + [url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             return _read_probe(profile, url)
         finally:
@@ -224,6 +242,22 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertTrue(out["gate"] and out["workspaceHidden"])
         self.assertTrue(out["runEnabled"])
         self.assertTrue(out["signedOutSession"])
+
+    def test_keep_me_signed_in_chooses_where_the_session_lives(self):
+        out = self.probe("#keep")
+        self.assertTrue(out["defaultOn"])  # on by default
+        self.assertEqual(out["label"], "Tetap masuk di HP ini")
+        self.assertEqual(out["on"], ["a", None])  # on: this device's storage
+        self.assertEqual(out["off"], [None, "b", "b"])  # off: this tab only, and no second copy left on the device
+        self.assertEqual(out["flagOff"], "0")
+        self.assertEqual(out["removed"], [None, None])
+        self.assertEqual((out["flagAfterSend"], out["flagOn"]), ("0", "1"))
+        self.assertFalse(out["ios"])  # no install note on a desktop browser
+
+    def test_an_iphone_in_the_browser_is_told_to_install_first(self):
+        iphone = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+        out = self.probe("#keep", user_agent=iphone)
+        self.assertTrue(out["ios"])
 
     def test_the_free_example_works_without_signing_in_and_analysing_asks_for_it(self):
         out = self.probe("#example")
