@@ -11,9 +11,9 @@ from bedahreview.auth import SupabaseAuth
 from bedahreview.fetchers.base import Fetcher
 
 try:
-    from test_auth import URL, FakeSupabase, new_key, token
+    from test_auth import URL, USER, FakeSupabase, new_key, token
 except ImportError:  # run as tests.<module>
-    from tests.test_auth import URL, FakeSupabase, new_key, token
+    from tests.test_auth import URL, USER, FakeSupabase, new_key, token
 
 JAKARTA_MIDNIGHT = datetime(2026, 10, 29, 17, 0, tzinfo=timezone.utc).timestamp()  # 00:00 on 30 Oct in Jakarta (UTC+7)
 
@@ -156,6 +156,76 @@ class ServerTests(unittest.TestCase):
         self.assertFalse(self.call("GET", "/api/config")[1]["url_box"])  # signed out
         self.assertFalse(self.call("GET", "/api/config", headers=self.bearer())[1]["url_box"])  # a normal account
         self.assertTrue(self.call("GET", "/api/config", headers=self.cookie())[1]["url_box"])  # an access-code tester
+
+
+class TrustedAccountTests(unittest.TestCase):
+    """BEDAHREVIEW_PAID_USER_IDS: the owner's own account gets the link box and no daily limit; every other account stays as it was."""
+    ME, OTHER = USER, "9c9c9c9c-aaaa-4bbb-8ccc-dddd00001111"
+
+    def setUp(self):
+        self.key, jwk = new_key("k1")
+        self.fetcher, self.fail_with = NoPaidFetch(), [None]
+
+        def classify(reviews, product=None):
+            if self.fail_with[0]:
+                raise self.fail_with[0]
+            return [{"id": r["id"], "bucket": "keep", "theme": "Praise: quality / material", "variant": None, "cause": "none", "check_first": False, "proof_quote": r["text"],
+                     "likely_fake": {"flag": False, "signals": []}, "fix_suggestion_id": None, "fight": None, "confidence": "high"} for r in reviews]
+        self.server = web.make_server(0, classify_fn=classify, fetcher=self.fetcher, public=True, user_daily=2, max_per_hour=100, paid_users=web.parse_user_ids(self.ME.upper() + " "),
+                                      supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key="sb_publishable_x")
+        self.port = self.server.server_address[1]
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
+
+    def call(self, method, path, payload=None, sub=None):
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
+        body = json.dumps(payload).encode() if payload is not None else None
+        headers = {"Authorization": "Bearer " + token(self.key, sub=sub)} if sub else {}
+        conn.request(method, path, body=body, headers=dict({"Content-Type": "application/json"} if body else {}, **headers))
+        resp = conn.getresponse()
+        data = json.loads(resp.read() or b"{}")
+        conn.close()
+        return resp.status, data
+
+    def test_the_list_is_read_strictly(self):
+        self.assertEqual(web.parse_user_ids(""), frozenset())
+        self.assertEqual(web.parse_user_ids(" %s , %s " % (self.ME.upper(), self.OTHER)), frozenset({self.ME, self.OTHER}))
+        for bad in ("someone@example.com", "1234", self.ME + "x", "%s;%s" % (self.ME, self.OTHER)):
+            with self.assertRaises(ValueError, msg=bad):
+                web.parse_user_ids(bad)
+
+    def test_a_trusted_account_sees_the_link_box_and_may_use_it(self):
+        self.assertTrue(self.call("GET", "/api/config", sub=self.ME)[1]["url_box"])
+        status, data = self.call("POST", "/api/classify", {"url": "https://www.tokopedia.com/toko/produk"}, sub=self.ME)
+        self.assertNotEqual(data.get("code"), "paid_off")  # it got as far as the fetcher (which the test makes fail)
+        self.assertEqual(self.fetcher.fetched, ["https://www.tokopedia.com/toko/produk"])
+
+    def test_any_other_account_still_cannot(self):
+        self.assertFalse(self.call("GET", "/api/config", sub=self.OTHER)[1]["url_box"])
+        status, data = self.call("POST", "/api/classify", {"url": "https://www.tokopedia.com/toko/produk"}, sub=self.OTHER)
+        self.assertEqual((status, data["code"]), (403, "paid_off"))
+        self.assertEqual(self.fetcher.fetched, [])
+
+    def test_a_trusted_account_is_not_counted_by_the_daily_limit(self):
+        for _ in range(4):
+            status, data = self.call("POST", "/api/classify", {"text": "bagus"}, sub=self.ME)
+            self.assertEqual(status, 200)
+            self.assertNotIn("quota", data)
+        self.assertEqual([self.call("POST", "/api/classify", {"text": "bagus"}, sub=self.OTHER)[0] for _ in range(3)], [200, 200, 429])
+
+    def test_no_credit_or_no_quota_is_named_as_such(self):
+        class Depleted(Exception):
+            code = 402
+        for code in (402, 429):
+            Depleted.code = code
+            self.fail_with[0] = Depleted("prepayment credits are depleted")
+            status, data = self.call("POST", "/api/classify", {"text": "bagus"}, sub=self.OTHER)
+            self.assertEqual((status, data["code"]), (502, "model_quota"))
+        self.fail_with[0] = TimeoutError("slow")  # anything else is still "try again in a moment"
+        self.assertEqual(self.call("POST", "/api/classify", {"text": "bagus"}, sub=self.OTHER)[1]["code"], "model_down")
+        self.fail_with[0] = None
+        self.assertEqual(self.call("POST", "/api/classify", {"text": "bagus"}, sub=self.OTHER)[1]["quota"]["used"], 1)  # the failed ones were given back
 
 
 class LimitOffTests(unittest.TestCase):

@@ -716,7 +716,7 @@ const TEXT = {
     syncOk: "Tersimpan di akunmu.", syncDown: "Riwayat sedang tidak tersedia. Catatanmu tetap tersimpan di perangkat ini dan akan disimpan ke akunmu nanti.",
     syncOff: "Masuk agar catatanmu tersimpan di akunmu dan bisa dibuka dari HP lain.", fixNoteReview: "Catatanmu tampak memuat teks ulasan. Tulis dengan kata-katamu sendiri.",
     limitDaily: "Batas harian tercapai: %s analisis per hari. Coba lagi besok (reset tengah malam WIB).", quotaLeft: "Sisa analisis hari ini: %s dari %s.",
-    e_paid_off: "Mengambil ulasan dari tautan belum tersedia untuk akun ini.",
+    e_paid_off: "Mengambil ulasan dari tautan belum tersedia untuk akun ini.", e_model_quota: "Kuota atau kredit Gemini sedang habis, jadi ulasan belum bisa dibedah. Coba lagi nanti.",
     startHere: "Mulai dari sini", startFix: "Perbaiki “%s”: %s ulasan mengeluhkan ini.", startSeeFix: "Lihat saran", startFight: "Balas ulasan tentang “%s”. Drafnya siap disalin.", startSeeFight: "Lihat draf",
     startNone: "Tidak ada keluhan yang perlu ditindak. Lihat yang dipuji pembeli di Pertahankan.", whySteps: "Kenapa & langkahnya",
     // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
@@ -856,7 +856,7 @@ const TEXT = {
     syncOk: "Saved in your account.", syncDown: "History is not available right now. Your notes stay saved on this device and will be saved to your account later.",
     syncOff: "Sign in so your notes are saved in your account and open on another phone.", fixNoteReview: "Your note looks like it contains review text. Write it in your own words.",
     limitDaily: "Daily limit reached: %s analyses a day. Try again tomorrow (resets at midnight Jakarta time).", quotaLeft: "Analyses left today: %s of %s.",
-    e_paid_off: "Reading reviews from a link is not available for this account yet.",
+    e_paid_off: "Reading reviews from a link is not available for this account yet.", e_model_quota: "Gemini has no quota or credit left right now, so the reviews cannot be analysed. Try again later.",
     startHere: "Start here", startFix: "Fix “%s”: %s review(s) complain about this.", startSeeFix: "See the fix", startFight: "Answer the review about “%s”. The draft is ready to copy.", startSeeFight: "See the draft",
     startNone: "No complaints to act on. See what buyers praise under Keep.", whySteps: "Why & steps",
   },
@@ -1975,7 +1975,7 @@ function showApp() {
   $("signin-btn").hidden = !sb || signedIn; $("logout-row").hidden = !(cfgAccess || (sb && signedIn));
   openedOnce();
   $("delete-area").hidden = !(sb && signedIn && userId && cfgCanDelete); $("delete-panel").hidden = true;
-  if (sb && signedIn && userId) syncFixes();
+  if (sb && signedIn && userId) { syncFixes(); refreshBox(); }
 }
 function fillSelect(sel, values, label) {
   const keep = sel.value;
@@ -2160,16 +2160,22 @@ if ("serviceWorker" in navigator) {
     .then(() => { document.documentElement.dataset.sw = "ready"; }).catch(() => { document.documentElement.dataset.sw = "failed"; });
 }
 
+function applyBox(cfg, first) {  // the link box: shown only when the server says this visitor may use it
+  linkBoxOn = !!cfg.url_box; renderRival();
+  $("intab-link").hidden = !cfg.url_box;
+  if (cfg.url_box) {
+    $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
+    if (first && desktop() && !$("paste").value && !location.search) selectInput("link", false);  // on a wide screen the link comes first
+  } else if ($("intab-link").getAttribute("aria-selected") === "true") selectInput("paste", false);
+}
+async function refreshBox() {  // after a sign-in the answer can change: a trusted account gets the link box that a normal one does not
+  try { applyBox(await (await api("/api/config")).json(), false); } catch (e) { /* keep what we have */ }
+}
 async function loadConfig() {
   try {
     const cfg = await (await fetch("/api/config")).json();
-    linkBoxOn = !!cfg.url_box; renderRival();
     cfgAccess = !!cfg.access; cfgCanDelete = !!cfg.can_delete;
-    if (cfg.url_box) {
-      $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
-      $("intab-link").hidden = false;
-      if (desktop() && !$("paste").value && !location.search) selectInput("link", false);  // on a wide screen the link comes first
-    }
+    applyBox(cfg, true);
     if (cfg.supabase) await startAuth(cfg);
     else { signedIn = true; $("logout-row").hidden = !cfg.access; openedOnce(); }  // an access code, or a local run: no sign-in screens
   } catch (e) { /* the link tab simply stays hidden */ }

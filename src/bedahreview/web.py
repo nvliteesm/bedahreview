@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs
 
-from .account import AccountAdmin, AccountError
+from .account import UUID_RE, AccountAdmin, AccountError
 from .auth import SupabaseAuth
 from .classifier import ClassificationError, classify, resolve_model
 from .competitors import MAX_COMPETITORS, compare_competitors, suggest_competitors
@@ -177,6 +177,15 @@ class DailyQuota:
             self._today()
             if self._counts.get(user, 0) > 0:
                 self._counts[user] -= 1
+
+
+def parse_user_ids(text: str) -> frozenset:
+    """BEDAHREVIEW_PAID_USER_IDS: Supabase user ids (as shown under Authentication > Users) of accounts you trust. They may use the paid link box and are not counted by the daily limit."""
+    ids = [part.strip().lower() for part in (text or "").split(",") if part.strip()]
+    for one in ids:
+        if not UUID_RE.fullmatch(one):
+            raise ValueError("BEDAHREVIEW_PAID_USER_IDS must be user ids like 1a029fda-83cc-447d-95ca-bb14ec302d4d, separated by commas.")
+    return frozenset(ids)
 
 
 def parse_access_codes(text: str) -> Dict[str, str]:
@@ -363,6 +372,7 @@ class Handler(BaseHTTPRequestHandler):
     access_codes: Dict[str, str] = {}  # tester name -> code; empty means no sign-in (local use)
     public = False  # public mode: any Host header is fine, cookies are Secure, per-visitor limits apply
     supabase_auth: Optional[SupabaseAuth] = None  # checks Supabase sign-in tokens on this server; None means only the access-code cookie works
+    paid_users: frozenset = frozenset()  # trusted accounts: may use the paid link box, and are not counted by the daily limit
     account_admin: Optional[AccountAdmin] = None  # deletes an account when the person asks; None when there is no secret key
     contact_email: str = ""  # shown on the privacy page; empty until the owner chooses to publish one
     event_sink: Optional[EventSink] = None  # saves events to Supabase in the background; None means the log line is all there is
@@ -454,7 +464,7 @@ class Handler(BaseHTTPRequestHandler):
     def _paid_ok(self) -> bool:
         """Count one paid action for this visitor; send the 429 and return False when they are at the hourly limit.
         With Supabase on, paid actions are only for access-code testers: a normal account never spends the Apify budget."""
-        if type(self).supabase_auth is not None and self._uid:
+        if type(self).supabase_auth is not None and self._uid and self._uid not in type(self).paid_users:
             self._json(403, {"error": "Reading reviews from a link is not available for this account. Paste the reviews instead.", "fallback": "paste", "code": "paid_off"})
             return False
         if self.paid_limiter and not self.paid_limiter.take(self._client()):
@@ -774,7 +784,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/example":
             return self._json(200, example_response())
         if path == "/api/config":
-            on = type(self).fetcher is not None and (type(self).supabase_auth is None or self._cookie_user())  # the link box is for access-code testers only when accounts are on
+            on = type(self).fetcher is not None and (type(self).supabase_auth is None or self._cookie_user() or self._uid in type(self).paid_users)  # with accounts on, the link box is for access-code testers and trusted accounts only
             cfg = {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes), "signed_in": self._authed(), "can_delete": type(self).account_admin is not None, "contact": type(self).contact_email}
             if type(self).supabase_public:
                 cfg["supabase"] = type(self).supabase_public
@@ -837,7 +847,7 @@ class Handler(BaseHTTPRequestHandler):
         if len(reviews) > MAX_REVIEWS:
             return self._json(400, {"error": "%d reviews pasted; v1 handles up to %d at a time." % (len(reviews), MAX_REVIEWS), "code": "too_many_reviews", "max": MAX_REVIEWS})
 
-        quota = type(self).daily_quota if self._uid else None
+        quota = type(self).daily_quota if self._uid and self._uid not in type(self).paid_users else None
         used = 0
         if quota:
             allowed, used = quota.take(self._uid)
@@ -856,6 +866,8 @@ class Handler(BaseHTTPRequestHandler):
                 quota.refund(self._uid)
             code = getattr(exc, "code", None)  # an HTTP status such as 429 or 503 helps; the message could echo what was sent, so it is not logged
             sys.stderr.write("classify failed: %s%s\n" % (type(exc).__name__, " (code %s)" % code if isinstance(code, int) else ""))
+            if code in (402, 429):  # out of credit, or out of quota: say so, because "try again in a moment" is not the cure for the first
+                return self._json(502, {"error": "Gemini has no quota or credit left (%s). Try again later." % code, "code": "model_quota"})
             return self._json(502, {"error": "Could not reach Gemini (%s). Try again in a moment." % type(exc).__name__, "code": "model_down"})
         out = build_response(reviews, results, model, source)
         if quota:
@@ -878,6 +890,7 @@ def make_server(
     event_sink: Optional[EventSink] = None,
     account_admin: Optional[AccountAdmin] = None,
     contact_email: str = "",
+    paid_users: frozenset = frozenset(),
     max_per_hour: int = DEFAULT_MAX_PER_HOUR,
     paid_per_hour: int = DEFAULT_PAID_PER_HOUR,
     max_concurrent: int = DEFAULT_MAX_CONCURRENT,
@@ -903,6 +916,7 @@ def make_server(
     handler.daily_quota = DailyQuota(user_daily) if user_daily > 0 else None
     handler.event_sink = event_sink
     handler.account_admin = account_admin
+    handler.paid_users = frozenset(paid_users)
     handler.contact_email = contact_email
     handler.supabase_public = {"url": supabase_auth.project_url, "anon_key": supabase_anon_key} if supabase_auth and supabase_anon_key else None
     if codes:
@@ -970,6 +984,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     service_key = (os.environ.get("SUPABASE_SERVICE_KEY") or "").strip()
     event_sink = EventSink(supabase_url, service_key) if supabase_url and service_key else None
     account_admin = AccountAdmin(supabase_url, service_key) if supabase_url and service_key else None
+    try:
+        paid_users = parse_user_ids(os.environ.get("BEDAHREVIEW_PAID_USER_IDS", ""))
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
     contact_email = (os.environ.get("BEDAHREVIEW_CONTACT_EMAIL") or "").strip()
     if contact_email and not re.match(r"^[^\s@<>\"']+@[^\s@<>\"']+\.[^\s@<>\"']+$", contact_email):
         print("BEDAHREVIEW_CONTACT_EMAIL must look like name@example.com.", file=sys.stderr)
@@ -983,7 +1002,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Setup problem: %s" % exc, file=sys.stderr)
         return 1
     try:
-        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, user_daily=user_daily, event_sink=event_sink, account_admin=account_admin, contact_email=contact_email, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
+        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, user_daily=user_daily, event_sink=event_sink, account_admin=account_admin, contact_email=contact_email, paid_users=paid_users, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (port, exc.strerror), file=sys.stderr)
         return 1
