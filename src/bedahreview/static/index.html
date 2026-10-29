@@ -518,11 +518,12 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   <!-- fixes the seller logged (saved in this browser only) -->
   <section id="view-fixes" hidden aria-labelledby="fixes-h" style="display:grid;gap:12px">
     <div class="res-head">
-      <div><h2 id="fixes-h" tabindex="-1" data-i18n="fixesTitle"></h2><p class="small muted" data-i18n="fixesSub"></p></div>
+      <div><h2 id="fixes-h" tabindex="-1" data-i18n="fixesTitle"></h2><p class="small muted" id="fixes-sub"></p></div>
       <button class="btn ghost" id="fixes-back" type="button" data-i18n="back"></button>
     </div>
     <div class="callout warn" data-i18n="fixesWarn"></div>
     <div class="callout hot" id="fixes-nostore" hidden data-i18n="fixesNoStore"></div>
+    <div class="callout" id="fixes-sync" role="status" hidden></div>
     <div class="row">
       <button class="btn ghost" id="fixes-export" type="button" data-i18n="fixesExport"></button>
       <button class="btn ghost" id="fixes-import" type="button" data-i18n="fixesImport"></button>
@@ -696,6 +697,9 @@ const TEXT = {
     gErrNet: "Tidak bisa menghubungi layanan masuk. Periksa koneksi, lalu coba lagi.", gErrGeneric: "Tidak bisa masuk (%s). Coba lagi.", gErrLoad: "Layanan masuk tidak bisa dimuat. Muat ulang halaman.",
     gErrShop: "Tautan toko harus diawali https://", gErrOauth: "Masuk dengan Google dibatalkan atau gagal. Coba lagi.",
     exampleNote: "Ini contoh dengan ulasan rekaan, bukan data nyata. Masuk untuk membedah ulasanmu sendiri.",
+    fixesSubAccount: "Disimpan di akunmu (nama produk, tautan, dan catatanmu) supaya bisa dibuka dari HP lain. Jangan menulis nama orang.",
+    syncOk: "Tersimpan di akunmu.", syncDown: "Riwayat sedang tidak tersedia. Catatanmu tetap tersimpan di perangkat ini dan akan disimpan ke akunmu nanti.",
+    syncOff: "Masuk agar catatanmu tersimpan di akunmu dan bisa dibuka dari HP lain.", fixNoteReview: "Catatanmu tampak memuat teks ulasan. Tulis dengan kata-katamu sendiri.",
     limitDaily: "Batas harian tercapai: %s analisis per hari. Coba lagi besok (reset tengah malam WIB).", quotaLeft: "Sisa analisis hari ini: %s dari %s.",
     e_paid_off: "Mengambil ulasan dari tautan belum tersedia untuk akun ini.",
     startHere: "Mulai dari sini", startFix: "Perbaiki “%s”: %s ulasan mengeluhkan ini.", startSeeFix: "Lihat saran", startFight: "Balas ulasan tentang “%s”. Drafnya siap disalin.", startSeeFight: "Lihat draf",
@@ -829,6 +833,9 @@ const TEXT = {
     gErrNet: "Could not reach the sign-in service. Check your connection and try again.", gErrGeneric: "Could not sign in (%s). Try again.", gErrLoad: "The sign-in service could not be loaded. Reload the page.",
     gErrShop: "The shop link must start with https://", gErrOauth: "Google sign-in was cancelled or failed. Try again.",
     exampleNote: "This is an example with made-up reviews, not real data. Sign in to analyse your own reviews.",
+    fixesSubAccount: "Saved in your account (the product name, link and your note) so it opens on another phone. Please do not write people's names.",
+    syncOk: "Saved in your account.", syncDown: "History is not available right now. Your notes stay saved on this device and will be saved to your account later.",
+    syncOff: "Sign in so your notes are saved in your account and open on another phone.", fixNoteReview: "Your note looks like it contains review text. Write it in your own words.",
     limitDaily: "Daily limit reached: %s analyses a day. Try again tomorrow (resets at midnight Jakarta time).", quotaLeft: "Analyses left today: %s of %s.",
     e_paid_off: "Reading reviews from a link is not available for this account yet.",
     startHere: "Start here", startFix: "Fix “%s”: %s review(s) complain about this.", startSeeFix: "See the fix", startFight: "Answer the review about “%s”. The draft is ready to copy.", startSeeFight: "See the draft",
@@ -1123,8 +1130,9 @@ function renderFeedback() {
 }
 
 /* ---------- fix tracking ----------
-   Saved in this browser only (localStorage, with an in-memory fallback). A record holds the theme, variant, the seller's own
-   note, the date and complaint counts with the sample size. Never review text, never a reviewer name, nothing sent to the server. */
+   Kept in this browser first (localStorage, with an in-memory fallback). A record holds the theme, variant, product link or name, the seller's own
+   note, the date and complaint counts with the sample size. Never review text, never a reviewer name. When signed in with Supabase the list is also
+   saved in the seller's account (the fixes table, only they can read it) so it opens on another phone; the browser copy always works without it. */
 const FIX_KEY = "bedahreview-fixes-v1", MAX_FIXES = 200, NOTE_MAX = 200, SMALL_SAMPLE = 10, MAX_IMPORT_BYTES = 500000;
 let memFixes = [], fixStorageOk = true, memOnly = false;  // memOnly: the last save failed, so the in-memory list is newer than storage
 const fxStr = (s, max) => (typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, max) : "");
@@ -1141,7 +1149,8 @@ function cleanFix(f) {  // anything read back from storage or an imported file p
   if (!f || typeof f !== "object") return null;
   const theme = fxStr(f.theme, 80), id = fxStr(f.id, 40), before = cleanCounts(f.before, false), date = fxDate(f.date);
   if (!theme || !id || !before || !date) return null;
-  return { id, theme, variant: fxStr(f.variant, 60), product: fxStr(f.product, 300), productLabel: fxStr(f.productLabel, 150), note: fxStr(f.note, NOTE_MAX), date, before, after: cleanCounts(f.after, true) };
+  const updated = Number.isFinite(f.updated) && f.updated > 0 && f.updated < 4e12 ? Math.floor(f.updated) : 0;  // when it last changed: the newer copy wins when two phones disagree
+  return { id, theme, variant: fxStr(f.variant, 60), product: fxStr(f.product, 300), productLabel: fxStr(f.productLabel, 150), note: fxStr(f.note, NOTE_MAX), date, before, after: cleanCounts(f.after, true), updated };
 }
 const cleanFixes = (list) => (Array.isArray(list) ? list : []).map(cleanFix).filter(Boolean).slice(0, MAX_FIXES);
 function loadFixes() {
@@ -1153,6 +1162,7 @@ function saveFixes(list) {
   memFixes = list;
   try { localStorage.setItem(FIX_KEY, JSON.stringify(list)); fixStorageOk = true; memOnly = false; } catch (e) { fixStorageOk = false; memOnly = true; }
   renderFixBadge();
+  scheduleFixPush();
   return fixStorageOk;
 }
 const baseVariant = (v) => String(v || "").split(",")[0].trim();
@@ -1171,7 +1181,7 @@ function countTheme(items, theme, variant) {  // complaints on this theme (and v
 function makeFix(group, note, src, items) {
   const now = countTheme(items, group.theme, group.variant || "");
   return {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), theme: group.theme, variant: group.variant || "", note: fxStr(note, NOTE_MAX), date: today(),
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), theme: group.theme, variant: group.variant || "", note: fxStr(note, NOTE_MAX), date: today(), updated: Date.now(),
     product: productKey(src), productLabel: fxStr((src || {}).title || (src || {}).url, 150), before: { count: now.count, total: now.total, sig: reviewSig(items), date: "" }, after: null,
   };
 }
@@ -1181,7 +1191,7 @@ function applyAnalysis(fixes, key, items) {  // set the "after" counts on every 
     if (f.product !== key || f.before.sig === sig || (f.after && f.after.sig === sig)) return f;
     const now = countTheme(items, f.theme, f.variant);
     if (!now.total) return f;
-    const upd = Object.assign({}, f, { after: { count: now.count, total: now.total, sig, date: today() } });
+    const upd = Object.assign({}, f, { after: { count: now.count, total: now.total, sig, date: today() }, updated: Date.now() });
     changed.push(upd);
     return upd;
   });
@@ -1196,7 +1206,7 @@ function mergeImport(current, text) {  // a file in, strictly checked; same id r
   if (!raw) return { error: "bad" };
   const good = cleanFixes(raw);
   const byId = new Map(current.map((f) => [f.id, f]));
-  good.forEach((f) => byId.set(f.id, f));
+  good.forEach((f) => byId.set(f.id, Object.assign({}, f, { updated: Date.now() })));  // an import is a deliberate choice: it wins over the copy in the account
   return { fixes: [...byId.values()].slice(0, MAX_FIXES), added: good.length, skipped: raw.length - good.length };
 }
 function fmtDate(iso) { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(lang === "id" ? "id-ID" : "en-GB", { day: "numeric", month: "short", year: "numeric" }); }
@@ -1204,6 +1214,12 @@ function renderFixBadge() {
   const n = loadFixes().length;
   $("fixes-count").textContent = n; $("fixes-count").hidden = !n;
   $("fixes-btn").setAttribute("aria-label", tr("fixesBtn") + (n ? " (" + n + ")" : "")); $("fixes-btn").title = tr("fixesBtn");
+}
+const noteCopiesReview = (text) => !!(text && lastData && looksLikeReviewText(String(text).trim(), lastData.items));  // a note is the seller's own words, not a pasted review
+function showFixNoteError(box, msg) {
+  let el = box.querySelector(".fixnote-error");
+  if (!el) { el = h("div", { class: "callout warn fixnote-error", role: "alert" }); box.prepend(el); }
+  el.textContent = msg;
 }
 function trackLines(f) {  // before and after, counts with their sample size, and the plain warning about small samples
   const small = f.after && Math.min(f.before.total, f.after.total) < SMALL_SAMPLE;
@@ -1230,13 +1246,96 @@ function fixTracker(group) {  // under a Fix card: the "mark as fixed" action, o
   open.addEventListener("click", () => { form.hidden = false; open.hidden = true; note.focus(); });
   cancel.addEventListener("click", () => { form.hidden = true; open.hidden = false; });
   save.addEventListener("click", () => {
+    if (noteCopiesReview(note.value)) { err.textContent = tr("fixNoteReview"); err.hidden = false; return; }
     const ok = saveFixes(loadFixes().concat(makeFix(group, note.value, src, lastData.items)));
-    if (!ok) { err.hidden = false; return; }
+    if (!ok) { err.textContent = tr("fixSaveFail"); err.hidden = false; return; }
     track("fix_marked");
     render(lastData, false);
   });
   form.append(...[h("label", { class: "field", for: note.id }, h("span", { text: tr("fixNoteLbl") }), note), key ? null : h("p", { class: "small muted", text: tr("fixNoName") }), err, h("div", { class: "row" }, save, cancel)].filter(Boolean));
   return h("div", { class: "fixform" }, open, form);
+}
+/* ---------- fixes in the account ----------
+   The browser copy is the working copy and always works. Signed in, the list is also kept in the account's fixes table: on sign-in the two are merged
+   (the newer copy of a fix wins), and later changes are pushed a moment after they are made. If Supabase cannot be reached the page says so and carries on.
+   A browser that last belonged to another account is not merged into this one. */
+const FIX_OWNER_KEY = "bedahreview-fixes-owner", FIX_PUSH_DELAY_MS = 1200, FIX_CHUNK = 50;
+const fixSync = { state: "off", userId: null, synced: new Map(), busy: false, dirty: false, timer: null };  // state: off | ok | down
+const fixOwner = () => { try { return localStorage.getItem(FIX_OWNER_KEY) || ""; } catch (e) { return ""; } };
+const setFixOwner = (id) => { try { if (id) localStorage.setItem(FIX_OWNER_KEY, id); else localStorage.removeItem(FIX_OWNER_KEY); } catch (e) { /* ignore */ } };
+function fixToRow(f, uid) {  // the exact columns of the fixes table, in a fixed order so two copies compare equal
+  return { user_id: uid, id: f.id, updated_at: new Date(f.updated || 1).toISOString(), theme: f.theme, variant: f.variant, product: f.product, product_label: f.productLabel, note: f.note, fixed_on: f.date,
+    before_count: f.before.count, before_total: f.before.total, before_sig: f.before.sig, after_count: f.after ? f.after.count : null, after_total: f.after ? f.after.total : null,
+    after_sig: f.after ? f.after.sig : null, after_on: f.after && f.after.date ? f.after.date : null };
+}
+function fixFromRow(r) {
+  if (!r || typeof r !== "object") return null;
+  return cleanFix({ id: r.id, theme: r.theme, variant: r.variant, product: r.product, productLabel: r.product_label, note: r.note, date: r.fixed_on, updated: Date.parse(r.updated_at),
+    before: { count: r.before_count, total: r.before_total, sig: r.before_sig, date: "" }, after: r.after_count == null ? null : { count: r.after_count, total: r.after_total, sig: r.after_sig, date: r.after_on || "" } });
+}
+function mergeFixes(local, remote) {
+  const byId = new Map(remote.map((f) => [f.id, f]));
+  local.forEach((f) => { const other = byId.get(f.id); if (!other || f.updated > other.updated) byId.set(f.id, f); });
+  return [...byId.values()].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)).slice(-MAX_FIXES);
+}
+function renderSyncStatus() {
+  const account = !!(sb && signedIn && userId), el = $("fixes-sync");
+  $("fixes-sub").textContent = tr(account ? "fixesSubAccount" : "fixesSub");
+  const key = account ? (fixSync.state === "down" ? "syncDown" : fixSync.state === "ok" ? "syncOk" : "") : (sb ? "syncOff" : "");
+  el.hidden = !key; el.className = "callout" + (key === "syncDown" ? " warn" : ""); el.textContent = key ? tr(key) : "";
+}
+function resetFixSync() { clearTimeout(fixSync.timer); Object.assign(fixSync, { state: "off", userId: null, synced: new Map(), busy: false, dirty: false, timer: null }); }
+async function syncFixes() {  // once per sign-in: fetch the account's list, merge it with this browser's, and push what the account does not have yet
+  if (!sb || !userId || fixSync.userId === userId) return;
+  const uid = userId; fixSync.userId = uid;
+  try {
+    const { data, error } = await withTimeout(sb.from("fixes").select("*"), 8000);
+    if (error) throw error;
+    const remote = (data || []).map(fixFromRow).filter(Boolean);
+    const other = fixOwner() && fixOwner() !== uid;  // this browser held another account's list: never mix it into this one
+    const merged = mergeFixes(other ? [] : loadFixes(), remote);
+    setFixOwner(uid);
+    fixSync.synced = new Map(remote.map((f) => [f.id, JSON.stringify(fixToRow(f, uid))]));
+    fixSync.state = "ok";
+    saveFixes(merged);
+    if (currentView === "fixes") renderFixes();
+  } catch (e) { fixSync.state = "down"; fixSync.userId = null; }  // down: the next change tries again
+  renderSyncStatus(); renderFixBadge();
+}
+function scheduleFixPush() {
+  if (!sb || !userId || fixSync.state === "off" && !fixSync.userId) return;  // not signed in, or the first sync has not started
+  clearTimeout(fixSync.timer); fixSync.timer = setTimeout(pushFixes, FIX_PUSH_DELAY_MS);
+}
+async function pushFixes() {
+  if (!sb || !userId) return;
+  if (fixSync.state !== "ok") { await syncFixes(); if (fixSync.state !== "ok") return; }  // it was down: try the whole sync again first
+  if (fixSync.busy) { fixSync.dirty = true; return; }
+  fixSync.busy = true;
+  try {
+    const list = loadFixes(), rows = list.map((f) => fixToRow(f, userId));
+    const changed = rows.filter((r) => fixSync.synced.get(r.id) !== JSON.stringify(r));
+    const keep = new Set(list.map((f) => f.id)), gone = [...fixSync.synced.keys()].filter((id) => !keep.has(id));
+    for (let i = 0; i < changed.length; i += FIX_CHUNK) {
+      const part = changed.slice(i, i + FIX_CHUNK);
+      const { error } = await withTimeout(sb.from("fixes").upsert(part, { onConflict: "user_id,id" }), 8000);
+      if (error) throw error;
+      part.forEach((r) => fixSync.synced.set(r.id, JSON.stringify(r)));
+    }
+    if (gone.length) {
+      const { error } = await withTimeout(sb.from("fixes").delete().in("id", gone), 8000);
+      if (error) throw error;
+      gone.forEach((id) => fixSync.synced.delete(id));
+    }
+    fixSync.state = "ok";
+  } catch (e) { fixSync.state = "down"; fixSync.userId = null; }
+  finally { fixSync.busy = false; renderSyncStatus(); }
+  if (fixSync.dirty) { fixSync.dirty = false; scheduleFixPush(); }
+}
+async function leaveWithFixes() {  // on "Keluar": save what is pending, then clear this browser's copy so the next person on a shared phone does not see it
+  if (!sb || !userId) return;
+  try { clearTimeout(fixSync.timer); await withTimeout(pushFixes(), 5000); } catch (e) { /* keep the local copy */ }
+  const pending = loadFixes().some((f) => fixSync.synced.get(f.id) !== JSON.stringify(fixToRow(f, userId))) || [...fixSync.synced.keys()].some((id) => !loadFixes().some((f) => f.id === id));
+  if (fixSync.state === "ok" && !pending) { memFixes = []; memOnly = false; try { localStorage.removeItem(FIX_KEY); } catch (e) { /* ignore */ } setFixOwner(""); }
 }
 let currentView = "input", viewBeforeFixes = "input", checkerView = "input", lastChanged = [];
 function openRivals(fromResults) {  // from the results button (product already filled in) or the bottom bar; a wide screen already shows the section
@@ -1258,7 +1357,8 @@ function fixItem(f) {
       const save = h("button", { class: "btn primary", type: "button", text: tr("fixSave") });
       save.addEventListener("click", () => {
         const d = fxDate(date.value) || f.date;
-        saveFixes(loadFixes().map((x) => (x.id === f.id ? Object.assign({}, x, { note: fxStr(note.value, NOTE_MAX), date: d }) : x)));
+        if (noteCopiesReview(note.value)) { showFixNoteError(body, tr("fixNoteReview")); return; }
+        saveFixes(loadFixes().map((x) => (x.id === f.id ? Object.assign({}, x, { note: fxStr(note.value, NOTE_MAX), date: d, updated: Date.now() }) : x)));
         renderFixes();
       });
       const cancel = h("button", { class: "btn ghost", type: "button", text: tr("fixCancel") });
@@ -1280,6 +1380,7 @@ function fixItem(f) {
   return h("article", { class: "card", style: "--c: var(--keep)" }, body);
 }
 function renderFixes(message) {
+  renderSyncStatus();
   const list = loadFixes();
   $("fixes-nostore").hidden = fixStorageOk;
   $("fixes-list").replaceChildren(...(list.length ? list.slice().reverse().map(fixItem) : [h("div", { class: "empty", text: tr("fixesEmpty") })]));
@@ -1671,7 +1772,7 @@ $("new-mob").addEventListener("click", () => { show("input"); toTop(); });
 $("pchip-change").addEventListener("click", () => { show("input"); toTop(); });
 $("back-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
 $("print-d").addEventListener("click", () => window.print());
-$("logout").addEventListener("click", async () => { if (sb) { try { await sb.auth.signOut(); } catch (e) { /* reload anyway */ } } try { await fetch("/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); } catch (e) { /* reload anyway */ } location.reload(); });
+$("logout").addEventListener("click", async () => { await leaveWithFixes(); if (sb) { try { await sb.auth.signOut(); } catch (e) { /* reload anyway */ } } try { await fetch("/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); } catch (e) { /* reload anyway */ } location.reload(); });
 $("fixes-btn").addEventListener("click", () => { if (currentView === "fixes") { $("fixes-back").click(); } else openFixes(); });
 $("fixes-back").addEventListener("click", () => { show(viewBeforeFixes === "loading" || (viewBeforeFixes === "results" && !lastData) ? "input" : viewBeforeFixes); toTop(); });
 $("fixes-export").addEventListener("click", exportFixes);
@@ -1854,6 +1955,7 @@ function showApp() {
   document.body.classList.remove("gated"); $("workspace").hidden = false; $("gate").hidden = true;
   $("signin-btn").hidden = !sb || signedIn; $("logout-row").hidden = !(cfgAccess || (sb && signedIn));
   openedOnce();
+  if (sb && signedIn && userId) syncFixes();
 }
 function fillSelect(sel, values, label) {
   const keep = sel.value;
@@ -1954,10 +2056,10 @@ async function enterApp(session) {
   await maybeIntro();
   showApp();
 }
-function onSignedOut() { userId = null; signedIn = false; eventQueue = []; cachedToken = ""; showGate("choose", false); }
+function onSignedOut() { userId = null; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync(); showGate("choose", false); }
 function handleUnauthorized() {
   if (!sb) { location.reload(); return; }
-  userId = null; signedIn = false; eventQueue = []; cachedToken = "";
+  userId = null; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync();
   sb.auth.signOut({ scope: "local" }).catch(() => {});
   showGate("choose", false);
 }

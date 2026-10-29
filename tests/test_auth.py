@@ -227,7 +227,7 @@ class SchemaTests(unittest.TestCase):
 
     def test_every_table_has_row_level_security_and_no_anon_access(self):
         tables = re.findall(r"create table if not exists public\.(\w+)", self.SQL)
-        self.assertEqual(set(tables), {"profiles", "events"})
+        self.assertEqual(set(tables), {"profiles", "events", "fixes"})
         for table in tables:
             self.assertIn("alter table public.%s" % table, self.SQL.replace("  ", " "))
             self.assertRegex(self.SQL, r"revoke all on public\.%s\s+from anon" % table)
@@ -235,9 +235,24 @@ class SchemaTests(unittest.TestCase):
         self.assertNotRegex(self.SQL, r"to\s+public\b")
 
     def test_nothing_that_identifies_a_review_or_a_person_has_a_column(self):
-        columns = re.findall(r"^\s+(\w+)\s+(?:uuid|text|timestamptz|bigint|jsonb|boolean)\b", self.SQL, re.M)
-        for forbidden in ("email", "name", "review", "text", "product", "ip", "ip_address", "user_agent", "phone", "ok_to_contact"):
-            self.assertNotIn(forbidden, columns)
+        def columns(table):
+            body = re.search(r"create table if not exists public\.%s \((.*?)\n\);" % table, self.SQL, re.S).group(1)
+            return re.findall(r"^\s+(\w+)\s+(?:uuid|text|timestamptz|bigint|jsonb|boolean|integer|date)\b", body, re.M)
+        # no table may hold an email, an address, a reviewer or review text
+        for table in ("profiles", "events", "fixes"):
+            for forbidden in ("email", "name", "review", "text", "ip", "ip_address", "user_agent", "phone", "ok_to_contact", "reviewer"):
+                self.assertNotIn(forbidden, columns(table), table)
+        # product names, links and notes are stored in exactly one place, on purpose: the seller's own fixes list
+        for table in ("profiles", "events"):
+            for column in ("product", "product_label", "note", "shop_name"):
+                self.assertNotIn(column, columns(table), table)
+        self.assertTrue({"product", "product_label", "note"} <= set(columns("fixes")))
+
+    def test_fixes_are_private_to_their_owner_and_capped(self):
+        for action in ("select", "insert", "update", "delete"):
+            self.assertRegex(self.SQL, r"create policy fixes_%s_own on public\.fixes for %s to authenticated" % (action, action))
+        self.assertIn("< 250", self.SQL)  # a ceiling a little above the page's 200
+        self.assertNotRegex(self.SQL, r"fixes[^;]*to\s+anon")
 
     def test_the_secret_key_is_only_ever_named_in_server_files(self):
         static = ROOT / "src" / "bedahreview" / "static"

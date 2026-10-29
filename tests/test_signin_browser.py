@@ -20,11 +20,21 @@ except ImportError:  # run as tests.<module>
 
 FAKE_SUPABASE = """
 <script>
-window.__sb = { calls: [], session: null, profile: null, listeners: [] };
+window.__sb = { calls: [], session: null, profile: null, listeners: [], fixes: [], fixesError: false };
 (function () {
   const hash = location.hash, user = { id: "user-1111-2222" };
-  if (["#intro", "#returning", "#expired", "#events"].includes(hash)) window.__sb.session = { access_token: hash === "#expired" ? "junk" : "__TOKEN__", user };
-  if (["#returning", "#expired", "#events"].includes(hash)) window.__sb.profile = { user_id: user.id };
+  const syncing = ["#sync-first", "#sync-other", "#sync-down", "#sync-edit", "#sync-leave"];
+  if (["#intro", "#returning", "#expired", "#events"].concat(syncing).includes(hash)) window.__sb.session = { access_token: hash === "#expired" ? "junk" : "__TOKEN__", user };
+  if (["#returning", "#expired", "#events"].concat(syncing).includes(hash)) window.__sb.profile = { user_id: user.id };
+  const fixA = { id: "aaa1", theme: "Sizing & fit", variant: "Hitam", product: "kaos boxy retro", productLabel: "Kaos Boxy Retro", note: "size chart diganti", date: "2026-10-20", before: { count: 2, total: 5, sig: "s1", date: "" }, after: null, updated: 1000 };
+  const rowB = { user_id: user.id, id: "bbb2", updated_at: "2026-10-25T10:00:00.000Z", theme: "Colour vs photo", variant: "Putih", product: "https://www.tokopedia.com/x/y", product_label: "Kaos Boxy", note: "foto diganti", fixed_on: "2026-10-25",
+    before_count: 2, before_total: 4, before_sig: "s2", after_count: 1, after_total: 5, after_sig: "s3", after_on: "2026-10-28" };
+  try {
+    if (hash === "#sync-first") { localStorage.setItem("bedahreview-fixes-v1", JSON.stringify([fixA])); window.__sb.fixes = [rowB]; }
+    if (hash === "#sync-other") { localStorage.setItem("bedahreview-fixes-v1", JSON.stringify([fixA])); localStorage.setItem("bedahreview-fixes-owner", "another-user"); }
+    if (hash === "#sync-down") { localStorage.setItem("bedahreview-fixes-v1", JSON.stringify([fixA])); window.__sb.fixesError = true; }
+    if (hash === "#sync-edit" || hash === "#sync-leave") window.__sb.fixes = [rowB];
+  } catch (e) { /* storage blocked */ }
   window.supabase = { createClient: (url, key, opts) => { window.__sb.opts = opts; return ({
     auth: {
       getSession: async () => ({ data: { session: window.__sb.session } }),
@@ -40,7 +50,15 @@ window.__sb = { calls: [], session: null, profile: null, listeners: [] };
       signInWithOAuth: async (a) => { window.__sb.calls.push(["oauth", a.provider, a.options.redirectTo]); return { error: null }; },
       signOut: async () => { window.__sb.session = null; return { error: null }; },
     },
-    from: (table) => ({
+    from: (table) => table === "fixes" ? ({
+      select: () => {
+        window.__sb.calls.push(["select-fixes"]);
+        const res = window.__sb.fixesError ? { data: null, error: { message: "paused" } } : { data: window.__sb.fixes.slice(), error: null };
+        return { then: (a, b) => Promise.resolve(res).then(a, b) };
+      },
+      upsert: async (rows) => { window.__sb.calls.push(["upsert-fixes", rows]); rows.forEach((r) => { window.__sb.fixes = window.__sb.fixes.filter((x) => x.id !== r.id).concat(r); }); return { error: null }; },
+      delete: () => ({ in: async (col, ids) => { window.__sb.calls.push(["delete-fixes", ids]); window.__sb.fixes = window.__sb.fixes.filter((x) => !ids.includes(x.id)); return { error: null }; } }),
+    }) : ({
       select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: window.__sb.profile, error: null }) }) }),
       upsert: async (row) => { window.__sb.calls.push(["upsert", table, row]); window.__sb.profile = { user_id: row.user_id }; return { error: null }; },
     }),
@@ -131,6 +149,50 @@ window.__probe = (async () => {
     window.dispatchEvent(new Event("pagehide")); await wait(400);
     out.sent = window.__reqs.slice(); out.queueLeft = eventQueue.length;
     out.explicit = await track("feedback", { answer: "yes" }, true); out.total = window.__reqs.length;  // the feedback answer goes at once and reports whether it was saved
+  }
+
+  if (hash.startsWith("#sync-")) {
+    await until(() => !byId("workspace").hidden);
+    const synced = () => fixSync.state !== "off" && !fixSync.busy;
+    await until(synced, 80);
+    out.state = fixSync.state;
+    if (hash === "#sync-first") {
+      await until(() => window.__sb.fixes.length === 2, 80);
+      out.local = loadFixes().map((f) => f.id).sort(); out.remote = window.__sb.fixes.map((r) => r.id).sort(); out.owner = localStorage.getItem("bedahreview-fixes-owner");
+      const b = loadFixes().find((f) => f.id === "bbb2"); out.fromAccount = [b.productLabel, b.note, b.after && b.after.count, b.after && b.after.total, b.date];
+      const pushed = window.__sb.calls.filter((c) => c[0] === "upsert-fixes").flatMap((c) => c[1]);
+      out.pushedIds = pushed.map((r) => r.id); out.columns = Object.keys(pushed[0]).sort(); out.pushedUser = pushed[0].user_id;
+      out.pushedNote = pushed[0].note; out.pushedProduct = pushed[0].product;
+    }
+    if (hash === "#sync-other") {
+      await wait(1800);
+      out.local = loadFixes().map((f) => f.id); out.owner = localStorage.getItem("bedahreview-fixes-owner"); out.upserts = window.__sb.calls.filter((c) => c[0] === "upsert-fixes").length;
+    }
+    if (hash === "#sync-down") {
+      openFixes(); out.status = byId("fixes-sync").textContent; out.statusWarn = byId("fixes-sync").className;
+      out.saved = saveFixes(loadFixes().concat(Object.assign({}, loadFixes()[0], { id: "ccc3" })));
+      await wait(1800);
+      out.local = loadFixes().map((f) => f.id).sort(); out.upserts = window.__sb.calls.filter((c) => c[0] === "upsert-fixes").length; out.badge = byId("fixes-count").textContent;
+    }
+    if (hash === "#sync-edit") {
+      await wait(1500);
+      saveFixes(loadFixes().map((f) => (f.id === "bbb2" ? Object.assign({}, f, { note: "catatan baru", updated: Date.now() }) : f)));
+      await until(() => window.__sb.fixes.some((r) => r.note === "catatan baru"), 80);
+      out.remoteNote = (window.__sb.fixes.find((r) => r.id === "bbb2") || {}).note;
+      saveFixes([]);
+      await until(() => window.__sb.fixes.length === 0, 80);
+      out.deleted = window.__sb.calls.filter((c) => c[0] === "delete-fixes").map((c) => c[1]); out.remoteLeft = window.__sb.fixes.length;
+    }
+    if (hash === "#sync-leave") {
+      await leaveWithFixes();
+      out.local = loadFixes().length; out.owner = localStorage.getItem("bedahreview-fixes-owner") || ""; out.remote = window.__sb.fixes.length;
+    }
+  }
+
+  if (hash === "#notes") {
+    await until(() => !byId("workspace").hidden);
+    lastData = { items: [{ text: "warna tulisannya ijo pas dateng hitem banget" }] };
+    out.copied = noteCopiesReview("warna tulisannya ijo pas dateng hitem banget parah"); out.own = noteCopiesReview("ganti foto varian putih"); out.empty = noteCopiesReview("");
   }
 
   if (hash === "#keep") {
@@ -266,6 +328,44 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual(out["sent"], [{"events": ["opened", "tab_viewed", "tab_viewed", "draft_copied"], "keepalive": True, "auth": True}])  # one request, kept alive past the page, with the sign-in
         self.assertEqual(out["queueLeft"], 0)
         self.assertEqual((out["explicit"], out["total"]), (True, 2))  # the server accepted it, and it did not wait
+
+    EXPECTED_COLUMNS = sorted(["user_id", "id", "updated_at", "theme", "variant", "product", "product_label", "note", "fixed_on", "before_count", "before_total", "before_sig", "after_count", "after_total", "after_sig", "after_on"])
+
+    def test_the_first_sign_in_merges_this_browsers_fixes_with_the_accounts(self):
+        out = self.probe("#sync-first")
+        self.assertEqual(out["state"], "ok")
+        self.assertEqual((out["local"], out["remote"]), (["aaa1", "bbb2"], ["aaa1", "bbb2"]))  # both lists end up in both places
+        self.assertEqual(out["owner"], "user-1111-2222")
+        self.assertEqual(out["fromAccount"], ["Kaos Boxy", "foto diganti", 1, 5, "2026-10-25"])  # a fix made on another phone arrives complete
+        self.assertEqual(out["pushedIds"], ["aaa1"])  # only what the account did not have is pushed
+        self.assertEqual(out["columns"], self.EXPECTED_COLUMNS)  # exactly the columns of the table: nothing else leaves the browser
+        self.assertEqual((out["pushedUser"], out["pushedNote"], out["pushedProduct"]), ("user-1111-2222", "size chart diganti", "kaos boxy retro"))
+
+    def test_a_browser_that_held_another_accounts_fixes_is_not_mixed_into_this_one(self):
+        out = self.probe("#sync-other")
+        self.assertEqual((out["local"], out["upserts"]), ([], 0))
+        self.assertEqual(out["owner"], "user-1111-2222")
+
+    def test_when_supabase_is_unavailable_the_page_says_so_and_keeps_working(self):
+        out = self.probe("#sync-down")
+        self.assertEqual(out["state"], "down")
+        self.assertIn("Riwayat sedang tidak tersedia", out["status"])
+        self.assertIn("warn", out["statusWarn"])
+        self.assertTrue(out["saved"])
+        self.assertEqual((out["local"], out["upserts"], out["badge"]), (["aaa1", "ccc3"], 0, "2"))  # still saved on the device, nothing pushed
+
+    def test_edits_and_deletes_follow_to_the_account(self):
+        out = self.probe("#sync-edit")
+        self.assertEqual(out["remoteNote"], "catatan baru")
+        self.assertEqual((out["deleted"], out["remoteLeft"]), ([["bbb2"]], 0))
+
+    def test_signing_out_clears_this_browsers_copy_but_never_the_accounts(self):
+        out = self.probe("#sync-leave")
+        self.assertEqual((out["local"], out["owner"], out["remote"]), (0, "", 1))
+
+    def test_a_note_cannot_repeat_review_text(self):
+        out = self.probe("#notes")
+        self.assertEqual((out["copied"], out["own"], out["empty"]), (True, False, False))
 
     def test_keep_me_signed_in_chooses_where_the_session_lives(self):
         out = self.probe("#keep")

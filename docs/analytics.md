@@ -5,9 +5,9 @@ Nothing else is ever logged. The list lives in one place, `src/bedahreview/event
 
 ## What is never logged
 
-- Review text, product names, product links, shop names, reviewer names.
+- Review text and reviewer names, anywhere.
+- Product names, product links, shop names and notes in the events or the log. (A seller's own fixes list does hold a product name, link and note: see "The fixes list" below. It is a separate table, never an event.)
 - IP addresses and user agents. (The request log prints the path only.)
-- Anything from the Fixes list. It stays in the tester's browser.
 
 ## Accounts and the device id
 
@@ -16,6 +16,16 @@ With Supabase sign-in on, each event is saved against the account (a random user
 Events also carry a random device id made in the browser (`localStorage`, `bedahreview-device`). It only appears in the log line below, as a backup for people who signed in with an access code or a local run. It is not saved in Supabase.
 
 If the browser sends "Do Not Track", the page sends no events at all, except a feedback answer the tester presses Send on themselves.
+
+## The fixes list (a separate table, on purpose)
+
+Marking a complaint as fixed keeps a small record: the theme, the variant, the date, the complaint counts before and after, the **product link or name** (used to match later analyses of the same product), and the seller's own short **note**. It is kept in the browser and, when signed in, in the account's `fixes` table in Supabase so it opens on another phone. Only that account can read it from the app; whoever runs the Supabase project can read it in the dashboard. That is a product choice, and the privacy page and the fixes screen say so.
+
+- The note is the seller's own words, up to 200 characters. The page refuses a note that repeats 20 or more characters of a review in the current analysis (a guard, not a guarantee), and the fixes screen asks people not to write names.
+- Nothing from this table is ever sent in an event or printed in the log.
+- Signing out saves what is pending, then clears the copy kept in that browser. The account's copy stays.
+- Deleting the account deletes its fixes with it.
+- Honest limit: a fix deleted on one phone can come back from another phone that was offline with an old copy.
 
 ## The events
 
@@ -27,7 +37,7 @@ Every event carries `event` and a server timestamp `ts`, plus the fields below (
 | `analysed` | an analysis finishes | `reviews` (a number, 0 to 50), `source` (`paste` or `link`), `lang` (`id` or `en`) |
 | `tab_viewed` | the tester opens a results tab, or the Competitors section (`rivals`) | `tab` (`fix`, `fight`, `ignore`, `keep` or `rivals`) |
 | `draft_copied` | the tester taps Copy | `kind` (`fix`, `side`, `chat`, `public` or `report`). The draft text is not sent. |
-| `fix_marked` | "Mark as fixed" is saved | none. The theme, note and counts stay in the browser. |
+| `fix_marked` | "Mark as fixed" is saved | none. The fix itself goes to the fixes table, not into the event. |
 | `rivals_started` | a competitor search starts | none |
 | `feedback` | the tester sends "Was this useful?" | `answer` (`yes`, `partly` or `no`), and `comment` only if they typed one (300 characters at most) |
 
