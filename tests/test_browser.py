@@ -89,13 +89,14 @@ window.__probe = (async () => {
     out.draftAfterBack = (document.querySelector("#panel-fight .draft .bahasa") || {}).textContent;
   }
   if (location.hash === "#desktop") {
-    out.cols = getComputedStyle(document.querySelector(".workspace")).gridTemplateColumns.split(" ").length;
-    out.hostBefore = document.getElementById("rival-body").parentNode.id;  // the competitor panel has its own column, usable before any analysis
+    out.cols = getComputedStyle(document.querySelector(".workspace")).gridTemplateColumns.split(" ").map(parseFloat);
+    out.hostBefore = document.getElementById("rival-body").parentNode.id;
     out.formBefore = !!document.getElementById("rival-url");
     document.getElementById("sample").click();
     document.getElementById("run").click();
     for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
     out.hostAfter = document.getElementById("rival-body").parentNode.id;
+    out.start = (document.querySelector("#start .st") || {}).textContent || "";
     out.rivalTab = !!document.getElementById("tab-rival");
     out.board = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
     out.chip = document.getElementById("pchip").hidden;
@@ -383,7 +384,9 @@ class BrowserTests(unittest.TestCase):
 
     def test_wide_screen_puts_the_competitor_panel_in_its_own_column(self):
         out = self.probe("/#desktop", width=1300)
-        self.assertEqual(out["cols"], 2)
+        self.assertEqual(len(out["cols"]), 2)
+        self.assertAlmostEqual(out["cols"][0] / sum(out["cols"]), 0.6, places=2)  # review triage 60%, competitors 40%
+        self.assertTrue(out["start"].startswith("Perbaiki"))  # the "start here" line names the biggest fix
         self.assertEqual((out["hostBefore"], out["formBefore"]), ("rival-home", True))
         self.assertEqual(out["hostAfter"], "rival-home")  # it stays put when results arrive
         self.assertFalse(out["rivalTab"])  # the competitor section is not a tab of the results any more

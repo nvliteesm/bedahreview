@@ -65,7 +65,7 @@ def _split(url: str):
         host = (parts.hostname or "").lower()
         bad = parts.scheme != "https" or parts.username is not None or parts.password is not None or parts.port not in (None, 443)
     except ValueError:
-        raise LinkError("That does not look like a link.")
+        raise LinkError("That does not look like a link.", code="not_link")
     return parts, host, bad
 
 
@@ -76,21 +76,21 @@ def resolve_short_link(url: str, opener: Optional[Any] = None) -> str:
     for _ in range(_MAX_HOPS):
         _, host, bad = _split(current)
         if bad or not _allowed_host(host):
-            raise LinkError("Could not open that short link. Open the product and copy its full link instead.")
+            raise LinkError("Could not open that short link. Open the product and copy its full link instead.", code="short_open")
         if host not in SHORT_HOSTS:
             return current
         request = urllib.request.Request(current, headers={"User-Agent": "BedahReview/0.1"})
         try:
             opener.open(request, timeout=8).close()
-            raise LinkError("Could not open that short link. Open the product and copy its full link instead.")
+            raise LinkError("Could not open that short link. Open the product and copy its full link instead.", code="short_open")
         except urllib.error.HTTPError as exc:
             location = exc.headers.get("Location") if exc.code in _REDIRECT_CODES and exc.headers else None
             if not location:
-                raise LinkError("Could not open that short link. Open the product and copy its full link instead.")
+                raise LinkError("Could not open that short link. Open the product and copy its full link instead.", code="short_open")
             current = urljoin(current, location)
         except (urllib.error.URLError, OSError):
-            raise LinkError("Could not open that short link. Open the product and copy its full link instead.")
-    raise LinkError("Could not open that short link. Open the product and copy its full link instead.")
+            raise LinkError("Could not open that short link. Open the product and copy its full link instead.", code="short_open")
+    raise LinkError("Could not open that short link. Open the product and copy its full link instead.", code="short_open")
 
 
 def identify_link(text: str, resolver: Callable[[str], str] = resolve_short_link) -> Tuple[str, str]:
@@ -99,31 +99,31 @@ def identify_link(text: str, resolver: Callable[[str], str] = resolve_short_link
     url = (found.group(0) if found else (text or "").strip()).rstrip(".,;)")
     parts, host, bad = _split(url)
     if bad and parts.scheme != "https":
-        raise LinkError("Paste the full https link of a %s product." % SUPPORTED)
+        raise LinkError("Paste the full https link of a %s product." % SUPPORTED, code="link_https")
     if bad:
-        raise LinkError("That does not look like a product link.")
+        raise LinkError("That does not look like a product link.", code="not_product")
     if host in SHORT_HOSTS:
         url = resolver(url)
         parts, host, bad = _split(url)
         if bad or not _allowed_host(host):
-            raise LinkError("That short link does not lead to a %s product." % SUPPORTED)
+            raise LinkError("That short link does not lead to a %s product." % SUPPORTED, code="short_bad")
     path = parts.path
     if host == "shopee.co.id" or host.endswith(".shopee.co.id"):
-        raise LinkError(SHOPEE_MESSAGE)
+        raise LinkError(SHOPEE_MESSAGE, code="shopee")
     if host in LAZADA_HOSTS:
         if not path.startswith("/products/") or not path.endswith(".html"):
-            raise LinkError("Open the Lazada product page and copy its link. It should start with lazada.co.id/products/")
+            raise LinkError("Open the Lazada product page and copy its link. It should start with lazada.co.id/products/", code="lazada_link")
         return "lazada", "https://www.lazada.co.id" + path
     if host == TIKTOK_SHOP_HOST or host in TIKTOK_HOSTS:
         match = _TIKTOK_ID.search(path if path.endswith("/") else path + "/")
         if not match or (host in TIKTOK_HOSTS and "/shop/" not in path):
-            raise LinkError("That is not a TikTok Shop product link.")
+            raise LinkError("That is not a TikTok Shop product link.", code="tiktok_link")
         return "tiktokshop", "https://%s/view/product/%s" % (TIKTOK_SHOP_HOST, match.group(1))
     if host in TOKOPEDIA_HOSTS:
         if len([s for s in path.split("/") if s]) < 2:
-            raise LinkError("Open the Tokopedia product page and copy its link (it has the shop name, then the product).")
+            raise LinkError("Open the Tokopedia product page and copy its link (it has the shop name, then the product).", code="tokopedia_link")
         return "tokopedia", "https://www.tokopedia.com" + path
-    raise LinkError("This link is not supported. Paste a %s product link, or paste the reviews." % SUPPORTED)
+    raise LinkError("This link is not supported. Paste a %s product link, or paste the reviews." % SUPPORTED, code="link_unsupported")
 
 
 # -- shared pieces ----------------------------------------------------------
@@ -192,14 +192,14 @@ class _Actors:
                 self._budget.reserve(self._cap)  # before the run, at its worst-case cost; a cache hit never gets here
             run = self._start(actor_id, run_input)
             if not run:
-                raise FetchError("The fetch service took too long.")
+                raise FetchError("The fetch service took too long.", code="fetch_slow")
             if run.get("status") not in (None, "SUCCEEDED"):
-                raise FetchError("The fetch service could not read reviews for that link.")
+                raise FetchError("The fetch service could not read reviews for that link.", code="fetch_failed")
             items = list(self._client.dataset(run["defaultDatasetId"]).iterate_items())
         except FetchError:
             raise
         except Exception as exc:
-            raise FetchError("The fetch service failed (%s)." % type(exc).__name__)
+            raise FetchError("The fetch service failed (%s)." % type(exc).__name__, code="fetch_failed")
         return [i for i in items if isinstance(i, dict)]
 
 
@@ -209,9 +209,9 @@ def _finish(reviews: List[Review], limit: int, mode: str) -> List[Review]:
     if mode == "complaints":
         kept = sorted((r for r in kept if r.star is not None and r.star <= max(COMPLAINT_STARS)), key=lambda r: r.star or 0)
         if not kept:
-            raise FetchError("No low-rated reviews with a comment were found for that product. Try Latest reviews.")
+            raise FetchError("No low-rated reviews with a comment were found for that product. Try Latest reviews.", code="no_low")
     if not kept:
-        raise FetchError("No reviews with a comment came back for that product.")
+        raise FetchError("No reviews with a comment came back for that product.", code="no_reviews")
     return kept[:limit]
 
 
@@ -290,7 +290,7 @@ class TikTokShopFetcher(Fetcher):
     def fetch_reviews(self, url: str, limit: int, mode: str = "latest") -> List[Review]:
         match = _TIKTOK_ID.search(urlsplit(url).path + "/")
         if not match:
-            raise LinkError("That is not a TikTok Shop product link.")
+            raise LinkError("That is not a TikTok Shop product link.", code="tiktok_link")
         product_id, want = match.group(1), limit + SPARE_REVIEWS
         if mode != "complaints":
             return _finish(self._run(product_id, want, "all", "most_recent"), limit, mode)

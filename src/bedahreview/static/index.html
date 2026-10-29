@@ -158,6 +158,12 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
 .ignore-list { display: grid; gap: 8px; list-style: none; padding: 0; }
 .ignore-list li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 0.92rem; overflow-wrap: anywhere; }
 .foot { font-size: 0.8rem; color: var(--muted); }
+main, #view-results, #view-fixes, .panel, .stack { grid-template-columns: minmax(0, 1fr); }  /* one column that never grows past its box, even for a long product name */
+.start { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--accent-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+.start > div { flex: 1 1 220px; min-width: 0; display: grid; gap: 2px; }
+.start .eb { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.start .st { font-weight: 700; overflow-wrap: anywhere; }
+.start .btn.primary { width: auto; flex: none; }
 
 
 /* ---------- shared pieces (new) ---------- */
@@ -244,7 +250,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   body { overflow: hidden; display: flex; flex-direction: column; }
   .topbar { position: static; flex: none; padding: 0 36px; }
   .topbar-in { max-width: none; min-height: 72px; }
-  .workspace { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; }
+  .workspace { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }  /* 60 / 40: review triage is the main job */
   .col { min-width: 0; overflow-y: auto; padding: 28px 36px 56px; }
   main.col { max-width: none; margin: 0; gap: 18px; }
   .col-2 { display: block; border-left: 2px solid var(--line); }
@@ -263,7 +269,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   .eyebrow { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; color: var(--accent); }
   .eyebrow.rival { color: var(--rival); }
   .fhead h1 { margin: 0; font-size: 1.8rem; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; }
-  .fside { display: flex; align-items: center; gap: 8px; flex: 0 1 auto; max-width: 100%; margin-left: auto; }
+  .fside { display: flex; align-items: center; gap: 8px; flex: 0 1 auto; max-width: 100%; min-width: 0; margin-left: auto; }
   .pchip { display: flex; align-items: center; gap: 6px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 8px 6px 16px; font-size: 0.92rem; box-shadow: var(--shadow); }
   .pchip b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pchip span { white-space: nowrap; color: var(--muted); }
@@ -285,15 +291,15 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   .error { border-radius: var(--radius); padding: 18px 20px; order: -1; }
   .error strong { font-size: 1.25rem; }
   .board { gap: 14px; }
-  .board button, .board button.main { grid-template-columns: auto 1fr auto; grid-template-areas: "ic l badge" "n n n"; justify-items: start; align-items: center; column-gap: 12px; row-gap: 8px; min-height: 118px; padding: 16px 18px; border-radius: var(--radius); box-shadow: var(--shadow); text-align: left; }
+  .board button, .board button.main { grid-template-columns: auto 1fr auto; grid-template-areas: "ic l badge" "n n n"; justify-items: start; align-items: center; column-gap: 12px; row-gap: 4px; min-height: 0; padding: 12px 16px; border-radius: var(--radius); box-shadow: var(--shadow); text-align: left; }
   .board button .ic { grid-area: ic; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--ignore-soft); color: var(--ignore); }
   .board button .ic svg { width: 17px; height: 17px; }
   .board button[data-b="fix"] .ic { background: var(--fix-soft); color: var(--fix); } .board button[data-b="fight"] .ic { background: var(--fight-soft); color: var(--fight); } .board button[data-b="keep"] .ic { background: var(--keep-soft); color: var(--keep); }
   .board .l, .board button.main .l { grid-area: l; font-size: 1.05rem; color: var(--ink); }
-  .board .n, .board button.main .n { grid-area: n; display: flex; align-items: baseline; gap: 10px; font-size: 2.3rem; }
+  .board .n, .board button.main .n { grid-area: n; display: flex; align-items: baseline; gap: 10px; font-size: 1.9rem; }
   .board .n::after { content: attr(data-d); font-size: 0.92rem; font-weight: 500; color: var(--muted); }
   .board button[aria-selected="true"]::after { content: attr(data-shown); grid-area: badge; font-size: 0.75rem; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 2px 12px; }
-  .board button[aria-selected="true"] { border-width: 2px; padding: 15px 17px; }
+  .board button[aria-selected="true"] { border-width: 2px; padding: 11px 15px; }
   .phead { font-size: 1.5rem; line-height: 1.2; font-weight: 800; letter-spacing: -0.01em; }
   .lead { color: var(--muted); margin-top: -8px; }
   .panel { gap: 14px; }
@@ -471,13 +477,14 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
         <button class="btn ghost" id="print" type="button" data-i18n="print"></button>
       </div>
     </div>
-    <div id="notes" style="display:grid;gap:8px"></div>
+    <div id="start"></div>
     <button class="btn ghost mob" id="rivals-open" type="button" data-i18n="rivalsOpen"></button>
     <div class="board" id="tabs" role="tablist"></div>
     <details class="legend dsk">
       <summary data-i18n="legendSummary"></summary>
       <div id="legend"></div>
     </details>
+    <div id="notes" style="display:grid;gap:8px"></div>
     <div id="panels"></div>
     <div class="card-box" id="feedback" hidden></div>
     <p class="foot" id="foot"></p>
@@ -565,7 +572,7 @@ const TEXT = {
     linkHint: "Kami membaca hingga 10 ulasan terbaru yang berisi teks. Nama pembeli tidak disimpan.", linkOpts: "Pilihan lain", trySample: "Belum punya tautan? Coba dengan contoh",
     navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Bandingkan dengan pesaing",
     rivalWantLbl: "Berapa pesaing?", rivalExampleBtn: "Lihat contoh (gratis)", rivalExampleHead: "Contoh, bukan data nyata.",
-    rivalExampleBody: "Angka dan kutipan di bawah dibuat untuk contoh. Tidak ada toko atau pembeli sungguhan, dan tidak ada biaya.",
+    rivalExampleBody: "Angka dan kutipan di bawah dibuat untuk contoh. “Contoh Kaos Boxy” bukan produkmu: tidak ada toko atau pembeli sungguhan, dan tidak ada biaya.",
     rivalNoBox: "Pencarian pesaing butuh kotak tautan, yang belum menyala di sini. Kamu masih bisa melihat contoh.",
     groupLearn: "Pelajari dari pesaing", groupLearnSub: "Mereka lebih baik di sini, atau lebih sering dipuji.", groupAvoid: "Hindari", groupAvoidSub: "Pesaing kena keluhan ini, kamu tidak. Jangan ikuti, dan jadikan alasan orang memilihmu.",
     groupIgnore: "Abaikan", groupIgnoreSub: "Selisihnya kecil atau sama saja: tidak perlu ditindak.", groupNone: "Belum ada.",
@@ -608,6 +615,23 @@ const TEXT = {
     rivalFakeLine: "%s ulasan pesaing diduga palsu dan tidak dihitung (%s).", rivalFakeEach: "%s: %s dibaca, %s dihitung", rivalSmallNote: "%s tidak dipakai untuk kalimat di atas karena ulasannya terlalu sedikit.",
     rivalLineWorse: "%s: %s di produkmu, di pesaing terbaik %s.", rivalLineOther: "%s: %s di produkmu, %s di %s.",
     rivalAlone: "Tanpa Bedah ulasan, kami tidak membandingkan dengan produkmu. Jalankan Bedah ulasan untuk melihat selisihnya.", rivalLinkLbl: "Lihat ulasannya",
+    rivalLineWorseEx: "%s: %s di %s, di pesaing terbaik %s.", rivalLineOtherEx: "%s: %s di %s, %s di %s.",
+    startHere: "Mulai dari sini", startFix: "Perbaiki “%s”: %s ulasan mengeluhkan ini.", startSeeFix: "Lihat saran", startFight: "Balas ulasan tentang “%s”. Drafnya siap disalin.", startSeeFight: "Lihat draf",
+    startNone: "Tidak ada keluhan yang perlu ditindak. Lihat yang dipuji pembeli di Pertahankan.", whySteps: "Kenapa & langkahnya",
+    // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
+    e_not_link: "Itu tidak terlihat seperti tautan.", e_link_https: "Tempel tautan https lengkap dari produk Tokopedia, Lazada, atau TikTok Shop.", e_not_product: "Itu tidak terlihat seperti tautan produk.",
+    e_short_bad: "Tautan pendek itu tidak mengarah ke produk Tokopedia, Lazada, atau TikTok Shop.", e_short_open: "Tautan pendek itu tidak bisa dibuka. Buka produknya, lalu salin tautan lengkapnya.",
+    e_shopee: "Shopee Indonesia belum membuka ulasannya untuk aplikasi lain, jadi tautan Shopee tidak bisa dibaca. Tempel ulasannya, atau pakai Bagikan dari aplikasi Shopee.",
+    e_lazada_link: "Buka halaman produk Lazada, lalu salin tautannya. Awalnya harus lazada.co.id/products/", e_tiktok_link: "Itu bukan tautan produk TikTok Shop.",
+    e_tokopedia_link: "Buka halaman produk Tokopedia, lalu salin tautannya (berisi nama toko, lalu nama produk).", e_link_unsupported: "Tautan ini belum didukung. Tempel tautan produk Tokopedia, Lazada, atau TikTok Shop, atau tempel ulasannya.",
+    e_fetch_slow: "Layanan pengambil ulasan terlalu lama.", e_fetch_failed: "Layanan pengambil ulasan tidak bisa membaca ulasan dari tautan itu.",
+    e_no_low: "Tidak ada ulasan bintang rendah yang berisi komentar untuk produk ini. Coba Ulasan terbaru.", e_no_reviews: "Tidak ada ulasan berisi komentar untuk produk ini.",
+    e_box_off: "Kotak tautan sedang tidak aktif.", e_no_title: "Nama produk belum ada, jadi pesaing tidak bisa dicari. Isi nama produknya.",
+    e_search_platform: "Pencarian pesaing belum tersedia untuk platform ini.", e_pick_count: "Pilih 1 sampai 3 pesaing untuk dibandingkan.", e_pick_other: "Pilih pesaing selain produkmu sendiri.",
+    e_suggest_failed: "Pencarian pesaing gagal.", e_compare_failed: "Perbandingan gagal. Coba lagi sebentar lagi.", e_too_many: "Terlalu banyak analisis dalam satu jam. Coba lagi nanti.",
+    e_server: "Ada masalah di server. Coba lagi.", e_too_large: "Teksnya kosong atau terlalu panjang. Kurangi jumlah ulasan.", e_no_parse: "Tidak ada ulasan yang terbaca. Tempel minimal satu ulasan.",
+    e_too_many_reviews: "Terlalu banyak ulasan sekaligus. Maksimal %s per analisis.", e_model_bad: "Jawaban model tidak bisa dipakai. Coba lagi.", e_model_down: "Tidak bisa menghubungi Gemini. Coba lagi sebentar lagi.",
+    e_paste: "Kamu bisa menempel ulasannya.", e_pasteRivals: "Kamu bisa menempel tautan pesaing.", e_other: "Coba pesaing lain.",
   },
   en: {
     navCheck: "Check", navNew: "New reviews", newReviews: "New reviews",
@@ -666,7 +690,7 @@ const TEXT = {
     linkHint: "We read up to 10 of the newest reviews that have text. Buyer names are not saved.", linkOpts: "More options", trySample: "No link yet? Try an example",
     navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Compare with competitors",
     rivalWantLbl: "How many competitors?", rivalExampleBtn: "See an example (free)", rivalExampleHead: "Example, not live data.",
-    rivalExampleBody: "The numbers and quotes below were made up for this example. No real shops or buyers, and no cost.",
+    rivalExampleBody: "The numbers and quotes below were made up for this example. “Contoh Kaos Boxy” is not your product: no real shops or buyers, and no cost.",
     rivalNoBox: "Finding competitors needs the link box, which is not switched on here. You can still see an example.",
     groupLearn: "Learn from", groupLearnSub: "They do better here, or get praised more.", groupAvoid: "Avoid", groupAvoidSub: "Competitors get this complaint and you do not. Do not copy it, and make it a reason to choose you.",
     groupIgnore: "Ignore", groupIgnoreSub: "A small gap or no gap: nothing to act on.", groupNone: "None yet.",
@@ -709,6 +733,9 @@ const TEXT = {
     rivalFakeLine: "%s competitor review(s) look fake and are not counted (%s).", rivalFakeEach: "%s: %s read, %s counted", rivalSmallNote: "%s is not used for the lines above because it has too few reviews.",
     rivalLineWorse: "%s: %s for you, %s for the best competitor.", rivalLineOther: "%s: %s for you, %s at %s.",
     rivalAlone: "Without Review triage we cannot compare against your product. Run Review triage to see the gap.", rivalLinkLbl: "See the reviews",
+    rivalLineWorseEx: "%s: %s for %s, %s for the best competitor.", rivalLineOtherEx: "%s: %s for %s, %s at %s.",
+    startHere: "Start here", startFix: "Fix “%s”: %s review(s) complain about this.", startSeeFix: "See the fix", startFight: "Answer the review about “%s”. The draft is ready to copy.", startSeeFight: "See the draft",
+    startNone: "No complaints to act on. See what buyers praise under Keep.", whySteps: "Why & steps",
   },
 };
 const THEME_ID = {
@@ -883,10 +910,10 @@ function replyCard(item) {
         item.check_first ? h("span", { class: "chip hot", text: tr("chipCourier") }) : null,
         item.variant ? h("span", { class: "chip soft", text: item.variant }) : null,
         item.confidence === "low" ? h("span", { class: "chip", text: tr("chipLow") }) : null)),
-    quote(item), fullText(item),
-    why ? h("p", { class: "why", lang }, h("b", { text: tr("whyLbl") }), why) : null,
-    steps.length ? h("ol", { class: "steps-list", lang }, steps.map((s) => h("li", { text: s }))) : null,
-    box);
+    quote(item), fullText(item), box,
+    why || steps.length ? h("details", { class: "full" }, h("summary", { text: tr("whySteps") }), h("div", { class: "stack" },
+      why ? h("p", { class: "why", lang }, h("b", { text: tr("whyLbl") }), why) : null,
+      steps.length ? h("ol", { class: "steps-list", lang }, steps.map((s) => h("li", { text: s }))) : null)) : null);
 }
 function fixCard(group, byId) {
   const members = group.ids.map((id) => byId[id]);
@@ -899,6 +926,23 @@ function fixCard(group, byId) {
     shown.map((m) => [quote(m), fullText(m)]),
     more.length ? h("details", { class: "full" }, h("summary", { text: tr("moreQuotes", more.length) }), h("div", { class: "stack" }, more.map((m) => [quote(m), fullText(m)]))) : null,
     fixTracker(group));
+}
+function startHere(groups, fight, byId) {  // the one task to do first: the biggest fix, else the first review to answer
+  let text, detail = null, tab, label;
+  if (groups.length) {
+    const g = groups[0];
+    text = tr("startFix", themeName(g.theme), g.n); detail = g.ids.map((id) => (byId[id] || {}).fix_suggestion_id).find(Boolean) || null; tab = "fix"; label = tr("startSeeFix");
+  } else if (fight.length) {
+    text = tr("startFight", themeName(fight[0].theme)); tab = "fight"; label = tr("startSeeFight");
+  } else {
+    return h("div", { class: "start" }, h("div", {}, h("p", { class: "eb", text: tr("startHere") }), h("p", { class: "st", text: tr("startNone") })));
+  }
+  const go = h("button", { class: "btn primary", type: "button", text: label, onclick: () => {
+    selectTab(tab, false);
+    const card = $("panel-" + tab).querySelector(".card");
+    if (card) card.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
+  } });
+  return h("div", { class: "start" }, h("div", {}, h("p", { class: "eb", text: tr("startHere") }), h("p", { class: "st", text }), detail ? h("p", { class: "small muted", lang: "id", text: detail }) : null), go);
 }
 function keepBody(keep) {
   const themes = [...new Set(keep.map((k) => k.theme.replace(/^Praise: /, "")))];
@@ -1186,6 +1230,7 @@ function render(data, fresh) {
   if (data.no_text) notes.push(h("div", { class: "callout", text: tr("noteNoText", data.no_text) }));
   if (data.dropped) notes.push(h("div", { class: "callout warn", text: tr("noteDropped", data.dropped) }));
   $("notes").replaceChildren(...notes);
+  $("start").replaceChildren(startHere(fixItems, fight, byId));
 
   const cap = (k) => k[0].toUpperCase() + k.slice(1);
   $("pchip-name").textContent = src.title || tr("pastedName");
@@ -1263,6 +1308,11 @@ function errText(data, fallback, rival) {  // the server sends a limit code; the
   if (data && data.limit === "budget") return tr(rival ? "limitBudgetRival" : "limitBudget");
   if (data && data.limit === "hour") return tr("limitHour");
   if (data && data.limit === "busy") return tr("limitBusy");
+  const own = data && data.code && TEXT[lang]["e_" + data.code];  // the server words it in English; say known problems in the page language
+  if (own) {
+    const next = data.fallback === "paste" ? (rival ? "e_pasteRivals" : "e_paste") : data.fallback === "other" ? "e_other" : "";
+    return own.replace("%s", data.max || "") + (next ? " " + TEXT[lang][next] : "");
+  }
   return (data && data.error) || fallback;
 }
 function pastedLinks(text) { return (text.match(/https?:\/\/[^\s<>"']+/g) || []).map((u) => ({ url: u })); }
@@ -1367,7 +1417,8 @@ function rivalResult(d) {
   const absent = !!d.you.absent;
   const names = d.competitors.map((c, i) => tr("rivalShop", String.fromCharCode(65 + i)));
   const nameOf = (who) => names[d.competitors.findIndex((c) => c.title === who)] || who;
-  const heads = (absent ? [] : [[tr("rivalYou"), d.you.credible]]).concat(d.competitors.map((c, i) => [names[i], c.credible]));
+  const exName = d.example ? d.you.title : "";  // the free example's "own" numbers are made up: name the example product, never "you"
+  const heads = (absent ? [] : [[exName || tr("rivalYou"), d.you.credible]]).concat(d.competitors.map((c, i) => [names[i], c.credible]));
   const body = [];
   for (const kind of ["complaint", "praise"]) {
     const rows = d.rows.filter((r) => r.kind === kind);
@@ -1384,7 +1435,8 @@ function rivalResult(d) {
   }
   const card = (x) => {
     const theme = plainTheme(x.theme), complaint = x.kind !== "praise_gap";
-    const text = x.kind === "worse" ? tr("rivalLineWorse", theme, x.you, x.best) : tr("rivalLineOther", theme, x.you, x.them, nameOf(x.who));
+    const text = exName ? (x.kind === "worse" ? tr("rivalLineWorseEx", theme, x.you, exName, x.best) : tr("rivalLineOtherEx", theme, x.you, exName, x.them, nameOf(x.who)))
+      : x.kind === "worse" ? tr("rivalLineWorse", theme, x.you, x.best) : tr("rivalLineOther", theme, x.you, x.them, nameOf(x.who));
     return h("div", { class: "ins " + (complaint ? "bad" : "good") }, h("div", { class: "big" }, h("b", { text: x.you }), h("i", { text: "vs" }), h("b", { text: x.kind === "worse" ? x.best : x.them })),
       h("p", {}, h("span", { class: complaint ? "bad" : "good", text: tr(complaint ? "rivalComplaints" : "rivalPraise") }), " · " + text));
   };

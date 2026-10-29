@@ -63,7 +63,7 @@ def search_products(actors: Any, platform: str, query: str) -> List[Candidate]:
     """Listings for a search phrase on one platform, best-reviewed first where the platform allows it. `actors` has run(actor_id, input)."""
     query = _text(query)
     if not query:
-        raise FetchError("There is nothing to search for.")
+        raise FetchError("There is nothing to search for.", code="no_title")
     if platform == "tokopedia":
         rows = actors.run(TOKOPEDIA_SEARCH_ACTOR, {"outputMode": "products", "keywords": [query], "sortBy": "reviews", "maxItems": SEARCH_RESULTS})
         found = [tokopedia_candidate(r) for r in rows]
@@ -71,7 +71,7 @@ def search_products(actors: Any, platform: str, query: str) -> List[Candidate]:
         rows = actors.run(LAZADA_SEARCH_ACTOR, {"mode": "search", "country": "ID", "searchTerms": [query], "maxItems": SEARCH_RESULTS})
         found = [lazada_candidate(r) for r in rows]
     else:
-        raise FetchError("Finding competitors is not available on this platform yet. Paste competitor links instead.")
+        raise FetchError("Finding competitors is not available on this platform yet. Paste competitor links instead.", code="search_platform")
     return [c for c in found if c]
 
 

@@ -266,6 +266,7 @@ class WebFlowTests(unittest.TestCase):
         status, out = self.post({"url": "https://shopee.co.id/Kaos-i.450430857.27207810374"})
         self.assertEqual(status, 400)
         self.assertIn("Paste the reviews", out["error"])
+        self.assertEqual(out["code"], "shopee")  # the page says it in Bahasa from the code
         self.assertEqual(self.client.calls, [])
 
 

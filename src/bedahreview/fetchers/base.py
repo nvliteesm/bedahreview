@@ -16,7 +16,11 @@ _PRODUCT_PATH = re.compile(r"-i\.\d+\.\d+/?$")
 
 
 class FetchError(Exception):
-    """Reviews could not be fetched. The message is safe to show the seller."""
+    """Reviews could not be fetched. The message is safe to show the seller. `code` names the problem so the page can say it in Bahasa."""
+
+    def __init__(self, message: str = "", code: str = "") -> None:
+        super().__init__(message)
+        self.code = code
 
 
 class LinkError(FetchError):
@@ -61,7 +65,7 @@ def check_shopee_product_url(url: str) -> str:
         has_userinfo = parts.username is not None or parts.password is not None
         port = parts.port
     except ValueError:
-        raise FetchError("That does not look like a link.")
+        raise FetchError("That does not look like a link.", code="not_link")
     if parts.scheme != "https" or host not in _SHOPEE_HOSTS or has_userinfo or port not in (None, 443):
         raise FetchError("Only https://shopee.co.id product links work in this demo.")
     if not _PRODUCT_PATH.search(parts.path):

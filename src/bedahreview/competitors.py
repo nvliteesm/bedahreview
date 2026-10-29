@@ -143,7 +143,7 @@ def fetch_sample(fetch: Callable[[str, int, str], List[Review]], url: str) -> Li
             mixed.append(review)
     if not mixed:
         # The newest-reviews error comes first: "no complaints" is normal for a good product, so it explains little.
-        raise errors.get("latest") or errors.get("complaints") or FetchError("No reviews with a comment came back.")
+        raise errors.get("latest") or errors.get("complaints") or FetchError("No reviews with a comment came back.", code="no_reviews")
     return mixed
 
 
@@ -213,16 +213,17 @@ def compare_competitors(
         try:
             return analyse_competitor(fetch, classify_fn, entry["url"], entry.get("title", ""))
         except FetchError as exc:
-            return {"failed": True, "budget": isinstance(exc, BudgetError), "title": entry.get("title", ""), "url": entry["url"], "error": str(exc)}
+            return {"failed": True, "budget": isinstance(exc, BudgetError), "title": entry.get("title", ""), "url": entry["url"], "error": str(exc), "code": getattr(exc, "code", "")}
 
     with ThreadPoolExecutor(max_workers=len(chosen) or 1) as pool:
         done = list(pool.map(one, chosen))
     rivals = [d for d in done if not d.get("failed")]
     failed = [{"title": d["title"], "url": d["url"], "error": d["error"]} for d in done if d.get("failed")]
+    codes = [d["code"] for d in done if d.get("failed")]
     if not rivals:
         if any(d.get("budget") for d in done):
             raise BudgetError("Demo limit reached today.")
-        raise FetchError(failed[0]["error"] if failed else "No competitors to compare.")
+        raise FetchError(failed[0]["error"] if failed else "No competitors to compare.", code=codes[0] if codes else "")
     # No own reviews (the seller skipped Bedah ulasan): show the rivals side by side, and make no statement about "you".
     you = dict(tally(own_items), title=own_title, absent=not own_items)
     rows = comparison_rows(you, rivals)

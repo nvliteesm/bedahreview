@@ -436,7 +436,7 @@ class Handler(BaseHTTPRequestHandler):
         """Fetch reviews from a product link (demo). Returns (reviews, source) or None after sending an error."""
         fetcher = type(self).fetcher
         if fetcher is None:
-            self._json(400, {"error": "The link box is switched off. Paste the reviews instead."})
+            self._json(400, {"error": "The link box is switched off. Paste the reviews instead.", "code": "box_off"})
             return None
         try:
             check_link = getattr(fetcher, "check_link", None)  # the link router knows every supported platform; older fetchers are Shopee-only
@@ -444,7 +444,7 @@ class Handler(BaseHTTPRequestHandler):
             limit = clamp_limit(limit)
             mode = check_mode(mode)
         except FetchError as exc:  # includes LinkError
-            self._json(400, {"error": str(exc)})
+            self._json(400, {"error": str(exc), "code": exc.code})
             return None
         if not self._paid_ok():  # a saved copy costs nothing but is counted too; the limit is per visitor and generous enough
             return None
@@ -454,11 +454,11 @@ class Handler(BaseHTTPRequestHandler):
             self._json(429, {"error": "Demo limit reached today. Paste the reviews instead.", "fallback": "paste", "limit": "budget"})
             return None
         except FetchError as exc:
-            self._json(502, {"error": "%s You can paste the reviews instead." % exc, "fallback": "paste"})
+            self._json(502, {"error": "%s You can paste the reviews instead." % exc, "fallback": "paste", "code": exc.code})
             return None
         except Exception as exc:
             sys.stderr.write("fetch failed: %s\n" % type(exc).__name__)
-            self._json(502, {"error": "Could not fetch reviews from that link. You can paste the reviews instead.", "fallback": "paste"})
+            self._json(502, {"error": "Could not fetch reviews from that link. You can paste the reviews instead.", "fallback": "paste", "code": "fetch_failed"})
             return None
         listing = next((r.product for r in fetched if getattr(r, "product", None)), None)
         title = listing or ("" if check_link else product_title_from_url(url))  # the router's links carry no title; its reviews do
@@ -470,7 +470,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self._authed():
             return self._json(401, {"error": "Please sign in again.", "login": True})
         if self.use_limiter and not self.use_limiter.take(self._client()):
-            return self._json(429, {"error": "Too many analyses this hour. Try again later."})
+            return self._json(429, {"error": "Too many analyses this hour. Try again later.", "code": "too_many"})
         try:
             length = int(self.headers.get("Content-Length") or 0)
             if "application/json" not in (self.headers.get("Content-Type") or "") or not 0 < length <= MAX_BODY_BYTES:
@@ -484,17 +484,17 @@ class Handler(BaseHTTPRequestHandler):
         fetcher = type(self).fetcher
         search = getattr(fetcher, "search", None)
         if search is None:
-            return self._json(400, {"error": "Finding competitors needs the link box. Paste competitor links instead.", "fallback": "paste"})
+            return self._json(400, {"error": "Finding competitors needs the link box. Paste competitor links instead.", "fallback": "paste", "code": "box_off"})
         title = " ".join(title.split())[:MAX_PRODUCT_CHARS]
         if not title:
-            return self._json(400, {"error": "The product title is missing, so competitors cannot be searched."})
+            return self._json(400, {"error": "The product title is missing, so competitors cannot be searched.", "code": "no_title"})
         try:
             url = fetcher.check_link(url)
         except FetchError as exc:
-            return self._json(400, {"error": str(exc)})
+            return self._json(400, {"error": str(exc), "code": exc.code})
         platform = fetcher.last_platform
         if platform not in SEARCH_PLATFORMS:
-            return self._json(400, {"error": "Finding competitors is not available for this platform yet. Paste competitor links instead.", "fallback": "paste"})
+            return self._json(400, {"error": "Finding competitors is not available for this platform yet. Paste competitor links instead.", "fallback": "paste", "code": "search_platform"})
         if not self._paid_ok():
             return
         try:
@@ -502,10 +502,10 @@ class Handler(BaseHTTPRequestHandler):
         except BudgetError:
             return self._json(429, {"error": "Demo limit reached today. Try again tomorrow.", "limit": "budget"})
         except FetchError as exc:
-            return self._json(502, {"error": "%s You can paste competitor links instead." % exc, "fallback": "paste"})
+            return self._json(502, {"error": "%s You can paste competitor links instead." % exc, "fallback": "paste", "code": exc.code})
         except Exception as exc:  # model or network trouble: say what happened without a traceback
             sys.stderr.write("suggest failed: %s\n" % type(exc).__name__)
-            return self._json(502, {"error": "Could not look for competitors (%s). You can paste competitor links instead." % type(exc).__name__, "fallback": "paste"})
+            return self._json(502, {"error": "Could not look for competitors (%s). You can paste competitor links instead." % type(exc).__name__, "fallback": "paste", "code": "suggest_failed"})
         self._json(200, result)
 
     def _compare(self) -> None:
@@ -513,11 +513,11 @@ class Handler(BaseHTTPRequestHandler):
         if not self._authed():
             return self._json(401, {"error": "Please sign in again.", "login": True})
         if self.use_limiter and not self.use_limiter.take(self._client()):
-            return self._json(429, {"error": "Too many analyses this hour. Try again later."})
+            return self._json(429, {"error": "Too many analyses this hour. Try again later.", "code": "too_many"})
         fetcher = type(self).fetcher
         fetch, check_link = getattr(fetcher, "fetch_fresh", None), getattr(fetcher, "check_link", None)
         if fetch is None or check_link is None:
-            return self._json(400, {"error": "Comparing needs the link box. Paste competitor links instead.", "fallback": "paste"})
+            return self._json(400, {"error": "Comparing needs the link box. Paste competitor links instead.", "fallback": "paste", "code": "box_off"})
         try:
             length = int(self.headers.get("Content-Length") or 0)
             if "application/json" not in (self.headers.get("Content-Type") or "") or not 0 < length <= MAX_BODY_BYTES:
@@ -532,7 +532,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError
             own_url = body.get("url") or ""
         except (ValueError, UnicodeDecodeError, KeyError, TypeError, AttributeError):
-            return self._json(400, {"error": "Choose 1 to %d competitors to compare." % MAX_COMPETITORS})
+            return self._json(400, {"error": "Choose 1 to %d competitors to compare." % MAX_COMPETITORS, "code": "pick_count"})
         try:
             mine = check_link(own_url) if own_url else ""
             competitors = []
@@ -541,9 +541,9 @@ class Handler(BaseHTTPRequestHandler):
                 if clean != mine and all(clean != c["url"] for c in competitors):
                     competitors.append({"url": clean, "title": entry["title"]})
         except FetchError as exc:
-            return self._json(400, {"error": str(exc)})
+            return self._json(400, {"error": str(exc), "code": exc.code})
         if not competitors:
-            return self._json(400, {"error": "Choose competitors other than your own product."})
+            return self._json(400, {"error": "Choose competitors other than your own product.", "code": "pick_other"})
         if not self._paid_ok():
             return
         try:
@@ -551,10 +551,10 @@ class Handler(BaseHTTPRequestHandler):
         except BudgetError:
             return self._json(429, {"error": "Demo limit reached today. Try again tomorrow.", "limit": "budget"})
         except FetchError as exc:
-            return self._json(502, {"error": "%s You can try other competitors." % exc})
+            return self._json(502, {"error": "%s You can try other competitors." % exc, "fallback": "other", "code": exc.code})
         except Exception as exc:  # model or network trouble: say what happened without a traceback
             sys.stderr.write("compare failed: %s\n" % type(exc).__name__)
-            return self._json(502, {"error": "Could not compare (%s). Try again in a moment." % type(exc).__name__})
+            return self._json(502, {"error": "Could not compare (%s). Try again in a moment." % type(exc).__name__, "code": "compare_failed"})
         self._json(200, result)
 
     # -- routes ----------------------------------------------------------
@@ -567,7 +567,7 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             sys.stderr.write("request failed: %s\n" % type(exc).__name__)
             try:
-                self._json(500, {"error": "Something went wrong on the server. Try again."})
+                self._json(500, {"error": "Something went wrong on the server. Try again.", "code": "server"})
             except Exception:
                 self.close_connection = True
 
@@ -650,7 +650,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self._authed():
             return self._json(401, {"error": "Please sign in again.", "login": True})
         if self.use_limiter and not self.use_limiter.take(self._client()):
-            return self._json(429, {"error": "Too many analyses this hour. Try again later."})
+            return self._json(429, {"error": "Too many analyses this hour. Try again later.", "code": "too_many"})
         if "application/json" not in (self.headers.get("Content-Type") or ""):
             return self._json(415, {"error": "Send JSON"})
         try:
@@ -658,7 +658,7 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             return self._json(400, {"error": "Bad Content-Length"})
         if length <= 0 or length > MAX_BODY_BYTES:
-            return self._json(413, {"error": "Paste is empty or too large (limit %d KB)" % (MAX_BODY_BYTES // 1000)})
+            return self._json(413, {"error": "Paste is empty or too large (limit %d KB)" % (MAX_BODY_BYTES // 1000), "code": "too_large"})
         try:
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             if not isinstance(body, dict):
@@ -680,20 +680,20 @@ class Handler(BaseHTTPRequestHandler):
             name = " ".join(product.split())[:MAX_PRODUCT_CHARS]
             source = {"kind": "paste", "title": name} if name else None
         if not reviews:
-            return self._json(400, {"error": "No reviews found. Paste at least one review."})
+            return self._json(400, {"error": "No reviews found. Paste at least one review.", "code": "no_parse"})
         if len(reviews) > MAX_REVIEWS:
-            return self._json(400, {"error": "%d reviews pasted; v1 handles up to %d at a time." % (len(reviews), MAX_REVIEWS)})
+            return self._json(400, {"error": "%d reviews pasted; v1 handles up to %d at a time." % (len(reviews), MAX_REVIEWS), "code": "too_many_reviews", "max": MAX_REVIEWS})
 
         model = resolve_model()
         try:
             title = (source or {}).get("title") or " ".join(product.split())[:MAX_PRODUCT_CHARS] or None
             results = type(self).classify_fn(reviews, product=title) if title else type(self).classify_fn(reviews)
         except ClassificationError as exc:
-            return self._json(502, {"error": "The model's reply could not be used: %s" % str(exc).splitlines()[0]})
+            return self._json(502, {"error": "The model's reply could not be used: %s" % str(exc).splitlines()[0], "code": "model_bad"})
         except Exception as exc:  # timeout, rate limit, network: say what happened without a traceback
             code = getattr(exc, "code", None)  # an HTTP status such as 429 or 503 helps; the message could echo what was sent, so it is not logged
             sys.stderr.write("classify failed: %s%s\n" % (type(exc).__name__, " (code %s)" % code if isinstance(code, int) else ""))
-            return self._json(502, {"error": "Could not reach Gemini (%s). Try again in a moment." % type(exc).__name__})
+            return self._json(502, {"error": "Could not reach Gemini (%s). Try again in a moment." % type(exc).__name__, "code": "model_down"})
         self._json(200, build_response(reviews, results, model, source))
 
 

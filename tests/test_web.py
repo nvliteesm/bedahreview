@@ -161,6 +161,7 @@ class WebTests(unittest.TestCase):
         resp, data = self.request("POST", "/api/classify", body, {"Content-Type": "application/json"})
         self.assertEqual(resp.status, 400)
         self.assertIn("switched off", json.loads(data)["error"])
+        self.assertEqual(json.loads(data)["code"], "box_off")
         self.assertEqual(self.seen, [])
 
     def _with_fetcher(self, fetcher):
