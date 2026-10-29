@@ -484,6 +484,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
           <pre data-i18n="howBody"></pre>
         </details>
         <button class="btn primary" id="run" type="button" data-i18n="run"></button>
+        <p class="small muted" id="quota-note" role="status" hidden></p>
         <div class="row">
           <button class="btn ghost" id="fb-retry" type="button" hidden data-i18n="fbRetry"></button>
           <button class="btn ghost" id="sample" type="button" data-i18n="sample"></button>
@@ -695,6 +696,8 @@ const TEXT = {
     gErrNet: "Tidak bisa menghubungi layanan masuk. Periksa koneksi, lalu coba lagi.", gErrGeneric: "Tidak bisa masuk (%s). Coba lagi.", gErrLoad: "Layanan masuk tidak bisa dimuat. Muat ulang halaman.",
     gErrShop: "Tautan toko harus diawali https://", gErrOauth: "Masuk dengan Google dibatalkan atau gagal. Coba lagi.",
     exampleNote: "Ini contoh dengan ulasan rekaan, bukan data nyata. Masuk untuk membedah ulasanmu sendiri.",
+    limitDaily: "Batas harian tercapai: %s analisis per hari. Coba lagi besok (reset tengah malam WIB).", quotaLeft: "Sisa analisis hari ini: %s dari %s.",
+    e_paid_off: "Mengambil ulasan dari tautan belum tersedia untuk akun ini.",
     startHere: "Mulai dari sini", startFix: "Perbaiki “%s”: %s ulasan mengeluhkan ini.", startSeeFix: "Lihat saran", startFight: "Balas ulasan tentang “%s”. Drafnya siap disalin.", startSeeFight: "Lihat draf",
     startNone: "Tidak ada keluhan yang perlu ditindak. Lihat yang dipuji pembeli di Pertahankan.", whySteps: "Kenapa & langkahnya",
     // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
@@ -826,6 +829,8 @@ const TEXT = {
     gErrNet: "Could not reach the sign-in service. Check your connection and try again.", gErrGeneric: "Could not sign in (%s). Try again.", gErrLoad: "The sign-in service could not be loaded. Reload the page.",
     gErrShop: "The shop link must start with https://", gErrOauth: "Google sign-in was cancelled or failed. Try again.",
     exampleNote: "This is an example with made-up reviews, not real data. Sign in to analyse your own reviews.",
+    limitDaily: "Daily limit reached: %s analyses a day. Try again tomorrow (resets at midnight Jakarta time).", quotaLeft: "Analyses left today: %s of %s.",
+    e_paid_off: "Reading reviews from a link is not available for this account yet.",
     startHere: "Start here", startFix: "Fix “%s”: %s review(s) complain about this.", startSeeFix: "See the fix", startFight: "Answer the review about “%s”. The draft is ready to copy.", startSeeFight: "See the draft",
     startNone: "No complaints to act on. See what buyers praise under Keep.", whySteps: "Why & steps",
   },
@@ -928,7 +933,7 @@ function applyLang() {
   $("lang").replaceChildren(h("span", { class: "o" + (lang === "id" ? " on" : ""), text: "ID" }), h("span", { class: "o" + (lang === "en" ? " on" : ""), text: "EN" }));
   $("pchip-change").textContent = tr("change"); $("back-results").textContent = tr("backResults"); $("print-d").textContent = tr("print");
   $("legend").replaceChildren(...["fix", "fight", "ignore", "keep"].map((k) => h("p", {}, h("b", { class: "lg-" + k, text: tr(k) }), tr("legend" + k[0].toUpperCase() + k.slice(1)))));
-  themeLabel(); renderFixBadge(); renderGate();
+  themeLabel(); renderFixBadge(); renderGate(); setQuota(lastQuota);
   if (currentView === "fixes") renderFixes();
   if (!$("run").disabled) $("run").textContent = tr("run");
   if (lastData) render(lastData, false); else renderRival();
@@ -1279,7 +1284,12 @@ async function importFixes(file) {
 /* ---------- results ---------- */
 const TABS = ["fix", "fight", "ignore", "keep"];
 const MAIN_TABS = ["fix", "fight"];
-let lastData = null, activeTab = "fix";
+let lastData = null, activeTab = "fix", lastQuota = null;
+function setQuota(q) {  // how many analyses are left today, shown under the button once the server has said (accounts only)
+  lastQuota = q || null;
+  const note = $("quota-note"); note.hidden = !lastQuota;
+  if (lastQuota) note.textContent = tr("quotaLeft", Math.max(0, lastQuota.max - lastQuota.used), lastQuota.max);
+}
 let rival = { step: "idle" }, rivalRun = 0;  // competitor analysis state; rivalRun lets a late reply notice that a new analysis has started
 function selectTab(key, focus) {
   activeTab = key;
@@ -1401,6 +1411,7 @@ function errText(data, fallback, rival) {  // the server sends a limit code; the
   if (data && data.limit === "budget") return tr(rival ? "limitBudgetRival" : "limitBudget");
   if (data && data.limit === "hour") return tr("limitHour");
   if (data && data.limit === "busy") return tr("limitBusy");
+  if (data && data.limit === "daily") return tr("limitDaily", data.max);
   const own = data && data.code && TEXT[lang]["e_" + data.code];  // the server words it in English; say known problems in the page language
   if (own) {
     const next = data.fallback === "paste" ? (rival ? "e_pasteRivals" : "e_paste") : data.fallback === "other" ? "e_other" : "";
@@ -1706,6 +1717,7 @@ async function send(payload, title) {
     if (res.status === 401) { show("input"); handleUnauthorized(); return; }  // signed out or the sign-in ran out: ask again
     if (!res.ok || !data) {
       show("input");
+      if (data && data.limit === "daily") setQuota({ used: data.max, max: data.max });
       const toPaste = data && data.fallback === "paste";
       const unreadable = toPaste && !data.limit;  // a daily limit is not "this link cannot be read"
       if (toPaste) selectInput("paste", false);  // first: switching tabs clears the error box
@@ -1713,6 +1725,7 @@ async function send(payload, title) {
       showError(errText(data, tr("errGeneric", res.status)), unreadable ? tr("errFetchTitle") : "");
       return;
     }
+    setQuota(data.quota);
     render(data, true);
   } catch (e) {
     stopLoading(); show("input"); showError(tr("errNetwork"));

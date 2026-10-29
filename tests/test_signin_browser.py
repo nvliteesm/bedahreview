@@ -109,6 +109,9 @@ window.__probe = (async () => {
     byId("sample").click(); byId("run").click();
     await until(() => !byId("view-results").hidden, 80);
     out.results = !byId("view-results").hidden; out.tabs = document.querySelectorAll("#tabs button").length;
+    out.quota = [vis("quota-note"), byId("quota-note").textContent];
+    out.dailyText = errText({ limit: "daily", max: 10 }, "x");
+    out.paidOff = errText({ code: "paid_off", fallback: "paste" }, "x");
   }
 
   if (hash === "#expired") {
@@ -235,6 +238,9 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual((out["intro"], out["upserts"]), (False, 0))
         self.assertTrue(out["results"])  # the server accepted the token the page sent
         self.assertEqual(out["tabs"], 4)
+        self.assertEqual(out["quota"], [True, "Sisa analisis hari ini: 9 dari 10."])  # shown once the server says how many are left
+        self.assertEqual(out["dailyText"], "Batas harian tercapai: 10 analisis per hari. Coba lagi besok (reset tengah malam WIB).")
+        self.assertEqual(out["paidOff"], "Mengambil ulasan dari tautan belum tersedia untuk akun ini. Kamu bisa menempel ulasannya.")
 
     def test_an_expired_sign_in_asks_again_instead_of_reloading_the_page(self):
         out = self.probe("#expired")

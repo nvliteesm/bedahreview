@@ -30,9 +30,10 @@ import sys
 import threading
 import time
 from collections import Counter, deque
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Callable, Deque, Dict, List, Optional
+from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs
 
 from .auth import SupabaseAuth
@@ -72,6 +73,8 @@ _BUSY_BODY = b'{"error": "Server is busy."}'
 BUSY_RESPONSE = (b"HTTP/1.0 503 Service Unavailable\r\nRetry-After: 5\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: "
                  + str(len(_BUSY_BODY)).encode() + b"\r\n\r\n" + _BUSY_BODY)  # sent as is when the connection cap is hit
 EVENTS_PER_HOUR = 600  # per visitor in public mode: a stuck page cannot flood the log
+DEFAULT_USER_DAILY = 10  # analyses per signed-in account per day; 0 turns the limit off
+JAKARTA = timezone(timedelta(hours=7))  # the day ends at midnight in Jakarta (no daylight saving there)
 DEFAULT_PAID_PER_HOUR = 6 # paid actions (link fetch, find or compare competitors) per visitor per hour in public mode: lower than plain pasting
 PUBLIC_ASSETS = {"/manifest.webmanifest", "/sw.js", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png"}
 # Files served from static/ (exact paths only; the query string is ignored, so /?text=... is the page).
@@ -134,6 +137,39 @@ class RateLimiter:
                 return False
             hits.append(now)
             return True
+
+
+class DailyQuota:
+    """At most `limit` analyses per account per day. In memory like the other limits, so a restart starts the day again: it stops one account
+    hogging the app, and the real cost guards are the global caps and the Gemini budget alert."""
+
+    def __init__(self, limit: int, clock: Callable[[], float] = time.time) -> None:
+        self.limit, self._clock = limit, clock
+        self._day, self._counts = "", {}  # type: str, Dict[str, int]
+        self._lock = threading.Lock()
+
+    def _today(self) -> str:
+        day = datetime.fromtimestamp(self._clock(), JAKARTA).strftime("%Y-%m-%d")
+        if day != self._day:  # a new day: everybody starts again, and old accounts are forgotten
+            self._day, self._counts = day, {}
+        return day
+
+    def take(self, user: str) -> Tuple[bool, int]:
+        """Count one analysis. Returns (allowed, used so far today including this one). Not counted when refused."""
+        with self._lock:
+            self._today()
+            used = self._counts.get(user, 0)
+            if used >= self.limit:
+                return False, used
+            self._counts[user] = used + 1
+            return True, used + 1
+
+    def refund(self, user: str) -> None:
+        """Give one back: the analysis did not happen (the model failed), so it should not cost the person their turn."""
+        with self._lock:
+            self._today()
+            if self._counts.get(user, 0) > 0:
+                self._counts[user] -= 1
 
 
 def parse_access_codes(text: str) -> Dict[str, str]:
@@ -320,6 +356,8 @@ class Handler(BaseHTTPRequestHandler):
     access_codes: Dict[str, str] = {}  # tester name -> code; empty means no sign-in (local use)
     public = False  # public mode: any Host header is fine, cookies are Secure, per-visitor limits apply
     supabase_auth: Optional[SupabaseAuth] = None  # checks Supabase sign-in tokens on this server; None means only the access-code cookie works
+    daily_quota: Optional[DailyQuota] = None  # per signed-in account; access-code testers and local runs are not counted here
+    _uid: Optional[str] = None  # the Supabase user of this request, set by _authed()
     supabase_public: Optional[Dict[str, str]] = None  # the project address and the publishable key: both are meant for the browser. The secret key is never kept here.
     login_limiter: Optional[RateLimiter] = None
     use_limiter: Optional[RateLimiter] = None
@@ -346,7 +384,11 @@ class Handler(BaseHTTPRequestHandler):
         self._json(200, {"ok": True})
 
     def _paid_ok(self) -> bool:
-        """Count one paid action for this visitor; send the 429 and return False when they are at the hourly limit."""
+        """Count one paid action for this visitor; send the 429 and return False when they are at the hourly limit.
+        With Supabase on, paid actions are only for access-code testers: a normal account never spends the Apify budget."""
+        if type(self).supabase_auth is not None and self._uid:
+            self._json(403, {"error": "Reading reviews from a link is not available for this account. Paste the reviews instead.", "fallback": "paste", "code": "paid_off"})
+            return False
         if self.paid_limiter and not self.paid_limiter.take(self._client()):
             self._json(429, {"error": "Too many link look-ups this hour. Try again later.", "limit": "hour"})
             return False
@@ -393,12 +435,18 @@ class Handler(BaseHTTPRequestHandler):
             return None
         return auth.verify(header[7:].strip())
 
+    def _cookie_user(self) -> bool:
+        return bool(self.access_codes) and check_session(self._cookie(COOKIE), self.access_codes, time.time()) is not None
+
     def _authed(self) -> bool:
+        self._uid = None
         if not self.access_codes and type(self).supabase_auth is None:
             return True  # local use: no sign-in at all
-        if self._bearer_user():
+        uid = self._bearer_user()
+        if uid:
+            self._uid = uid
             return True
-        return bool(self.access_codes) and check_session(self._cookie(COOKIE), self.access_codes, time.time()) is not None
+        return self._cookie_user()
 
     def _login_page(self, status: int, nxt: str, error: str = "") -> None:
         err = '<p class="err" role="alert">%s</p>' % html.escape(error) if error else ""
@@ -658,7 +706,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/example":
             return self._json(200, example_response())
         if path == "/api/config":
-            on = type(self).fetcher is not None
+            on = type(self).fetcher is not None and (type(self).supabase_auth is None or self._cookie_user())  # the link box is for access-code testers only when accounts are on
             cfg = {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes), "signed_in": self._authed()}
             if type(self).supabase_public:
                 cfg["supabase"] = type(self).supabase_public
@@ -717,17 +765,30 @@ class Handler(BaseHTTPRequestHandler):
         if len(reviews) > MAX_REVIEWS:
             return self._json(400, {"error": "%d reviews pasted; v1 handles up to %d at a time." % (len(reviews), MAX_REVIEWS), "code": "too_many_reviews", "max": MAX_REVIEWS})
 
+        quota = type(self).daily_quota if self._uid else None
+        used = 0
+        if quota:
+            allowed, used = quota.take(self._uid)
+            if not allowed:
+                return self._json(429, {"error": "Daily limit reached: %d analyses a day. Try again tomorrow." % quota.limit, "code": "daily_limit", "limit": "daily", "max": quota.limit})
         model = resolve_model()
         try:
             title = (source or {}).get("title") or " ".join(product.split())[:MAX_PRODUCT_CHARS] or None
             results = type(self).classify_fn(reviews, product=title) if title else type(self).classify_fn(reviews)
         except ClassificationError as exc:
+            if quota:
+                quota.refund(self._uid)
             return self._json(502, {"error": "The model's reply could not be used: %s" % str(exc).splitlines()[0], "code": "model_bad"})
         except Exception as exc:  # timeout, rate limit, network: say what happened without a traceback
+            if quota:
+                quota.refund(self._uid)
             code = getattr(exc, "code", None)  # an HTTP status such as 429 or 503 helps; the message could echo what was sent, so it is not logged
             sys.stderr.write("classify failed: %s%s\n" % (type(exc).__name__, " (code %s)" % code if isinstance(code, int) else ""))
             return self._json(502, {"error": "Could not reach Gemini (%s). Try again in a moment." % type(exc).__name__, "code": "model_down"})
-        self._json(200, build_response(reviews, results, model, source))
+        out = build_response(reviews, results, model, source)
+        if quota:
+            out["quota"] = {"used": used, "max": quota.limit}
+        self._json(200, out)
 
 
 def make_server(
@@ -741,6 +802,7 @@ def make_server(
     access_codes: Optional[Dict[str, str]] = None,
     supabase_auth: Optional[SupabaseAuth] = None,
     supabase_anon_key: str = "",
+    user_daily: int = DEFAULT_USER_DAILY,
     max_per_hour: int = DEFAULT_MAX_PER_HOUR,
     paid_per_hour: int = DEFAULT_PAID_PER_HOUR,
     max_concurrent: int = DEFAULT_MAX_CONCURRENT,
@@ -763,6 +825,7 @@ def make_server(
     handler.access_codes = codes
     handler.public = public
     handler.supabase_auth = supabase_auth
+    handler.daily_quota = DailyQuota(user_daily) if user_daily > 0 else None
     handler.supabase_public = {"url": supabase_auth.project_url, "anon_key": supabase_anon_key} if supabase_auth and supabase_anon_key else None
     if codes:
         handler.login_limiter = RateLimiter(MAX_LOGIN_FAILS, LOGIN_WINDOW_SECS)
@@ -807,6 +870,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("BEDAHREVIEW_MAX_PER_HOUR must be a whole number.", file=sys.stderr)
         return 1
     try:
+        user_daily = int(os.environ.get("BEDAHREVIEW_USER_DAILY") or DEFAULT_USER_DAILY)
+        if user_daily < 0:
+            raise ValueError
+    except ValueError:
+        print("BEDAHREVIEW_USER_DAILY must be a whole number (0 turns the daily limit off).", file=sys.stderr)
+        return 1
+    try:
         paid_per_hour = int(os.environ.get("BEDAHREVIEW_PAID_PER_HOUR") or DEFAULT_PAID_PER_HOUR)
     except ValueError:
         print("BEDAHREVIEW_PAID_PER_HOUR must be a whole number.", file=sys.stderr)
@@ -828,7 +898,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Setup problem: %s" % exc, file=sys.stderr)
         return 1
     try:
-        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
+        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, user_daily=user_daily, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (port, exc.strerror), file=sys.stderr)
         return 1
