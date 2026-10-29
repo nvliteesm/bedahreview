@@ -40,7 +40,8 @@ from .auth import SupabaseAuth
 from .classifier import ClassificationError, classify, resolve_model
 from .competitors import MAX_COMPETITORS, compare_competitors, suggest_competitors
 from .env import has_api_key, load_dotenv
-from .events import clean_event, log_line
+from .event_store import EventSink
+from .events import clean_batch, clean_event, db_row, log_line
 from .fetchers import MAX_LIMIT, BudgetError, Fetcher, FetcherConfigError, FetchError, get_fetcher, product_title_from_url, to_review_dicts
 from .fetchers.base import check_mode, check_shopee_product_url, clamp_limit
 from .fetchers.search import SEARCH_PLATFORMS
@@ -63,6 +64,7 @@ MAX_LOGIN_FAILS = 5  # per visitor, per LOGIN_WINDOW_SECS
 LOGIN_WINDOW_SECS = 15 * 60
 DEFAULT_MAX_PER_HOUR = 30  # analyses per visitor per hour in public mode
 MAX_EVENT_BYTES = 2000
+MAX_BATCH_BYTES = 20_000  # one batch of up to 50 events
 READ_TIMEOUT_SECS = 20  # a visitor who stops sending (or sends one byte at a time) is cut off after this long
 MAX_CONNECTIONS = 64  # open connections at once; more get an immediate 503
 DEFAULT_MAX_CONCURRENT = 6  # analyses (model or paid-fetch work) running at once; more get a 503 and a Retry-After
@@ -356,6 +358,7 @@ class Handler(BaseHTTPRequestHandler):
     access_codes: Dict[str, str] = {}  # tester name -> code; empty means no sign-in (local use)
     public = False  # public mode: any Host header is fine, cookies are Secure, per-visitor limits apply
     supabase_auth: Optional[SupabaseAuth] = None  # checks Supabase sign-in tokens on this server; None means only the access-code cookie works
+    event_sink: Optional[EventSink] = None  # saves events to Supabase in the background; None means the log line is all there is
     daily_quota: Optional[DailyQuota] = None  # per signed-in account; access-code testers and local runs are not counted here
     _uid: Optional[str] = None  # the Supabase user of this request, set by _authed()
     supabase_public: Optional[Dict[str, str]] = None  # the project address and the publishable key: both are meant for the browser. The secret key is never kept here.
@@ -366,8 +369,17 @@ class Handler(BaseHTTPRequestHandler):
     analysis_slots: Any = threading.BoundedSemaphore(DEFAULT_MAX_CONCURRENT)  # replaced per server in make_server
     timeout = READ_TIMEOUT_SECS  # socketserver applies this to the connection: slow or silent visitors are dropped
 
+    def _record(self, events: List[Dict[str, Any]]) -> None:
+        """Every event is printed as one line (the backup that needs nothing else). For a signed-in account it is also handed to the Supabase writer."""
+        for event in events:
+            sys.stdout.write(log_line(event) + "\n")
+        sys.stdout.flush()
+        sink = type(self).event_sink
+        if sink and self._uid:
+            sink.submit([db_row(self._uid, event) for event in events])
+
     def _event(self) -> None:
-        """One anonymous usage event (fixed list, fixed fields: see events.py). Behind the access code; written to stdout as one JSON line."""
+        """One anonymous usage event (fixed list, fixed fields: see events.py). Behind the sign-in."""
         if not self._authed():
             return self._json(401, {"error": "Please sign in again.", "login": True})
         if self.event_limiter and not self.event_limiter.take(self._client()):
@@ -379,8 +391,23 @@ class Handler(BaseHTTPRequestHandler):
             event = clean_event(json.loads(self.rfile.read(length).decode("utf-8")))
         except (ValueError, UnicodeDecodeError):
             return self._json(400, {"error": "Not an allowed event."})
-        sys.stdout.write(log_line(event) + "\n")
-        sys.stdout.flush()
+        self._record([event])
+        self._json(200, {"ok": True})
+
+    def _events(self) -> None:
+        """A batch of events from the page: what it queued over the last 10 seconds, or everything left when the page is hidden."""
+        if not self._authed():
+            return self._json(401, {"error": "Please sign in again.", "login": True})
+        if self.event_limiter and not self.event_limiter.take(self._client()):
+            return self._json(429, {"error": "Too many events."})
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            if "application/json" not in (self.headers.get("Content-Type") or "") or not 0 < length <= MAX_BATCH_BYTES:
+                raise ValueError
+            _, events = clean_batch(json.loads(self.rfile.read(length).decode("utf-8")))
+        except (ValueError, UnicodeDecodeError):
+            return self._json(400, {"error": "Not an allowed batch of events."})
+        self._record(events)
         self._json(200, {"ok": True})
 
     def _paid_ok(self) -> bool:
@@ -722,6 +749,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._logout()
         if self.path == "/api/event":
             return self._event()
+        if self.path == "/api/events":
+            return self._events()
         if self.path == "/api/competitors/suggest":
             return self._suggest()
         if self.path == "/api/competitors/compare":
@@ -803,6 +832,7 @@ def make_server(
     supabase_auth: Optional[SupabaseAuth] = None,
     supabase_anon_key: str = "",
     user_daily: int = DEFAULT_USER_DAILY,
+    event_sink: Optional[EventSink] = None,
     max_per_hour: int = DEFAULT_MAX_PER_HOUR,
     paid_per_hour: int = DEFAULT_PAID_PER_HOUR,
     max_concurrent: int = DEFAULT_MAX_CONCURRENT,
@@ -826,6 +856,7 @@ def make_server(
     handler.public = public
     handler.supabase_auth = supabase_auth
     handler.daily_quota = DailyQuota(user_daily) if user_daily > 0 else None
+    handler.event_sink = event_sink
     handler.supabase_public = {"url": supabase_auth.project_url, "anon_key": supabase_anon_key} if supabase_auth and supabase_anon_key else None
     if codes:
         handler.login_limiter = RateLimiter(MAX_LOGIN_FAILS, LOGIN_WINDOW_SECS)
@@ -889,6 +920,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("BEDAHREVIEW_MAX_CONCURRENT must be a whole number of 1 or more.", file=sys.stderr)
         return 1
     supabase_auth = SupabaseAuth(supabase_url) if supabase_url else None
+    service_key = (os.environ.get("SUPABASE_SERVICE_KEY") or "").strip()
+    event_sink = EventSink(supabase_url, service_key) if supabase_url and service_key else None
     if not has_api_key():
         print("GEMINI_API_KEY is not set. Add it to .env (see .env.example).", file=sys.stderr)
         return 1
@@ -898,13 +931,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Setup problem: %s" % exc, file=sys.stderr)
         return 1
     try:
-        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, user_daily=user_daily, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
+        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, user_daily=user_daily, event_sink=event_sink, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (port, exc.strerror), file=sys.stderr)
         return 1
     local = "localhost" if supabase_auth else "127.0.0.1"  # Google sends people back to the address listed in Supabase, which is localhost
     where = "0.0.0.0:%d (public, sign-in on, %d analyses per visitor per hour)" % (port, max_per_hour) if public else "http://%s:%d" % (local, port)
     print("BedahReview is running on %s  (model: %s)  Press Ctrl+C to stop." % (where, resolve_model()), flush=True)
+    print("Usage events: %s" % ("also saved to Supabase per account" if event_sink else "log lines only (add SUPABASE_URL and SUPABASE_SERVICE_KEY to save them per account)"), flush=True)
     print("Product-link box (demo): %s" % ("ON, paid third-party fetch" if fetcher else "off (set FETCHER=apify in .env to turn on)"), flush=True)
     try:
         server.serve_forever()

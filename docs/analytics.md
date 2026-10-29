@@ -1,6 +1,6 @@
 # What BedahReview logs, and what it does not
 
-The goal is to say what testers actually did, not what we hoped. So the app logs a small, fixed list of anonymous events.
+The goal is to say what testers actually did, not what we hoped. So the app logs a small, fixed list of usage events, tied to an account but never to a name, an email, a review or a product.
 Nothing else is ever logged. The list lives in one place, `src/bedahreview/events.py`, and every event is checked against it on the server.
 
 ## What is never logged
@@ -9,15 +9,17 @@ Nothing else is ever logged. The list lives in one place, `src/bedahreview/event
 - IP addresses and user agents. (The request log prints the path only.)
 - Anything from the Fixes list. It stays in the tester's browser.
 
-## The device id
+## Accounts and the device id
 
-A random id (24 hex characters) is made in the tester's browser and kept in `localStorage` under `bedahreview-device`. It tells browsers apart, nothing more. It is not linked to a name, account or address. Clearing browser data makes a new id, and the same person on two phones counts as two devices.
+With Supabase sign-in on, each event is saved against the account (a random user id; the email stays in Supabase Auth and is never in the events table). That is how "unique people" are counted: one account, however many taps or phones.
+
+Events also carry a random device id made in the browser (`localStorage`, `bedahreview-device`). It only appears in the log line below, as a backup for people who signed in with an access code or a local run. It is not saved in Supabase.
 
 If the browser sends "Do Not Track", the page sends no events at all, except a feedback answer the tester presses Send on themselves.
 
 ## The events
 
-Every event carries `event`, `device` and a server timestamp `ts`, plus the fields below. Anything outside this table is rejected with a 400.
+Every event carries `event` and a server timestamp `ts`, plus the fields below (and `device` in the log line). Anything outside this table is rejected with a 400.
 
 | Event | When | Extra fields |
 |---|---|---|
@@ -33,17 +35,25 @@ Every event carries `event`, `device` and a server timestamp `ts`, plus the fiel
 
 `comment` is the only place a tester can type. The page says that a comment is saved only if they write one and asks them not to write names or paste review text. As a second guard, the page refuses to send a comment that repeats 20 or more characters of any review in the current analysis. This is a guard, not a guarantee: a comment is still a person's own words.
 
-## Where the lines go
+## Where the events go
 
-The server writes one JSON line per event to standard output, for example:
+1. **Batches from the page.** Events wait in a small queue and are sent together every 10 seconds while there is something to send, and once more when the page is hidden or closed (`POST /api/events`, up to 50 events, signed in). A failed send is dropped, never retried.
+2. **A log line, always.** The server prints one JSON line per event to standard output, for example:
 
 ```
 {"severity":"INFO","message":"bedahreview_event","ts":"2026-10-27T09:15:02Z","event":"analysed","device":"3fa9c2d41b7e8a06c5d1e2f3","reviews":10,"source":"paste","lang":"id"}
 ```
 
-On Cloud Run these lines appear in Cloud Logging as `jsonPayload`. Locally they print in the terminal. The endpoint is `POST /api/event`, behind the access code, with a limit of 600 events per visitor per hour in public mode.
+   On Cloud Run these lines appear in Cloud Logging as `jsonPayload`; locally they print in the terminal. This is the backup that needs nothing else.
+3. **Supabase, for signed-in accounts.** When `SUPABASE_SERVICE_KEY` is set, the server also saves one row per event in the `events` table (`user_id`, `event`, `props`) from a background thread, so a visitor never waits for it. If Supabase is slow, paused or down, the rows are dropped and one short warning is printed. Access-code testers and local runs have no account, so they only get the log line.
+
+Limits: 600 requests per visitor per hour in public mode.
 
 ## Reading the numbers
+
+**From Supabase** (the source for unique people): open the SQL editor and run the queries in `db/queries.sql`: accounts per week, analyses per account, and the funnel from opened to analysed to copied a draft.
+
+**From the log** (the backup):
 
 ```
 gcloud logging read 'jsonPayload.message="bedahreview_event"' --format=json --freshness=30d --limit=5000 > events.json
@@ -54,6 +64,8 @@ It prints counts per event, per device, the analyses by source and language, tab
 
 ## Honest limits
 
-- A device is a browser, not a person. With a handful of testers these are stories, not statistics, and the report says so.
+- In the log, a device is a browser, not a person. In Supabase an account is a person, but one person can make two accounts (two emails). With a handful of testers these are stories, not statistics.
 - Cloud Logging keeps logs for 30 days by default. Export or note the numbers you want to keep.
-- Events can be lost if the browser is closed at the wrong moment, or if someone blocks the request.
+- Events can be lost if the browser is closed at the wrong moment, if someone blocks the request, if the sign-in token has run out while the page was hidden, or if Supabase is down.
+- Supabase's free plan pauses a project after a week with no use. Events sent while it is paused are lost; the log lines remain.
+- Keep events for 90 days (delete older rows by hand, see the end of `db/queries.sql`) and delete an account's rows with the account.

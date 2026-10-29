@@ -23,8 +23,8 @@ FAKE_SUPABASE = """
 window.__sb = { calls: [], session: null, profile: null, listeners: [] };
 (function () {
   const hash = location.hash, user = { id: "user-1111-2222" };
-  if (["#intro", "#returning", "#expired"].includes(hash)) window.__sb.session = { access_token: hash === "#expired" ? "junk" : "__TOKEN__", user };
-  if (["#returning", "#expired"].includes(hash)) window.__sb.profile = { user_id: user.id };
+  if (["#intro", "#returning", "#expired", "#events"].includes(hash)) window.__sb.session = { access_token: hash === "#expired" ? "junk" : "__TOKEN__", user };
+  if (["#returning", "#expired", "#events"].includes(hash)) window.__sb.profile = { user_id: user.id };
   window.supabase = { createClient: (url, key, opts) => { window.__sb.opts = opts; return ({
     auth: {
       getSession: async () => ({ data: { session: window.__sb.session } }),
@@ -120,6 +120,17 @@ window.__probe = (async () => {
     byId("sample").click(); byId("run").click();
     await until(() => vis("gate"), 80);
     out.gate = vis("gate"); out.workspaceHidden = byId("workspace").hidden; out.runEnabled = !byId("run").disabled; out.signedOutSession = window.__sb.session === null;
+  }
+
+  if (hash === "#events") {
+    await until(() => !byId("workspace").hidden);
+    window.__reqs = []; const real = window.fetch;
+    window.fetch = (u, o) => { if (String(u).includes("/api/events")) window.__reqs.push({ events: JSON.parse(o.body).events.map((e) => e.event), keepalive: !!o.keepalive, auth: !!(o.headers && o.headers.Authorization) }); return real(u, o); };
+    track("tab_viewed", { tab: "fix" }); track("tab_viewed", { tab: "fight" }); track("draft_copied", { kind: "chat" });
+    await wait(300); out.beforeHide = window.__reqs.length;  // taps send nothing by themselves
+    window.dispatchEvent(new Event("pagehide")); await wait(400);
+    out.sent = window.__reqs.slice(); out.queueLeft = eventQueue.length;
+    out.explicit = await track("feedback", { answer: "yes" }, true); out.total = window.__reqs.length;  // the feedback answer goes at once and reports whether it was saved
   }
 
   if (hash === "#keep") {
@@ -248,6 +259,13 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertTrue(out["gate"] and out["workspaceHidden"])
         self.assertTrue(out["runEnabled"])
         self.assertTrue(out["signedOutSession"])
+
+    def test_events_wait_in_a_queue_and_go_out_together(self):
+        out = self.probe("#events")
+        self.assertEqual(out["beforeHide"], 0)
+        self.assertEqual(out["sent"], [{"events": ["opened", "tab_viewed", "tab_viewed", "draft_copied"], "keepalive": True, "auth": True}])  # one request, kept alive past the page, with the sign-in
+        self.assertEqual(out["queueLeft"], 0)
+        self.assertEqual((out["explicit"], out["total"]), (True, 2))  # the server accepted it, and it did not wait
 
     def test_keep_me_signed_in_chooses_where_the_session_lives(self):
         out = self.probe("#keep")

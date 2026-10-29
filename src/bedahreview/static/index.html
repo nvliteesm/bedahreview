@@ -646,7 +646,7 @@ const TEXT = {
     fbQ: "Apakah hasil ini berguna?", fbYes: "Ya", fbPartly: "Sebagian", fbNo: "Tidak", fbComment: "Mau menambahkan sesuatu? (opsional)",
     fbNote: "Komentar hanya disimpan kalau kamu menulisnya. Jangan tulis nama orang atau menempel teks ulasan.", fbSend: "Kirim", fbThanks: "Terima kasih. Jawabanmu membantu.",
     fbReview: "Komentarmu tampak memuat teks ulasan. Hapus bagian itu dulu, supaya tidak ada teks ulasan yang tersimpan.", fbFail: "Tidak terkirim. Coba lagi nanti.",
-    privNote: "Kami mencatat kejadian anonim (misalnya tab yang dibuka), tanpa teks ulasan, nama, atau alamat IP. Kalau browsermu mengirim “Do Not Track”, kejadian itu tidak dikirim. Daftar lengkapnya ada di docs/analytics.md.",
+    privNote: "Kami mencatat kejadian pemakaian (misalnya tab yang dibuka) per akun, tanpa teks ulasan, nama produk, atau alamat IP. Kalau browsermu mengirim “Do Not Track”, kejadian itu tidak dikirim. Daftar lengkapnya ada di docs/analytics.md.",
     limitBusy: "Server sedang sibuk. Coba lagi sebentar lagi.", logout: "Keluar", back: "Kembali", fixesBtn: "Perbaikan", fixesTitle: "Perbaikan yang kamu catat", fixesSub: "Disimpan di browser ini saja. Tidak ada yang dikirim ke server.",
     fixesWarn: "Hitungan dari contoh kecil bisa menyesatkan. Keluhan yang berkurang satu bisa kebetulan, dan bukan bukti perbaikanmu berhasil. Analisis baru juga bisa memuat ulasan lama yang sama.",
     fixesNoStore: "Browser ini tidak bisa menyimpan data, jadi catatan hilang saat halaman ditutup. Ekspor ke file JSON supaya tidak hilang.",
@@ -779,7 +779,7 @@ const TEXT = {
     fbQ: "Was this useful?", fbYes: "Yes", fbPartly: "Partly", fbNo: "No", fbComment: "Anything to add? (optional)",
     fbNote: "A comment is saved only if you write one. Please do not write names or paste review text.", fbSend: "Send", fbThanks: "Thank you. Your answer helps.",
     fbReview: "Your comment looks like it contains review text. Please remove that part, so no review text is stored.", fbFail: "Could not send. Try again later.",
-    privNote: "We log anonymous events (for example which tab was opened), with no review text, names or IP address. If your browser sends “Do Not Track”, those events are not sent. The full list is in docs/analytics.md.",
+    privNote: "We record usage events (for example which tab was opened) per account, with no review text, product names or IP address. If your browser sends “Do Not Track”, those events are not sent. The full list is in docs/analytics.md.",
     limitBusy: "The server is busy. Try again in a moment.", logout: "Sign out", back: "Back", fixesBtn: "Fixes", fixesTitle: "Fixes you logged", fixesSub: "Saved in this browser only. Nothing is sent to the server.",
     fixesWarn: "Counts from small samples can mislead. One complaint fewer can be chance, not proof that your fix worked. A new analysis may also include some of the same old reviews.",
     fixesNoStore: "This browser cannot save data, so your log is lost when the page closes. Export it to a JSON file to keep it.",
@@ -1067,11 +1067,30 @@ function device() {
   return deviceId;
 }
 const doNotTrack = () => navigator.doNotTrack === "1" || window.doNotTrack === "1";
-function track(event, props, explicit) {  // fire and forget; "explicit" is the tester pressing Send, so Do Not Track does not apply
-  if ((doNotTrack() && !explicit) || !signedIn) return Promise.resolve(false);  // nobody signed in, nothing to count
-  return authHeaders().then((auth) => fetch("/api/event", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, auth), body: JSON.stringify({ event, device: device(), props: props || {} }), keepalive: true }))
-    .then((res) => res.ok).catch(() => false);
+/* Events wait in a small queue and go out together: every 10 seconds while there is something to send, and once more when the page is hidden or closed.
+   One request per tap would be wasteful and, on a phone, slow. If a send fails the events are dropped: counts are never worth slowing the app. */
+const EVENT_FLUSH_MS = 10000, EVENT_BATCH = 50, EVENT_QUEUE_MAX = 200;
+let eventQueue = [], eventTimer = null;
+function sendEvents(items, whenHidden) {  // whenHidden: no time to ask for a fresh token, so use the one we last saw
+  const post = (auth) => fetch("/api/events", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, auth), body: JSON.stringify({ device: device(), events: items }), keepalive: true });
+  const bearer = cachedToken ? { Authorization: "Bearer " + cachedToken } : {};
+  return (whenHidden ? post(bearer) : authHeaders().then(post)).then((res) => res.ok).catch(() => false);
 }
+function flushEvents(whenHidden) {
+  if (!eventQueue.length) { clearInterval(eventTimer); eventTimer = null; return; }  // nothing waiting: the timer rests until the next event
+  while (eventQueue.length) sendEvents(eventQueue.splice(0, EVENT_BATCH), whenHidden === true);
+}
+function track(event, props, explicit) {  // "explicit" is the tester pressing Send on feedback: sent at once, and Do Not Track does not apply
+  if ((doNotTrack() && !explicit) || !signedIn) return Promise.resolve(false);  // nobody signed in, nothing to count
+  const item = { event, props: props || {} };
+  if (explicit) return sendEvents([item], false);
+  eventQueue.push(item);
+  if (eventQueue.length > EVENT_QUEUE_MAX) eventQueue.shift();
+  if (!eventTimer) eventTimer = setInterval(() => flushEvents(false), EVENT_FLUSH_MS);
+  return Promise.resolve(true);
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushEvents(true); });
+window.addEventListener("pagehide", () => flushEvents(true));
 function looksLikeReviewText(comment, items) {  // a comment that repeats 20 characters of any analysed review is not sent
   const c = comment.toLowerCase();
   return items.some((it) => { const t = String(it.text || "").toLowerCase(); for (let i = 0; i + 20 <= t.length; i += 5) if (c.includes(t.slice(i, i + 20))) return true; return false; });
@@ -1791,7 +1810,7 @@ function takeShared() {
 /* ---------- sign-in (Supabase) ----------
    Only when the server says Supabase is on. The browser talks to Supabase directly, so its per-address limits count each person apart;
    our server only checks the token it is sent. Only the publishable key is in this page, never the secret key. */
-let sb = null, signedIn = true, userId = null, cfgAccess = false, gateStep = "choose", gateEmail = "", resendAt = 0, resendTimer = null, introDone = null, openedSent = false, exampleShown = false;
+let sb = null, cachedToken = "", signedIn = true, userId = null, cfgAccess = false, gateStep = "choose", gateEmail = "", resendAt = 0, resendTimer = null, introDone = null, openedSent = false, exampleShown = false;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PLATFORMS = ["tokopedia", "lazada", "tiktokshop", "shopee", "other"], CATEGORIES = ["fashion", "beauty", "food", "electronics", "home", "other"];
 const PLATFORM_NAME = { tokopedia: "Tokopedia", lazada: "Lazada", tiktokshop: "TikTok Shop", shopee: "Shopee" };
@@ -1815,7 +1834,7 @@ const isIos = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.p
 const isInstalled = () => navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
 async function authHeaders() {
   if (!sb) return {};
-  try { const { data } = await sb.auth.getSession(); return data.session ? { Authorization: "Bearer " + data.session.access_token } : {}; } catch (e) { return {}; }
+  try { const { data } = await sb.auth.getSession(); cachedToken = data.session ? data.session.access_token : ""; return cachedToken ? { Authorization: "Bearer " + cachedToken } : {}; } catch (e) { return {}; }
 }
 async function api(path, init) { return fetch(path, Object.assign({}, init, { headers: Object.assign({}, (init || {}).headers, await authHeaders()) })); }
 function openedOnce() { if (!openedSent && signedIn) { openedSent = true; track("opened"); } }
@@ -1935,10 +1954,10 @@ async function enterApp(session) {
   await maybeIntro();
   showApp();
 }
-function onSignedOut() { userId = null; signedIn = false; showGate("choose", false); }
+function onSignedOut() { userId = null; signedIn = false; eventQueue = []; cachedToken = ""; showGate("choose", false); }
 function handleUnauthorized() {
   if (!sb) { location.reload(); return; }
-  userId = null; signedIn = false;
+  userId = null; signedIn = false; eventQueue = []; cachedToken = "";
   sb.auth.signOut({ scope: "local" }).catch(() => {});
   showGate("choose", false);
 }
@@ -1947,10 +1966,11 @@ async function startAuth(cfg) {
   if (!window.supabase) { try { await loadScript("vendor/supabase.js"); } catch (e) { /* handled below */ } }
   if (!window.supabase) { signedIn = !!cfg.signed_in; if (!signedIn) { showGate("choose", false); showGateError(tr("gErrLoad")); } else showApp(); return; }
   sb = window.supabase.createClient(cfg.supabase.url, cfg.supabase.anon_key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "pkce", storage: authStorage } });
-  sb.auth.onAuthStateChange((event, session) => { setTimeout(() => { if (event === "SIGNED_OUT") onSignedOut(); else if (session) enterApp(session); }, 0); });  // not awaited inside the callback: Supabase asks for that
+  sb.auth.onAuthStateChange((event, session) => { cachedToken = session ? session.access_token : ""; setTimeout(() => { if (event === "SIGNED_OUT") onSignedOut(); else if (session) enterApp(session); }, 0); });  // not awaited inside the callback: Supabase asks for that
   const params = new URLSearchParams(location.search), oauthFailed = params.has("error") || params.has("error_description");
   let session = null;
   try { session = (await sb.auth.getSession()).data.session; } catch (e) { /* no session */ }
+  cachedToken = session ? session.access_token : "";  // known from the start, so events can still be sent when the page is hidden before any other request
   if (/[?&](code|error|error_code|error_description)=/.test(location.search) || /access_token|error=/.test(location.hash)) { try { history.replaceState(null, "", location.pathname); } catch (e) { /* keep it */ } }
   if (session) { signedIn = true; enterApp(session); return; }
   signedIn = !!cfg.signed_in;  // true for an access-code cookie

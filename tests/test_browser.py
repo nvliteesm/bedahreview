@@ -188,6 +188,7 @@ window.__probe = (async () => {
     [...fb.querySelectorAll("button")].find((b) => b.textContent === "Kirim").click();
     await until(() => fb.textContent.indexOf("Terima kasih") >= 0);
     out.ev.thanks = fb.textContent.indexOf("Terima kasih") >= 0;
+    window.dispatchEvent(new Event("pagehide"));  // the page being hidden sends everything that was queued, in one batch
     await wait(500);
   }
 

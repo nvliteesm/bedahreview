@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional
 
 MAX_REVIEWS_FIELD = 50  # same ceiling as one analysis
 MAX_COMMENT_CHARS = 300
+MAX_BATCH = 50  # events in one request: the page sends what it has queued every 10 seconds, or when the page is hidden
 DEVICE_RE = re.compile(r"^[a-z0-9-]{8,40}$")  # a random id kept in the tester's browser
 
 # event -> field -> rule. A rule is ("enum", choices), ("int", low, high) or ("text", max_chars, optional).
@@ -68,3 +69,23 @@ def log_line(event: Dict[str, Any], now: Optional[datetime] = None) -> str:
     """A single JSON line in the shape Cloud Logging reads (severity and message are special keys there)."""
     stamp = (now or datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ")
     return json.dumps(dict({"severity": "INFO", "message": "bedahreview_event", "ts": stamp}, **event), ensure_ascii=False, separators=(",", ":"))
+
+
+def clean_batch(body: Any) -> tuple:
+    """(device, [event, ...]) for a batch from the page, or ValueError. One bad event refuses the whole batch: the page is ours, so a bad one is a bug worth seeing."""
+    if not isinstance(body, dict) or set(body) - {"device", "events"}:
+        raise ValueError("bad shape")
+    items = body.get("events")
+    if not isinstance(items, list) or not 1 <= len(items) <= MAX_BATCH:
+        raise ValueError("bad batch")
+    events = []
+    for item in items:
+        if not isinstance(item, dict) or set(item) - {"event", "props"}:
+            raise ValueError("bad event")
+        events.append(clean_event({"event": item.get("event"), "device": body.get("device"), "props": item.get("props", {})}))
+    return body["device"], events
+
+
+def db_row(user_id: str, event: Dict[str, Any]) -> Dict[str, Any]:
+    """The row saved in Supabase: the account, the event name and its fixed fields. No device id, no address, no text beyond the optional feedback comment."""
+    return {"user_id": user_id, "event": event["event"], "props": {k: v for k, v in event.items() if k not in ("event", "device")}}
