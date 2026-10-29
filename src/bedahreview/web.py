@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any, Callable, Deque, Dict, List, Optional
 from urllib.parse import parse_qs
 
+from .auth import SupabaseAuth
 from .classifier import ClassificationError, classify, resolve_model
 from .competitors import MAX_COMPETITORS, compare_competitors, suggest_competitors
 from .env import has_api_key, load_dotenv
@@ -307,6 +308,7 @@ class Handler(BaseHTTPRequestHandler):
     fetcher: Optional[Fetcher] = None  # set when FETCHER=apify; None keeps the link box switched off
     access_codes: Dict[str, str] = {}  # tester name -> code; empty means no sign-in (local use)
     public = False  # public mode: any Host header is fine, cookies are Secure, per-visitor limits apply
+    supabase_auth: Optional[SupabaseAuth] = None  # checks Supabase sign-in tokens on this server; None means only the access-code cookie works
     login_limiter: Optional[RateLimiter] = None
     use_limiter: Optional[RateLimiter] = None
     paid_limiter: Optional[RateLimiter] = None
@@ -370,8 +372,18 @@ class Handler(BaseHTTPRequestHandler):
     def _cookie_flags(self) -> str:
         return "Path=/; HttpOnly; SameSite=Lax%s" % ("; Secure" if self.public else "")
 
+    def _bearer_user(self) -> Optional[str]:
+        """The Supabase user id from an "Authorization: Bearer <token>" header, or None. A token is not a cookie, so a form on another site cannot send it."""
+        auth = type(self).supabase_auth
+        header = self.headers.get("Authorization") or ""
+        if auth is None or not header[:7].lower() == "bearer ":
+            return None
+        return auth.verify(header[7:].strip())
+
     def _authed(self) -> bool:
         if not self.access_codes:
+            return True  # local use: no sign-in at all, as before (the Supabase sign-in screens arrive in the next step)
+        if self._bearer_user():
             return True
         return check_session(self._cookie(COOKIE), self.access_codes, time.time()) is not None
 
@@ -706,6 +718,7 @@ def make_server(
     access_code: Optional[str] = None,
     public: bool = False,
     access_codes: Optional[Dict[str, str]] = None,
+    supabase_auth: Optional[SupabaseAuth] = None,
     max_per_hour: int = DEFAULT_MAX_PER_HOUR,
     paid_per_hour: int = DEFAULT_PAID_PER_HOUR,
     max_concurrent: int = DEFAULT_MAX_CONCURRENT,
@@ -727,6 +740,7 @@ def make_server(
         codes.setdefault(SHARED_NAME, access_code)
     handler.access_codes = codes
     handler.public = public
+    handler.supabase_auth = supabase_auth
     if codes:
         handler.login_limiter = RateLimiter(MAX_LOGIN_FAILS, LOGIN_WINDOW_SECS)
     if public:
@@ -773,6 +787,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     except ValueError:
         print("BEDAHREVIEW_MAX_CONCURRENT must be a whole number of 1 or more.", file=sys.stderr)
         return 1
+    supabase_url = (os.environ.get("SUPABASE_URL") or "").strip()
+    if supabase_url and not re.match(r"^https://[a-z0-9-]+\.supabase\.co/?$", supabase_url):
+        print("SUPABASE_URL must look like https://<project>.supabase.co", file=sys.stderr)
+        return 1
+    supabase_auth = SupabaseAuth(supabase_url) if supabase_url else None
     if not has_api_key():
         print("GEMINI_API_KEY is not set. Add it to .env (see .env.example).", file=sys.stderr)
         return 1
@@ -782,7 +801,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Setup problem: %s" % exc, file=sys.stderr)
         return 1
     try:
-        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
+        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (port, exc.strerror), file=sys.stderr)
         return 1
