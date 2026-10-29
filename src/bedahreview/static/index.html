@@ -158,6 +158,26 @@ blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(
 .ignore-list { display: grid; gap: 8px; list-style: none; padding: 0; }
 .ignore-list li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 0.92rem; overflow-wrap: anywhere; }
 .foot { font-size: 0.8rem; color: var(--muted); }
+/* ---------- sign-in screens ---------- */
+body:not(.ready) .workspace, body:not(.ready) .bottombar { visibility: hidden; }  /* no flash of the app before we know whether to ask for a sign-in */
+body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: none; }
+.gate { max-width: 440px; margin: 0 auto; padding: 24px max(var(--gutter), env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left)); }
+.gate-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; display: grid; gap: 14px; }
+.gate-step { display: grid; gap: 14px; }
+.gate h1 { margin: 0 0 4px; font-size: 1.4rem; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em; }
+.gate h1:focus { outline: none; }
+.gbtn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; border-radius: 12px; border: 1px solid #dadce0; background: #fff; color: #1f1f1f; font: inherit; font-weight: 700; cursor: pointer; }
+.gbtn svg { width: 20px; height: 20px; flex: none; }
+.gbtn[disabled], .btn[disabled] { opacity: 0.6; cursor: progress; }
+.or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.85rem; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.otp { display: flex; gap: 8px; justify-content: center; }
+.otp input { width: 46px; height: 56px; min-height: 56px; padding: 0; text-align: center; font-size: 1.5rem; font-weight: 800; border-radius: 12px; font-variant-numeric: tabular-nums; }
+.gate .btn.ghost { width: 100%; }
+#start { display: grid; gap: 8px; }
+.gate-links { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
+.gate-links a { color: var(--accent); font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
+@media (min-width: 1100px) { .gate { padding-top: 56px; } .gate-card { padding: 32px; box-shadow: var(--shadow); } }
 main, #view-results, #view-fixes, .panel, .stack { grid-template-columns: minmax(0, 1fr); }  /* one column that never grows past its box, even for a long product name */
 .start { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--accent-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
 .start > div { flex: 1 1 220px; min-width: 0; display: grid; gap: 2px; }
@@ -341,12 +361,54 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
       <span class="wm">bedah<span>review</span></span>
     </div>
     <div class="tools">
+      <button class="btn pill" id="signin-btn" type="button" hidden data-i18n="signInShort"></button>
       <button class="lang" id="lang" type="button" aria-label="Bahasa / Language"></button>
       <button class="theme" id="fixes-btn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><span class="badge" id="fixes-count" hidden></span></button>
       <button class="theme" id="theme" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="theme-icon" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
     </div>
   </div>
 </header>
+
+<section id="gate" class="gate" hidden aria-labelledby="gate-h">
+  <div class="gate-card">
+    <div class="gate-step" id="g-choose">
+      <div><h1 id="gate-h" tabindex="-1" data-i18n="gTitle"></h1><p class="muted" data-i18n="gSub"></p></div>
+      <button class="gbtn" id="g-google" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i18n="gGoogle"></span></button>
+      <p class="or" data-i18n="gOr"></p>
+      <label class="field" for="g-email"><span data-i18n="gEmail"></span>
+        <input id="g-email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" data-i18n-ph="gEmailPh">
+      </label>
+      <button class="btn primary" id="g-send" type="button" data-i18n="gSend"></button>
+      <p class="small muted" data-i18n="gConsent"></p>
+      <button class="btn ghost" id="g-example" type="button" data-i18n="gExample"></button>
+      <div class="gate-links">
+        <a id="g-codelink" href="/code" hidden data-i18n="gCode"></a>
+        <button class="plain" id="g-close" type="button" hidden data-i18n="gClose"></button>
+      </div>
+    </div>
+    <div class="gate-step" id="g-verify" hidden>
+      <div><h1 id="g-vtitle" data-i18n="gCodeTitle"></h1><p class="muted" id="g-vsub"></p></div>
+      <div class="otp" id="otp" role="group" aria-labelledby="g-vtitle"></div>
+      <button class="btn primary" id="g-verify-btn" type="button" data-i18n="gVerify"></button>
+      <div class="gate-links">
+        <button class="plain" id="g-resend" type="button" disabled></button>
+        <button class="plain" id="g-change" type="button" data-i18n="gChange"></button>
+      </div>
+    </div>
+    <div class="gate-step" id="g-intro" hidden>
+      <div><h1 data-i18n="gIntroTitle"></h1><p class="muted" data-i18n="gIntroSub"></p></div>
+      <label class="field" for="g-platform"><span data-i18n="gPlatform"></span><select id="g-platform"></select></label>
+      <label class="field" for="g-shop"><span data-i18n="gShop"></span><input id="g-shop" type="url" inputmode="url" autocomplete="off" spellcheck="false" data-i18n-ph="gShopPh"></label>
+      <label class="field" for="g-category"><span data-i18n="gCategory"></span><select id="g-category"></select></label>
+      <button class="btn primary" id="g-save" type="button" data-i18n="gSave"></button>
+      <button class="plain" id="g-skip" type="button" data-i18n="gSkip"></button>
+    </div>
+    <div class="error" id="g-error" role="alert" hidden>
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <div id="g-error-text"></div>
+    </div>
+  </div>
+</section>
 
 <div class="workspace" id="workspace" data-section="checker">
 <main id="main" class="col col-1">
@@ -616,6 +678,18 @@ const TEXT = {
     rivalLineWorse: "%s: %s di produkmu, di pesaing terbaik %s.", rivalLineOther: "%s: %s di produkmu, %s di %s.",
     rivalAlone: "Tanpa Bedah ulasan, kami tidak membandingkan dengan produkmu. Jalankan Bedah ulasan untuk melihat selisihnya.", rivalLinkLbl: "Lihat ulasannya",
     rivalLineWorseEx: "%s: %s di %s, di pesaing terbaik %s.", rivalLineOtherEx: "%s: %s di %s, %s di %s.",
+    gTitle: "Masuk untuk membedah ulasanmu", gSub: "Gratis, tanpa kata sandi. Pakai Google atau email.", gGoogle: "Masuk dengan Google", gOr: "atau pakai email",
+    gEmail: "Email", gEmailPh: "nama@email.com", gSend: "Kirim kode ke email", gConsent: "Kami mencatat pemakaian per akun (tanpa isi ulasan) untuk riset produk ini.",
+    gExample: "Coba contoh dulu", gCode: "Punya kode akses? Masuk di sini", gClose: "Nanti saja", signInShort: "Masuk",
+    gCodeTitle: "Masukkan kode 6 digit", gCodeSub: "Kami kirim kode ke %s. Kalau belum masuk, cek folder spam.", gVerify: "Masuk", gResend: "Kirim ulang kode", gResendIn: "Kirim ulang kode (%s)",
+    gSentAgain: "Kode baru sudah dikirim.", gChange: "Ganti email", gDigit: "Digit %s dari 6",
+    gIntroTitle: "Sedikit tentang tokomu", gIntroSub: "Boleh dilewati. Ini membantu kami memahami siapa yang memakai BedahReview.", gPlatform: "Jualan di mana?", gPick: "Pilih…", gOther: "Lainnya",
+    gShop: "Tautan toko (opsional)", gShopPh: "https://…", gCategory: "Kategori produk", gSave: "Simpan & mulai", gSkip: "Lewati",
+    cat_fashion: "Fashion", cat_beauty: "Kecantikan", cat_food: "Makanan & minuman", cat_electronics: "Elektronik", cat_home: "Rumah tangga", cat_other: "Lainnya",
+    gErrEmail: "Alamat email tidak valid.", gErrShort: "Masukkan 6 digit kodenya.", gErrCode: "Kode salah atau sudah kedaluwarsa. Minta kode baru.", gErrRate: "Terlalu banyak permintaan. Tunggu sebentar, lalu coba lagi.",
+    gErrNet: "Tidak bisa menghubungi layanan masuk. Periksa koneksi, lalu coba lagi.", gErrGeneric: "Tidak bisa masuk (%s). Coba lagi.", gErrLoad: "Layanan masuk tidak bisa dimuat. Muat ulang halaman.",
+    gErrShop: "Tautan toko harus diawali https://", gErrOauth: "Masuk dengan Google dibatalkan atau gagal. Coba lagi.",
+    exampleNote: "Ini contoh dengan ulasan rekaan, bukan data nyata. Masuk untuk membedah ulasanmu sendiri.",
     startHere: "Mulai dari sini", startFix: "Perbaiki “%s”: %s ulasan mengeluhkan ini.", startSeeFix: "Lihat saran", startFight: "Balas ulasan tentang “%s”. Drafnya siap disalin.", startSeeFight: "Lihat draf",
     startNone: "Tidak ada keluhan yang perlu ditindak. Lihat yang dipuji pembeli di Pertahankan.", whySteps: "Kenapa & langkahnya",
     // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
@@ -734,6 +808,18 @@ const TEXT = {
     rivalLineWorse: "%s: %s for you, %s for the best competitor.", rivalLineOther: "%s: %s for you, %s at %s.",
     rivalAlone: "Without Review triage we cannot compare against your product. Run Review triage to see the gap.", rivalLinkLbl: "See the reviews",
     rivalLineWorseEx: "%s: %s for %s, %s for the best competitor.", rivalLineOtherEx: "%s: %s for %s, %s at %s.",
+    gTitle: "Sign in to analyse your reviews", gSub: "Free, no password. Use Google or email.", gGoogle: "Continue with Google", gOr: "or use email",
+    gEmail: "Email", gEmailPh: "name@email.com", gSend: "Send code to my email", gConsent: "We record usage per account (never review text) for research on this product.",
+    gExample: "Try an example first", gCode: "Have an access code? Sign in here", gClose: "Not now", signInShort: "Sign in",
+    gCodeTitle: "Enter the 6-digit code", gCodeSub: "We sent a code to %s. If it has not arrived, check your spam folder.", gVerify: "Sign in", gResend: "Send the code again", gResendIn: "Send the code again (%s)",
+    gSentAgain: "A new code was sent.", gChange: "Change email", gDigit: "Digit %s of 6",
+    gIntroTitle: "A little about your shop", gIntroSub: "You can skip this. It helps us understand who uses BedahReview.", gPlatform: "Where do you sell?", gPick: "Choose…", gOther: "Other",
+    gShop: "Shop link (optional)", gShopPh: "https://…", gCategory: "Product category", gSave: "Save & start", gSkip: "Skip",
+    cat_fashion: "Fashion", cat_beauty: "Beauty", cat_food: "Food & drink", cat_electronics: "Electronics", cat_home: "Home", cat_other: "Other",
+    gErrEmail: "That email address is not valid.", gErrShort: "Enter all 6 digits.", gErrCode: "The code is wrong or has expired. Ask for a new one.", gErrRate: "Too many requests. Wait a moment, then try again.",
+    gErrNet: "Could not reach the sign-in service. Check your connection and try again.", gErrGeneric: "Could not sign in (%s). Try again.", gErrLoad: "The sign-in service could not be loaded. Reload the page.",
+    gErrShop: "The shop link must start with https://", gErrOauth: "Google sign-in was cancelled or failed. Try again.",
+    exampleNote: "This is an example with made-up reviews, not real data. Sign in to analyse your own reviews.",
     startHere: "Start here", startFix: "Fix “%s”: %s review(s) complain about this.", startSeeFix: "See the fix", startFight: "Answer the review about “%s”. The draft is ready to copy.", startSeeFight: "See the draft",
     startNone: "No complaints to act on. See what buyers praise under Keep.", whySteps: "Why & steps",
   },
@@ -836,7 +922,7 @@ function applyLang() {
   $("lang").replaceChildren(h("span", { class: "o" + (lang === "id" ? " on" : ""), text: "ID" }), h("span", { class: "o" + (lang === "en" ? " on" : ""), text: "EN" }));
   $("pchip-change").textContent = tr("change"); $("back-results").textContent = tr("backResults"); $("print-d").textContent = tr("print");
   $("legend").replaceChildren(...["fix", "fight", "ignore", "keep"].map((k) => h("p", {}, h("b", { class: "lg-" + k, text: tr(k) }), tr("legend" + k[0].toUpperCase() + k.slice(1)))));
-  themeLabel(); renderFixBadge();
+  themeLabel(); renderFixBadge(); renderGate();
   if (currentView === "fixes") renderFixes();
   if (!$("run").disabled) $("run").textContent = tr("run");
   if (lastData) render(lastData, false); else renderRival();
@@ -971,8 +1057,8 @@ function device() {
 }
 const doNotTrack = () => navigator.doNotTrack === "1" || window.doNotTrack === "1";
 function track(event, props, explicit) {  // fire and forget; "explicit" is the tester pressing Send, so Do Not Track does not apply
-  if (doNotTrack() && !explicit) return Promise.resolve(false);
-  return fetch("/api/event", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event, device: device(), props: props || {} }), keepalive: true })
+  if ((doNotTrack() && !explicit) || !signedIn) return Promise.resolve(false);  // nobody signed in, nothing to count
+  return authHeaders().then((auth) => fetch("/api/event", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, auth), body: JSON.stringify({ event, device: device(), props: props || {} }), keepalive: true }))
     .then((res) => res.ok).catch(() => false);
 }
 function looksLikeReviewText(comment, items) {  // a comment that repeats 20 characters of any analysed review is not sent
@@ -982,7 +1068,7 @@ function looksLikeReviewText(comment, items) {  // a comment that repeats 20 cha
 let feedbackState = { answer: null, sent: false, comment: "", error: "" };
 function renderFeedback() {
   const box = $("feedback"), st = feedbackState;
-  if (!lastData) { box.hidden = true; return; }
+  if (!lastData || lastData.example) { box.hidden = true; return; }
   box.hidden = false;
   if (st.sent) { box.replaceChildren(h("p", { class: "lbl-b", role: "status", text: tr("fbThanks") })); return; }
   const answers = h("div", { class: "seg", role: "group", "aria-label": tr("fbQ") }, [["yes", "fbYes"], ["partly", "fbPartly"], ["no", "fbNo"]].map(([a, k]) =>
@@ -1097,7 +1183,7 @@ function trackLines(f) {  // before and after, counts with their sample size, an
     f.after ? h("span", { class: "small-warn" + (small ? " strong" : ""), text: small ? tr("fixSmallStrong") : tr("fixSmall") }) : null);
 }
 function fixTracker(group) {  // under a Fix card: the "mark as fixed" action, or the saved fix with its before and after
-  if (!lastData) return null;
+  if (!lastData || lastData.example) return null;
   const src = lastData.source || {}, key = productKey(src);
   const saved = loadFixes().find((f) => sameFix(f, key, group.theme, group.variant));
   if (saved) {
@@ -1215,7 +1301,8 @@ function render(data, fresh) {
   $("results-h").textContent = tr("results");
   $("summary").textContent = name + data.reviews + " " + tr("reviewsWord") + (data.star_avg ? " · " + data.star_avg + "★" : "");
 
-  if (fresh !== false) {  // new reviews: compare them with every fix saved for this product
+  if (data.example) lastChanged = [];
+  if (fresh !== false && !data.example) {  // new reviews: compare them with every fix saved for this product
     const out = applyAnalysis(loadFixes(), productKey(src), data.items);
     lastChanged = out.changed;
     if (out.changed.length) saveFixes(out.fixes);
@@ -1230,7 +1317,7 @@ function render(data, fresh) {
   if (data.no_text) notes.push(h("div", { class: "callout", text: tr("noteNoText", data.no_text) }));
   if (data.dropped) notes.push(h("div", { class: "callout warn", text: tr("noteDropped", data.dropped) }));
   $("notes").replaceChildren(...notes);
-  $("start").replaceChildren(startHere(fixItems, fight, byId));
+  $("start").replaceChildren(...[data.example ? h("div", { class: "callout warn", role: "note", text: tr("exampleNote") }) : null, startHere(fixItems, fight, byId)].filter(Boolean));
 
   const cap = (k) => k[0].toUpperCase() + k.slice(1);
   $("pchip-name").textContent = src.title || tr("pastedName");
@@ -1298,10 +1385,10 @@ let rivalForm = { url: "", name: "" };
 const ownSource = () => (lastData && lastData.source && lastData.source.kind === "url" ? lastData.source : null);
 $("rival-home").append(rivalBodyEl);
 async function postJson(path, payload) {
-  const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  const res = await api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   let data = null;
   try { data = await res.json(); } catch (e) { /* not JSON */ }
-  if (res.status === 401) { location.reload(); return null; }
+  if (res.status === 401) { handleUnauthorized(); return null; }
   return { ok: res.ok, data };
 }
 function errText(data, fallback, rival) {  // the server sends a limit code; the words come from our own Bahasa / English text
@@ -1486,6 +1573,7 @@ function renderRival() {
   rivalBodyEl.replaceChildren(...[rivalBody()].flat(Infinity).filter(Boolean));
 }
 async function rivalFind(target) {
+  if (!ensureSignedIn()) return;
   const own = ownSource();
   const t = target || (own ? { url: own.url, title: own.title || "", mine: true } : null);
   if (!t) return;
@@ -1495,7 +1583,8 @@ async function rivalFind(target) {
   let next;
   try {
     const out = await postJson("/api/competitors/suggest", { url: t.url, title: t.title });
-    if (!out || run !== rivalRun) return;
+    if (!out) { rival = { step: "idle" }; renderRival(); return; }  // not signed in: the sign-in screen is up
+    if (run !== rivalRun) return;
     const cands = out.ok ? out.data.candidates : [];
     next = { step: "pick", target: t, want: rivalWant, candidates: cands, checked: cands.map((c, i) => (c.picked ? i : -1)).filter((i) => i >= 0).slice(0, rivalWant), extra: "", error: out.ok ? "" : errText(out.data, tr("errGeneric", ""), true) };
   } catch (e) {
@@ -1505,6 +1594,7 @@ async function rivalFind(target) {
   rival = next; renderRival();
 }
 async function rivalCompare() {
+  if (!ensureSignedIn()) return;
   const pick = rival, t = pick.target, chosen = rivalChosen(pick), run = ++rivalRun;
   if (!chosen.length) { pick.error = tr("rivalNeedOne"); renderRival(); return; }
   const own = t.mine && lastData ? lastData.items.map((i) => ({ theme: i.theme, bucket: i.bucket, fake: !!(i.likely_fake && i.likely_fake.flag) })) : [];  // no Bedah ulasan for this link: compare the rivals only
@@ -1512,7 +1602,8 @@ async function rivalCompare() {
   let next;
   try {
     const out = await postJson("/api/competitors/compare", { url: t.url, title: t.title, own, competitors: chosen });
-    if (!out || run !== rivalRun) return;
+    if (!out) { rival = { step: "idle" }; renderRival(); return; }  // not signed in: the sign-in screen is up
+    if (run !== rivalRun) return;
     next = out.ok ? { step: "result", target: t, data: out.data } : Object.assign(pick, { step: "pick", error: errText(out.data, tr("errGeneric", ""), true) });
   } catch (e) {
     if (run !== rivalRun) return;
@@ -1544,7 +1635,7 @@ $("new-mob").addEventListener("click", () => { show("input"); toTop(); });
 $("pchip-change").addEventListener("click", () => { show("input"); toTop(); });
 $("back-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
 $("print-d").addEventListener("click", () => window.print());
-$("logout").addEventListener("click", async () => { try { await fetch("/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); } catch (e) { /* reload anyway */ } location.reload(); });
+$("logout").addEventListener("click", async () => { if (sb) { try { await sb.auth.signOut(); } catch (e) { /* reload anyway */ } } try { await fetch("/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); } catch (e) { /* reload anyway */ } location.reload(); });
 $("fixes-btn").addEventListener("click", () => { if (currentView === "fixes") { $("fixes-back").click(); } else openFixes(); });
 $("fixes-back").addEventListener("click", () => { show(viewBeforeFixes === "loading" || (viewBeforeFixes === "results" && !lastData) ? "input" : viewBeforeFixes); toTop(); });
 $("fixes-export").addEventListener("click", exportFixes);
@@ -1602,11 +1693,11 @@ async function send(payload, title) {
   const buttons = [$("run"), $("fetch")]; buttons.forEach((b) => { b.disabled = true; });
   startLoading(title);
   try {
-    const res = await fetch("/api/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const res = await api("/api/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     let data = null;
     try { data = await res.json(); } catch (e) { /* not JSON */ }
     stopLoading();
-    if (res.status === 401) { location.reload(); return; }  // signed out: the server shows the access-code page
+    if (res.status === 401) { show("input"); handleUnauthorized(); return; }  // signed out or the sign-in ran out: ask again
     if (!res.ok || !data) {
       show("input");
       const toPaste = data && data.fallback === "paste";
@@ -1629,12 +1720,14 @@ function countReviewsRough(text) {
   return blocks.filter((b) => b.trim()).length;
 }
 function runPaste() {
+  if (!ensureSignedIn()) return;
   const text = $("paste").value;
   if (!text.trim()) { showError(tr("errPaste")); $("paste").focus(); return; }
   $("shared-note").hidden = true;
   send({ text, product: $("product").value.trim() }, tr("loadingTitle", countReviewsRough(text)));
 }
 function runFetch() {
+  if (!ensureSignedIn()) return;
   const url = $("url").value.trim();
   if (!url) { showError(tr("errLink")); $("url").focus(); return; }
   send({ url, limit: parseInt($("limit").value, 10) || 10, mode: $("mode").value }, tr("loadingFetch"));
@@ -1676,6 +1769,181 @@ function takeShared() {
   selectInput("paste", false);
 }
 
+/* ---------- sign-in (Supabase) ----------
+   Only when the server says Supabase is on. The browser talks to Supabase directly, so its per-address limits count each person apart;
+   our server only checks the token it is sent. Only the publishable key is in this page, never the secret key. */
+let sb = null, signedIn = true, userId = null, cfgAccess = false, gateStep = "choose", gateEmail = "", resendAt = 0, resendTimer = null, introDone = null, openedSent = false, exampleShown = false;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PLATFORMS = ["tokopedia", "lazada", "tiktokshop", "shopee", "other"], CATEGORIES = ["fashion", "beauty", "food", "electronics", "home", "other"];
+const PLATFORM_NAME = { tokopedia: "Tokopedia", lazada: "Lazada", tiktokshop: "TikTok Shop", shopee: "Shopee" };
+const OTP_LEN = 6, RESEND_SECS = 60;
+async function authHeaders() {
+  if (!sb) return {};
+  try { const { data } = await sb.auth.getSession(); return data.session ? { Authorization: "Bearer " + data.session.access_token } : {}; } catch (e) { return {}; }
+}
+async function api(path, init) { return fetch(path, Object.assign({}, init, { headers: Object.assign({}, (init || {}).headers, await authHeaders()) })); }
+function openedOnce() { if (!openedSent && signedIn) { openedSent = true; track("opened"); } }
+function loadScript(src) { return new Promise((ok, no) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = no; document.head.append(el); }); }
+const withTimeout = (promise, ms) => Promise.race([promise, new Promise((_, no) => setTimeout(() => no(new Error("timeout")), ms))]);
+function authErrorText(e) {
+  const code = (e && e.code) || "", status = e && e.status;
+  if (code === "otp_expired") return tr("gErrCode");
+  if (code === "email_address_invalid") return tr("gErrEmail");
+  if (code === "over_email_send_rate_limit" || code === "over_request_rate_limit" || status === 429) return tr("gErrRate");
+  if (!status || (e && e.name === "AuthRetryableFetchError")) return tr("gErrNet");
+  return tr("gErrGeneric", code || status);
+}
+function showGateError(msg) { $("g-error-text").textContent = msg || ""; $("g-error").hidden = !msg; }
+function hideApp() { document.body.classList.add("gated"); $("workspace").hidden = true; }
+function showApp() {
+  document.body.classList.remove("gated"); $("workspace").hidden = false; $("gate").hidden = true;
+  $("signin-btn").hidden = !sb || signedIn; $("logout-row").hidden = !(cfgAccess || (sb && signedIn));
+  openedOnce();
+}
+function fillSelect(sel, values, label) {
+  const keep = sel.value;
+  sel.replaceChildren(h("option", { value: "", text: tr("gPick") }), ...values.map((v) => h("option", { value: v, text: label(v) })));
+  sel.value = keep;
+}
+function tickResend() {
+  const left = Math.max(0, Math.ceil((resendAt - Date.now()) / 1000)), b = $("g-resend");
+  b.disabled = left > 0; b.textContent = left > 0 ? tr("gResendIn", left) : tr("gResend");
+  if (left <= 0 && resendTimer) { clearInterval(resendTimer); resendTimer = null; }
+}
+function startResend() { resendAt = Date.now() + RESEND_SECS * 1000; clearInterval(resendTimer); resendTimer = setInterval(tickResend, 1000); tickResend(); }
+function renderGate() {
+  otpBoxes.forEach((b, i) => b.setAttribute("aria-label", tr("gDigit", i + 1)));
+  $("g-vsub").textContent = tr("gCodeSub", gateEmail);
+  fillSelect($("g-platform"), PLATFORMS, (v) => PLATFORM_NAME[v] || tr("gOther"));
+  fillSelect($("g-category"), CATEGORIES, (v) => tr("cat_" + v));
+  $("g-codelink").hidden = !cfgAccess; $("g-close").hidden = !exampleShown;
+  tickResend();
+}
+function showGate(step, focus) {
+  document.body.classList.add("gated"); $("workspace").hidden = true; $("gate").hidden = false;
+  gateStep = step || "choose";
+  for (const name of ["choose", "verify", "intro"]) $("g-" + name).hidden = name !== gateStep;
+  showGateError(""); renderGate();
+  if (focus !== false) $({ choose: "g-email", verify: "otp-0", intro: "g-platform" }[gateStep]).focus();
+}
+const otpBoxes = [];
+function otpValue() { return otpBoxes.map((b) => b.value).join(""); }
+function clearOtp() { otpBoxes.forEach((b) => { b.value = ""; }); otpBoxes[0].focus(); }
+function fillFrom(i, raw) {  // typing, an autofilled code (iPhone puts all six in the first box) and a paste all end up here
+  const digits = String(raw).replace(/\D/g, "").slice(0, OTP_LEN - i);
+  if (!digits) { otpBoxes[i].value = ""; return; }
+  [...digits].forEach((d, k) => { otpBoxes[i + k].value = d; });
+  otpBoxes[Math.min(i + digits.length, OTP_LEN - 1)].focus();
+  if (otpValue().length === OTP_LEN) verifyCode();
+}
+for (let i = 0; i < OTP_LEN; i++) {
+  const input = h("input", { id: "otp-" + i, type: "text", inputmode: "numeric", pattern: "[0-9]*", maxlength: i === 0 ? String(OTP_LEN) : "1", autocomplete: i === 0 ? "one-time-code" : "off" });
+  input.addEventListener("input", () => fillFrom(i, input.value));
+  input.addEventListener("paste", (e) => { e.preventDefault(); fillFrom(i, (e.clipboardData || window.clipboardData).getData("text")); });
+  input.addEventListener("focus", () => input.select());
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Backspace" && !input.value && i > 0) { otpBoxes[i - 1].value = ""; otpBoxes[i - 1].focus(); }
+    else if (e.key === "ArrowLeft" && i > 0) otpBoxes[i - 1].focus();
+    else if (e.key === "ArrowRight" && i < OTP_LEN - 1) otpBoxes[i + 1].focus();
+    else if (e.key === "Enter") verifyCode();
+  });
+  otpBoxes.push(input); $("otp").append(input);
+}
+async function sendCode(again) {
+  const email = again ? gateEmail : $("g-email").value.trim();
+  if (!EMAIL_RE.test(email)) { showGateError(tr("gErrEmail")); $("g-email").focus(); return; }
+  const btn = again ? $("g-resend") : $("g-send"); btn.disabled = true; showGateError("");
+  try {
+    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+    if (error) { showGateError(authErrorText(error)); return; }
+    gateEmail = email; startResend();
+    if (again) announce(tr("gSentAgain")); else { showGate("verify"); clearOtp(); }
+  } catch (e) { showGateError(tr("gErrNet")); } finally { btn.disabled = false; if (again) tickResend(); }
+}
+let verifying = false;
+async function verifyCode() {
+  if (verifying) return;
+  const token = otpValue();
+  if (token.length !== OTP_LEN) { showGateError(tr("gErrShort")); return; }
+  verifying = true; $("g-verify-btn").disabled = true; showGateError("");
+  try {
+    const { data, error } = await sb.auth.verifyOtp({ email: gateEmail, token, type: "email" });
+    if (error) { showGateError(authErrorText(error)); clearOtp(); return; }
+    enterApp(data.session);
+  } catch (e) { showGateError(tr("gErrNet")); } finally { verifying = false; $("g-verify-btn").disabled = false; }
+}
+async function maybeIntro() {  // first sign-in only: a few optional questions. If Supabase cannot be reached the questions are skipped and the app opens anyway.
+  let known = true;
+  try {
+    const r = await withTimeout(sb.from("profiles").select("user_id").eq("user_id", userId).maybeSingle(), 6000);
+    if (!r.error && !r.data) known = false;
+  } catch (e) { /* Supabase is down or paused */ }
+  if (known) return;
+  showGate("intro");
+  await new Promise((resolve) => { introDone = resolve; });
+}
+async function saveIntro(skip) {
+  const platform = $("g-platform").value, category = $("g-category").value, shop = $("g-shop").value.trim();
+  if (!skip && shop && !/^https?:\/\/\S{3,290}$/.test(shop)) { showGateError(tr("gErrShop")); $("g-shop").focus(); return; }
+  const row = { user_id: userId, lang };  // a skipped intro still saves a row, so the questions are not asked again
+  if (!skip) Object.assign(row, { platform: PLATFORMS.includes(platform) ? platform : null, category: CATEGORIES.includes(category) ? category : null, shop_url: shop || null });
+  try { await withTimeout(sb.from("profiles").upsert(row, { onConflict: "user_id" }), 6000); } catch (e) { /* carry on; we ask again next time */ }
+  if (introDone) { introDone(); introDone = null; }
+}
+async function enterApp(session) {
+  if (!session || !session.user || userId === session.user.id) return;
+  userId = session.user.id; signedIn = true; hideApp();
+  await maybeIntro();
+  showApp();
+}
+function onSignedOut() { userId = null; signedIn = false; showGate("choose", false); }
+function handleUnauthorized() {
+  if (!sb) { location.reload(); return; }
+  userId = null; signedIn = false;
+  sb.auth.signOut({ scope: "local" }).catch(() => {});
+  showGate("choose", false);
+}
+function ensureSignedIn() { if (!sb || signedIn) return true; showGate("choose"); return false; }
+async function startAuth(cfg) {
+  if (!window.supabase) { try { await loadScript("vendor/supabase.js"); } catch (e) { /* handled below */ } }
+  if (!window.supabase) { signedIn = !!cfg.signed_in; if (!signedIn) { showGate("choose", false); showGateError(tr("gErrLoad")); } else showApp(); return; }
+  sb = window.supabase.createClient(cfg.supabase.url, cfg.supabase.anon_key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "pkce" } });
+  sb.auth.onAuthStateChange((event, session) => { setTimeout(() => { if (event === "SIGNED_OUT") onSignedOut(); else if (session) enterApp(session); }, 0); });  // not awaited inside the callback: Supabase asks for that
+  const params = new URLSearchParams(location.search), oauthFailed = params.has("error") || params.has("error_description");
+  let session = null;
+  try { session = (await sb.auth.getSession()).data.session; } catch (e) { /* no session */ }
+  if (/[?&](code|error|error_code|error_description)=/.test(location.search) || /access_token|error=/.test(location.hash)) { try { history.replaceState(null, "", location.pathname); } catch (e) { /* keep it */ } }
+  if (session) { signedIn = true; enterApp(session); return; }
+  signedIn = !!cfg.signed_in;  // true for an access-code cookie
+  if (signedIn) { showApp(); return; }
+  showGate("choose", false);
+  if (oauthFailed) showGateError(tr("gErrOauth"));
+}
+$("g-google").addEventListener("click", async () => {
+  showGateError("");
+  try {
+    const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + "/" } });
+    if (error) showGateError(authErrorText(error));
+  } catch (e) { showGateError(tr("gErrNet")); }
+});
+$("g-send").addEventListener("click", () => sendCode(false));
+$("g-email").addEventListener("keydown", (e) => { if (e.key === "Enter") sendCode(false); });
+$("g-verify-btn").addEventListener("click", verifyCode);
+$("g-resend").addEventListener("click", () => sendCode(true));
+$("g-change").addEventListener("click", () => showGate("choose"));
+$("g-save").addEventListener("click", () => saveIntro(false));
+$("g-skip").addEventListener("click", () => saveIntro(true));
+$("g-close").addEventListener("click", showApp);
+$("signin-btn").addEventListener("click", () => showGate("choose"));
+$("g-example").addEventListener("click", async () => {
+  try {
+    const res = await fetch("/api/example");
+    if (!res.ok) throw new Error("example");
+    const data = await res.json();
+    exampleShown = true; showApp(); render(data, true);
+  } catch (e) { showGateError(tr("gErrNet")); }
+});
+
 /* ---------- install and offline ---------- */
 let deferredInstall = null;
 window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredInstall = e; $("install").hidden = false; });
@@ -1694,18 +1962,21 @@ async function loadConfig() {
   try {
     const cfg = await (await fetch("/api/config")).json();
     linkBoxOn = !!cfg.url_box; renderRival();
-    $("logout-row").hidden = !cfg.access;  // only when a sign-in code protects this copy
-    if (!cfg.url_box) return;
-    $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
-    $("intab-link").hidden = false;
-    if (desktop() && !$("paste").value && !location.search) selectInput("link", false);  // on a wide screen the link comes first
+    cfgAccess = !!cfg.access;
+    if (cfg.url_box) {
+      $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
+      $("intab-link").hidden = false;
+      if (desktop() && !$("paste").value && !location.search) selectInput("link", false);  // on a wide screen the link comes first
+    }
+    if (cfg.supabase) await startAuth(cfg);
+    else { signedIn = true; $("logout-row").hidden = !cfg.access; openedOnce(); }  // an access code, or a local run: no sign-in screens
   } catch (e) { /* the link tab simply stays hidden */ }
+  document.body.classList.add("ready");
 }
 
 applyLang();
 takeShared();
 loadConfig();
-track("opened");
 </script>
 </body>
 </html>

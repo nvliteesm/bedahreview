@@ -111,50 +111,111 @@ class VerifyTests(unittest.TestCase):
 
 class WebTests(unittest.TestCase):
     CODES = {"ani": "ani-secret-1"}
+    ANON = "sb_publishable_test_key_for_tests"
 
     def setUp(self):
         self.key, jwk = new_key("k1")
-        self.server = web.make_server(0, classify_fn=lambda reviews, product=None: [], access_codes=dict(self.CODES), public=True, supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)))
+        self.server = web.make_server(0, classify_fn=lambda reviews, product=None: [], access_codes=dict(self.CODES), public=True,
+                                      supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key=self.ANON)
         self.port = self.server.server_address[1]
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
         self.addCleanup(self.server.server_close)
         self.addCleanup(self.server.shutdown)
 
-    def get(self, path, headers=None):
+    def call(self, path, headers=None, method="GET", body=None):
         conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
-        conn.request("GET", path, headers=headers or {})
+        conn.request(method, path, body=body, headers=headers or {})
         resp = conn.getresponse()
-        resp.read()
+        data = resp.read()
         conn.close()
-        return resp.status
+        return resp, data
 
-    def test_the_api_accepts_a_genuine_token_and_refuses_the_rest(self):
-        self.assertEqual(self.get("/api/config", {"Authorization": "Bearer " + token(self.key)}), 200)
-        self.assertEqual(self.get("/api/config", {"Authorization": "bearer " + token(self.key)}), 200)
+    def get(self, path, headers=None):
+        return self.call(path, headers)[0].status
+
+    def test_a_gated_api_call_accepts_a_genuine_token_and_refuses_the_rest(self):
+        # /api/ping does not exist: 404 means the sign-in check passed, 401 means it did not
+        self.assertEqual(self.get("/api/ping", {"Authorization": "Bearer " + token(self.key)}), 404)
+        self.assertEqual(self.get("/api/ping", {"Authorization": "bearer " + token(self.key)}), 404)
         for bad in ("Bearer " + token(self.key, exp=int(time.time()) - 60), "Bearer junk", "Bearer ", token(self.key), "Basic abc"):
-            self.assertEqual(self.get("/api/config", {"Authorization": bad}), 401, bad)
-        self.assertEqual(self.get("/api/config"), 401)
-
-    def test_a_token_does_not_replace_the_cookie_for_the_page_yet(self):
-        self.assertEqual(self.get("/", {"Authorization": "Bearer " + token(self.key)}), 200)  # the browser never sends it on a page load; here it is accepted like any API call
-        self.assertEqual(self.get("/"), 401)  # no sign-in: the access-code page, as before
+            self.assertEqual(self.get("/api/ping", {"Authorization": bad}), 401, bad)
+        self.assertEqual(self.get("/api/ping"), 401)
+        self.assertEqual(self.call("/api/event", method="POST", body=b"{}", headers={"Content-Type": "application/json"})[0].status, 401)
 
     def test_the_access_code_cookie_still_works(self):
         cookie = web.COOKIE + "=" + web.session_token("ani", self.CODES["ani"], int(time.time()) + 100)
-        self.assertEqual(self.get("/api/config", {"Cookie": cookie}), 200)
+        self.assertEqual(self.get("/api/ping", {"Cookie": cookie}), 404)
+
+    def test_the_page_and_its_files_load_without_signing_in(self):
+        for path in ("/", "/vendor/supabase.js", "/manifest.webmanifest", "/sw.js"):
+            self.assertEqual(self.get(path), 200, path)
+
+    def test_config_is_public_and_says_whether_you_are_signed_in(self):
+        resp, data = self.call("/api/config")
+        cfg = json.loads(data)
+        self.assertEqual((resp.status, cfg["signed_in"]), (200, False))
+        self.assertEqual(cfg["supabase"], {"url": URL, "anon_key": self.ANON})
+        signed = json.loads(self.call("/api/config", {"Authorization": "Bearer " + token(self.key)})[1])
+        self.assertTrue(signed["signed_in"])
+        cookie = web.COOKIE + "=" + web.session_token("ani", self.CODES["ani"], int(time.time()) + 100)
+        self.assertTrue(json.loads(self.call("/api/config", {"Cookie": cookie})[1])["signed_in"])  # a code user is signed in too
+
+    def test_only_the_publishable_key_ever_leaves_the_server(self):
+        for path in ("/", "/api/config", "/api/example"):
+            self.assertNotIn(b"sb_secret_", self.call(path)[1])
+            self.assertNotIn(b"SERVICE_KEY", self.call(path)[1])
+
+    def test_the_free_example_needs_no_sign_in_and_no_model(self):
+        resp, data = self.call("/api/example")
+        out = json.loads(data)
+        self.assertEqual(resp.status, 200)
+        self.assertTrue(out["example"])
+        self.assertEqual(out["reviews"], len(out["items"]) + out["dropped"])
+        self.assertTrue(out["groups"] and out["counts"]["fight"] >= 1)
+        self.assertEqual(out["source"]["title"], "Kaos Boxy Retro")
+
+    def test_the_example_copy_matches_the_recorded_sample(self):
+        sample = json.loads((ROOT / "samples" / "live_gemini_sample.json").read_text(encoding="utf-8"))
+        shipped = json.loads((web.EXAMPLE_PATH).read_text(encoding="utf-8"))
+        self.assertEqual((shipped["input"], shipped["output"]), (sample["input"], sample["output"]))  # the copy inside src/ is what gets deployed
+
+    def test_the_page_may_talk_to_supabase_and_nobody_else(self):
+        csp = self.call("/")[0].getheader("Content-Security-Policy")
+        self.assertIn("connect-src 'self' " + URL, csp)
+        self.assertIn("default-src 'self'", csp)
+        self.assertNotIn("cdn", csp)
+
+    def test_the_access_code_page_is_still_reachable_for_interviewers(self):
+        resp, page = self.call("/code")
+        self.assertEqual(resp.status, 200)
+        self.assertIn(b'name="csrf"', page)
+
+    def test_the_pinned_supabase_js_is_the_file_we_reviewed(self):
+        import hashlib
+        data = (web.STATIC / "vendor" / "supabase.js").read_bytes()
+        self.assertEqual(hashlib.sha256(data).hexdigest(), "d6a5c4414a5d4ce646d9c1de223aa7067d3ff664c15394ffeb7fcffc763354a3")  # @supabase/supabase-js 2.117.3, umd build
 
 
-class LocalRunTests(unittest.TestCase):
-    def test_a_local_run_without_codes_stays_open_even_with_supabase_set(self):
+class SupabaseOnlyTests(unittest.TestCase):
+    """Public mode with Supabase and no access codes: the page is open, the work is not."""
+
+    def test_no_codes_means_no_code_page_and_a_sign_in_is_still_required(self):
         key, jwk = new_key("k1")
-        server = web.make_server(0, classify_fn=lambda reviews, product=None: [], supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)))
+        server = web.make_server(0, classify_fn=lambda reviews, product=None: [], public=True, supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key="sb_publishable_x")
         self.addCleanup(server.server_close)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         self.addCleanup(server.shutdown)
-        conn = http.client.HTTPConnection("127.0.0.1", server.server_address[1], timeout=10)
-        conn.request("GET", "/api/config")
-        self.assertEqual(conn.getresponse().status, 200)
-        conn.close()
+
+        def status(path, headers=None):
+            conn = http.client.HTTPConnection("127.0.0.1", server.server_address[1], timeout=10)
+            conn.request("GET", path, headers=headers or {})
+            code = conn.getresponse().status
+            conn.close()
+            return code
+        self.assertEqual(status("/"), 200)
+        self.assertEqual(status("/api/ping"), 401)
+        self.assertEqual(status("/api/ping", {"Authorization": "Bearer " + token(key)}), 404)
+        self.assertEqual(status("/code"), 401)  # nothing to type a code into
 
 
 class SchemaTests(unittest.TestCase):
@@ -179,10 +240,14 @@ class SchemaTests(unittest.TestCase):
             self.assertNotIn(forbidden, columns)
 
     def test_the_secret_key_is_only_ever_named_in_server_files(self):
-        for path in (ROOT / "src" / "bedahreview" / "static").rglob("*"):
-            if path.is_file() and path.suffix in (".html", ".js", ".webmanifest"):
-                self.assertNotIn("SERVICE_KEY", path.read_text(), path.name)
-                self.assertNotIn("sb_secret_", path.read_text(), path.name)
+        static = ROOT / "src" / "bedahreview" / "static"
+        ours = [p for p in static.rglob("*") if p.is_file() and p.suffix in (".html", ".js", ".webmanifest") and "vendor" not in p.parts]  # the pinned library only mentions the prefix, it holds no key
+        self.assertTrue(ours)
+        for path in ours:
+            text = path.read_text(encoding="utf-8")
+            self.assertNotIn("SERVICE_KEY", text, path.name)
+            self.assertNotIn("sb_secret_", text, path.name)
+            self.assertNotRegex(text, r"sb_secret_[A-Za-z0-9_-]{10,}", path.name)
 
 
 if __name__ == "__main__":

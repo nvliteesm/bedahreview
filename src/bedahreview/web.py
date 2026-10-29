@@ -76,7 +76,10 @@ DEFAULT_PAID_PER_HOUR = 6 # paid actions (link fetch, find or compare competitor
 PUBLIC_ASSETS = {"/manifest.webmanifest", "/sw.js", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png"}
 # Files served from static/ (exact paths only; the query string is ignored, so /?text=... is the page).
 PAGES = {"/": "index.html", "/index.html": "index.html"}
+OPEN_API = {"/api/config", "/api/example"}  # answered without sign-in when Supabase is on: the sign-in screens and the free example need them
+EXAMPLE_PATH = Path(__file__).resolve().parent / "data" / "example_result.json"  # a real model reply to invented reviews, recorded once
 ASSETS = {
+    "/vendor/supabase.js": ("vendor/supabase.js", "text/javascript; charset=utf-8"),  # one pinned copy of supabase-js, served from here instead of a CDN
     "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json; charset=utf-8"),
     "/sw.js": ("sw.js", "text/javascript; charset=utf-8"),
     "/icons/icon-192.png": ("icons/icon-192.png", "image/png"),
@@ -301,6 +304,14 @@ class BoundedServer(ThreadingHTTPServer):
             self._slots.release()
 
 
+def example_response() -> Dict[str, Any]:
+    """The free example: a recorded model reply to invented reviews, shaped like a real analysis. No model call, no cost, no sign-in."""
+    recorded = json.loads(EXAMPLE_PATH.read_text(encoding="utf-8"))
+    out = build_response(recorded["input"], recorded["output"], recorded["model"], {"kind": "paste", "title": recorded["product"]})
+    out["example"] = True
+    return out
+
+
 class Handler(BaseHTTPRequestHandler):
     classify_fn: Callable[..., List[Dict[str, Any]]] = staticmethod(classify)  # replaced in tests
     suggest_fn: Callable[..., Dict[str, Any]] = staticmethod(suggest_competitors)  # replaced in tests
@@ -309,6 +320,7 @@ class Handler(BaseHTTPRequestHandler):
     access_codes: Dict[str, str] = {}  # tester name -> code; empty means no sign-in (local use)
     public = False  # public mode: any Host header is fine, cookies are Secure, per-visitor limits apply
     supabase_auth: Optional[SupabaseAuth] = None  # checks Supabase sign-in tokens on this server; None means only the access-code cookie works
+    supabase_public: Optional[Dict[str, str]] = None  # the project address and the publishable key: both are meant for the browser. The secret key is never kept here.
     login_limiter: Optional[RateLimiter] = None
     use_limiter: Optional[RateLimiter] = None
     paid_limiter: Optional[RateLimiter] = None
@@ -350,7 +362,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'")
+        connect = " ".join(["'self'"] + ([type(self).supabase_public["url"]] if type(self).supabase_public else []))  # the page may talk to Supabase sign-in and nobody else
+        self.send_header("Content-Security-Policy", "default-src 'self'; connect-src %s; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'" % connect)
         self.end_headers()
         if self.command != "HEAD":  # a HEAD reply has the same headers, including Content-Length, and no body
             self.wfile.write(body)
@@ -381,11 +394,11 @@ class Handler(BaseHTTPRequestHandler):
         return auth.verify(header[7:].strip())
 
     def _authed(self) -> bool:
-        if not self.access_codes:
-            return True  # local use: no sign-in at all, as before (the Supabase sign-in screens arrive in the next step)
+        if not self.access_codes and type(self).supabase_auth is None:
+            return True  # local use: no sign-in at all
         if self._bearer_user():
             return True
-        return check_session(self._cookie(COOKIE), self.access_codes, time.time()) is not None
+        return bool(self.access_codes) and check_session(self._cookie(COOKIE), self.access_codes, time.time()) is not None
 
     def _login_page(self, status: int, nxt: str, error: str = "") -> None:
         err = '<p class="err" role="alert">%s</p>' % html.escape(error) if error else ""
@@ -630,7 +643,10 @@ class Handler(BaseHTTPRequestHandler):
         if not self._host_ok():
             return self._json(403, {"error": "Host not allowed"})
         path = self.path.split("?", 1)[0]
-        if not self._authed() and path not in PUBLIC_ASSETS:
+        open_site = type(self).supabase_auth is not None  # Supabase on: the page is public and the sign-in screens are inside it
+        if open_site and path == "/code" and self.access_codes:
+            return self._login_page(200, "/")  # interviewers and testers with an access code
+        if not self._authed() and path not in PUBLIC_ASSETS and not (open_site and (path in PAGES or path in ASSETS or path in OPEN_API)):
             if path.startswith("/api/"):
                 return self._json(401, {"error": "Please sign in again.", "login": True})
             return self._login_page(401, self.path)
@@ -639,9 +655,14 @@ class Handler(BaseHTTPRequestHandler):
         if path in ASSETS:
             name, content_type = ASSETS[path]
             return self._send(200, (STATIC / name).read_bytes(), content_type)
+        if path == "/api/example":
+            return self._json(200, example_response())
         if path == "/api/config":
             on = type(self).fetcher is not None
-            return self._json(200, {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes)})
+            cfg = {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes), "signed_in": self._authed()}
+            if type(self).supabase_public:
+                cfg["supabase"] = type(self).supabase_public
+            return self._json(200, cfg)
         self._json(404, {"error": "Not found"})
 
     def _post(self) -> None:
@@ -719,6 +740,7 @@ def make_server(
     public: bool = False,
     access_codes: Optional[Dict[str, str]] = None,
     supabase_auth: Optional[SupabaseAuth] = None,
+    supabase_anon_key: str = "",
     max_per_hour: int = DEFAULT_MAX_PER_HOUR,
     paid_per_hour: int = DEFAULT_PAID_PER_HOUR,
     max_concurrent: int = DEFAULT_MAX_CONCURRENT,
@@ -741,6 +763,7 @@ def make_server(
     handler.access_codes = codes
     handler.public = public
     handler.supabase_auth = supabase_auth
+    handler.supabase_public = {"url": supabase_auth.project_url, "anon_key": supabase_anon_key} if supabase_auth and supabase_anon_key else None
     if codes:
         handler.login_limiter = RateLimiter(MAX_LOGIN_FAILS, LOGIN_WINDOW_SECS)
     if public:
@@ -767,8 +790,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     if access_code and len(access_code) < MIN_ACCESS_CODE_CHARS:
         print("BEDAHREVIEW_ACCESS_CODE must be at least %d characters." % MIN_ACCESS_CODE_CHARS, file=sys.stderr)
         return 1
-    if public and not access_code and not access_codes:
-        print("Public mode needs BEDAHREVIEW_ACCESS_CODE or BEDAHREVIEW_ACCESS_CODES (codes of at least %d characters), or anyone could spend your Gemini key." % MIN_ACCESS_CODE_CHARS, file=sys.stderr)
+    supabase_url = (os.environ.get("SUPABASE_URL") or "").strip()
+    supabase_key = (os.environ.get("SUPABASE_ANON_KEY") or "").strip()
+    if supabase_url and not re.match(r"^https://[a-z0-9-]+\.supabase\.co/?$", supabase_url):
+        print("SUPABASE_URL must look like https://<project>.supabase.co", file=sys.stderr)
+        return 1
+    if supabase_url and not supabase_key:
+        print("SUPABASE_URL is set but SUPABASE_ANON_KEY (the publishable key) is not. Sign-in needs both.", file=sys.stderr)
+        return 1
+    if public and not access_code and not access_codes and not supabase_url:
+        print("Public mode needs Supabase sign-in (SUPABASE_URL and SUPABASE_ANON_KEY) or BEDAHREVIEW_ACCESS_CODE / BEDAHREVIEW_ACCESS_CODES (codes of at least %d characters), or anyone could spend your Gemini key." % MIN_ACCESS_CODE_CHARS, file=sys.stderr)
         return 1
     try:
         max_per_hour = int(os.environ.get("BEDAHREVIEW_MAX_PER_HOUR") or DEFAULT_MAX_PER_HOUR)
@@ -787,10 +818,6 @@ def main(argv: Optional[List[str]] = None) -> int:
     except ValueError:
         print("BEDAHREVIEW_MAX_CONCURRENT must be a whole number of 1 or more.", file=sys.stderr)
         return 1
-    supabase_url = (os.environ.get("SUPABASE_URL") or "").strip()
-    if supabase_url and not re.match(r"^https://[a-z0-9-]+\.supabase\.co/?$", supabase_url):
-        print("SUPABASE_URL must look like https://<project>.supabase.co", file=sys.stderr)
-        return 1
     supabase_auth = SupabaseAuth(supabase_url) if supabase_url else None
     if not has_api_key():
         print("GEMINI_API_KEY is not set. Add it to .env (see .env.example).", file=sys.stderr)
@@ -801,11 +828,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Setup problem: %s" % exc, file=sys.stderr)
         return 1
     try:
-        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
+        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (port, exc.strerror), file=sys.stderr)
         return 1
-    where = "0.0.0.0:%d (public, access code on, %d analyses per visitor per hour)" % (port, max_per_hour) if public else "http://127.0.0.1:%d" % port
+    local = "localhost" if supabase_auth else "127.0.0.1"  # Google sends people back to the address listed in Supabase, which is localhost
+    where = "0.0.0.0:%d (public, sign-in on, %d analyses per visitor per hour)" % (port, max_per_hour) if public else "http://%s:%d" % (local, port)
     print("BedahReview is running on %s  (model: %s)  Press Ctrl+C to stop." % (where, resolve_model()), flush=True)
     print("Product-link box (demo): %s" % ("ON, paid third-party fetch" if fetcher else "off (set FETCHER=apify in .env to turn on)"), flush=True)
     try:

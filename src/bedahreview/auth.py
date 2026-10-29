@@ -46,6 +46,7 @@ class SupabaseAuth:
         clock: Callable[[], float] = time.time,
     ) -> None:
         base = project_url.rstrip("/")
+        self.project_url = base
         self.issuer = base + "/auth/v1"
         self.jwks_url = self.issuer + "/.well-known/jwks.json"
         self._fetch = fetch or fetch_jwks

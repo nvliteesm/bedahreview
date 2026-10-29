@@ -150,3 +150,13 @@ agreement with the sheet, not ground truth.
 2. `classify()` function: prompt + Gemini API, validated against the schema (done and run against the live API: see docs/eval-results.md; Gemini is the main provider, Groq/Qwen are a possible backup)
 3. Eval script scoring against the labelled Review log (done; needs your CSV export to run)
 4. Minimal paste-in web UI (done)
+
+## Sign-in with Supabase (Google or email code)
+
+With `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `.env`, the page opens for everyone and asks for a sign-in before it analyses anything: Google first, or an email with a 6-digit code. The browser talks to Supabase directly; this server only checks the token it is sent (`src/bedahreview/auth.py`, no call to Supabase per request). A first sign-in shows a few optional, skippable questions (platform, shop link, category). "Coba contoh dulu" shows a recorded example (`src/bedahreview/data/example_result.json`) with no sign-in and no model call. Access codes keep working at `/code` for interviewers.
+
+- Open the app at **http://localhost:8000**, not 127.0.0.1: Google sends people back to the address listed in Supabase (Authentication > URL Configuration).
+- To run without any sign-in locally, leave `SUPABASE_URL` out of `.env`.
+- The secret key (`SUPABASE_SERVICE_KEY`) never goes in a page. Only the publishable key is sent to the browser.
+- `src/bedahreview/static/vendor/supabase.js` is one pinned copy of `@supabase/supabase-js` 2.117.3 (umd build, sha256 `d6a5c441...54a3`, checked by a test). To update it, download the new file, change the hash in `tests/test_auth.py`, run the tests.
+- The email code needs the "Confirm signup" and "Magic Link" email templates in Supabase (Authentication > Emails) to contain `{{ .Token }}`. Until a custom email sender is set up, Supabase sends at most 2 emails an hour.
