@@ -24,6 +24,7 @@ KEYS_TTL_SECS = 3600  # how long fetched keys are trusted before a fresh fetch
 REFETCH_COOLDOWN_SECS = 60  # an unknown key id triggers one fresh fetch, but not more often than this
 FETCH_TIMEOUT_SECS = 5
 MAX_TOKEN_CHARS = 4096
+REVOKE_SECS = 2 * 3600  # longer than a token lives (an hour by default), so a deleted account cannot keep using its old token
 
 
 def fetch_jwks(url: str) -> Dict[str, Any]:
@@ -54,6 +55,7 @@ class SupabaseAuth:
         self._keys: Dict[str, Any] = {}  # kid -> public key
         self._fetched_at = 0.0
         self._warned = False
+        self._revoked: Dict[str, float] = {}  # user id -> until when it is refused. In memory: a restart forgets it, and the token ends within the hour anyway
         self._lock = threading.Lock()
 
     def _load(self, force: bool = False) -> None:
@@ -76,6 +78,13 @@ class SupabaseAuth:
             if not self._warned:
                 sys.stderr.write("supabase keys not loaded: %s\n" % type(exc).__name__)
                 self._warned = True
+
+    def revoke(self, user_id: str) -> None:
+        """Refuse this account's tokens from now on (its account has been deleted, but the token itself is still signed and unexpired)."""
+        with self._lock:
+            now = self._clock()
+            self._revoked = {u: until for u, until in self._revoked.items() if until > now}
+            self._revoked[user_id] = now + REVOKE_SECS
 
     def verify(self, token: str) -> Optional[str]:
         if not isinstance(token, str) or not token or len(token) > MAX_TOKEN_CHARS:
@@ -102,4 +111,9 @@ class SupabaseAuth:
         except jwt.PyJWTError:
             return None
         sub = claims.get("sub")
-        return sub if isinstance(sub, str) and 8 <= len(sub) <= 64 else None
+        if not (isinstance(sub, str) and 8 <= len(sub) <= 64):
+            return None
+        with self._lock:
+            if self._revoked.get(sub, 0) > self._clock():
+                return None
+        return sub

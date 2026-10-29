@@ -34,10 +34,12 @@ class EventSink:
         self._post = post or (lambda rows: post_rows(project_url, key, rows))
         self._queue: "queue.Queue[List[Dict[str, Any]]]" = queue.Queue(maxsize=MAX_PENDING)
         self._warned = False
+        self._forgotten: set = set()  # accounts that were deleted: their rows would be refused (the account is gone), so they are never sent
         threading.Thread(target=self._run, name="event-sink", daemon=True).start()
 
     def submit(self, rows: List[Dict[str, Any]]) -> bool:
         """Hand over rows to be saved. False (and the rows are dropped) when too many are already waiting."""
+        rows = [r for r in rows if r.get("user_id") not in self._forgotten]
         if not rows:
             return True
         try:
@@ -46,6 +48,10 @@ class EventSink:
         except queue.Full:
             self._warn("queue full")
             return False
+
+    def forget(self, user_id: str) -> None:
+        """Drop anything still waiting for this account, and anything that arrives later."""
+        self._forgotten.add(user_id)
 
     def wait_idle(self) -> None:
         """Block until everything handed over has been tried. For tests."""
@@ -67,7 +73,9 @@ class EventSink:
                         taken += 1
                     except queue.Empty:
                         break
-                self._post(rows)
+                rows = [r for r in rows if r.get("user_id") not in self._forgotten]
+                if rows:
+                    self._post(rows)
                 self._warned = False
             except urllib.error.HTTPError as exc:
                 self._warn("HTTP %d" % exc.code)

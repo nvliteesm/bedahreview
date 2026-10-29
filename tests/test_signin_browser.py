@@ -9,13 +9,14 @@ import unittest
 from pathlib import Path
 
 from bedahreview import web
+from bedahreview.account import TABLES, AccountAdmin
 from bedahreview.auth import SupabaseAuth
 
 try:
-    from test_auth import URL, FakeSupabase, new_key, token
+    from test_auth import URL, USER, FakeSupabase, new_key, token
     from test_browser import CHROME, _read_probe, _stub_classify
 except ImportError:  # run as tests.<module>
-    from tests.test_auth import URL, FakeSupabase, new_key, token
+    from tests.test_auth import URL, USER, FakeSupabase, new_key, token
     from tests.test_browser import CHROME, _read_probe, _stub_classify
 
 FAKE_SUPABASE = """
@@ -23,7 +24,8 @@ FAKE_SUPABASE = """
 window.__sb = { calls: [], session: null, profile: null, listeners: [], fixes: [], fixesError: false };
 (function () {
   const hash = location.hash, user = { id: "user-1111-2222" };
-  const syncing = ["#sync-first", "#sync-other", "#sync-down", "#sync-edit", "#sync-leave"];
+  window.__stage = sessionStorage.getItem("bedahreview-deleted") ? 2 : 1;  // the delete test reloads the page once: stage 2 is the page after the deletion
+  const syncing = ["#sync-first", "#sync-other", "#sync-down", "#sync-edit", "#sync-leave", "#delete"];
   if (["#intro", "#returning", "#expired", "#events"].concat(syncing).includes(hash)) window.__sb.session = { access_token: hash === "#expired" ? "junk" : "__TOKEN__", user };
   if (["#returning", "#expired", "#events"].concat(syncing).includes(hash)) window.__sb.profile = { user_id: user.id };
   const fixA = { id: "aaa1", theme: "Sizing & fit", variant: "Hitam", product: "kaos boxy retro", productLabel: "Kaos Boxy Retro", note: "size chart diganti", date: "2026-10-20", before: { count: 2, total: 5, sig: "s1", date: "" }, after: null, updated: 1000 };
@@ -34,6 +36,10 @@ window.__sb = { calls: [], session: null, profile: null, listeners: [], fixes: [
     if (hash === "#sync-other") { localStorage.setItem("bedahreview-fixes-v1", JSON.stringify([fixA])); localStorage.setItem("bedahreview-fixes-owner", "another-user"); }
     if (hash === "#sync-down") { localStorage.setItem("bedahreview-fixes-v1", JSON.stringify([fixA])); window.__sb.fixesError = true; }
     if (hash === "#sync-edit" || hash === "#sync-leave") window.__sb.fixes = [rowB];
+    if (hash === "#delete" && window.__stage === 1) {
+      localStorage.setItem("bedahreview-fixes-v1", JSON.stringify([fixA])); localStorage.setItem("bedahreview-device", "3fa9c2d41b7e8a06c5d1e2f3"); localStorage.setItem("bedahreview-fixes-owner", user.id);
+    }
+    if (hash === "#delete" && window.__stage === 2) { window.__sb.session = null; window.__sb.profile = null; }
   } catch (e) { /* storage blocked */ }
   window.supabase = { createClient: (url, key, opts) => { window.__sb.opts = opts; return ({
     auth: {
@@ -189,6 +195,23 @@ window.__probe = (async () => {
     }
   }
 
+  if (hash === "#delete") {
+    if (window.__stage === 1) {
+      await until(() => !byId("workspace").hidden);
+      out.stage = 1; out.areaShown = !byId("delete-area").hidden;
+      byId("delete-open").click(); out.panelOpened = !byId("delete-panel").hidden; out.warns = byId("delete-panel").textContent.includes("Tidak bisa dibatalkan");
+      byId("delete-cancel").click(); out.cancelled = byId("delete-panel").hidden;
+      byId("delete-open").click();
+      sessionStorage.setItem("probe-stage1", JSON.stringify(out));  // the page reloads on success, so what stage 1 saw is carried over for stage 2 to report
+      byId("delete-confirm").click();
+      await wait(8000);  // the page reloads as soon as the server says it is done
+      return out;
+    }
+    await until(() => !byId("gate").hidden);
+    return { stage: 2, stage1: JSON.parse(sessionStorage.getItem("probe-stage1") || "null"), gate: !byId("gate").hidden, workspaceHidden: byId("workspace").hidden, info: byId("g-info").textContent, infoShown: !byId("g-info").hidden,
+      fixes: localStorage.getItem("bedahreview-fixes-v1"), device: localStorage.getItem("bedahreview-device"), owner: localStorage.getItem("bedahreview-fixes-owner"), session: window.__sb.session };
+  }
+
   if (hash === "#notes") {
     await until(() => !byId("workspace").hidden);
     lastData = { items: [{ text: "warna tulisannya ijo pas dateng hitem banget" }] };
@@ -245,7 +268,9 @@ class SignInBrowserTests(unittest.TestCase):
         html = html.replace(start, FAKE_SUPABASE.replace("__TOKEN__", token(key)) + start).replace("</body>", PROBE + "</body>")
         index.write_text(html, encoding="utf-8")
         cls.real_static, web.STATIC = web.STATIC, static
+        cls.admin_calls = []
         cls.server = web.make_server(0, classify_fn=_stub_classify, access_codes={"ani": "ani-secret-1"}, public=True,
+                                     account_admin=AccountAdmin(URL, "sb_secret_x", request=lambda m, u, h, b: (cls.admin_calls.append((m, u.replace(URL, ""))) or 204)),
                                      supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key="sb_publishable_x")
         cls.port = cls.server.server_address[1]
         threading.Thread(target=cls.server.serve_forever, daemon=True).start()
@@ -362,6 +387,19 @@ class SignInBrowserTests(unittest.TestCase):
     def test_signing_out_clears_this_browsers_copy_but_never_the_accounts(self):
         out = self.probe("#sync-leave")
         self.assertEqual((out["local"], out["owner"], out["remote"]), (0, "", 1))
+
+    def test_deleting_the_account_asks_twice_deletes_and_leaves_nothing_behind(self):
+        self.admin_calls.clear()
+        self.addCleanup(lambda: self.server.RequestHandlerClass.supabase_auth._revoked.clear())  # the deleted test account is blocked on this shared server: let the other tests use it again
+        out = self.probe("#delete")
+        self.assertEqual(out["stage"], 2, out)  # the page reloaded: the server said it was done
+        self.assertEqual(out["stage1"], {"stage": 1, "areaShown": True, "panelOpened": True, "warns": True, "cancelled": True})  # it asked first, and Batal closed the question
+        self.assertTrue(out["gate"] and out["workspaceHidden"])  # signed out
+        self.assertTrue(out["infoShown"])
+        self.assertEqual(out["info"], "Akunmu dan semua datanya sudah dihapus.")
+        self.assertEqual((out["fixes"], out["device"], out["owner"]), (None, None, None))  # the fixes copy, the device id and the owner mark are gone from this browser
+        self.assertIsNone(out["session"])
+        self.assertEqual(self.admin_calls, [("DELETE", "/rest/v1/%s?user_id=eq.%s" % (t, USER)) for t in TABLES] + [("DELETE", "/auth/v1/admin/users/" + USER)])
 
     def test_a_note_cannot_repeat_review_text(self):
         out = self.probe("#notes")

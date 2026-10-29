@@ -374,6 +374,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
 <section id="gate" class="gate" hidden aria-labelledby="gate-h">
   <div class="gate-card">
     <div class="gate-step" id="g-choose">
+      <div class="callout" id="g-info" role="status" hidden></div>
       <div><h1 id="gate-h" tabindex="-1" data-i18n="gTitle"></h1><p class="muted" data-i18n="gSub"></p></div>
       <label class="check" for="g-keep"><input type="checkbox" id="g-keep" checked><span data-i18n="gKeep"></span></label>
       <button class="gbtn" id="g-google" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i18n="gGoogle"></span></button>
@@ -382,7 +383,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
         <input id="g-email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" data-i18n-ph="gEmailPh">
       </label>
       <button class="btn primary" id="g-send" type="button" data-i18n="gSend"></button>
-      <p class="small muted" data-i18n="gConsent"></p>
+      <p class="small muted"><span data-i18n="gConsent"></span> <a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a></p>
       <div class="callout" id="g-ios" hidden data-i18n="gIosNote"></div>
       <button class="btn ghost" id="g-example" type="button" data-i18n="gExample"></button>
       <div class="gate-links">
@@ -557,9 +558,19 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
     <div class="card-box" id="feedback" hidden></div>
     <p class="foot" id="foot"></p>
     <p class="foot" data-i18n="privNote"></p>
+    <p class="foot"><a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a></p>
   </section>
 
   <p class="foot" id="logout-row" hidden><button class="plain" id="logout" type="button" data-i18n="logout"></button></p>
+  <div id="delete-area" hidden>
+    <p class="foot"><button class="plain" id="delete-open" type="button" data-i18n="delBtn"></button></p>
+    <div class="card-box" id="delete-panel" hidden role="alertdialog" aria-labelledby="delete-h">
+      <h3 id="delete-h" data-i18n="delTitle"></h3>
+      <p data-i18n="delBody"></p>
+      <div class="callout hot" id="delete-error" role="alert" hidden></div>
+      <div class="row"><button class="btn danger" id="delete-confirm" type="button"></button><button class="btn ghost" id="delete-cancel" type="button" data-i18n="delCancel"></button></div>
+    </div>
+  </div>
   <span class="vh" id="toast" role="status" aria-live="polite"></span>
 </main>
 
@@ -697,6 +708,10 @@ const TEXT = {
     gErrNet: "Tidak bisa menghubungi layanan masuk. Periksa koneksi, lalu coba lagi.", gErrGeneric: "Tidak bisa masuk (%s). Coba lagi.", gErrLoad: "Layanan masuk tidak bisa dimuat. Muat ulang halaman.",
     gErrShop: "Tautan toko harus diawali https://", gErrOauth: "Masuk dengan Google dibatalkan atau gagal. Coba lagi.",
     exampleNote: "Ini contoh dengan ulasan rekaan, bukan data nyata. Masuk untuk membedah ulasanmu sendiri.",
+    privLink: "Kebijakan privasi", delBtn: "Hapus akun dan data saya", delTitle: "Hapus akun dan semua datamu?",
+    delBody: "Ini menghapus akunmu, profilmu, catatan pemakaianmu, dan daftar perbaikanmu (termasuk nama produk dan catatan) di server kami, serta salinannya di perangkat ini. Tidak bisa dibatalkan.",
+    delConfirm: "Ya, hapus semuanya", delCancel: "Batal", delDeleting: "Menghapus…", delErr: "Tidak bisa menghapus akun sekarang. Coba lagi sebentar lagi.",
+    delUnavailable: "Penghapusan akun belum tersedia di server ini.", gDeleted: "Akunmu dan semua datanya sudah dihapus.",
     fixesSubAccount: "Disimpan di akunmu (nama produk, tautan, dan catatanmu) supaya bisa dibuka dari HP lain. Jangan menulis nama orang.",
     syncOk: "Tersimpan di akunmu.", syncDown: "Riwayat sedang tidak tersedia. Catatanmu tetap tersimpan di perangkat ini dan akan disimpan ke akunmu nanti.",
     syncOff: "Masuk agar catatanmu tersimpan di akunmu dan bisa dibuka dari HP lain.", fixNoteReview: "Catatanmu tampak memuat teks ulasan. Tulis dengan kata-katamu sendiri.",
@@ -833,6 +848,10 @@ const TEXT = {
     gErrNet: "Could not reach the sign-in service. Check your connection and try again.", gErrGeneric: "Could not sign in (%s). Try again.", gErrLoad: "The sign-in service could not be loaded. Reload the page.",
     gErrShop: "The shop link must start with https://", gErrOauth: "Google sign-in was cancelled or failed. Try again.",
     exampleNote: "This is an example with made-up reviews, not real data. Sign in to analyse your own reviews.",
+    privLink: "Privacy policy", delBtn: "Delete my account and data", delTitle: "Delete your account and all your data?",
+    delBody: "This deletes your account, your profile, your usage records and your fixes list (including product names and notes) on our server, and the copy on this device. It cannot be undone.",
+    delConfirm: "Yes, delete everything", delCancel: "Cancel", delDeleting: "Deleting…", delErr: "The account could not be deleted right now. Try again in a moment.",
+    delUnavailable: "Deleting an account is not available on this server.", gDeleted: "Your account and all your data have been deleted.",
     fixesSubAccount: "Saved in your account (the product name, link and your note) so it opens on another phone. Please do not write people's names.",
     syncOk: "Saved in your account.", syncDown: "History is not available right now. Your notes stay saved on this device and will be saved to your account later.",
     syncOff: "Sign in so your notes are saved in your account and open on another phone.", fixNoteReview: "Your note looks like it contains review text. Write it in your own words.",
@@ -1911,7 +1930,7 @@ function takeShared() {
 /* ---------- sign-in (Supabase) ----------
    Only when the server says Supabase is on. The browser talks to Supabase directly, so its per-address limits count each person apart;
    our server only checks the token it is sent. Only the publishable key is in this page, never the secret key. */
-let sb = null, cachedToken = "", signedIn = true, userId = null, cfgAccess = false, gateStep = "choose", gateEmail = "", resendAt = 0, resendTimer = null, introDone = null, openedSent = false, exampleShown = false;
+let sb = null, cachedToken = "", signedIn = true, userId = null, cfgAccess = false, cfgCanDelete = false, gateStep = "choose", gateEmail = "", resendAt = 0, resendTimer = null, introDone = null, openedSent = false, exampleShown = false;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PLATFORMS = ["tokopedia", "lazada", "tiktokshop", "shopee", "other"], CATEGORIES = ["fashion", "beauty", "food", "electronics", "home", "other"];
 const PLATFORM_NAME = { tokopedia: "Tokopedia", lazada: "Lazada", tiktokshop: "TikTok Shop", shopee: "Shopee" };
@@ -1955,6 +1974,7 @@ function showApp() {
   document.body.classList.remove("gated"); $("workspace").hidden = false; $("gate").hidden = true;
   $("signin-btn").hidden = !sb || signedIn; $("logout-row").hidden = !(cfgAccess || (sb && signedIn));
   openedOnce();
+  $("delete-area").hidden = !(sb && signedIn && userId && cfgCanDelete); $("delete-panel").hidden = true;
   if (sb && signedIn && userId) syncFixes();
 }
 function fillSelect(sel, values, label) {
@@ -2079,6 +2099,7 @@ async function startAuth(cfg) {
   if (signedIn) { showApp(); return; }
   showGate("choose", false);
   if (oauthFailed) showGateError(tr("gErrOauth"));
+  try { if (sessionStorage.getItem("bedahreview-deleted")) { sessionStorage.removeItem("bedahreview-deleted"); $("g-info").textContent = tr("gDeleted"); $("g-info").hidden = false; } } catch (e) { /* ignore */ }
 }
 $("g-keep").addEventListener("change", () => setKeep($("g-keep").checked));
 $("g-google").addEventListener("click", async () => {
@@ -2096,6 +2117,25 @@ $("g-change").addEventListener("click", () => showGate("choose"));
 $("g-save").addEventListener("click", () => saveIntro(false));
 $("g-skip").addEventListener("click", () => saveIntro(true));
 $("g-close").addEventListener("click", showApp);
+/* "Hapus akun dan data saya": asks twice, deletes on the server, then clears everything this browser holds for the account and reloads. */
+$("delete-open").addEventListener("click", () => { $("delete-panel").hidden = false; $("delete-error").hidden = true; $("delete-confirm").textContent = tr("delConfirm"); $("delete-cancel").focus(); });
+$("delete-cancel").addEventListener("click", () => { $("delete-panel").hidden = true; });
+$("delete-confirm").addEventListener("click", async () => {
+  const btn = $("delete-confirm"), fail = (msg) => { $("delete-error").textContent = msg; $("delete-error").hidden = false; };
+  btn.disabled = true; btn.textContent = tr("delDeleting"); $("delete-error").hidden = true;
+  clearTimeout(fixSync.timer); fixSync.dirty = false; eventQueue = [];  // nothing may be sent to an account that is going away
+  let done = false;
+  try {
+    const res = await api("/api/account/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirm: "delete" }) });
+    if (res.ok) done = true;
+    else { const data = await res.json().catch(() => null); fail(data && data.code === "delete_unavailable" ? tr("delUnavailable") : tr("delErr")); }
+  } catch (e) { fail(tr("delErr")); }
+  btn.disabled = false; btn.textContent = tr("delConfirm");
+  if (!done) { resetFixSync(); syncFixes(); return; }  // nothing was deleted: carry on as before
+  try { await sb.auth.signOut({ scope: "local" }); } catch (e) { /* the account is gone either way */ }
+  try { [FIX_KEY, FIX_OWNER_KEY, DEVICE_KEY].forEach((k) => localStorage.removeItem(k)); sessionStorage.setItem("bedahreview-deleted", "1"); } catch (e) { /* ignore */ }
+  location.reload();  // a clean page: no review, result or note is left in memory
+});
 $("signin-btn").addEventListener("click", () => showGate("choose"));
 $("g-example").addEventListener("click", async () => {
   try {
@@ -2124,7 +2164,7 @@ async function loadConfig() {
   try {
     const cfg = await (await fetch("/api/config")).json();
     linkBoxOn = !!cfg.url_box; renderRival();
-    cfgAccess = !!cfg.access;
+    cfgAccess = !!cfg.access; cfgCanDelete = !!cfg.can_delete;
     if (cfg.url_box) {
       $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
       $("intab-link").hidden = false;

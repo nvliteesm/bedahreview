@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs
 
+from .account import AccountAdmin, AccountError
 from .auth import SupabaseAuth
 from .classifier import ClassificationError, classify, resolve_model
 from .competitors import MAX_COMPETITORS, compare_competitors, suggest_competitors
@@ -78,9 +79,9 @@ EVENTS_PER_HOUR = 600  # per visitor in public mode: a stuck page cannot flood t
 DEFAULT_USER_DAILY = 10  # analyses per signed-in account per day; 0 turns the limit off
 JAKARTA = timezone(timedelta(hours=7))  # the day ends at midnight in Jakarta (no daylight saving there)
 DEFAULT_PAID_PER_HOUR = 6 # paid actions (link fetch, find or compare competitors) per visitor per hour in public mode: lower than plain pasting
-PUBLIC_ASSETS = {"/manifest.webmanifest", "/sw.js", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png"}
+PUBLIC_ASSETS = {"/privacy", "/manifest.webmanifest", "/sw.js", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png"}
 # Files served from static/ (exact paths only; the query string is ignored, so /?text=... is the page).
-PAGES = {"/": "index.html", "/index.html": "index.html"}
+PAGES = {"/": "index.html", "/index.html": "index.html", "/privacy": "privacy.html"}
 OPEN_API = {"/api/config", "/api/example"}  # answered without sign-in when Supabase is on: the sign-in screens and the free example need them
 EXAMPLE_PATH = Path(__file__).resolve().parent / "data" / "example_result.json"  # a real model reply to invented reviews, recorded once
 ASSETS = {
@@ -165,6 +166,10 @@ class DailyQuota:
                 return False, used
             self._counts[user] = used + 1
             return True, used + 1
+
+    def forget(self, user: str) -> None:
+        with self._lock:
+            self._counts.pop(user, None)
 
     def refund(self, user: str) -> None:
         """Give one back: the analysis did not happen (the model failed), so it should not cost the person their turn."""
@@ -358,6 +363,8 @@ class Handler(BaseHTTPRequestHandler):
     access_codes: Dict[str, str] = {}  # tester name -> code; empty means no sign-in (local use)
     public = False  # public mode: any Host header is fine, cookies are Secure, per-visitor limits apply
     supabase_auth: Optional[SupabaseAuth] = None  # checks Supabase sign-in tokens on this server; None means only the access-code cookie works
+    account_admin: Optional[AccountAdmin] = None  # deletes an account when the person asks; None when there is no secret key
+    contact_email: str = ""  # shown on the privacy page; empty until the owner chooses to publish one
     event_sink: Optional[EventSink] = None  # saves events to Supabase in the background; None means the log line is all there is
     daily_quota: Optional[DailyQuota] = None  # per signed-in account; access-code testers and local runs are not counted here
     _uid: Optional[str] = None  # the Supabase user of this request, set by _authed()
@@ -408,6 +415,40 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, UnicodeDecodeError):
             return self._json(400, {"error": "Not an allowed batch of events."})
         self._record(events)
+        self._json(200, {"ok": True})
+
+    def _delete_account(self) -> None:
+        """"Hapus akun dan data saya": delete this signed-in account and everything saved under it. Needs a Supabase sign-in (an access-code tester has no account)."""
+        if not self._authed():
+            return self._json(401, {"error": "Please sign in again.", "login": True})
+        uid = self._uid
+        if not uid:
+            return self._json(400, {"error": "Only an account can be deleted.", "code": "no_account"})
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            if "application/json" not in (self.headers.get("Content-Type") or "") or not 0 < length <= 200:
+                raise ValueError
+            if json.loads(self.rfile.read(length).decode("utf-8")) != {"confirm": "delete"}:
+                raise ValueError
+        except (ValueError, UnicodeDecodeError):
+            return self._json(400, {"error": "Send {\"confirm\": \"delete\"}.", "code": "not_confirmed"})
+        if self.use_limiter and not self.use_limiter.take(self._client()):
+            return self._json(429, {"error": "Too many tries. Try again later."})
+        admin = type(self).account_admin
+        if admin is None:
+            return self._json(503, {"error": "Deleting an account is not available on this server.", "code": "delete_unavailable"})
+        try:
+            admin.delete_account(uid)
+        except AccountError as exc:
+            sys.stderr.write("account delete failed: %s\n" % exc)
+            return self._json(502, {"error": "The account could not be deleted. Try again in a moment.", "code": "delete_failed"})
+        type(self).supabase_auth.revoke(uid)  # its token is still signed and unexpired: refuse it from now on
+        if type(self).daily_quota:
+            type(self).daily_quota.forget(uid)
+        if type(self).event_sink:
+            type(self).event_sink.forget(uid)
+        sys.stdout.write(json.dumps({"severity": "INFO", "message": "bedahreview_account_deleted"}) + "\n")  # a count for the owner, no id
+        sys.stdout.flush()
         self._json(200, {"ok": True})
 
     def _paid_ok(self) -> bool:
@@ -734,7 +775,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, example_response())
         if path == "/api/config":
             on = type(self).fetcher is not None and (type(self).supabase_auth is None or self._cookie_user())  # the link box is for access-code testers only when accounts are on
-            cfg = {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes), "signed_in": self._authed()}
+            cfg = {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes), "signed_in": self._authed(), "can_delete": type(self).account_admin is not None, "contact": type(self).contact_email}
             if type(self).supabase_public:
                 cfg["supabase"] = type(self).supabase_public
             return self._json(200, cfg)
@@ -751,6 +792,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._event()
         if self.path == "/api/events":
             return self._events()
+        if self.path == "/api/account/delete":
+            return self._delete_account()
         if self.path == "/api/competitors/suggest":
             return self._suggest()
         if self.path == "/api/competitors/compare":
@@ -833,6 +876,8 @@ def make_server(
     supabase_anon_key: str = "",
     user_daily: int = DEFAULT_USER_DAILY,
     event_sink: Optional[EventSink] = None,
+    account_admin: Optional[AccountAdmin] = None,
+    contact_email: str = "",
     max_per_hour: int = DEFAULT_MAX_PER_HOUR,
     paid_per_hour: int = DEFAULT_PAID_PER_HOUR,
     max_concurrent: int = DEFAULT_MAX_CONCURRENT,
@@ -857,6 +902,8 @@ def make_server(
     handler.supabase_auth = supabase_auth
     handler.daily_quota = DailyQuota(user_daily) if user_daily > 0 else None
     handler.event_sink = event_sink
+    handler.account_admin = account_admin
+    handler.contact_email = contact_email
     handler.supabase_public = {"url": supabase_auth.project_url, "anon_key": supabase_anon_key} if supabase_auth and supabase_anon_key else None
     if codes:
         handler.login_limiter = RateLimiter(MAX_LOGIN_FAILS, LOGIN_WINDOW_SECS)
@@ -922,6 +969,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     supabase_auth = SupabaseAuth(supabase_url) if supabase_url else None
     service_key = (os.environ.get("SUPABASE_SERVICE_KEY") or "").strip()
     event_sink = EventSink(supabase_url, service_key) if supabase_url and service_key else None
+    account_admin = AccountAdmin(supabase_url, service_key) if supabase_url and service_key else None
+    contact_email = (os.environ.get("BEDAHREVIEW_CONTACT_EMAIL") or "").strip()
+    if contact_email and not re.match(r"^[^\s@<>\"']+@[^\s@<>\"']+\.[^\s@<>\"']+$", contact_email):
+        print("BEDAHREVIEW_CONTACT_EMAIL must look like name@example.com.", file=sys.stderr)
+        return 1
     if not has_api_key():
         print("GEMINI_API_KEY is not set. Add it to .env (see .env.example).", file=sys.stderr)
         return 1
@@ -931,7 +983,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Setup problem: %s" % exc, file=sys.stderr)
         return 1
     try:
-        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, user_daily=user_daily, event_sink=event_sink, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
+        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, user_daily=user_daily, event_sink=event_sink, account_admin=account_admin, contact_email=contact_email, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (port, exc.strerror), file=sys.stderr)
         return 1
@@ -939,6 +991,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     where = "0.0.0.0:%d (public, sign-in on, %d analyses per visitor per hour)" % (port, max_per_hour) if public else "http://%s:%d" % (local, port)
     print("BedahReview is running on %s  (model: %s)  Press Ctrl+C to stop." % (where, resolve_model()), flush=True)
     print("Usage events: %s" % ("also saved to Supabase per account" if event_sink else "log lines only (add SUPABASE_URL and SUPABASE_SERVICE_KEY to save them per account)"), flush=True)
+    print("Account deletion (\"Hapus akun dan data saya\"): %s" % ("on" if account_admin else "off (needs SUPABASE_SERVICE_KEY)"), flush=True)
     print("Product-link box (demo): %s" % ("ON, paid third-party fetch" if fetcher else "off (set FETCHER=apify in .env to turn on)"), flush=True)
     try:
         server.serve_forever()

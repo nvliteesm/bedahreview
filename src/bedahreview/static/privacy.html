@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex">
+<title>Kebijakan privasi · BedahReview</title>
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root { --bg: #f6f7f5; --surface: #ffffff; --ink: #17201c; --muted: #5d6963; --line: #dde2de; --accent: #0f6b5a; --soft: #dff1ec; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --accent: #4fc2a8; --soft: #163a33; } }
+:root[data-theme="dark"] { --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --accent: #4fc2a8; --soft: #163a33; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { position: sticky; top: 0; background: var(--surface); border-bottom: 1px solid var(--line); }
+.bar { max-width: 760px; margin: 0 auto; min-height: 56px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.02em; color: var(--ink); text-decoration: none; }
+.brand span { color: var(--accent); }
+.lang { display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.lang button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 1.7rem; line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 6px; }
+h2 { font-size: 1.15rem; margin: 28px 0 6px; }
+p, ul { margin: 0 0 12px; }
+ul { padding-left: 1.2em; display: grid; gap: 6px; }
+.muted { color: var(--muted); }
+.note { background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 16px 0; }
+a { color: var(--accent); font-weight: 600; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <a class="brand" href="/">bedah<span>review</span></a>
+  <div class="lang" role="group" aria-label="Bahasa / Language"><button type="button" data-l="id" aria-pressed="true">ID</button><button type="button" data-l="en" aria-pressed="false">EN</button></div>
+</div></header>
+
+<main>
+<article lang="id" id="p-id">
+  <h1>Kebijakan privasi</h1>
+  <p class="muted">Terakhir diperbarui: 29 Oktober 2026. Ditulis dengan bahasa sederhana oleh pembuat aplikasi ini. Ini bukan nasihat hukum.</p>
+
+  <h2>Apa ini</h2>
+  <p>BedahReview membantu penjual memilah ulasan pembeli menjadi Perbaiki, Tanggapi, Abaikan, dan Pertahankan. Ini proyek pribadi untuk riset produk, bukan perusahaan.</p>
+
+  <h2>Yang kami simpan</h2>
+  <ul>
+    <li><b>Akun.</b> Alamat email kamu, lewat Google atau kode yang dikirim ke email. Disimpan oleh Supabase (layanan masuk). Kami tidak pernah melihat kata sandi Google-mu.</li>
+    <li><b>Profil (opsional).</b> Platform jualan, tautan toko, kategori produk, dan bahasa. Boleh dilewati.</li>
+    <li><b>Catatan pemakaian, per akun.</b> Kejadian seperti “membuka aplikasi”, “membuka tab”, “menyalin draf”, dan jumlah ulasan yang dibedah. Tanpa isi ulasan, tanpa nama produk, tanpa alamat IP. Satu-satunya teks bebas adalah komentar yang kamu ketik sendiri di pertanyaan “Apakah hasil ini berguna?”.</li>
+    <li><b>Daftar perbaikan, kalau kamu memakainya.</b> Saat kamu menekan “Tandai sudah diperbaiki”, kami menyimpan tema keluhan, varian, tanggal, jumlah keluhan sebelum dan sesudah, <b>nama atau tautan produk</b>, dan <b>catatan singkatmu</b>. Ini agar daftarmu bisa dibuka dari HP lain. Lewat aplikasi, hanya akunmu yang bisa membacanya; pembuat aplikasi bisa melihatnya di dasbor Supabase. Jangan menulis nama orang di catatan.</li>
+    <li><b>Di perangkatmu.</b> Sesi masuk, pilihan bahasa dan tema, salinan daftar perbaikan, dan penanda acak perangkat. Semuanya di penyimpanan browser (localStorage), bukan cookie pelacak.</li>
+  </ul>
+
+  <h2>Yang tidak kami simpan</h2>
+  <ul>
+    <li>Teks ulasan yang kamu tempel. Teks itu dikirim untuk dianalisis, lalu tidak kami simpan.</li>
+    <li>Nama pembeli.</li>
+    <li>Alamat IP dan jenis perangkat di catatan kami sendiri.</li>
+  </ul>
+
+  <h2>Ke mana datamu pergi</h2>
+  <ul>
+    <li><b>Gemini API (Google).</b> Teks ulasan yang kamu tempel dikirim ke sana untuk dianalisis. Cara Google memperlakukan data itu mengikuti ketentuan Gemini API milik Google.</li>
+    <li><b>Supabase.</b> Menyimpan akun, profil, catatan pemakaian, dan daftar perbaikan.</li>
+    <li><b>Google Cloud Run.</b> Tempat aplikasi berjalan. Google Cloud menyimpan catatan permintaan standarnya sendiri, yang bisa memuat alamat IP, di luar kendali kami.</li>
+    <li><b>Apify.</b> Hanya untuk penguji undangan yang memakai fitur tautan produk: tautan dikirim ke layanan itu untuk mengambil ulasan yang tampil publik. Akun biasa tidak memakai ini.</li>
+  </ul>
+
+  <h2>Berapa lama</h2>
+  <ul>
+    <li>Catatan pemakaian: kami berencana menghapus yang lebih dari 90 hari (dilakukan manual).</li>
+    <li>Profil dan daftar perbaikan: sampai kamu menghapus akunmu.</li>
+    <li>Catatan Google Cloud: sesuai pengaturan Google (umumnya sekitar 30 hari).</li>
+  </ul>
+
+  <h2>Pilihanmu</h2>
+  <ul>
+    <li><b>Hapus akun dan data saya.</b> Tombolnya ada di bagian bawah aplikasi. Ini menghapus akunmu, profilmu, catatan pemakaianmu, dan daftar perbaikanmu di server kami, serta salinannya di perangkat itu. Tidak bisa dibatalkan.</li>
+    <li><b>Do Not Track.</b> Kalau browsermu mengirimnya, catatan pemakaian tidak dikirim.</li>
+    <li><b>Ekspor.</b> Daftar perbaikan bisa diekspor ke file JSON.</li>
+  </ul>
+  <p class="note">Batas yang jujur: layanan pihak ketiga (Supabase, Google) bisa menyimpan salinan sementara di sistem cadangannya setelah penghapusan. Tidak ada sistem yang sempurna, dan satu orang bisa membuat dua akun.</p>
+
+  <h2>Kontak</h2>
+  <p class="contact" data-none="Alamat kontak belum dipublikasikan. Hubungi pembuat lewat orang yang membagikan tautan ini kepadamu.">…</p>
+</article>
+
+<article lang="en" id="p-en" hidden>
+  <h1>Privacy policy</h1>
+  <p class="muted">Last updated: 29 October 2026. Written in plain words by the person who built this app. It is not legal advice.</p>
+
+  <h2>What this is</h2>
+  <p>BedahReview helps sellers sort buyer reviews into Fix it, Fight it, Ignore and Keep. It is a personal project for product research, not a company.</p>
+
+  <h2>What we keep</h2>
+  <ul>
+    <li><b>Account.</b> Your email address, through Google or a code sent to your email. It is kept by Supabase (the sign-in service). We never see your Google password.</li>
+    <li><b>Profile (optional).</b> Where you sell, your shop link, product category and language. You can skip it.</li>
+    <li><b>Usage records, per account.</b> Events like “opened the app”, “opened a tab”, “copied a draft”, and how many reviews were analysed. No review text, no product names, no IP address. The only free text is a comment you type yourself under “Was this useful?”.</li>
+    <li><b>Your fixes list, if you use it.</b> When you tap “Mark as fixed” we keep the complaint theme, variant, date, complaint counts before and after, the <b>product name or link</b> and your <b>short note</b>. This is so your list opens on another phone. Through the app only your account can read it; the person who runs the app can see it in the Supabase dashboard. Please do not write people's names in a note.</li>
+    <li><b>On your device.</b> Your sign-in session, language and theme choice, a copy of your fixes list, and a random device marker. All in browser storage (localStorage), not tracking cookies.</li>
+  </ul>
+
+  <h2>What we do not keep</h2>
+  <ul>
+    <li>The review text you paste. It is sent to be analysed, and we do not store it.</li>
+    <li>Buyer names.</li>
+    <li>IP addresses and device types in our own records.</li>
+  </ul>
+
+  <h2>Where your data goes</h2>
+  <ul>
+    <li><b>Gemini API (Google).</b> The review text you paste is sent there to be analysed. How Google handles it follows Google's Gemini API terms.</li>
+    <li><b>Supabase.</b> Holds the account, profile, usage records and fixes list.</li>
+    <li><b>Google Cloud Run.</b> Where the app runs. Google Cloud keeps its own standard request logs, which can include IP addresses, outside our control.</li>
+    <li><b>Apify.</b> Only for invited testers who use the product-link feature: the link is sent to that service to read publicly shown reviews. Normal accounts do not use this.</li>
+  </ul>
+
+  <h2>How long</h2>
+  <ul>
+    <li>Usage records: we plan to delete those older than 90 days (done by hand).</li>
+    <li>Profile and fixes list: until you delete your account.</li>
+    <li>Google Cloud logs: as Google sets it (usually about 30 days).</li>
+  </ul>
+
+  <h2>Your choices</h2>
+  <ul>
+    <li><b>Delete my account and data.</b> The button is at the bottom of the app. It deletes your account, profile, usage records and fixes list on our server, and the copy on that device. It cannot be undone.</li>
+    <li><b>Do Not Track.</b> If your browser sends it, usage records are not sent.</li>
+    <li><b>Export.</b> The fixes list can be exported to a JSON file.</li>
+  </ul>
+  <p class="note">An honest limit: third-party services (Supabase, Google) may keep a copy in their backups for a while after deletion. No system is perfect, and one person can make two accounts.</p>
+
+  <h2>Contact</h2>
+  <p class="contact" data-none="No contact address is published yet. Reach the builder through whoever shared this link with you.">…</p>
+</article>
+<p><a href="/" id="back">← Kembali ke aplikasi</a></p>
+</main>
+
+<script>
+(function () {
+  var lang = "id";
+  try { if (localStorage.getItem("bedahreview-lang") === "en") lang = "en"; } catch (e) { /* storage blocked */ }
+  function show(l) {
+    lang = l;
+    document.documentElement.lang = l;
+    document.getElementById("p-id").hidden = l !== "id";
+    document.getElementById("p-en").hidden = l !== "en";
+    document.getElementById("back").textContent = l === "id" ? "← Kembali ke aplikasi" : "← Back to the app";
+    document.title = (l === "id" ? "Kebijakan privasi" : "Privacy policy") + " · BedahReview";
+    document.querySelectorAll(".lang button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.l === l ? "true" : "false"); });
+  }
+  document.querySelectorAll(".lang button").forEach(function (b) {
+    b.addEventListener("click", function () { show(b.dataset.l); try { localStorage.setItem("bedahreview-lang", b.dataset.l); } catch (e) { /* ignore */ } });
+  });
+  try { var th = localStorage.getItem("bedahreview-theme"); if (th === "dark" || th === "light") document.documentElement.dataset.theme = th; } catch (e) { /* ignore */ }
+  show(lang);
+  fetch("/api/config").then(function (r) { return r.json(); }).then(function (cfg) {
+    document.querySelectorAll(".contact").forEach(function (p) {
+      if (cfg && cfg.contact) { p.textContent = ""; var a = document.createElement("a"); a.href = "mailto:" + cfg.contact; a.textContent = cfg.contact; p.append(a); }
+      else p.textContent = p.dataset.none;
+    });
+  }).catch(function () { document.querySelectorAll(".contact").forEach(function (p) { p.textContent = p.dataset.none; }); });
+})();
+</script>
+</body>
+</html>

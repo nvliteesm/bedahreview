@@ -24,7 +24,7 @@ Marking a complaint as fixed keeps a small record: the theme, the variant, the d
 - The note is the seller's own words, up to 200 characters. The page refuses a note that repeats 20 or more characters of a review in the current analysis (a guard, not a guarantee), and the fixes screen asks people not to write names.
 - Nothing from this table is ever sent in an event or printed in the log.
 - Signing out saves what is pending, then clears the copy kept in that browser. The account's copy stays.
-- Deleting the account deletes its fixes with it.
+- "Hapus akun dan data saya" deletes the account's events, fixes and profile, then the account, and clears this browser's copy (see the README).
 - Honest limit: a fix deleted on one phone can come back from another phone that was offline with an old copy.
 
 ## The events
