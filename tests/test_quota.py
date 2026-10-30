@@ -145,12 +145,10 @@ class ServerTests(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertNotIn("quota", data)
 
-    def test_a_normal_account_may_read_a_link_but_never_search_competitors(self):
+    def test_a_normal_account_may_read_a_link(self):
         status, data = self.call("POST", "/api/classify", {"url": "https://www.tokopedia.com/toko/produk"}, self.bearer())
         self.assertEqual((status, data["code"]), (502, "fetch_failed"))  # it reached the fetcher, which the test makes fail
-        self.assertEqual(self.call("POST", "/api/competitors/suggest", {"url": "https://www.tokopedia.com/toko/produk", "title": "Kaos"}, self.bearer())[0], 403)
-        self.assertEqual(self.call("POST", "/api/competitors/compare", {"url": "", "title": "", "own": [], "competitors": [{"url": "https://www.tokopedia.com/a/b"}]}, self.bearer())[0], 403)
-        self.assertEqual(self.fetcher.fetched, ["https://www.tokopedia.com/toko/produk"])  # the link only, never a competitor
+        self.assertEqual(self.fetcher.fetched, ["https://www.tokopedia.com/toko/produk"])
 
     def test_the_daily_limit_is_checked_before_a_paid_fetch(self):
         link = {"url": "https://www.tokopedia.com/toko/produk"}
@@ -161,10 +159,80 @@ class ServerTests(unittest.TestCase):
         self.assertEqual((status, data["code"]), (429, "daily_limit"))
         self.assertEqual(len(self.fetcher.fetched), 1)  # the refused one never reached the paid fetcher
 
-    def test_everyone_gets_the_link_box_and_only_testers_get_competitors(self):
-        for headers, rivals in (({}, False), (self.bearer(), False), (self.cookie(), True)):  # signed out, a normal account, an access-code tester
+    def test_the_link_box_and_competitors_are_offered_to_everyone(self):
+        for headers in ({}, self.bearer(), self.cookie()):  # signed out (the page asks for a sign-in first), a normal account, an access-code tester
             cfg = self.call("GET", "/api/config", headers=headers)[1]
-            self.assertEqual((cfg["url_box"], cfg["rivals"]), (True, rivals))
+            self.assertEqual((cfg["url_box"], cfg["rivals"]), (True, True))
+
+
+class RivalFetch(Fetcher):
+    """Enough of the link router for the competitor routes; the paid parts are replaced by the stubs given to the server."""
+    last_platform = "tokopedia"
+
+    def check_link(self, url):
+        return url
+
+    def search(self, *args, **kwargs):
+        raise AssertionError("the stub suggest_fn does the search")
+
+    def fetch_fresh(self, *args, **kwargs):
+        raise AssertionError("the stub compare_fn does the fetching")
+
+    def fetch_reviews(self, url, limit, mode="latest"):
+        raise AssertionError("not used here")
+
+
+class CompetitorAccountTests(unittest.TestCase):
+    """Every signed-in account may find and compare competitors; a comparison is one of the day's analyses, counted before any paid work."""
+    COMPARE = {"url": "https://www.tokopedia.com/me/kaos", "title": "Kaos", "own": [], "competitors": [{"url": "https://www.tokopedia.com/a/b"}]}
+
+    def setUp(self):
+        self.key, jwk = new_key("k1")
+        self.compares, self.fail = [], [None]
+
+        def compare(fetch, classify, own, title, competitors):
+            self.compares.append(len(competitors))
+            if self.fail[0]:
+                raise self.fail[0]
+            return {"you": {}, "competitors": [], "rows": [], "insights": [], "failed": []}
+        self.server = web.make_server(0, classify_fn=lambda reviews, product=None: [], fetcher=RivalFetch(), public=True, user_daily=2, max_per_hour=100,
+                                      suggest_fn=lambda search, platform, url, title: {"candidates": []}, compare_fn=compare,
+                                      supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key="sb_publishable_x")
+        self.port = self.server.server_address[1]
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
+
+    def call(self, path, payload, signed=True):
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
+        headers = {"Content-Type": "application/json"}
+        if signed:
+            headers["Authorization"] = "Bearer " + token(self.key)
+        conn.request("POST", path, body=json.dumps(payload).encode(), headers=headers)
+        resp = conn.getresponse()
+        data = json.loads(resp.read() or b"{}")
+        conn.close()
+        return resp.status, data
+
+    def test_a_normal_account_finds_and_compares_and_the_comparison_counts_as_an_analysis(self):
+        self.assertEqual(self.call("/api/competitors/suggest", {"url": "https://www.tokopedia.com/me/kaos", "title": "Kaos"}), (200, {"candidates": []}))
+        status, data = self.call("/api/competitors/compare", self.COMPARE)
+        self.assertEqual((status, data["quota"]), (200, {"used": 1, "max": 2}))
+
+    def test_a_visitor_is_asked_to_sign_in_and_nothing_paid_runs(self):
+        for path, payload in (("/api/competitors/suggest", {"url": "https://www.tokopedia.com/me/kaos", "title": "Kaos"}), ("/api/competitors/compare", self.COMPARE)):
+            status, data = self.call(path, payload, signed=False)
+            self.assertEqual((status, data["login"]), (401, True))
+        self.assertEqual(self.compares, [])
+
+    def test_a_spent_day_never_starts_a_comparison_and_a_failed_one_is_given_back(self):
+        self.fail[0] = TimeoutError("model down")
+        self.assertEqual(self.call("/api/competitors/compare", self.COMPARE)[0], 502)
+        self.fail[0] = None
+        self.assertEqual([self.call("/api/competitors/compare", self.COMPARE)[0] for _ in range(2)], [200, 200])  # the failure did not use a turn
+        status, data = self.call("/api/competitors/compare", self.COMPARE)
+        self.assertEqual((status, data["code"]), (429, "daily_limit"))
+        self.assertEqual(len(self.compares), 3)  # the refused one never started
 
 
 class TrustedAccountTests(unittest.TestCase):
@@ -210,11 +278,6 @@ class TrustedAccountTests(unittest.TestCase):
         self.assertNotEqual(data.get("code"), "paid_off")  # it got as far as the fetcher (which the test makes fail)
         self.assertEqual(self.fetcher.fetched, ["https://www.tokopedia.com/toko/produk"])
 
-    def test_any_other_account_gets_no_competitor_search(self):
-        self.assertFalse(self.call("GET", "/api/config", sub=self.OTHER)[1]["rivals"])
-        status, data = self.call("POST", "/api/competitors/suggest", {"url": "https://www.tokopedia.com/toko/produk", "title": "Kaos"}, sub=self.OTHER)
-        self.assertEqual((status, data["code"]), (403, "paid_off"))
-        self.assertEqual(self.fetcher.fetched, [])
 
     def test_a_trusted_account_is_not_counted_by_the_daily_limit(self):
         for _ in range(4):

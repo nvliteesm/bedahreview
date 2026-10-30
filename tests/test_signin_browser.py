@@ -154,7 +154,6 @@ window.__probe = (async () => {
     out.results = !byId("view-results").hidden; out.tabs = document.querySelectorAll("#tabs button").length;
     out.quota = [vis("quota-note"), byId("quota-note").textContent];
     out.dailyText = errText({ limit: "daily", max: 10 }, "x");
-    out.paidOff = errText({ code: "paid_off", fallback: "paste" }, "x");
   }
 
   if (hash === "#expired") {
@@ -255,6 +254,24 @@ window.__probe = (async () => {
     byId("url").value = "https://www.tokopedia.com/toko/kaos-boxy"; byId("fetch").click();
     await until(() => !byId("view-results").hidden, 80);
     out.locked = { unlock: vis("unlock"), panels: shown("panels"), counts: [...document.querySelectorAll("#tabs button .n")].map((n) => n.textContent), summary: byId("summary").textContent };
+  }
+
+  if (hash === "#rival-visitor") {
+    await until(() => !byId("workspace").hidden);
+    const home = byId("rival-home");
+    out.note = home.textContent.includes("Mencari pesaing perlu masuk dulu (gratis).");
+    out.notOff = !home.textContent.includes("belum menyala");
+    out.noCost = !/biaya|Rp/.test(home.textContent);
+    const go = [...home.querySelectorAll("button.btn.primary")].pop();
+    out.button = go.textContent;
+    home.querySelector("#rival-url").value = "https://www.tokopedia.com/toko/kaos"; home.querySelector("#rival-url").dispatchEvent(new Event("input"));
+    go.click(); await wait(200);
+    out.gate = vis("gate"); out.info = byId("g-info").textContent;
+    byId("g-email").value = "ani@example.com"; byId("g-send").click();
+    await until(() => vis("g-verify")); paste("123456");
+    await until(() => vis("g-intro")); byId("g-skip").click();
+    await until(() => !byId("workspace").hidden);
+    out.after = { button: [...byId("rival-home").querySelectorAll("button.btn.primary")].pop().textContent, kept: byId("rival-url").value, note: byId("rival-home").textContent.includes("perlu masuk") };
   }
 
   if (hash === "#free-google") {
@@ -416,7 +433,6 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual(out["tabs"], 4)
         self.assertEqual(out["quota"], [True, "Sisa analisis hari ini: 9 dari 10."])  # shown once the server says how many are left
         self.assertEqual(out["dailyText"], "Batas harian tercapai: 10 analisis per hari. Coba lagi besok (reset tengah malam WIB).")
-        self.assertEqual(out["paidOff"], "Mengambil ulasan dari tautan belum tersedia untuk akun ini. Kamu bisa menempel ulasannya.")
 
     def test_an_expired_sign_in_asks_again_instead_of_reloading_the_page(self):
         out = self.probe("#expired")
@@ -528,6 +544,13 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual((out["locked"]["unlock"], out["locked"]["panels"]), (True, False))
         self.assertEqual(out["locked"]["counts"], ["1", "1", "0", "1"])  # the four numbers show; the quotes and drafts wait for a sign-in
         self.assertIn("Kaos Boxy Retro", out["locked"]["summary"])
+
+    def test_a_visitor_is_asked_to_sign_in_for_competitors_and_then_can_search(self):
+        out = self.probe("#rival-visitor")
+        self.assertTrue(out["note"] and out["notOff"] and out["noCost"])
+        self.assertEqual(out["button"], "Masuk untuk mencari pesaing")
+        self.assertEqual((out["gate"], out["info"]), (True, "Masuk untuk mencari dan membandingkan pesaing. Gratis, tanpa kata sandi."))
+        self.assertEqual(out["after"], {"button": "Cari pesaing", "kept": "https://www.tokopedia.com/toko/kaos", "note": False})  # signed in: the search is open, and the link is still there
 
     def test_a_free_analysis_waits_in_the_tab_during_the_google_sign_in(self):
         out = self.probe("#free-google")

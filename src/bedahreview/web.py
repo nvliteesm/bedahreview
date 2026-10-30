@@ -496,13 +496,9 @@ class Handler(BaseHTTPRequestHandler):
         sys.stdout.flush()
         self._json(200, {"ok": True})
 
-    def _paid_ok(self, rivals: bool = True) -> bool:
+    def _paid_ok(self) -> bool:
         """Count one paid action for this visitor; send the 429 and return False when they are at the hourly limit.
-        Reading reviews from a product link is open to everyone (a visitor's one free analysis, and every account within its daily limit).
-        With Supabase on, the competitor search and compare (rivals=True) stay with access-code testers and trusted accounts."""
-        if rivals and type(self).supabase_auth is not None and self._uid and self._uid not in type(self).paid_users:
-            self._json(403, {"error": "Reading reviews from a link is not available for this account. Paste the reviews instead.", "fallback": "paste", "code": "paid_off"})
-            return False
+        Paid work is open to every signed-in account (and to a visitor's one free analysis): the daily limits and the Apify budget are the guards."""
         if self.paid_limiter and not self.paid_limiter.take(self._client()):
             self._json(429, {"error": "Too many link look-ups this hour. Try again later.", "limit": "hour"})
             return False
@@ -673,7 +669,7 @@ class Handler(BaseHTTPRequestHandler):
         except FetchError as exc:  # includes LinkError
             self._json(400, {"error": str(exc), "code": exc.code})
             return None
-        if not self._paid_ok(rivals=False):  # a saved copy costs nothing but is counted too; the limit is per visitor and generous enough
+        if not self._paid_ok():  # a saved copy costs nothing but is counted too; the limit is per visitor and generous enough
             return None
         try:
             fetched = fetcher.fetch_reviews(url, limit, mode)
@@ -771,17 +767,29 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(400, {"error": str(exc), "code": exc.code})
         if not competitors:
             return self._json(400, {"error": "Choose competitors other than your own product.", "code": "pick_other"})
+        quota = type(self).daily_quota if self._uid and self._uid not in type(self).paid_users else None  # a comparison is one of the day's analyses, counted before any paid work
+        used = 0
+        if quota:
+            allowed, used = quota.take(self._uid)
+            if not allowed:
+                return self._json(429, {"error": "Daily limit reached: %d analyses a day. Try again tomorrow." % quota.limit, "code": "daily_limit", "limit": "daily", "max": quota.limit})
         if not self._paid_ok():
+            if quota:
+                quota.refund(self._uid)
             return
         try:
             result = type(self).compare_fn(fetch, type(self).classify_fn, own, title, competitors)
-        except BudgetError:
-            return self._json(429, {"error": "Demo limit reached today. Try again tomorrow.", "limit": "budget"})
-        except FetchError as exc:
-            return self._json(502, {"error": "%s You can try other competitors." % exc, "fallback": "other", "code": exc.code})
-        except Exception as exc:  # model or network trouble: say what happened without a traceback
-            sys.stderr.write("compare failed: %s\n" % type(exc).__name__)
+        except Exception as exc:
+            if quota:
+                quota.refund(self._uid)  # the comparison did not happen, so it does not cost a turn
+            if isinstance(exc, BudgetError):
+                return self._json(429, {"error": "Demo limit reached today. Try again tomorrow.", "limit": "budget"})
+            if isinstance(exc, FetchError):
+                return self._json(502, {"error": "%s You can try other competitors." % exc, "fallback": "other", "code": exc.code})
+            sys.stderr.write("compare failed: %s\n" % type(exc).__name__)  # model or network trouble: say what happened without a traceback
             return self._json(502, {"error": "Could not compare (%s). Try again in a moment." % type(exc).__name__, "code": "compare_failed"})
+        if quota:
+            result = dict(result, quota={"used": used, "max": quota.limit})
         self._json(200, result)
 
     # -- routes ----------------------------------------------------------
@@ -862,8 +870,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/example":
             return self._json(200, example_response())
         if path == "/api/config":
-            rivals = type(self).fetcher is not None and (type(self).supabase_auth is None or self._cookie_user() or self._uid in type(self).paid_users)  # with accounts on, competitors are for access-code testers and trusted accounts only
-            cfg = {"url_box": type(self).fetcher is not None, "rivals": rivals, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes), "signed_in": self._authed(), "can_delete": type(self).account_admin is not None, "contact": type(self).contact_email, "free": type(self).free_trial is not None}
+            cfg = {"url_box": type(self).fetcher is not None, "rivals": type(self).fetcher is not None, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes), "signed_in": self._authed(), "can_delete": type(self).account_admin is not None, "contact": type(self).contact_email, "free": type(self).free_trial is not None}  # both need a signed-in account, except the one free analysis
             if type(self).supabase_public:
                 cfg["supabase"] = type(self).supabase_public
             return self._json(200, cfg)

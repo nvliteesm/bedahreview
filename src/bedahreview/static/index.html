@@ -677,7 +677,7 @@ const TEXT = {
     rivalSearching: "Mencari produk serupa…", rivalSearchSub: "Sekitar 10-40 detik.",
     rivalPick: "Centang yang memang sebanding dengan produkmu (maks. %s):", rivalMoreLbl: "Produk lain yang ditemukan",
     rivalNone: "Tidak ada produk yang jelas sebanding. Tempel tautan pesaing di bawah.", rivalPaste: "Atau tempel tautan pesaing (satu per baris)",
-    rivalGo: "Bandingkan", rivalCost: "perkiraan biaya ±Rp%s", rivalNeedOne: "Pilih atau tempel minimal satu pesaing.", rivalMax: "Maksimal %s pesaing.",
+    rivalGo: "Bandingkan", rivalNeedOne: "Pilih atau tempel minimal satu pesaing.", rivalMax: "Maksimal %s pesaing.",
     rivalComparing: "Membandingkan ulasan…", rivalCompareSub: "Mengambil ulasan tiap toko lalu membedahnya. Sekitar 30-90 detik.",
     rivalSampleHead: "Contoh kecil:", rivalSampleBody: "sekitar 7 ulasan per toko (4 keluhan, 3 terbaru), bukan seluruh pasar. Angka adalah jumlah ulasan, bukan persen. Ulasan pesaing tidak disimpan.",
     rivalFake: "%s ulasan pesaing diduga palsu dan tidak dihitung.", rivalFailed: "Tidak bisa diambil: %s Layanan pengambil ulasan gagal, atau toko ini belum punya ulasan. Coba lagi.", rivalYou: "Kamu", rivalComplaints: "Keluhan", rivalPraise: "Pujian",
@@ -726,7 +726,8 @@ const TEXT = {
     rivalOwnLbl: "Produkmu, dari Bedah ulasan", rivalOther: "Pakai produk lain", rivalBackOwn: "Pakai produk dari Bedah ulasan", rivalTitleAlone: "Bandingkan produkmu dengan pesaing",
     rivalIntroS: "Kami cari 2–3 produk serupa di platform yang sama. Kamu pilih yang cocok, lalu kami hitung keluhan dan pujian di ulasan mereka.",
     rivalYourLink: "Tautan produkmu", rivalYourName: "Nama produk (membantu pencarian)", rivalYourNamePh: "mis. Kaos Boxy Retro", rivalFindLink: "Cari pesaing",
-    rivalFreeNote: "Bisa dipakai tanpa Bedah ulasan. Belum ada biaya sampai kamu menekan Bandingkan.", rivalNeedLink: "Tempel tautan produkmu dulu.", rivalNeedName: "Isi nama produkmu supaya kami bisa mencari yang serupa.",
+    rivalFreeNote: "Bisa dipakai tanpa Bedah ulasan. Satu perbandingan memakai satu jatah analisis harianmu.",
+    rivalSignIn: "Masuk untuk mencari dan membandingkan pesaing. Gratis, tanpa kata sandi.", rivalSignInNote: "Mencari pesaing perlu masuk dulu (gratis). Contohnya bisa dilihat tanpa masuk.", rivalSignInBtn: "Masuk untuk mencari pesaing", rivalNeedLink: "Tempel tautan produkmu dulu.", rivalNeedName: "Isi nama produkmu supaya kami bisa mencari yang serupa.",
     stepFind: "Cari", stepPick: "Pilih", stepCompare: "Bandingkan",
     rivalFound: "Kami menemukan %s produk mirip. %s yang paling mirip sudah dicentang, hapus centang kalau tidak cocok.", rivalMost: "Paling mirip", rivalMoreN: "Produk lain yang ditemukan · %s", rivalShopLbl: "Toko: %s",
     rivalSeen: "Yang terlihat dari angka", rivalByTheme: "Jumlah ulasan per tema", rivalThemeCol: "Tema", nReviewsCol: "%s ulasan", rivalNote: "Catatan data",
@@ -761,7 +762,7 @@ const TEXT = {
     syncOk: "Tersimpan di akunmu.", syncDown: "Riwayat sedang tidak tersedia. Catatanmu tetap tersimpan di perangkat ini dan akan disimpan ke akunmu nanti.",
     syncOff: "Masuk agar catatanmu tersimpan di akunmu dan bisa dibuka dari HP lain.", fixNoteReview: "Catatanmu tampak memuat teks ulasan. Tulis dengan kata-katamu sendiri.",
     limitDaily: "Batas harian tercapai: %s analisis per hari. Coba lagi besok (reset tengah malam WIB).", quotaLeft: "Sisa analisis hari ini: %s dari %s.",
-    e_paid_off: "Mengambil ulasan dari tautan belum tersedia untuk akun ini.", e_model_quota: "Kuota atau kredit Gemini sedang habis, jadi ulasan belum bisa dibedah. Coba lagi nanti.",
+    e_model_quota: "Kuota atau kredit Gemini sedang habis, jadi ulasan belum bisa dibedah. Coba lagi nanti.",
     startHere: "Mulai dari sini", startFix: "Perbaiki “%s”: %s ulasan mengeluhkan ini.", startSeeFix: "Lihat saran", startFight: "Balas ulasan tentang “%s”. Drafnya siap disalin.", startSeeFight: "Lihat draf",
     startNone: "Tidak ada keluhan yang perlu ditindak. Lihat yang dipuji pembeli di Pertahankan.", whySteps: "Kenapa & langkahnya",
     // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
@@ -821,7 +822,7 @@ const TEXT = {
     rivalSearching: "Looking for similar products…", rivalSearchSub: "About 10-40 seconds.",
     rivalPick: "Tick the ones that are really comparable to yours (max %s):", rivalMoreLbl: "Other products found",
     rivalNone: "No product was clearly comparable. Paste competitor links below.", rivalPaste: "Or paste competitor links (one per line)",
-    rivalGo: "Compare", rivalCost: "estimated cost ±Rp%s", rivalNeedOne: "Pick or paste at least one competitor.", rivalMax: "At most %s competitors.",
+    rivalGo: "Compare", rivalNeedOne: "Pick or paste at least one competitor.", rivalMax: "At most %s competitors.",
     rivalComparing: "Comparing reviews…", rivalCompareSub: "Fetching each shop's reviews, then reading them. About 30-90 seconds.",
     rivalSampleHead: "Small sample:", rivalSampleBody: "about 7 reviews per shop (4 complaints, 3 recent), not the whole market. Numbers are review counts, not percentages. Competitor reviews are not saved.",
     rivalFake: "%s competitor review(s) look fake and are not counted.", rivalFailed: "Could not be read: %s The review service failed, or this shop has no reviews yet. Try again.", rivalYou: "You", rivalComplaints: "Complaints", rivalPraise: "Praise",
@@ -870,7 +871,8 @@ const TEXT = {
     rivalOwnLbl: "Your product, from Review triage", rivalOther: "Use another product", rivalBackOwn: "Use the product from Review triage", rivalTitleAlone: "Compare your product with competitors",
     rivalIntroS: "We look for 2–3 similar products on the same platform. You pick the ones that fit, then we count complaints and praise in their reviews.",
     rivalYourLink: "Your product link", rivalYourName: "Product name (helps the search)", rivalYourNamePh: "e.g. Retro Boxy Tee", rivalFindLink: "Find competitors",
-    rivalFreeNote: "Works without Review triage. Nothing is charged until you press Compare.", rivalNeedLink: "Paste your product link first.", rivalNeedName: "Enter your product name so we can search for similar ones.",
+    rivalFreeNote: "Works without Review triage. One comparison uses one of your daily analyses.",
+    rivalSignIn: "Sign in to find and compare competitors. It is free, no password.", rivalSignInNote: "Finding competitors needs a free sign-in. You can see an example without one.", rivalSignInBtn: "Sign in to find competitors", rivalNeedLink: "Paste your product link first.", rivalNeedName: "Enter your product name so we can search for similar ones.",
     stepFind: "Find", stepPick: "Pick", stepCompare: "Compare",
     rivalFound: "We found %s similar products. The %s closest are already ticked; untick any that do not fit.", rivalMost: "Closest", rivalMoreN: "Other products found · %s", rivalShopLbl: "Shop: %s",
     rivalSeen: "What the numbers show", rivalByTheme: "Reviews per theme", rivalThemeCol: "Theme", nReviewsCol: "%s reviews", rivalNote: "Data notes",
@@ -905,7 +907,7 @@ const TEXT = {
     syncOk: "Saved in your account.", syncDown: "History is not available right now. Your notes stay saved on this device and will be saved to your account later.",
     syncOff: "Sign in so your notes are saved in your account and open on another phone.", fixNoteReview: "Your note looks like it contains review text. Write it in your own words.",
     limitDaily: "Daily limit reached: %s analyses a day. Try again tomorrow (resets at midnight Jakarta time).", quotaLeft: "Analyses left today: %s of %s.",
-    e_paid_off: "Reading reviews from a link is not available for this account yet.", e_model_quota: "Gemini has no quota or credit left right now, so the reviews cannot be analysed. Try again later.",
+    e_model_quota: "Gemini has no quota or credit left right now, so the reviews cannot be analysed. Try again later.",
     startHere: "Start here", startFix: "Fix “%s”: %s review(s) complain about this.", startSeeFix: "See the fix", startFight: "Answer the review about “%s”. The draft is ready to copy.", startSeeFight: "See the draft",
     startNone: "No complaints to act on. See what buyers praise under Keep.", whySteps: "Why & steps",
   },
@@ -1563,7 +1565,6 @@ function render(data, fresh) {
 }
 
 /* ---------- competitor analysis ---------- */
-const RIVAL_COST_IDR = 500;  // about 3 US cents per competitor, shown while we test
 const MAX_RIVALS = 3;
 let rivalWant = 3, linkBoxOn = null, rivalsOn = null;  // how many competitors the seller wants (1 to 3); linkBoxOn (read reviews from a link) and rivalsOn (competitor search) are null until the server says
 const MIN_CREDIBLE = 5;  // same rule as the server: fewer credible reviews than this and a shop is shown but not used for a statement
@@ -1634,14 +1635,16 @@ function wantSelector() {
   return h("div", { class: "want" }, h("span", { text: tr("rivalWantLbl") }), h("div", { class: "seg", role: "group", "aria-label": tr("rivalWantLbl") },
     [1, 2, 3].map((n) => h("button", { type: "button", "aria-pressed": rivalWant === n ? "true" : "false", text: String(n), onclick: () => { rivalWant = n; renderRival(); } }))));
 }
-const noBoxNote = () => (rivalsOn === false ? h("div", { class: "callout warn", text: tr("rivalNoBox") }) : null);
+const visitor = () => !!sb && !signedIn;  // no account yet: competitor search needs a (free) sign-in
+const noBoxNote = () => (rivalsOn === false ? h("div", { class: "callout warn", text: tr("rivalNoBox") }) : visitor() ? h("div", { class: "callout", text: tr("rivalSignInNote") }) : null);
+function rivalSignedIn() { if (!visitor()) return true; showGate("choose"); gateInfo(tr("rivalSignIn")); return false; }
 function exampleLink() {  // a built-in comparison, free for every visitor, clearly labelled as made up
   return h("button", { class: "plain strong", type: "button", text: tr("rivalExampleBtn"), onclick: () => { rival = { step: "result", data: Object.assign({ example: true }, EXAMPLE_COMPARE) }; rivalRun += 1; renderRival(); } });
 }
 function rivalIdle() {
   const own = ownSource();
   if (own && !rival.other) {
-    const find = h("button", { class: "btn primary", type: "button" }, tr("rivalAskBtn"));
+    const find = h("button", { class: "btn primary", type: "button" }, tr(visitor() ? "rivalSignInBtn" : "rivalAskBtn"));
     find.addEventListener("click", () => rivalFind());
     const other = h("button", { class: "btn pill", type: "button" }, tr("rivalOther"));
     other.addEventListener("click", () => { rival = { step: "idle", other: true }; renderRival(); });
@@ -1655,9 +1658,10 @@ function rivalIdle() {
   url.addEventListener("input", () => { rivalForm.url = url.value; }); name.addEventListener("input", () => { rivalForm.name = name.value; });
   const err = h("div", { class: "callout warn", role: "alert", hidden: true });
   const fail = (msg, field) => { err.textContent = msg; err.hidden = false; field.focus(); };
-  const go = h("button", { class: "btn primary", type: "button" }, tr("rivalFindLink"));
+  const go = h("button", { class: "btn primary", type: "button" }, tr(visitor() ? "rivalSignInBtn" : "rivalFindLink"));
   go.addEventListener("click", () => {
     const u = url.value.trim(), title = name.value.trim() || slugTitle(u);
+    if (!rivalSignedIn()) return;  // the link and name stay filled in for after the sign-in
     if (!u) return fail(tr("rivalNeedLink"), url);
     if (!title) return fail(tr("rivalNeedName"), name);
     rivalFind({ url: u, title, mine: !!(own && own.url === u) });
@@ -1686,12 +1690,11 @@ function candidateCard(st, i) {
     c.shop ? h("span", { class: "meta", text: tr("rivalShopLbl", c.shop) }) : null));
 }
 function rivalPick(st) {
-  const goText = () => tr("rivalGo") + " · " + tr("rivalCost", fmtNum(Math.max(rivalChosen(st).length, 1) * RIVAL_COST_IDR));
-  const go = h("button", { class: "btn primary", type: "button", id: "rival-go" }, goText());
+  const go = h("button", { class: "btn primary", type: "button", id: "rival-go" }, tr("rivalGo"));
   go.addEventListener("click", rivalCompare);
   const area = h("textarea", { id: "rival-paste", spellcheck: "false", rows: "3", placeholder: "https://tokopedia.link/…", style: "min-height:80px" });
   area.value = st.extra;
-  area.addEventListener("input", () => { st.extra = area.value; go.textContent = goText(); });
+  area.addEventListener("input", () => { st.extra = area.value; });
   const best = [], other = [];
   st.candidates.forEach((c, i) => (c.picked ? best : other).push(candidateCard(st, i)));
   const more = other.length ? h("details", { class: "pcard-more", open: st.moreOpen || !best.length }, h("summary", { text: tr("rivalMoreN", other.length) }), h("div", { class: "stack" }, other)) : null;
@@ -1783,7 +1786,7 @@ function renderRival() {
   rivalBodyEl.replaceChildren(...[rivalBody()].flat(Infinity).filter(Boolean));
 }
 async function rivalFind(target) {
-  if (!ensureSignedIn()) return;
+  if (!rivalSignedIn()) return;
   const own = ownSource();
   const t = target || (own ? { url: own.url, title: own.title || "", mine: true } : null);
   if (!t) return;
@@ -1804,7 +1807,7 @@ async function rivalFind(target) {
   rival = next; renderRival();
 }
 async function rivalCompare() {
-  if (!ensureSignedIn()) return;
+  if (!rivalSignedIn()) return;
   const pick = rival, t = pick.target, chosen = rivalChosen(pick), run = ++rivalRun;
   if (!chosen.length) { pick.error = tr("rivalNeedOne"); renderRival(); return; }
   const own = t.mine && lastData ? lastData.items.map((i) => ({ theme: i.theme, bucket: i.bucket, fake: !!(i.likely_fake && i.likely_fake.flag) })) : [];  // no Bedah ulasan for this link: compare the rivals only
@@ -1814,6 +1817,7 @@ async function rivalCompare() {
     const out = await postJson("/api/competitors/compare", { url: t.url, title: t.title, own, competitors: chosen });
     if (!out) { rival = { step: "idle" }; renderRival(); return; }  // not signed in: the sign-in screen is up
     if (run !== rivalRun) return;
+    if (out.ok && out.data.quota) setQuota(out.data.quota);  // a comparison is one of the day's analyses
     next = out.ok ? { step: "result", target: t, data: out.data } : Object.assign(pick, { step: "pick", error: errText(out.data, tr("errGeneric", ""), true) });
   } catch (e) {
     if (run !== rivalRun) return;
@@ -2061,6 +2065,7 @@ function renderAccount() {  // the header shows "Masuk" to a visitor and the acc
   $("acct-initial").textContent = (userEmail || (userId ? "?" : "#")).charAt(0);
   $("delete-area").hidden = !(sb && signedIn && userId && cfgCanDelete);
   if (!on) setMenu(false);
+  renderRival();  // the competitor buttons say "sign in" to a visitor
 }
 function setMenu(open) {
   $("acct-menu").hidden = !open; $("acct-btn").setAttribute("aria-expanded", open ? "true" : "false");
