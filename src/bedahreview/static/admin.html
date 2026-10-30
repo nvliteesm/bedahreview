@@ -119,6 +119,11 @@ code { font-size: 0.85em; }
     </section>
 
     <div class="grid">
+      <section class="card wide">
+        <h2>Free analysis, then sign-in</h2>
+        <p class="muted small" id="free-sub"></p>
+        <table id="free"></table>
+      </section>
       <section class="card">
         <h2>People active per day</h2>
         <p class="muted small">Different accounts that used the app that day</p>
@@ -287,6 +292,12 @@ function render(s) {
   byId("daily").replaceChildren(
     el("tr", {}, el("th", {}, "Day"), el("th", { class: "n" }, "Sign-ups"), el("th", { class: "n" }, "People"), el("th", { class: "n" }, "Analyses"), el("th", { class: "n" }, "Failed")),
     ...s.daily.slice().reverse().map((d) => el("tr", {}, el("td", {}, fmtDay(d.day)), el("td", { class: "n" }, d.signups), el("td", { class: "n" }, d.people), el("td", { class: "n" }, d.analyses), el("td", { class: "n" }, d.failed))));
+
+  const free = s.free;
+  byId("free-sub").textContent = free ? "Visitors without an account get one analysis; the details need a sign-in. Free analyses are counted in the server's memory, since " + fmtDay(free.since.slice(0, 10)) + " (the last restart)." : "The free analysis is off on this server.";
+  byId("free").replaceChildren(
+    el("tr", {}, el("td", {}, "Free analyses (no account)"), el("td", { class: "n" }, free ? free.runs : "–")),
+    el("tr", {}, el("td", {}, "Accounts that signed in to see one (this period)"), el("td", { class: "n" }, s.free_unlocked == null ? "–" : s.free_unlocked)));
 
   const opened = (s.funnel[0] || {}).people || 0;
   byId("funnel").replaceChildren(el("tr", {}, el("th", {}, "Step"), el("th", { class: "n" }, "People"), el("th", { class: "n" }, "Of opened")),

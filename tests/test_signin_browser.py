@@ -23,11 +23,11 @@ FAKE_SUPABASE = """
 <script>
 window.__sb = { calls: [], session: null, profile: null, listeners: [], fixes: [], fixesError: false };
 (function () {
-  const hash = location.hash, user = { id: "user-1111-2222" };
+  const hash = location.hash, user = { id: "user-1111-2222", email: "ani@example.com" };
   window.__stage = sessionStorage.getItem("bedahreview-deleted") ? 2 : 1;  // the delete test reloads the page once: stage 2 is the page after the deletion
   const syncing = ["#sync-first", "#sync-other", "#sync-down", "#sync-edit", "#sync-leave", "#delete"];
-  if (["#intro", "#returning", "#expired", "#events"].concat(syncing).includes(hash)) window.__sb.session = { access_token: hash === "#expired" ? "junk" : "__TOKEN__", user };
-  if (["#returning", "#expired", "#events"].concat(syncing).includes(hash)) window.__sb.profile = { user_id: user.id };
+  if (["#intro", "#returning", "#expired", "#events", "#account"].concat(syncing).includes(hash)) window.__sb.session = { access_token: hash === "#expired" ? "junk" : "__TOKEN__", user };
+  if (["#returning", "#expired", "#events", "#account"].concat(syncing).includes(hash)) window.__sb.profile = { user_id: user.id };
   const fixA = { id: "aaa1", theme: "Sizing & fit", variant: "Hitam", product: "kaos boxy retro", productLabel: "Kaos Boxy Retro", note: "size chart diganti", date: "2026-10-20", before: { count: 2, total: 5, sig: "s1", date: "" }, after: null, updated: 1000 };
   const rowB = { user_id: user.id, id: "bbb2", updated_at: "2026-10-25T10:00:00.000Z", theme: "Colour vs photo", variant: "Putih", product: "https://www.tokopedia.com/x/y", product_label: "Kaos Boxy", note: "foto diganti", fixed_on: "2026-10-25",
     before_count: 2, before_total: 4, before_sig: "s2", after_count: 1, after_total: 5, after_sig: "s3", after_on: "2026-10-28" };
@@ -40,6 +40,8 @@ window.__sb = { calls: [], session: null, profile: null, listeners: [], fixes: [
       localStorage.setItem("bedahreview-fixes-v1", JSON.stringify([fixA])); localStorage.setItem("bedahreview-device", "3fa9c2d41b7e8a06c5d1e2f3"); localStorage.setItem("bedahreview-fixes-owner", user.id);
     }
     if (hash === "#delete" && window.__stage === 2) { window.__sb.session = null; window.__sb.profile = null; }
+    window.__back = hash === "#free-google" && !!sessionStorage.getItem("probe-back");  // the free-analysis test reloads once, as if back from Google
+    if (window.__back) { window.__sb.session = { access_token: "__TOKEN__", user }; window.__sb.profile = { user_id: user.id }; }
   } catch (e) { /* storage blocked */ }
   window.supabase = { createClient: (url, key, opts) => { window.__sb.opts = opts; return ({
     auth: {
@@ -85,6 +87,9 @@ window.__probe = (async () => {
   await until(() => document.body.classList.contains("ready"));
 
   if (hash === "#out") {
+    await until(() => !byId("workspace").hidden);
+    out.start = { gate: vis("gate"), app: !byId("workspace").hidden, signinBtn: vis("signin-btn"), acct: vis("acct") };
+    byId("signin-btn").click();
     await until(() => vis("gate"));
     out.gate = vis("gate"); out.workspaceHidden = byId("workspace").hidden;
     out.title = byId("gate-h").textContent; out.google = byId("g-google").textContent.trim();
@@ -212,6 +217,53 @@ window.__probe = (async () => {
       fixes: localStorage.getItem("bedahreview-fixes-v1"), device: localStorage.getItem("bedahreview-device"), owner: localStorage.getItem("bedahreview-fixes-owner"), session: window.__sb.session };
   }
 
+  const shown = (id) => getComputedStyle(byId(id)).display !== "none";
+  if (hash === "#free") {
+    await until(() => !byId("workspace").hidden);
+    out.start = { gate: vis("gate"), signinBtn: vis("signin-btn"), acct: vis("acct") };
+    byId("sample").click(); byId("run").click();
+    await until(() => !byId("view-results").hidden, 80);
+    out.locked = { unlock: vis("unlock"), panels: shown("panels"), counts: document.querySelectorAll("#tabs button .n").length, flag: localStorage.getItem("bedahreview-free-used") };
+    byId("tab-fight").click(); out.tabPointsToSignIn = document.activeElement === byId("unlock-h");
+    show("input"); byId("run").click(); await wait(300);
+    out.second = { gate: vis("gate"), info: byId("g-info").textContent, close: vis("g-close") };
+    byId("g-email").value = "ani@example.com"; byId("g-send").click();
+    await until(() => vis("g-verify")); paste("123456");
+    await until(() => vis("g-intro")); byId("g-skip").click();
+    await until(() => !byId("workspace").hidden && !byId("view-results").hidden, 80);
+    out.after = { unlock: vis("unlock"), panels: shown("panels"), acct: vis("acct"), signinBtn: vis("signin-btn"), email: byId("acct-email").textContent, queued: eventQueue.map((e) => e.event) };
+  }
+
+  if (hash === "#free-google") {
+    await until(() => !byId("workspace").hidden);
+    if (!window.__back) {
+      byId("sample").click(); byId("run").click();
+      await until(() => vis("unlock"), 80);
+      byId("unlock-google").click(); await wait(300);
+      const saved = JSON.parse(sessionStorage.getItem("bedahreview-free-result") || "null");
+      sessionStorage.setItem("probe-stage1", JSON.stringify({ oauth: calls("oauth").length, saved: !!(saved && saved.free && saved.items.length) }));
+      sessionStorage.setItem("probe-back", "1");
+      location.reload();
+      await wait(8000);
+      return out;
+    }
+    await until(() => !byId("view-results").hidden, 80);
+    return { stage1: JSON.parse(sessionStorage.getItem("probe-stage1") || "null"), results: !byId("view-results").hidden, unlock: vis("unlock"), panels: shown("panels"),
+      left: sessionStorage.getItem("bedahreview-free-result"), queued: eventQueue.map((e) => e.event) };
+  }
+
+  if (hash === "#account") {
+    await until(() => !byId("workspace").hidden);
+    out.closed = vis("acct-menu");
+    byId("acct-btn").click();
+    out.open = [vis("acct-menu"), byId("acct-btn").getAttribute("aria-expanded"), document.activeElement && document.activeElement.className];
+    out.items = [...byId("acct-menu").querySelectorAll(".mitem")].filter((b) => b.offsetParent).map((b) => b.textContent);
+    out.deleteRed = getComputedStyle(byId("delete-open")).color !== getComputedStyle(byId("logout")).color;
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); out.escClosed = !vis("acct-menu") && document.activeElement === byId("acct-btn");
+    byId("acct-btn").click(); document.body.click(); out.outsideClosed = !vis("acct-menu");
+    out.oldFooter = !!document.querySelector("main #logout, main #delete-open");
+  }
+
   if (hash === "#notes") {
     await until(() => !byId("workspace").hidden);
     lastData = { items: [{ text: "warna tulisannya ijo pas dateng hitem banget" }] };
@@ -219,6 +271,7 @@ window.__probe = (async () => {
   }
 
   if (hash === "#keep") {
+    await until(() => !byId("workspace").hidden); byId("signin-btn").click();
     await until(() => vis("gate"));
     const store = window.__sb.opts.auth.storage;
     out.defaultOn = byId("g-keep").checked; out.label = byId("g-keep").parentElement.textContent.trim();
@@ -236,15 +289,17 @@ window.__probe = (async () => {
   }
 
   if (hash === "#example") {
+    await until(() => !byId("workspace").hidden); byId("signin-btn").click();
     await until(() => vis("gate"));
     byId("g-example").click();
     await until(() => !byId("view-results").hidden, 80);
     out.results = !byId("view-results").hidden; out.note = byId("start").textContent.includes("contoh dengan ulasan rekaan");
     out.feedbackHidden = byId("feedback").hidden; out.fixButtons = document.querySelectorAll("#panel-fix .fixform").length;
     out.signinBtn = vis("signin-btn"); out.counts = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
+    localStorage.setItem("bedahreview-free-used", "1");  // the free analysis was already used in this browser
     show("input"); byId("sample").click(); byId("run").click();
     await wait(300);
-    out.gateAfterRun = vis("gate"); out.closeShown = vis("g-close");
+    out.gateAfterRun = vis("gate"); out.closeShown = vis("g-close"); out.info = byId("g-info").textContent;
     byId("g-close").click(); out.backInApp = !byId("workspace").hidden;
   }
   return out;
@@ -271,7 +326,7 @@ class SignInBrowserTests(unittest.TestCase):
         cls.admin_calls = []
         cls.server = web.make_server(0, classify_fn=_stub_classify, access_codes={"ani": "ani-secret-1"}, public=True,
                                      account_admin=AccountAdmin(URL, "sb_secret_x", request=lambda m, u, h, b: (cls.admin_calls.append((m, u.replace(URL, ""))) or 204)),
-                                     supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key="sb_publishable_x")
+                                     supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key="sb_publishable_x", free_per_visitor=50)
         cls.port = cls.server.server_address[1]
         threading.Thread(target=cls.server.serve_forever, daemon=True).start()
 
@@ -294,14 +349,14 @@ class SignInBrowserTests(unittest.TestCase):
             chrome.terminate()
             chrome.wait(timeout=20)
 
-    def test_a_visitor_who_is_not_signed_in_sees_the_sign_in_not_the_app(self):
+    def test_a_visitor_lands_in_the_app_and_the_sign_in_opens_from_the_header(self):
         out = self.probe("#out")
+        self.assertEqual(out["start"], {"gate": False, "app": True, "signinBtn": True, "acct": False})  # the first analysis is free, so the app comes first
         self.assertEqual((out["gate"], out["workspaceHidden"]), (True, True))
         self.assertEqual(out["title"], "Masuk untuk membedah ulasanmu")
         self.assertEqual(out["google"], "Masuk dengan Google")
         self.assertTrue(out["consent"])
         self.assertTrue(out["codeLink"])  # interviewers with an access code still have a way in
-        self.assertFalse(out["signinBtn"])  # the gate itself is the sign-in
         self.assertFalse(out["noContactAsk"])  # no "may we contact you" question anywhere
         self.assertEqual(out["otp"], ["one-time-code", "numeric", "off", 6])
         self.assertEqual(out["titleEn"], "Sign in to analyse your reviews")
@@ -427,8 +482,40 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertTrue(out["feedbackHidden"])
         self.assertEqual(out["fixButtons"], 0)  # nothing from the example can be saved as a real fix
         self.assertTrue(out["signinBtn"])
-        self.assertTrue(out["gateAfterRun"])
+        self.assertTrue(out["gateAfterRun"])  # the free analysis was used: analysing asks for a sign-in
+        self.assertEqual(out["info"], "Analisis gratismu sudah terpakai. Masuk untuk lanjut, tetap gratis.")
         self.assertTrue(out["closeShown"] and out["backInApp"])
+
+    def test_one_free_analysis_shows_the_counts_and_a_sign_in_shows_the_rest(self):
+        out = self.probe("#free")
+        self.assertEqual(out["start"], {"gate": False, "signinBtn": True, "acct": False})
+        self.assertEqual(out["locked"], {"unlock": True, "panels": False, "counts": 4, "flag": "1"})  # the four numbers show, the details wait
+        self.assertTrue(out["tabPointsToSignIn"])
+        self.assertEqual(out["second"], {"gate": True, "info": "Analisis gratismu sudah terpakai. Masuk untuk lanjut, tetap gratis.", "close": True})
+        after = out["after"]
+        self.assertEqual((after["unlock"], after["panels"], after["acct"], after["signinBtn"]), (False, True, True, False))
+        self.assertEqual(after["email"], "ani@example.com")  # shown in this browser's menu only
+        self.assertIn("free_unlocked", after["queued"])
+        self.assertIn("analysed", after["queued"])  # the free analysis now counts for the account
+
+    def test_a_free_analysis_waits_in_the_tab_during_the_google_sign_in(self):
+        out = self.probe("#free-google")
+        self.assertEqual(out["stage1"], {"oauth": 1, "saved": True})
+        self.assertTrue(out["results"])
+        self.assertEqual((out["unlock"], out["panels"]), (False, True))
+        self.assertIsNone(out["left"])  # removed as soon as it was shown again
+        self.assertIn("free_unlocked", out["queued"])
+
+    def test_the_account_menu_holds_sign_out_privacy_and_a_separate_red_delete(self):
+        out = self.probe("#account")
+        self.assertFalse(out["closed"])
+        self.assertEqual(out["open"], [True, "true", "mitem"])  # opens with the first item focused
+        self.assertEqual(out["items"][0], "Keluar")
+        self.assertIn("Kebijakan privasi", out["items"])
+        self.assertEqual(out["items"][-1], "Hapus akun dan data saya")  # last, apart from the rest
+        self.assertTrue(out["deleteRed"])
+        self.assertTrue(out["escClosed"] and out["outsideClosed"])
+        self.assertFalse(out["oldFooter"])  # no longer at the bottom of the results
 
 
 if __name__ == "__main__":

@@ -26,12 +26,12 @@ create table if not exists public.events (
   id      bigint generated always as identity primary key,
   ts      timestamptz not null default now(),
   user_id uuid not null references auth.users (id) on delete cascade,
-  event   text not null check (event in ('opened', 'analysed', 'tab_viewed', 'draft_copied', 'fix_marked', 'rivals_started', 'feedback', 'analysis_failed', 'limit_hit')),
+  event   text not null check (event in ('opened', 'analysed', 'tab_viewed', 'draft_copied', 'fix_marked', 'rivals_started', 'feedback', 'free_unlocked', 'analysis_failed', 'limit_hit')),
   props   jsonb not null default '{}'::jsonb check (jsonb_typeof(props) = 'object' and octet_length(props::text) <= 2000)
 );
 -- A project made before analysis_failed and limit_hit existed has the old list: replace it (safe to repeat).
 alter table public.events drop constraint if exists events_event_check;
-alter table public.events add constraint events_event_check check (event in ('opened', 'analysed', 'tab_viewed', 'draft_copied', 'fix_marked', 'rivals_started', 'feedback', 'analysis_failed', 'limit_hit'));
+alter table public.events add constraint events_event_check check (event in ('opened', 'analysed', 'tab_viewed', 'draft_copied', 'fix_marked', 'rivals_started', 'feedback', 'free_unlocked', 'analysis_failed', 'limit_hit'));
 create index if not exists events_user_ts_idx on public.events (user_id, ts desc);
 create index if not exists events_ts_idx on public.events (ts desc);
 

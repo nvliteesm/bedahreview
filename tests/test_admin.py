@@ -54,6 +54,7 @@ EVENT_ROWS = [
     ev("2026-10-20T03:03:00+00:00", A, "draft_copied", kind="chat"),
     ev("2026-10-24T18:30:00+00:00", B, "opened"),  # 01:30 on the 25th in Jakarta
     ev("2026-10-25T02:00:00+00:00", B, "analysed", reviews=5, source="paste", lang="id"),
+    ev("2026-10-25T02:01:00+00:00", B, "free_unlocked"),  # B tried the free analysis, then signed in to see it
     ev("2026-10-25T02:05:00+00:00", B, "fix_marked"),
     ev("2026-10-28T04:00:00+00:00", A, "opened"),
     ev("2026-10-28T04:01:00+00:00", A, "analysed", reviews=20, source="link", lang="en"),
@@ -119,6 +120,7 @@ class NumbersTests(unittest.TestCase):
         s = self.s
         self.assertEqual(s["analyses"], {"total": 3, "by_source": {"paste": 2, "link": 1}, "by_lang": {"id": 2, "en": 1}, "avg_reviews": 11.7, "per_person": 1.5})
         self.assertEqual([f["people"] for f in s["funnel"]], [2, 2, 1, 1, 1])
+        self.assertEqual(s["free_unlocked"], 1)
         self.assertEqual(s["features"], {"tabs": {"fix": 1}, "drafts": {"chat": 1}, "fix_marked": 1, "rivals_started": 0})
         self.assertEqual(s["health"], {"failed": 1, "failed_by_code": {"model_quota": 1}, "failed_by_step": {"analyse": 1}, "limits": 1, "limits_by_kind": {"daily": 1}, "people_hit_limit": 1})
         self.assertEqual(s["fixes"], {"total": 1, "accounts": 1, "rechecked": 1})
@@ -258,6 +260,7 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         data = json.loads(body)
         self.assertEqual((data["days"], data["accounts"]["total"]), (7, 3))
+        self.assertEqual(data["free"]["runs"], 0)  # free analyses without an account, counted in memory since the server started
         self.assertNotIn(SECRET.encode(), body)
         self.assertNotIn(b"@example.com", body)
         self.assertEqual(json.loads(self.call("GET", "/api/admin/stats?days=x", headers=self.bearer())[1])["days"], 30)
@@ -350,7 +353,7 @@ window.__probe = (async () => {
     out.bars = document.querySelectorAll("#c-people .bar").length;
     out.failed = q("failed").textContent; out.limits = q("limits").textContent;
     out.people = [...document.querySelectorAll("#people tr")].slice(1).map((tr) => tr.cells[0].textContent);
-    out.comment = q("comments").textContent; out.note = q("note").textContent;
+    out.comment = q("comments").textContent; out.note = q("note").textContent; out.free = q("free").textContent;
     // headless Chrome will not make a window narrower than 500px, so the page is held to a phone's 360px to look for sideways scrolling
     document.documentElement.style.width = "360px"; window.dispatchEvent(new Event("resize")); await wait(400);
     out.overflow = [...document.querySelectorAll("main *")].filter((n) => !n.closest(".scroll") && n.getBoundingClientRect().right > 361).map((n) => n.tagName + "." + n.className).slice(0, 5);
@@ -412,6 +415,7 @@ class AdminPageBrowserTests(unittest.TestCase):
         self.assertIn("Daily limit per account", out["limits"])
         self.assertEqual(out["people"], ["aaaaaaaa", "bbbbbbbb"])
         self.assertIn("mantap", out["comment"])
+        self.assertIn("Accounts that signed in to see one (this period)1", out["free"])
         self.assertIn("left out", out["note"])
         self.assertEqual(out["overflow"], [])  # only the wide People table may scroll sideways, inside its own box
         self.assertEqual(out["week"], "24 Oct – 30 Oct ")

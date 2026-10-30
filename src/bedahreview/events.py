@@ -25,6 +25,7 @@ EVENTS: Dict[str, Dict[str, tuple]] = {
     "fix_marked": {},
     "rivals_started": {},
     "feedback": {"answer": ("enum", ("yes", "partly", "no")), "comment": ("text", MAX_COMMENT_CHARS, True)},
+    "free_unlocked": {},  # signed in to see the details of the free analysis made before having an account
 }
 
 # Written by the server itself when an analysis fails or is refused by a limit, so the owner's dashboard can show what goes wrong.

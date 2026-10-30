@@ -20,7 +20,7 @@ def event(name, **props):
 class CleanEventTests(unittest.TestCase):
     def test_every_allowed_event_is_accepted_with_its_fields(self):
         good = [event("opened"), event("analysed", reviews=10, source="paste", lang="id"), event("tab_viewed", tab="rivals"), event("draft_copied", kind="chat"),
-                event("fix_marked"), event("rivals_started"), event("feedback", answer="partly"), event("feedback", answer="no", comment="  agak  lama ")]
+                event("fix_marked"), event("rivals_started"), event("free_unlocked"), event("feedback", answer="partly"), event("feedback", answer="no", comment="  agak  lama ")]
         self.assertEqual({e["event"] for e in good}, set(EVENTS))
         for body in good:
             self.assertEqual(clean_event(body)["event"], body["event"])

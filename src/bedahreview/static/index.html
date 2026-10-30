@@ -170,6 +170,30 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 .gate h1:focus { outline: none; }
 .gbtn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; border-radius: 12px; border: 1px solid #dadce0; background: #fff; color: #1f1f1f; font: inherit; font-weight: 700; cursor: pointer; }
 .gbtn svg { width: 20px; height: 20px; flex: none; }
+/* account menu: who is signed in, sign out, privacy, and (apart, in red) deleting the account */
+.acct { position: relative; }
+.avatar { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--accent); color: var(--on-accent); font: inherit; font-weight: 800; font-size: 1.05rem; cursor: pointer; display: grid; place-items: center; padding: 0; text-transform: uppercase; }
+.acct-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; width: min(300px, calc(100vw - 2 * var(--gutter))); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18); padding: 6px; display: grid; }
+.acct-who { display: grid; gap: 2px; padding: 10px 12px 12px; border-bottom: 1px solid var(--line); margin-bottom: 4px; overflow-wrap: anywhere; }
+.mitem { display: flex; align-items: center; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--ink); font: inherit; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
+.mitem:hover, .mitem:focus-visible { background: var(--accent-soft); }
+.mitem.danger { color: var(--fight); font-weight: 500; font-size: 0.88rem; }
+.mitem.danger:hover, .mitem.danger:focus-visible { background: var(--fight-soft); }
+.acct-menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+#delete-panel { display: grid; gap: 10px; padding: 8px 12px 12px; } #delete-panel[hidden] { display: none; }
+#delete-panel h3 { margin: 0; font-size: 0.95rem; } #delete-panel p { margin: 0; }
+/* a free analysis before signing in: the counts show, the details wait behind this box */
+.unlock { justify-items: center; text-align: center; padding: 22px 18px; border-color: var(--accent); }
+.unlock h3 { margin: 0; font-size: 1.1rem; } .unlock p { margin: 0; }
+.unlock .lock { width: 28px; height: 28px; color: var(--accent); }
+#view-results.locked #panels, #view-results.locked #notes, #view-results.locked #feedback, #view-results.locked .legend,
+#view-results.locked #rivals-open, #view-results.locked #start button { display: none !important; }
+.foot a { color: inherit; }
+.unlock a { color: inherit; }
+/* a phone header has room for four things: a visitor gets "Masuk" and the language; the theme switch moves into the account menu */
+.has-acct #theme, .visitor #theme, .visitor #fixes-btn { display: none; }
+@media (min-width: 1100px) { .has-acct #theme, .visitor #theme { display: grid; } #acct-theme { display: none; } }
+@media (max-width: 399px) { .lang .o:not(.on) { display: none; } }  /* a small phone: the language switch shows only the current one, and a tap still switches */
 .gbtn[disabled], .btn[disabled] { opacity: 0.6; cursor: progress; }
 .or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.85rem; }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
@@ -369,6 +393,25 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
       <button class="lang" id="lang" type="button" aria-label="Bahasa / Language"></button>
       <button class="theme" id="fixes-btn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><span class="badge" id="fixes-count" hidden></span></button>
       <button class="theme" id="theme" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="theme-icon" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+      <div class="acct" id="acct" hidden>
+        <button class="avatar" id="acct-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="acct-menu" data-i18n-label="acctMenu"><span id="acct-initial" aria-hidden="true"></span></button>
+        <div class="acct-menu" id="acct-menu" hidden>
+          <div class="acct-who"><span class="small muted" data-i18n="acctAs"></span><b id="acct-email"></b></div>
+          <div id="logout-row" hidden><button class="mitem" id="logout" type="button" data-i18n="logout"></button></div>
+          <button class="mitem" id="acct-theme" type="button"></button>
+          <a class="mitem" href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a>
+          <div id="delete-area" hidden>
+            <hr>
+            <button class="mitem danger" id="delete-open" type="button" data-i18n="delBtn"></button>
+            <div id="delete-panel" hidden role="alertdialog" aria-labelledby="delete-h">
+              <h3 id="delete-h" data-i18n="delTitle"></h3>
+              <p class="small" data-i18n="delBody"></p>
+              <div class="callout hot" id="delete-error" role="alert" hidden></div>
+              <div class="row"><button class="btn danger" id="delete-confirm" type="button"></button><button class="btn ghost" id="delete-cancel" type="button" data-i18n="delCancel"></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </header>
@@ -551,6 +594,14 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
     <div id="start"></div>
     <button class="btn ghost mob" id="rivals-open" type="button" data-i18n="rivalsOpen"></button>
     <div class="board" id="tabs" role="tablist"></div>
+    <div class="card-box unlock" id="unlock" hidden aria-labelledby="unlock-h">
+      <svg class="i lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+      <h3 id="unlock-h" tabindex="-1" data-i18n="unlockTitle"></h3>
+      <p class="muted" data-i18n="unlockBody"></p>
+      <button class="gbtn" id="unlock-google" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i18n="gGoogle"></span></button>
+      <button class="plain strong" id="unlock-email" type="button" data-i18n="unlockEmail"></button>
+      <p class="small muted"><span data-i18n="unlockNote"></span> <span data-i18n="gConsent"></span> <a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a></p>
+    </div>
     <details class="legend dsk">
       <summary data-i18n="legendSummary"></summary>
       <div id="legend"></div>
@@ -563,16 +614,6 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
     <p class="foot"><a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a></p>
   </section>
 
-  <p class="foot" id="logout-row" hidden><button class="plain" id="logout" type="button" data-i18n="logout"></button></p>
-  <div id="delete-area" hidden>
-    <p class="foot"><button class="plain" id="delete-open" type="button" data-i18n="delBtn"></button></p>
-    <div class="card-box" id="delete-panel" hidden role="alertdialog" aria-labelledby="delete-h">
-      <h3 id="delete-h" data-i18n="delTitle"></h3>
-      <p data-i18n="delBody"></p>
-      <div class="callout hot" id="delete-error" role="alert" hidden></div>
-      <div class="row"><button class="btn danger" id="delete-confirm" type="button"></button><button class="btn ghost" id="delete-cancel" type="button" data-i18n="delCancel"></button></div>
-    </div>
-  </div>
   <span class="vh" id="toast" role="status" aria-live="polite"></span>
 </main>
 
@@ -714,6 +755,10 @@ const TEXT = {
     delBody: "Ini menghapus akunmu, profilmu, catatan pemakaianmu, dan daftar perbaikanmu (termasuk nama produk dan catatan) di server kami, serta salinannya di perangkat ini. Tidak bisa dibatalkan.",
     delConfirm: "Ya, hapus semuanya", delCancel: "Batal", delDeleting: "Menghapus…", delErr: "Tidak bisa menghapus akun sekarang. Coba lagi sebentar lagi.",
     delUnavailable: "Penghapusan akun belum tersedia di server ini.", gDeleted: "Akunmu dan semua datanya sudah dihapus.",
+    acctMenu: "Akun", acctAs: "Masuk sebagai", acctCode: "Kode akses penguji",
+    unlockTitle: "Hasilnya sudah siap", unlockBody: "Masuk gratis untuk melihat kutipan asli pembeli, apa yang perlu diperbaiki, dan draf balasan yang siap disalin.",
+    unlockEmail: "Pakai email saja", unlockNote: "Tanpa kata sandi. Hasil ini tetap ada setelah kamu masuk.",
+    gFreeUsed: "Analisis gratismu sudah terpakai. Masuk untuk lanjut, tetap gratis.",
     fixesSubAccount: "Disimpan di akunmu (nama produk, tautan, dan catatanmu) supaya bisa dibuka dari HP lain. Jangan menulis nama orang.",
     syncOk: "Tersimpan di akunmu.", syncDown: "Riwayat sedang tidak tersedia. Catatanmu tetap tersimpan di perangkat ini dan akan disimpan ke akunmu nanti.",
     syncOff: "Masuk agar catatanmu tersimpan di akunmu dan bisa dibuka dari HP lain.", fixNoteReview: "Catatanmu tampak memuat teks ulasan. Tulis dengan kata-katamu sendiri.",
@@ -854,6 +899,10 @@ const TEXT = {
     delBody: "This deletes your account, your profile, your usage records and your fixes list (including product names and notes) on our server, and the copy on this device. It cannot be undone.",
     delConfirm: "Yes, delete everything", delCancel: "Cancel", delDeleting: "Deleting…", delErr: "The account could not be deleted right now. Try again in a moment.",
     delUnavailable: "Deleting an account is not available on this server.", gDeleted: "Your account and all your data have been deleted.",
+    acctMenu: "Account", acctAs: "Signed in as", acctCode: "Tester access code",
+    unlockTitle: "Your results are ready", unlockBody: "Sign in for free to see the buyers' exact quotes, what to fix, and reply drafts ready to copy.",
+    unlockEmail: "Use email instead", unlockNote: "No password. These results stay here after you sign in.",
+    gFreeUsed: "You have used your free analysis. Sign in to keep going; it is still free.",
     fixesSubAccount: "Saved in your account (the product name, link and your note) so it opens on another phone. Please do not write people's names.",
     syncOk: "Saved in your account.", syncDown: "History is not available right now. Your notes stay saved on this device and will be saved to your account later.",
     syncOff: "Sign in so your notes are saved in your account and open on another phone.", fixNoteReview: "Your note looks like it contains review text. Write it in your own words.",
@@ -940,6 +989,7 @@ function themeLabel() {
   const dark = darkNow();
   $("theme").setAttribute("aria-label", tr(dark ? "themeLight" : "themeDark")); $("theme").title = tr(dark ? "themeLight" : "themeDark");
   $("theme-icon").setAttribute("d", dark ? SUN : MOON);
+  $("acct-theme").textContent = tr(dark ? "themeLight" : "themeDark");
 }
 function setTheme(mode) { document.documentElement.dataset.theme = mode; document.documentElement.style.colorScheme = mode; themeLabel(); }
 try { const saved = localStorage.getItem("bedahreview-theme"); if (saved === "dark" || saved === "light") setTheme(saved); } catch (e) { /* storage can be blocked */ }
@@ -961,7 +1011,7 @@ function applyLang() {
   $("lang").replaceChildren(h("span", { class: "o" + (lang === "id" ? " on" : ""), text: "ID" }), h("span", { class: "o" + (lang === "en" ? " on" : ""), text: "EN" }));
   $("pchip-change").textContent = tr("change"); $("back-results").textContent = tr("backResults"); $("print-d").textContent = tr("print");
   $("legend").replaceChildren(...["fix", "fight", "ignore", "keep"].map((k) => h("p", {}, h("b", { class: "lg-" + k, text: tr(k) }), tr("legend" + k[0].toUpperCase() + k.slice(1)))));
-  themeLabel(); renderFixBadge(); renderGate(); setQuota(lastQuota);
+  themeLabel(); renderFixBadge(); renderGate(); renderAccount(); setQuota(lastQuota);
   if (currentView === "fixes") renderFixes();
   if (!$("run").disabled) $("run").textContent = tr("run");
   if (lastData) render(lastData, false); else renderRival();
@@ -1443,6 +1493,7 @@ function selectTab(key, focus) {
 }
 function render(data, fresh) {
   lastData = data;
+  setLocked(!!data.free && !signedIn);
   if (fresh !== false && !(rival.target && !rival.target.mine)) { rival = { step: "idle" }; rivalRun += 1; }  // a comparison started from some other link survives a new analysis
   const byId = {}; data.items.forEach((it) => { byId[it.id] = it; });
   const real = data.items.filter((it) => !(it.likely_fake && it.likely_fake.flag));
@@ -1483,7 +1534,10 @@ function render(data, fresh) {
     const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, class: MAIN_TABS.includes(k) ? "main" : "", "aria-controls": "panel-" + k, "data-b": k, "data-shown": tr("shown") },
       h("span", { class: "ic", "aria-hidden": "true" }, svgIcon(BOARD_ICON[k])),
       h("span", { class: "n", text: counts[k], "data-d": tr("board" + cap(k)) }), h("span", { class: "l", text: tr(k) }));
-    tab.addEventListener("click", () => { selectTab(k, false); track("tab_viewed", { tab: k }); });
+    tab.addEventListener("click", () => {
+      if (freeLocked) { $("unlock").scrollIntoView({ block: "center", behavior: "smooth" }); $("unlock-h").focus({ preventScroll: true }); return; }  // the details need a sign-in first
+      selectTab(k, false); track("tab_viewed", { tab: k });
+    });
     return tab;
   }));
   const plat = platformName(src.url || "");
@@ -1855,7 +1909,11 @@ async function send(payload, title) {
     let data = null;
     try { data = await res.json(); } catch (e) { /* not JSON */ }
     stopLoading();
-    if (res.status === 401) { show("input"); handleUnauthorized(); return; }  // signed out or the sign-in ran out: ask again
+    if (res.status === 401) {  // signed out or the sign-in ran out: ask again. Without an account: the free analysis is used up.
+      show("input");
+      if (data && data.code === "free_used") freeRefused(); else handleUnauthorized();
+      return;
+    }
     if (!res.ok || !data) {
       show("input");
       if (data && data.limit === "daily") setQuota({ used: data.max, max: data.max });
@@ -1867,6 +1925,7 @@ async function send(payload, title) {
       return;
     }
     setQuota(data.quota);
+    if (data.free) markFreeUsed();
     render(data, true);
   } catch (e) {
     stopLoading(); show("input"); showError(tr("errNetwork"));
@@ -1880,7 +1939,7 @@ function countReviewsRough(text) {
   return blocks.filter((b) => b.trim()).length;
 }
 function runPaste() {
-  if (!ensureSignedIn()) return;
+  if (!ensureSignedIn(true)) return;
   const text = $("paste").value;
   if (!text.trim()) { showError(tr("errPaste")); $("paste").focus(); return; }
   $("shared-note").hidden = true;
@@ -1934,7 +1993,23 @@ function takeShared() {
 /* ---------- sign-in (Supabase) ----------
    Only when the server says Supabase is on. The browser talks to Supabase directly, so its per-address limits count each person apart;
    our server only checks the token it is sent. Only the publishable key is in this page, never the secret key. */
-let sb = null, cachedToken = "", signedIn = true, userId = null, cfgAccess = false, cfgCanDelete = false, gateStep = "choose", gateEmail = "", resendAt = 0, resendTimer = null, introDone = null, openedSent = false, exampleShown = false;
+let sb = null, cachedToken = "", signedIn = true, userId = null, userEmail = "", cfgAccess = false, cfgCanDelete = false, cfgFree = false, gateStep = "choose", gateEmail = "", resendAt = 0, resendTimer = null, introDone = null, openedSent = false, exampleShown = false, freeLocked = false;
+/* One free analysis before signing in: the page shows the counts, and the quotes, suggestions and drafts wait behind a sign-in box.
+   The flag stays in this browser. For a Google sign-in, which leaves the page, the result waits in this tab's sessionStorage and is removed as soon as it is shown again. */
+const FREE_KEY = "bedahreview-free-used", PENDING_KEY = "bedahreview-free-result";
+const freeUsed = () => { try { return localStorage.getItem(FREE_KEY) === "1"; } catch (e) { return false; } };
+function markFreeUsed() { try { localStorage.setItem(FREE_KEY, "1"); } catch (e) { /* the server still counts */ } }
+function setLocked(on) { freeLocked = on; $("view-results").classList.toggle("locked", on); $("unlock").hidden = !on; }
+function dropPending() { try { sessionStorage.removeItem(PENDING_KEY); } catch (e) { /* ignore */ } }
+function unlockFree() {  // just signed in: show the free analysis in full, and count it for this account
+  let pending = null;
+  try { pending = JSON.parse(sessionStorage.getItem(PENDING_KEY) || "null"); } catch (e) { /* nothing waiting */ }
+  dropPending();
+  if (pending && pending.free && Array.isArray(pending.items)) render(pending, true);  // back from Google: the page was reloaded
+  else if (freeLocked && lastData) { setLocked(false); track("analysed", { reviews: Math.min(lastData.reviews, 50), source: "paste", lang }); show("results"); $("results-h").focus({ preventScroll: true }); }
+  else return;
+  track("free_unlocked");
+}
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PLATFORMS = ["tokopedia", "lazada", "tiktokshop", "shopee", "other"], CATEGORIES = ["fashion", "beauty", "food", "electronics", "home", "other"];
 const PLATFORM_NAME = { tokopedia: "Tokopedia", lazada: "Lazada", tiktokshop: "TikTok Shop", shopee: "Shopee" };
@@ -1976,11 +2051,31 @@ function showGateError(msg) { $("g-error-text").textContent = msg || ""; $("g-er
 function hideApp() { document.body.classList.add("gated"); $("workspace").hidden = true; }
 function showApp() {
   document.body.classList.remove("gated"); $("workspace").hidden = false; $("gate").hidden = true;
-  $("signin-btn").hidden = !sb || signedIn; $("logout-row").hidden = !(cfgAccess || (sb && signedIn));
+  renderAccount();
   openedOnce();
-  $("delete-area").hidden = !(sb && signedIn && userId && cfgCanDelete); $("delete-panel").hidden = true;
-  if (sb && signedIn && userId) { syncFixes(); refreshBox(); }
+  if (sb && signedIn && userId) { syncFixes(); refreshBox(); unlockFree(); }
 }
+function renderAccount() {  // the header shows "Masuk" to a visitor and the account menu to someone signed in (an account, or a tester's access code)
+  const on = signedIn && !!(userId || cfgAccess);
+  $("signin-btn").hidden = !sb || signedIn;
+  $("acct").hidden = !on; $("logout-row").hidden = !on; document.body.classList.toggle("has-acct", on); document.body.classList.toggle("visitor", !!sb && !signedIn);
+  $("acct-email").textContent = userEmail || (userId ? "" : tr("acctCode"));  // an access-code tester has no email to show
+  $("acct-initial").textContent = (userEmail || (userId ? "?" : "#")).charAt(0);
+  $("delete-area").hidden = !(sb && signedIn && userId && cfgCanDelete);
+  if (!on) setMenu(false);
+}
+function setMenu(open) {
+  $("acct-menu").hidden = !open; $("acct-btn").setAttribute("aria-expanded", open ? "true" : "false");
+  if (!open) $("delete-panel").hidden = true;
+}
+$("acct-btn").addEventListener("click", () => {
+  const open = $("acct-menu").hidden; setMenu(open);
+  if (open) { const first = [...$("acct-menu").querySelectorAll(".mitem")].find((b) => b.offsetParent); if (first) first.focus(); }
+});
+document.addEventListener("click", (e) => { if (!$("acct-menu").hidden && !$("acct").contains(e.target)) setMenu(false); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("acct-menu").hidden) { setMenu(false); $("acct-btn").focus(); } });
+$("acct-theme").addEventListener("click", () => $("theme").click());
+function gateInfo(msg) { $("g-info").textContent = msg || ""; $("g-info").hidden = !msg; }
 function fillSelect(sel, values, label) {
   const keep = sel.value;
   sel.replaceChildren(h("option", { value: "", text: tr("gPick") }), ...values.map((v) => h("option", { value: v, text: label(v) })));
@@ -1997,7 +2092,7 @@ function renderGate() {
   $("g-vsub").textContent = tr("gCodeSub", gateEmail);
   fillSelect($("g-platform"), PLATFORMS, (v) => PLATFORM_NAME[v] || tr("gOther"));
   fillSelect($("g-category"), CATEGORIES, (v) => tr("cat_" + v));
-  $("g-codelink").hidden = !cfgAccess; $("g-close").hidden = !exampleShown;
+  $("g-codelink").hidden = !cfgAccess; $("g-close").hidden = !sb;  // the app is open without an account, so the sign-in can always wait
   $("g-ios").hidden = !(isIos() && !isInstalled());  // an iPhone's installed app has its own storage, so signing in inside Safari would not carry over
   $("g-keep").checked = keepFlag();
   tickResend();
@@ -2006,7 +2101,7 @@ function showGate(step, focus) {
   document.body.classList.add("gated"); $("workspace").hidden = true; $("gate").hidden = false;
   gateStep = step || "choose";
   for (const name of ["choose", "verify", "intro"]) $("g-" + name).hidden = name !== gateStep;
-  showGateError(""); renderGate();
+  showGateError(""); gateInfo(""); renderGate();
   if (focus !== false) $({ choose: "g-email", verify: "otp-0", intro: "g-platform" }[gateStep]).focus();
 }
 const otpBoxes = [];
@@ -2076,18 +2171,23 @@ async function saveIntro(skip) {
 }
 async function enterApp(session) {
   if (!session || !session.user || userId === session.user.id) return;
-  userId = session.user.id; signedIn = true; hideApp();
+  userId = session.user.id; userEmail = session.user.email || ""; signedIn = true; hideApp();  // the email is only shown in this browser's menu, never sent anywhere
   await maybeIntro();
   showApp();
 }
-function onSignedOut() { userId = null; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync(); showGate("choose", false); }
+function onSignedOut() { userId = null; userEmail = ""; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync(); dropPending(); renderAccount(); showGate("choose", false); }
 function handleUnauthorized() {
   if (!sb) { location.reload(); return; }
-  userId = null; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync();
+  userId = null; userEmail = ""; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync(); renderAccount();
   sb.auth.signOut({ scope: "local" }).catch(() => {});
   showGate("choose", false);
 }
-function ensureSignedIn() { if (!sb || signedIn) return true; showGate("choose"); return false; }
+function ensureSignedIn(allowFree) {  // allowFree: pasting, where the first analysis needs no account
+  if (!sb || signedIn || (allowFree && cfgFree && !freeUsed())) return true;
+  showGate("choose"); if (allowFree && cfgFree) gateInfo(tr("gFreeUsed"));
+  return false;
+}
+function freeRefused() { markFreeUsed(); showGate("choose"); gateInfo(tr("gFreeUsed")); }
 async function startAuth(cfg) {
   if (!window.supabase) { try { await loadScript("vendor/supabase.js"); } catch (e) { /* handled below */ } }
   if (!window.supabase) { signedIn = !!cfg.signed_in; if (!signedIn) { showGate("choose", false); showGateError(tr("gErrLoad")); } else showApp(); return; }
@@ -2101,18 +2201,26 @@ async function startAuth(cfg) {
   if (session) { signedIn = true; enterApp(session); return; }
   signedIn = !!cfg.signed_in;  // true for an access-code cookie
   if (signedIn) { showApp(); return; }
+  let deleted = false;
+  try { deleted = !!sessionStorage.getItem("bedahreview-deleted"); sessionStorage.removeItem("bedahreview-deleted"); } catch (e) { /* ignore */ }
+  if (!oauthFailed && !deleted) { showApp(); return; }  // no account yet: the app is open, and the first analysis is free
   showGate("choose", false);
   if (oauthFailed) showGateError(tr("gErrOauth"));
-  try { if (sessionStorage.getItem("bedahreview-deleted")) { sessionStorage.removeItem("bedahreview-deleted"); $("g-info").textContent = tr("gDeleted"); $("g-info").hidden = false; } } catch (e) { /* ignore */ }
+  if (deleted) gateInfo(tr("gDeleted"));
 }
-$("g-keep").addEventListener("change", () => setKeep($("g-keep").checked));
-$("g-google").addEventListener("click", async () => {
-  setKeep($("g-keep").checked); showGateError("");
+async function googleSignIn() {  // leaves the page for Google; a locked free result waits in this tab until we are back
+  const fail = (msg) => { dropPending(); if ($("gate").hidden) showGate("choose", false); showGateError(msg); };
+  showGateError("");
+  if (freeLocked && lastData) { try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(lastData)); } catch (e) { /* the result cannot wait: the sign-in still works */ } }
   try {
     const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + "/" } });
-    if (error) showGateError(authErrorText(error));
-  } catch (e) { showGateError(tr("gErrNet")); }
-});
+    if (error) fail(authErrorText(error));
+  } catch (e) { fail(tr("gErrNet")); }
+}
+$("g-keep").addEventListener("change", () => setKeep($("g-keep").checked));
+$("g-google").addEventListener("click", () => { setKeep($("g-keep").checked); googleSignIn(); });
+$("unlock-google").addEventListener("click", googleSignIn);
+$("unlock-email").addEventListener("click", () => showGate("choose"));
 $("g-send").addEventListener("click", () => sendCode(false));
 $("g-email").addEventListener("keydown", (e) => { if (e.key === "Enter") sendCode(false); });
 $("g-verify-btn").addEventListener("click", verifyCode);
@@ -2178,10 +2286,10 @@ async function refreshBox() {  // after a sign-in the answer can change: a trust
 async function loadConfig() {
   try {
     const cfg = await (await fetch("/api/config")).json();
-    cfgAccess = !!cfg.access; cfgCanDelete = !!cfg.can_delete;
+    cfgAccess = !!cfg.access; cfgCanDelete = !!cfg.can_delete; cfgFree = !!cfg.free;
     applyBox(cfg, true);
     if (cfg.supabase) await startAuth(cfg);
-    else { signedIn = true; $("logout-row").hidden = !cfg.access; openedOnce(); }  // an access code, or a local run: no sign-in screens
+    else { signedIn = true; renderAccount(); openedOnce(); }  // an access code, or a local run: no sign-in screens
   } catch (e) { /* the link tab simply stays hidden */ }
   document.body.classList.add("ready");
 }

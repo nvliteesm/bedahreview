@@ -40,8 +40,11 @@ Every event carries `event` and a server timestamp `ts`, plus the fields below (
 | `fix_marked` | "Mark as fixed" is saved | none. The fix itself goes to the fixes table, not into the event. |
 | `rivals_started` | a competitor search starts | none |
 | `feedback` | the tester sends "Was this useful?" | `answer` (`yes`, `partly` or `no`), and `comment` only if they typed one (300 characters at most) |
+| `free_unlocked` | someone signs in to see the details of the free analysis they made before having an account | none. Sent once, right after the sign-in, together with an `analysed` event for that analysis. |
 | `analysis_failed` | **written by the server**: an analysis, competitor search or compare failed (5xx) | `step` (`analyse`, `suggest` or `compare`), `code` (the server's own error code, such as `model_quota`; never the message) |
 | `limit_hit` | **written by the server**: one of those was refused by a limit | `step`, `limit` (`daily`, `hour`, `budget` or `busy`) |
+
+A free analysis made without an account is not an event (there is no account to save it under). The server prints one `bedahreview_free_analysis` log line for it, with nothing else in it, and counts it in memory for `/admin` ("since the last restart").
 
 The last two are `SERVER_EVENTS` in `events.py`: the page can never send them, and their log line has `"device":"server"`. A person's own slip (nothing pasted, a bad link) is not an event; only the app failing or turning someone away is.
 

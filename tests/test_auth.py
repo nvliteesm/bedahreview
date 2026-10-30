@@ -218,6 +218,93 @@ class SupabaseOnlyTests(unittest.TestCase):
         self.assertEqual(status("/code"), 401)  # nothing to type a code into
 
 
+class FreeAnalysisTests(unittest.TestCase):
+    """With accounts on, a visitor gets one analysis before signing in: paste only, a few per visitor address, a fixed number a day for everyone."""
+    BODY = json.dumps({"text": "warna beda dari foto\nbahannya tipis"}).encode()
+
+    def start(self, **options):
+        self.key, jwk = new_key("k1")
+        self.fail = False
+
+        def classify(reviews, product=None):
+            if self.fail:
+                raise RuntimeError("model down")
+            return [{"id": r["id"], "bucket": "fix", "theme": "Colour vs photo", "variant": None, "cause": "listing", "check_first": False, "proof_quote": r["text"],
+                     "likely_fake": {"flag": False, "signals": []}, "fix_suggestion_id": "Ganti foto.", "fight": None, "confidence": "high"} for r in reviews]
+        self.server = web.make_server(0, classify_fn=classify, public=True, supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key="sb_publishable_x", **options)
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
+
+    def post(self, body=None, headers=None, forwarded="203.0.113.7"):
+        conn = http.client.HTTPConnection("127.0.0.1", self.server.server_address[1], timeout=10)
+        conn.request("POST", "/api/classify", body=body or self.BODY, headers=dict({"Content-Type": "application/json", "X-Forwarded-For": forwarded}, **(headers or {})))
+        resp = conn.getresponse()
+        out = (resp.status, json.loads(resp.read()))
+        conn.close()
+        return out
+
+    def test_a_visitor_gets_a_full_analysis_marked_free_and_the_config_says_so(self):
+        self.start()
+        status, out = self.post()
+        self.assertEqual(status, 200)
+        self.assertTrue(out["free"])  # the page hides the details until a sign-in
+        self.assertNotIn("quota", out)
+        self.assertEqual(out["counts"]["fix"], 2)
+        conn = http.client.HTTPConnection("127.0.0.1", self.server.server_address[1], timeout=10)
+        conn.request("GET", "/api/config")
+        self.assertTrue(json.loads(conn.getresponse().read())["free"])
+        conn.close()
+        self.assertEqual(self.server.RequestHandlerClass.free_trial.done, 1)
+
+    def test_a_signed_in_analysis_is_not_marked_free(self):
+        self.start()
+        status, out = self.post(headers={"Authorization": "Bearer " + token(self.key)})
+        self.assertEqual(status, 200)
+        self.assertNotIn("free", out)
+        self.assertEqual(self.server.RequestHandlerClass.free_trial.done, 0)
+
+    def test_a_link_never_runs_without_an_account(self):
+        self.start()
+        status, out = self.post(json.dumps({"url": "https://www.tokopedia.com/toko/produk"}).encode())
+        self.assertEqual((status, out["code"], out["login"]), (401, "free_paste_only", True))
+
+    def test_a_sign_in_that_ran_out_is_asked_again_not_treated_as_a_stranger(self):
+        self.start()
+        status, out = self.post(headers={"Authorization": "Bearer " + token(self.key, exp=int(time.time()) - 60)})
+        self.assertEqual((status, out.get("code")), (401, None))
+
+    def test_each_visitor_address_has_a_small_allowance(self):
+        self.start(free_per_visitor=2)
+        self.assertEqual([self.post()[0] for _ in range(2)], [200, 200])
+        status, out = self.post()
+        self.assertEqual((status, out["code"], out["login"]), (401, "free_used", True))
+        self.assertEqual(self.post(forwarded="198.51.100.9")[0], 200)  # someone else is not affected
+
+    def test_everyone_together_has_a_daily_cap(self):
+        self.start(free_daily=2)
+        self.assertEqual([self.post(forwarded="198.51.100.%d" % i)[0] for i in range(1, 4)], [200, 200, 401])
+
+    def test_a_failed_analysis_is_given_back(self):
+        self.start(free_per_visitor=1)
+        self.fail = True
+        self.assertEqual(self.post()[0], 502)
+        self.fail = False
+        self.assertEqual(self.post()[0], 200)  # the failure did not use up the turn
+        self.assertEqual(self.server.RequestHandlerClass.free_trial.done, 1)
+
+    def test_zero_turns_the_free_analysis_off(self):
+        self.start(free_daily=0)
+        status, out = self.post()
+        self.assertEqual((status, out.get("code")), (401, None))
+        self.assertIsNone(self.server.RequestHandlerClass.free_trial)
+
+    def test_without_supabase_there_is_no_free_analysis(self):
+        server = web.make_server(0, classify_fn=lambda reviews, product=None: [], access_codes={"ani": "ani-secret-1"}, public=True)
+        self.addCleanup(server.server_close)
+        self.assertIsNone(server.RequestHandlerClass.free_trial)
+
+
 class SchemaTests(unittest.TestCase):
     SQL = (ROOT / "db" / "schema.sql").read_text()
 

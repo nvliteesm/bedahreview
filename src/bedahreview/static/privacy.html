@@ -53,6 +53,7 @@ a { color: var(--accent); font-weight: 600; }
     <li><b>Catatan pemakaian, per akun.</b> Kejadian seperti “membuka aplikasi”, “membuka tab”, “menyalin draf”, jumlah ulasan yang dibedah, dan saat analisis gagal atau kena batas (hanya jenis kesalahannya). Tanpa isi ulasan, tanpa nama produk, tanpa alamat IP. Satu-satunya teks bebas adalah komentar yang kamu ketik sendiri di pertanyaan “Apakah hasil ini berguna?”.</li>
     <li><b>Daftar perbaikan, kalau kamu memakainya.</b> Saat kamu menekan “Tandai sudah diperbaiki”, kami menyimpan tema keluhan, varian, tanggal, jumlah keluhan sebelum dan sesudah, <b>nama atau tautan produk</b>, dan <b>catatan singkatmu</b>. Ini agar daftarmu bisa dibuka dari HP lain. Lewat aplikasi, hanya akunmu yang bisa membacanya; pembuat aplikasi bisa melihatnya di dasbor Supabase. Jangan menulis nama orang di catatan.</li>
     <li><b>Di perangkatmu.</b> Sesi masuk, pilihan bahasa dan tema, salinan daftar perbaikan, dan penanda acak perangkat. Semuanya di penyimpanan browser (localStorage), bukan cookie pelacak.</li>
+    <li><b>Analisis gratis sebelum masuk.</b> Tanpa akun, kamu bisa membedah ulasan sekali. Server tidak menyimpan apa pun darinya: hanya hitungan jumlahnya. Browser mencatat bahwa analisis gratis sudah dipakai. Kalau kamu masuk dengan Google, hasilnya menunggu di penyimpanan tab ini (sessionStorage) selama kamu ke halaman Google, lalu langsung dihapus begitu tampil lagi.</li>
   </ul>
 
   <h2>Yang tidak kami simpan</h2>
@@ -103,6 +104,7 @@ a { color: var(--accent); font-weight: 600; }
     <li><b>Usage records, per account.</b> Events like “opened the app”, “opened a tab”, “copied a draft”, how many reviews were analysed, and when an analysis fails or hits a limit (only the kind of error). No review text, no product names, no IP address. The only free text is a comment you type yourself under “Was this useful?”.</li>
     <li><b>Your fixes list, if you use it.</b> When you tap “Mark as fixed” we keep the complaint theme, variant, date, complaint counts before and after, the <b>product name or link</b> and your <b>short note</b>. This is so your list opens on another phone. Through the app only your account can read it; the person who runs the app can see it in the Supabase dashboard. Please do not write people's names in a note.</li>
     <li><b>On your device.</b> Your sign-in session, language and theme choice, a copy of your fixes list, and a random device marker. All in browser storage (localStorage), not tracking cookies.</li>
+    <li><b>The free analysis before signing in.</b> Without an account you can analyse reviews once. The server keeps nothing from it except a count. Your browser notes that the free analysis was used. If you sign in with Google, the result waits in this tab's storage (sessionStorage) while you are on Google's page, and is removed as soon as it is shown again.</li>
   </ul>
 
   <h2>What we do not keep</h2>

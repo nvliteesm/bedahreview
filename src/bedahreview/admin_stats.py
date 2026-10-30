@@ -230,6 +230,7 @@ class AdminStats:
                 "per_person": round(len(analysed) / len(analysed_days), 1) if analysed_days else None,
             },
             "funnel": [{"step": s, "people": reached(s)} for s in ("opened", "analysed", "tab_viewed", "draft_copied", "fix_marked")],
+            "free_unlocked": reached("free_unlocked"),  # accounts that signed in to see a free analysis made before they had one
             "features": {
                 "tabs": split("tab_viewed", "tab"),
                 "drafts": split("draft_copied", "kind"),

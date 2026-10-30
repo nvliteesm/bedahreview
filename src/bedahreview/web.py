@@ -79,6 +79,8 @@ BUSY_RESPONSE = (b"HTTP/1.0 503 Service Unavailable\r\nRetry-After: 5\r\nContent
                  + str(len(_BUSY_BODY)).encode() + b"\r\n\r\n" + _BUSY_BODY)  # sent as is when the connection cap is hit
 EVENTS_PER_HOUR = 600  # per visitor in public mode: a stuck page cannot flood the log
 DEFAULT_USER_DAILY = 10  # analyses per signed-in account per day; 0 turns the limit off
+DEFAULT_FREE_DAILY = 30  # analyses without an account, for everyone together, per day; 0 turns the free analysis off
+DEFAULT_FREE_PER_VISITOR = 3  # analyses without an account per visitor address per day (the page itself allows one per browser)
 JAKARTA = timezone(timedelta(hours=7))  # the day ends at midnight in Jakarta (no daylight saving there)
 DEFAULT_PAID_PER_HOUR = 6 # paid actions (link fetch, find or compare competitors) per visitor per hour in public mode: lower than plain pasting
 PUBLIC_ASSETS = {"/privacy", "/manifest.webmanifest", "/sw.js", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png"}
@@ -179,6 +181,33 @@ class DailyQuota:
             self._today()
             if self._counts.get(user, 0) > 0:
                 self._counts[user] -= 1
+
+
+class FreeTrial:
+    """One analysis before signing in. The page allows one per browser; the server allows a few per visitor address (a phone network can put
+    many people behind one address) and a fixed number per day for everyone together, so strangers cannot run up the Gemini bill.
+    In memory only: the address is a key in this table and is never written anywhere."""
+
+    def __init__(self, daily: int, per_visitor: int = DEFAULT_FREE_PER_VISITOR, clock: Callable[[], float] = time.time) -> None:
+        self._visitors, self._everyone = DailyQuota(per_visitor, clock), DailyQuota(daily, clock)
+        self._lock = threading.Lock()
+        self.done, self.since = 0, datetime.fromtimestamp(clock(), timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")  # finished free analyses since this server started
+
+    def take(self, visitor: str) -> bool:
+        if not self._visitors.take(visitor)[0]:
+            return False
+        if not self._everyone.take("all")[0]:
+            self._visitors.refund(visitor)
+            return False
+        return True
+
+    def refund(self, visitor: str) -> None:
+        self._visitors.refund(visitor)
+        self._everyone.refund("all")
+
+    def finished(self) -> None:
+        with self._lock:
+            self.done += 1
 
 
 def parse_user_ids(text: str, setting: str = "BEDAHREVIEW_PAID_USER_IDS") -> frozenset:
@@ -382,6 +411,7 @@ class Handler(BaseHTTPRequestHandler):
     contact_email: str = ""  # shown on the privacy page; empty until the owner chooses to publish one
     event_sink: Optional[EventSink] = None  # saves events to Supabase in the background; None means the log line is all there is
     daily_quota: Optional[DailyQuota] = None  # per signed-in account; access-code testers and local runs are not counted here
+    free_trial: Optional[FreeTrial] = None  # with Supabase on: the one analysis before signing in (paste only); None turns it off
     _uid: Optional[str] = None  # the Supabase user of this request, set by _authed()
     supabase_public: Optional[Dict[str, str]] = None  # the project address and the publishable key: both are meant for the browser. The secret key is never kept here.
     login_limiter: Optional[RateLimiter] = None
@@ -528,7 +558,10 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             days = DEFAULT_DAYS
         try:
-            self._json(200, stats.summary(days))
+            out = dict(stats.summary(days))
+            trial = type(self).free_trial
+            out["free"] = {"runs": trial.done, "since": trial.since} if trial else None  # analyses without an account: counted in memory, so since the last restart
+            self._json(200, out)
         except StatsError as exc:
             sys.stderr.write("admin stats failed: %s\n" % exc)
             self._json(502, {"error": "Supabase could not be read. Try again in a moment.", "code": "stats_failed"})
@@ -829,7 +862,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, example_response())
         if path == "/api/config":
             on = type(self).fetcher is not None and (type(self).supabase_auth is None or self._cookie_user() or self._uid in type(self).paid_users)  # with accounts on, the link box is for access-code testers and trusted accounts only
-            cfg = {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes), "signed_in": self._authed(), "can_delete": type(self).account_admin is not None, "contact": type(self).contact_email}
+            cfg = {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes), "signed_in": self._authed(), "can_delete": type(self).account_admin is not None, "contact": type(self).contact_email, "free": type(self).free_trial is not None}
             if type(self).supabase_public:
                 cfg["supabase"] = type(self).supabase_public
             return self._json(200, cfg)
@@ -854,7 +887,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._compare()
         if self.path != "/api/classify":
             return self._json(404, {"error": "Not found"})
-        if not self._authed():
+        trial = type(self).free_trial
+        free = not self._authed()  # not signed in: only the free analysis is possible
+        if free and (type(self).supabase_auth is None or trial is None or self.headers.get("Authorization")):  # a sign-in that ran out is asked again, not treated as a stranger
             return self._json(401, {"error": "Please sign in again.", "login": True})
         if self.use_limiter and not self.use_limiter.take(self._client()):
             return self._json(429, {"error": "Too many analyses this hour. Try again later.", "code": "too_many"})
@@ -876,6 +911,8 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, UnicodeDecodeError):
             return self._json(400, {"error": "Body must be JSON like {\"text\": \"...\"}"})
 
+        if free and url.strip():  # a link costs money: never without an account
+            return self._json(401, {"error": "Sign in to read reviews from a link.", "login": True, "code": "free_paste_only"})
         source: Optional[Dict[str, Any]] = None
         if url.strip():
             fetched = self._fetch(url, body.get("limit", DEFAULT_LIMIT), body.get("mode", "complaints"))
@@ -897,17 +934,23 @@ class Handler(BaseHTTPRequestHandler):
             allowed, used = quota.take(self._uid)
             if not allowed:
                 return self._json(429, {"error": "Daily limit reached: %d analyses a day. Try again tomorrow." % quota.limit, "code": "daily_limit", "limit": "daily", "max": quota.limit})
+        if free and not trial.take(self._client()):
+            return self._json(401, {"error": "Sign in to keep analysing. It is free.", "login": True, "code": "free_used"})
+
+        def give_back() -> None:  # the analysis did not happen, so it does not cost anyone their turn
+            if quota:
+                quota.refund(self._uid)
+            if free:
+                trial.refund(self._client())
         model = resolve_model()
         try:
             title = (source or {}).get("title") or " ".join(product.split())[:MAX_PRODUCT_CHARS] or None
             results = type(self).classify_fn(reviews, product=title) if title else type(self).classify_fn(reviews)
         except ClassificationError as exc:
-            if quota:
-                quota.refund(self._uid)
+            give_back()
             return self._json(502, {"error": "The model's reply could not be used: %s" % str(exc).splitlines()[0], "code": "model_bad"})
         except Exception as exc:  # timeout, rate limit, network: say what happened without a traceback
-            if quota:
-                quota.refund(self._uid)
+            give_back()
             code = getattr(exc, "code", None)  # an HTTP status such as 429 or 503 helps; the message could echo what was sent, so it is not logged
             sys.stderr.write("classify failed: %s%s\n" % (type(exc).__name__, " (code %s)" % code if isinstance(code, int) else ""))
             if code in (402, 429):  # out of credit, or out of quota: say so, because "try again in a moment" is not the cure for the first
@@ -916,6 +959,11 @@ class Handler(BaseHTTPRequestHandler):
         out = build_response(reviews, results, model, source)
         if quota:
             out["quota"] = {"used": used, "max": quota.limit}
+        if free:
+            out["free"] = True  # the page shows the counts and asks for a sign-in before the quotes, suggestions and drafts
+            trial.finished()
+            sys.stdout.write(json.dumps({"severity": "INFO", "message": "bedahreview_free_analysis"}) + "\n")  # a count for the owner: no address, no text
+            sys.stdout.flush()
         self._json(200, out)
 
 
@@ -931,6 +979,8 @@ def make_server(
     supabase_auth: Optional[SupabaseAuth] = None,
     supabase_anon_key: str = "",
     user_daily: int = DEFAULT_USER_DAILY,
+    free_daily: int = DEFAULT_FREE_DAILY,
+    free_per_visitor: int = DEFAULT_FREE_PER_VISITOR,
     event_sink: Optional[EventSink] = None,
     account_admin: Optional[AccountAdmin] = None,
     contact_email: str = "",
@@ -960,6 +1010,7 @@ def make_server(
     handler.public = public
     handler.supabase_auth = supabase_auth
     handler.daily_quota = DailyQuota(user_daily) if user_daily > 0 else None
+    handler.free_trial = FreeTrial(free_daily, free_per_visitor) if supabase_auth and free_daily > 0 and free_per_visitor > 0 else None
     handler.event_sink = event_sink
     handler.account_admin = account_admin
     handler.paid_users = frozenset(paid_users)
@@ -1017,6 +1068,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("BEDAHREVIEW_USER_DAILY must be a whole number (0 turns the daily limit off).", file=sys.stderr)
         return 1
     try:
+        free_daily = int(os.environ.get("BEDAHREVIEW_FREE_DAILY") or DEFAULT_FREE_DAILY)
+        if free_daily < 0:
+            raise ValueError
+    except ValueError:
+        print("BEDAHREVIEW_FREE_DAILY must be a whole number (0 turns the free analysis off).", file=sys.stderr)
+        return 1
+    try:
         paid_per_hour = int(os.environ.get("BEDAHREVIEW_PAID_PER_HOUR") or DEFAULT_PAID_PER_HOUR)
     except ValueError:
         print("BEDAHREVIEW_PAID_PER_HOUR must be a whole number.", file=sys.stderr)
@@ -1052,7 +1110,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Setup problem: %s" % exc, file=sys.stderr)
         return 1
     try:
-        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, user_daily=user_daily, event_sink=event_sink, account_admin=account_admin, contact_email=contact_email, paid_users=paid_users, admin_stats=admin_stats, admin_ids=admin_ids, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
+        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, user_daily=user_daily, free_daily=free_daily, event_sink=event_sink, account_admin=account_admin, contact_email=contact_email, paid_users=paid_users, admin_stats=admin_stats, admin_ids=admin_ids, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (port, exc.strerror), file=sys.stderr)
         return 1
@@ -1060,6 +1118,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     where = "0.0.0.0:%d (public, sign-in on, %d analyses per visitor per hour)" % (port, max_per_hour) if public else "http://%s:%d" % (local, port)
     print("BedahReview is running on %s  (model: %s)  Press Ctrl+C to stop." % (where, resolve_model()), flush=True)
     print("Usage events: %s" % ("also saved to Supabase per account" if event_sink else "log lines only (add SUPABASE_URL and SUPABASE_SERVICE_KEY to save them per account)"), flush=True)
+    print("Free analysis before sign-in (paste only): %s" % ("on, %d a day for everyone together" % free_daily if supabase_auth and free_daily else "off"), flush=True)
     print("Account deletion (\"Hapus akun dan data saya\"): %s" % ("on" if account_admin else "off (needs SUPABASE_SERVICE_KEY)"), flush=True)
     print("Owner dashboard (/admin): %s" % ("on for %d account(s)" % len(admin_ids) if admin_stats else "off (needs SUPABASE_URL, SUPABASE_SERVICE_KEY and BEDAHREVIEW_ADMIN_USER_IDS)"), flush=True)
     print("Product-link box (demo): %s" % ("ON, paid third-party fetch" if fetcher else "off (set FETCHER=apify in .env to turn on)"), flush=True)
