@@ -1,15 +1,46 @@
 # BedahReview: notes for Claude Code
 
-URL box is demo-only and uses a swappable fetcher in `src/bedahreview/fetchers/`. Paste/upload is the default. Platform terms are unverified: never bypass blocks or logins, never store reviewer names, keep the token in .env. The link box routes Tokopedia, Lazada and TikTok Shop links to paid Apify actors (`fetchers/platforms.py`); Shopee Indonesia is blocked, so its links are refused with a message.
+Phone-first PWA that sorts Indonesian marketplace reviews into Fix / Fight / Ignore (plus Keep) with exact-quote proof and Bahasa drafts, and compares a product with competitors. A PM portfolio piece for Shopee / TikTok: the goal is proof of real, unique users. Standard-library Python server (`src/bedahreview/web.py`), one plain-JavaScript page (`static/index.html`), no build step. Gemini is the model; Supabase holds accounts; Google Cloud Run is the planned host (not deployed with the current code yet).
 
 ## Working rules
-- Never put API keys or tokens in code, chat or git. `.env`, `eval/data/`, `eval/results/` and `fetch_cache/` stay untracked.
-- Do not run a paid fetch (Apify) without asking the owner first; the per-run cost cap is `APIFY_MAX_COST_USD`.
-- Run the app from the venv: `source .venv/bin/activate`. Tests: `python -m unittest discover -s tests`.
-- After each build step, stage the files and draft a commit message; the owner commits and pushes.
+- Never put API keys, tokens or the Supabase secret key in code, chat or git. `.env`, `eval/data/`, `eval/results/` and `fetch_cache/` stay untracked. Do not read or print `.env` values; to check it, print key names and set/empty only.
+- Do not run a paid fetch (Apify) without asking the owner first; the per-run cost cap is `APIFY_MAX_COST_USD`. Ask before creating or changing anything in the owner's Supabase, Google Cloud or email-sender accounts, and before any deploy; give click-by-click steps, the owner does the clicking. A one-off tiny Gemini request to diagnose an error is fine.
+- Run from the venv: `source .venv/bin/activate`. Tests: `python -W ignore -m unittest discover -s tests` (about 90 s, ~340 tests, 4 skipped; the browser tests need Google Chrome). No Node, `gh`, `timeout` or Docker on this Mac.
+- After each build step: run the tests, stage the files, scan the staged diff for secrets, draft a commit message. The owner commits and pushes. Commit messages end with the Co-Authored-By line from the session's attribution reminder.
+- The owner is a PM, not a developer: plain short answers, one recommendation with reasons, no jargon. When asked to "discuss first" or "do not code", answer without touching files. Report what could not be checked.
+- Python changes and `.env` changes need an app restart (Ctrl+C, `python -m bedahreview.web`); the page file is read per request, so a refresh is enough for page-only changes.
 
-## Product direction
-Phone-first PWA. Triage = Fix / Fight / Ignore with exact-quote proof and Bahasa drafts. Fight it never promises review removal. Model name and keys in .env. No reviewer names stored. Fix tracking comes after the triage works.
-- The model still returns five buckets (fix, fight, check, ignore, keep); the page shows three tabs: check goes under Tanggapi, keep is the "Pertahankan" strip, star-only reviews are answered in code (Ignore) and never sent to the model. Likely-fake reviews are left out of every count.
-- The model env var stays `BEDAHREVIEW_MODEL`. Never log review text: the Share menu puts it in the URL query, so the request log prints the path only.
+## Product rules
+- The model returns five buckets (fix, fight, check, ignore, keep); the page shows a 2x2 board: Perbaiki, Tanggapi (check goes under it), Abaikan, Pertahankan. Star-only reviews are answered in code (Ignore) and never sent to the model. Likely-fake reviews are left out of every count. Fight it never promises review removal.
+- Never log or store review text or reviewer names. The Share menu puts review text in the URL query, so the request log prints the path only. The model env var stays `BEDAHREVIEW_MODEL`.
 - The service worker caches the app shell only, never `/api/`.
+- Desktop is a fixed 60/40 split (review triage left, competitors right); phone has two sections and a bottom bar. The results open with a "Mulai dari sini" box naming the first task.
+- Server errors carry a `code`; the page says known ones in Bahasa/English (`e_<code>` texts), so add a code and both texts when adding an error.
+
+## Accounts, limits and data (Supabase)
+- Sign-in: Google first, email 6-digit code as backup, optional skippable intro (platform, shop link, category; no "ok to contact" question). The browser talks to Supabase directly; the server only checks the token itself (`auth.py`: ES256 against the project's cached public keys, needs `PyJWT` + `cryptography`, pinned). Only the user id is kept from a token, never the email. `supabase-js` 2.117.3 is vendored at `static/vendor/supabase.js` (hash checked by a test); the CSP allows connecting to the project's Supabase address only.
+- Without `SUPABASE_URL` the app behaves as before (local run open, or shared/per-tester access codes at `/code`). With it, the page is public and every `/api/` call needs a token or an access-code cookie. Open the app at **http://localhost:8000**, not 127.0.0.1 (Google redirects to the address listed in Supabase).
+- "Tetap masuk di HP ini" (default on) keeps the session on the device; off keeps it in the tab. iPhone browsers are told to install first and sign in from the icon.
+- Limits: `BEDAHREVIEW_USER_DAILY` analyses per account per day (default 10, 0 = off, day ends midnight Jakarta, in memory, failed analyses are refunded). Normal accounts never use the paid link box or competitor search; only access-code testers and ids in `BEDAHREVIEW_PAID_USER_IDS` do (those ids are also not daily-limited). Global caps stay: 6 analyses at once, hourly caps, `--max-instances 1` on Cloud Run, because limits live in memory.
+- Tables (`db/schema.sql`, run by the owner in the Supabase SQL editor, safe to repeat): `profiles`, `events`, `fixes`, all with row level security and explicit grants ("automatically expose new tables" is off). Never store review text, reviewer names or IP addresses. Product name/link and the seller's note are stored only in `fixes`, by an explicit owner decision, and the privacy page says so. Events are a fixed list in `events.py` (a test compares it with the SQL).
+- Events: the page queues them and sends batches (`/api/events`, every 10 s and when hidden); the server prints a log line for each and saves rows for signed-in accounts from a background thread (`event_store.py`, needs `SUPABASE_SERVICE_KEY`; failures are dropped with one warning). Supabase being down or paused must never break analysing.
+- Fixes live in the browser first and sync to the account (merge on sign-in, newer copy wins; a browser that held another account's list is never mixed in). Notes cannot repeat review text.
+- "Hapus akun dan data saya" (`account.py`): deletes the rows, then the account, revokes the token at once, clears the browser copy. `/privacy` is a public bilingual page; `BEDAHREVIEW_CONTACT_EMAIL` publishes a contact address (leave empty to publish none).
+- The secret key (`SUPABASE_SERVICE_KEY`) is server-only: never in a page or a reply (a test checks this).
+
+## Link box and platforms
+- Demo-only and swappable (`fetchers/`). Tokopedia, Lazada and TikTok Shop links go to paid Apify actors (`fetchers/platforms.py`); Shopee Indonesia is blocked, so its links are refused with a message. Platform terms are unverified: never bypass blocks or logins. `APIFY_DAILY_BUDGET_USD` caps the day.
+
+## Gemini
+- Default model `gemini-3.5-flash-lite`. The owner's billed project is on prepaid credits and ran out (error 402 "prepayment credits are depleted"); the Google Cloud trial credit does not pay for it. The app now answers "no quota or credit" for 402/429. Fallback plan: a free key from a new AI Studio project, or a small top-up. Real cost per analysis is not measured yet; a backup model (Groq) comes later, with its own eval.
+- Eval baseline about 86-88% bucket accuracy on labels drafted by Claude (optimistic; a fresh hand-labelled set is still needed). See `docs/eval-results*.md`.
+
+## Testing notes
+- Tests use a fake Supabase (generated key, stand-in client in headless Chrome); nothing touches the real project. `test_signin_browser.py` shares one server across tests, so a test that deletes an account must clear the revoke list afterwards.
+- UI checks: headless Chrome screenshots (`--window-size`, `--virtual-time-budget`, `--blink-settings=preferredColorScheme=0|1`); the page's top-level `$` is taken, so injected probe scripts must use another name. A scratchpad stub server with a fake model and fetcher is the way to look at screens without spending money.
+
+## Not verified yet
+Real phone Share-menu and iPhone install/Google sign-in, the Docker build and a Cloud Run deploy with these changes, a real account deletion, real email codes (needs the Supabase templates to contain `{{ .Token }}` and a custom email sender; Supabase's own sender allows 2 emails an hour), the Bahasa drafts with a native speaker, Google's Gemini data terms, platform terms.
+
+## Open work
+Deploy (secrets into Secret Manager, redeploy, set Site URL and redirect URLs in Supabase and Google), email sender for the code option, publish the Google consent screen (Audience) before inviting testers, a security review of the sign-in work, keeping a free Supabase project awake, Gemini cost measurement and Groq backup, Shopee route (browser extension), file/CSV upload, fresh hand-labelled test set.
