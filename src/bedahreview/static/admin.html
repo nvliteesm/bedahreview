@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex, nofollow">
+<title>BedahReview owner</title>
+<link rel="icon" href="icons/icon-192.png">
+<style>
+/* The owner's dashboard. Same colours as the app; phone first (one column, 16px gutters), wider screens get two columns.
+   This page holds no numbers itself: it asks /api/admin/stats with the owner's sign-in, and everyone else gets "not found". */
+:root {
+  --bg: #f6f7f5; --surface: #ffffff; --ink: #17201c; --muted: #5d6963; --line: #dde2de; --grid: #eceeec;
+  --accent: #0f6b5a; --on-accent: #ffffff; --accent-soft: #dff1ec; --bad: #b3261e; --bad-soft: #fde8e6; --warn: #8a5300; --warn-soft: #fff1e0;
+  --font-ui: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --gutter: 16px; --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --grid: #232b28;
+    --accent: #4fc2a8; --on-accent: #0b1411; --accent-soft: #163a33; --bad: #f2b8b5; --bad-soft: #3a1f1d; --warn: #f0a24a; --warn-soft: #33261a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --grid: #232b28;
+  --accent: #4fc2a8; --on-accent: #0b1411; --accent-soft: #163a33; --bad: #f2b8b5; --bad-soft: #3a1f1d; --warn: #f0a24a; --warn-soft: #33261a;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-ui); }
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: 1.15rem; font-weight: 800; }
+h2 { font-size: 1rem; font-weight: 800; }
+.muted { color: var(--muted); }
+.small { font-size: 0.82rem; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+main { max-width: 1080px; margin: 0 auto; padding: max(var(--gutter), env(safe-area-inset-top)) max(var(--gutter), env(safe-area-inset-right)) 48px max(var(--gutter), env(safe-area-inset-left)); }
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.seg button, .btn { font: inherit; font-weight: 700; min-height: 40px; padding: 0 14px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.btn { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.note { margin: 0 0 16px; }
+.state { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-top: 16px; }
+.state.bad { background: var(--bad-soft); border-color: transparent; }
+.state a { color: var(--accent); font-weight: 700; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0 16px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; min-width: 0; }
+.tile .label { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
+.tile .num { font-size: 1.9rem; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.tile .sub { font-size: 0.82rem; color: var(--muted); }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; min-width: 0; }
+.card h2 { margin-bottom: 2px; }
+.card > .muted.small { margin-bottom: 10px; }
+.wide { grid-column: 1 / -1; }
+.chart { position: relative; margin-top: 8px; }
+.chart svg { display: block; width: 100%; height: 150px; overflow: visible; }
+.chart .bar { fill: var(--accent); }
+.chart .bar.on { fill: var(--ink); }
+.chart .axis { fill: var(--muted); font-size: 11px; }
+.chart .gridline { stroke: var(--grid); stroke-width: 1; }
+.chart .hit { fill: transparent; cursor: default; }
+.tip { position: absolute; top: -6px; transform: translate(-50%, -100%); background: var(--ink); color: var(--bg); font-size: 0.8rem; font-weight: 600; padding: 4px 8px;
+  border-radius: 6px; white-space: nowrap; pointer-events: none; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 0.78rem; color: var(--muted); font-weight: 700; white-space: nowrap; }
+td.n, th.n { text-align: right; }
+tr:last-child td { border-bottom: 0; }
+.meter { display: block; height: 6px; border-radius: 3px; background: var(--accent); margin-top: 4px; min-width: 2px; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.empty { color: var(--muted); font-size: 0.88rem; padding: 6px 0; }
+.chip { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.chip.no { background: var(--bad-soft); color: var(--bad); }
+.chip.partly { background: var(--warn-soft); color: var(--warn); }
+.comment { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.comment:last-child { border-bottom: 0; }
+.comment p { margin-top: 4px; overflow-wrap: anywhere; }
+details summary { cursor: pointer; font-weight: 700; color: var(--accent); min-height: 32px; display: flex; align-items: center; }
+details[open] summary { margin-bottom: 8px; }
+#people td { white-space: nowrap; }
+code { font-size: 0.85em; }
+@media (min-width: 720px) {
+  .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>BedahReview · Owner dashboard</h1>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Period">
+        <button type="button" data-days="7" aria-pressed="false">7 days</button>
+        <button type="button" data-days="30" aria-pressed="true">30 days</button>
+        <button type="button" data-days="90" aria-pressed="false">90 days</button>
+      </div>
+      <button type="button" class="btn" id="refresh">Refresh</button>
+    </div>
+  </header>
+  <p class="note muted small" id="note">Loading…</p>
+
+  <div class="state" id="state" hidden></div>
+
+  <div id="board" hidden>
+    <section class="tiles" aria-label="Headline numbers">
+      <div class="tile"><div class="label">Accounts</div><div class="num" id="t-accounts">–</div><div class="sub" id="t-accounts-sub"></div></div>
+      <div class="tile"><div class="label">Active people</div><div class="num" id="t-active">–</div><div class="sub" id="t-active-sub"></div></div>
+      <div class="tile"><div class="label">Came back (2+ days)</div><div class="num" id="t-returned">–</div><div class="sub" id="t-returned-sub"></div></div>
+      <div class="tile"><div class="label">Analyses</div><div class="num" id="t-analyses">–</div><div class="sub" id="t-analyses-sub"></div></div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>People active per day</h2>
+        <p class="muted small">Different accounts that used the app that day</p>
+        <div class="chart" id="c-people"></div>
+      </section>
+      <section class="card">
+        <h2>Analyses per day</h2>
+        <p class="muted small">Finished analyses (paste or link)</p>
+        <div class="chart" id="c-analyses"></div>
+      </section>
+      <section class="card wide">
+        <details>
+          <summary>Show the days as a table</summary>
+          <div class="scroll"><table id="daily"></table></div>
+        </details>
+      </section>
+
+      <section class="card">
+        <h2>From opening to a fix</h2>
+        <p class="muted small">Accounts that reached each step in this period</p>
+        <table id="funnel"></table>
+      </section>
+      <section class="card">
+        <h2>Health</h2>
+        <p class="muted small" id="health-sub"></p>
+        <div class="pair">
+          <div><h3 class="small">Failed analyses</h3><table id="failed"></table></div>
+          <div><h3 class="small">Limits hit</h3><table id="limits"></table></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>What they use</h2>
+        <p class="muted small" id="use-sub"></p>
+        <div class="pair">
+          <div><h3 class="small">Tabs opened</h3><table id="tabs"></table></div>
+          <div><h3 class="small">Drafts copied</h3><table id="drafts"></table></div>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Who they are</h2>
+        <p class="muted small" id="who-sub"></p>
+        <div class="pair">
+          <div><h3 class="small">Platform</h3><table id="platform"></table></div>
+          <div><h3 class="small">Category</h3><table id="category"></table></div>
+        </div>
+      </section>
+
+      <section class="card wide">
+        <h2>People</h2>
+        <p class="muted small" id="people-sub"></p>
+        <div class="scroll"><table id="people"></table></div>
+      </section>
+
+      <section class="card wide">
+        <h2>Was it useful?</h2>
+        <p class="muted small" id="fb-sub"></p>
+        <div id="comments"></div>
+      </section>
+    </div>
+  </div>
+</main>
+<script>
+"use strict";
+const byId = (id) => document.getElementById(id);
+const CODE_NAMES = {
+  model_quota: "Gemini out of credit or quota", model_down: "Could not reach Gemini", model_bad: "Model reply could not be used",
+  fetch_failed: "Link fetch failed", fetch_slow: "Link fetch too slow", no_reviews: "Link had no reviews", suggest_failed: "Competitor search failed",
+  compare_failed: "Competitor compare failed", server: "Server error", other: "Other",
+};
+const LIMIT_NAMES = { daily: "Daily limit per account", hour: "Hourly limit", budget: "Paid-fetch budget for the day", busy: "Server busy (too many at once)" };
+const STEP_NAMES = { opened: "Opened the app", analysed: "Ran an analysis", tab_viewed: "Looked at a result tab", draft_copied: "Copied a draft", fix_marked: "Marked a fix" };
+const TAB_NAMES = { fix: "Perbaiki (fix)", fight: "Tanggapi (fight)", ignore: "Abaikan (ignore)", keep: "Pertahankan (keep)", rivals: "Competitors" };
+const PLATFORM_NAMES = { tokopedia: "Tokopedia", lazada: "Lazada", tiktokshop: "TikTok Shop", shopee: "Shopee", other: "Other" };
+let sb = null, days = 30, busy = false;
+
+function el(tag, attrs, ...kids) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) { if (k === "class") node.className = v; else node.setAttribute(k, v); }
+  for (const kid of kids) if (kid !== null && kid !== undefined) node.append(kid instanceof Node ? kid : String(kid));
+  return node;
+}
+const svgEl = (tag, attrs) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
+const fmtDay = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+const pct = (a, b) => (b ? Math.round((100 * a) / b) + "%" : "–");
+const pl = (n, one, many) => n + " " + (n === 1 ? one : many || one + "s");
+
+function showState(text, bad, link) {
+  const box = byId("state"); box.replaceChildren(el("p", {}, text));
+  if (link) box.append(el("p", { style: "margin-top:10px" }, el("a", { href: link[0] }, link[1])));
+  box.classList.toggle("bad", !!bad); box.hidden = false; byId("board").hidden = true;
+}
+
+/* Where the app keeps the sign-in: this device ("Tetap masuk", the default) or this tab. Same rule as the app, so the owner signs in there once. */
+const keepFlag = () => { try { return localStorage.getItem("bedahreview-keep") !== "0"; } catch (e) { return true; } };
+function storeFor(keep) { try { const st = keep ? localStorage : sessionStorage; st.getItem("probe"); return st; } catch (e) { return null; } }
+const memStore = {};
+const authStorage = {
+  getItem(k) { const st = storeFor(keepFlag()); return st ? st.getItem(k) : (k in memStore ? memStore[k] : null); },
+  setItem(k, v) { const st = storeFor(keepFlag()); if (st) { try { st.setItem(k, v); } catch (e) { memStore[k] = v; } } else memStore[k] = v; },
+  removeItem(k) { delete memStore[k]; for (const keep of [true, false]) { try { const st = storeFor(keep); if (st) st.removeItem(k); } catch (e) { /* ignore */ } } },
+};
+
+/* One bar per day, anchored to the baseline with a rounded top; hover or focus a day to see its number. A single series, so no legend. */
+function barChart(box, rows, key, unit) {
+  const W = Math.max(240, box.clientWidth || 600), H = 150, top = 14, bottom = 22, left = 26, gap = rows.length > 45 ? 1 : 2;  // drawn at the box's real width, so text is never stretched
+  const max = Math.max(1, ...rows.map((r) => r[key])), n = rows.length, step = (W - left) / n, bw = Math.max(1, step - gap);
+  const y = (v) => top + (H - top - bottom) * (1 - v / max);
+  const svg = svgEl("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": unit + " per day, highest " + max });
+  for (const v of [0, max]) {
+    svg.append(svgEl("line", { class: "gridline", x1: left, x2: W, y1: y(v), y2: y(v) }));
+    const t = svgEl("text", { class: "axis", x: left - 6, y: y(v) + 4, "text-anchor": "end" }); t.textContent = v; svg.append(t);
+  }
+  const tip = el("div", { class: "tip", hidden: "" });
+  rows.forEach((r, i) => {
+    const x = left + i * step + gap / 2, v = r[key];
+    let bar = null;
+    if (v > 0) {
+      const h = y(0) - y(v), rad = Math.min(4, bw / 2, h);
+      bar = svgEl("path", { class: "bar", d: "M" + x + "," + y(0) + "v" + -(h - rad) + "q0," + -rad + " " + rad + "," + -rad + "h" + (bw - 2 * rad) + "q" + rad + ",0 " + rad + "," + rad + "v" + (h - rad) + "z" });
+      svg.append(bar);
+    }
+    const hit = svgEl("rect", { class: "hit", x: left + i * step, y: 0, width: step, height: H, tabindex: "0", "aria-label": fmtDay(r.day) + ": " + v + " " + unit });
+    const on = () => { tip.textContent = fmtDay(r.day) + " · " + v + " " + unit; tip.style.left = ((x + bw / 2) / W) * 100 + "%"; tip.hidden = false; if (bar) bar.classList.add("on"); };
+    const off = () => { tip.hidden = true; if (bar) bar.classList.remove("on"); };
+    hit.addEventListener("mouseenter", on); hit.addEventListener("mouseleave", off); hit.addEventListener("focus", on); hit.addEventListener("blur", off);
+    hit.addEventListener("touchstart", on, { passive: true });
+    svg.append(hit);
+  });
+  const labelAt = (i, anchor) => { const t = svgEl("text", { class: "axis", x: left + i * step + step / 2, y: H - 4, "text-anchor": anchor }); t.textContent = fmtDay(rows[i].day); svg.append(t); };
+  labelAt(0, "start"); if (n > 2) labelAt(Math.floor((n - 1) / 2), "middle"); labelAt(n - 1, "end");
+  box.replaceChildren(svg, tip);
+}
+
+/* A two-column count table with a small bar under each label, biggest first. */
+function countTable(table, counts, names, total) {
+  const entries = Object.entries(counts || {});
+  if (!entries.length) { table.replaceChildren(el("tr", {}, el("td", { class: "empty" }, "Nothing yet"))); return; }
+  const max = Math.max(...entries.map((e) => e[1])), sum = total || entries.reduce((a, e) => a + e[1], 0);
+  table.replaceChildren(...entries.map(([k, v]) => el("tr", {},
+    el("td", {}, (names && names[k]) || k, el("span", { class: "meter", style: "width:" + Math.max(2, (100 * v) / max) + "%" })),
+    el("td", { class: "n" }, v, el("div", { class: "muted small" }, pct(v, sum))))));
+}
+
+let shown = null;
+function drawCharts() {
+  if (!shown) return;
+  barChart(byId("c-people"), shown.daily, "people", "people");
+  barChart(byId("c-analyses"), shown.daily, "analyses", "analyses");
+}
+let resizeTimer = 0;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawCharts, 150); });
+
+function render(s) {
+  shown = s;
+  const a = s.accounts, act = s.active, an = s.analyses;
+  byId("t-accounts").textContent = a.total;
+  byId("t-accounts-sub").textContent = "+" + a.new + " new in this period · " + Object.entries(a.by_method).map(([k, v]) => v + " " + k).join(", ");
+  byId("t-active").textContent = act.window;
+  byId("t-active-sub").textContent = act.week + " in the last 7 days · " + act.today + " today";
+  byId("t-returned").textContent = act.returned;
+  byId("t-returned-sub").textContent = pct(act.returned, act.window) + " of active · " + act.analysed_on_two_days + " analysed on 2+ days";
+  byId("t-analyses").textContent = an.total;
+  byId("t-analyses-sub").textContent = (an.per_person ? an.per_person + " per person · " : "") + (an.avg_reviews ? an.avg_reviews + " reviews each" : "no analyses yet");
+
+  byId("daily").replaceChildren(
+    el("tr", {}, el("th", {}, "Day"), el("th", { class: "n" }, "Sign-ups"), el("th", { class: "n" }, "People"), el("th", { class: "n" }, "Analyses"), el("th", { class: "n" }, "Failed")),
+    ...s.daily.slice().reverse().map((d) => el("tr", {}, el("td", {}, fmtDay(d.day)), el("td", { class: "n" }, d.signups), el("td", { class: "n" }, d.people), el("td", { class: "n" }, d.analyses), el("td", { class: "n" }, d.failed))));
+
+  const opened = (s.funnel[0] || {}).people || 0;
+  byId("funnel").replaceChildren(el("tr", {}, el("th", {}, "Step"), el("th", { class: "n" }, "People"), el("th", { class: "n" }, "Of opened")),
+    ...s.funnel.map((f) => el("tr", {}, el("td", {}, STEP_NAMES[f.step] || f.step, el("span", { class: "meter", style: "width:" + (opened ? Math.max(2, (100 * f.people) / opened) : 2) + "%" })),
+      el("td", { class: "n" }, f.people), el("td", { class: "n" }, pct(f.people, opened)))));
+
+  const h = s.health;
+  byId("health-sub").textContent = h.failed + " failed · " + h.limits + " refused by a limit (" + pl(h.people_hit_limit, "person", "people") + ") · " + pct(h.failed, h.failed + an.total) + " of tries failed";
+  countTable(byId("failed"), h.failed_by_code, CODE_NAMES);
+  countTable(byId("limits"), h.limits_by_kind, LIMIT_NAMES);
+
+  const f = s.features;
+  byId("use-sub").textContent = pl(f.fix_marked, "fix", "fixes") + " marked · " + pl(f.rivals_started, "competitor comparison") + " started · " + pl(s.fixes.total, "fix", "fixes") + " saved by " + pl(s.fixes.accounts, "account") + " (" + s.fixes.rechecked + " re-checked)";
+  countTable(byId("tabs"), f.tabs, TAB_NAMES);
+  countTable(byId("drafts"), f.drafts);
+
+  const p = s.profiles;
+  byId("who-sub").textContent = p.intro_done + " of " + a.total + " accounts filled in the intro · language: " + (Object.entries(p.lang).map(([k, v]) => v + " " + k).join(", ") || "–");
+  countTable(byId("platform"), p.platform, PLATFORM_NAMES);
+  countTable(byId("category"), p.category);
+
+  byId("people-sub").textContent = "Short account id (the start of the id in Supabase, Authentication > Users). No emails. " +
+    (s.people_total > s.people.length ? "Showing the " + s.people.length + " most active of " + s.people_total + "." : s.people_total + " accounts with any activity.");
+  const head = ["Account", "Joined", "Active days", "Analyses", "Drafts", "Fixes", "Failed", "Last seen", "Platform"];
+  byId("people").replaceChildren(el("tr", {}, ...head.map((t, i) => el("th", { class: i >= 2 && i <= 6 ? "n" : "" }, t))),
+    ...(s.people.length ? s.people.map((u) => el("tr", {}, el("td", {}, el("code", {}, u.id)), el("td", {}, u.joined ? fmtDay(u.joined) : "–"), el("td", { class: "n" }, u.days),
+      el("td", { class: "n" }, u.analyses), el("td", { class: "n" }, u.drafts), el("td", { class: "n" }, u.fixes), el("td", { class: "n" }, u.failed),
+      el("td", {}, u.last ? fmtDay(u.last) : "–"), el("td", {}, PLATFORM_NAMES[u.platform] || "–"))) : [el("tr", {}, el("td", { class: "empty", colspan: "9" }, "Nobody yet"))]));
+
+  const ans = s.feedback.answers, said = (ans.yes || 0) + (ans.partly || 0) + (ans.no || 0);
+  byId("fb-sub").textContent = said ? (ans.yes || 0) + " yes · " + (ans.partly || 0) + " partly · " + (ans.no || 0) + " no (" + pct(ans.yes || 0, said) + " yes)" : "No answers yet";
+  byId("comments").replaceChildren(...(s.feedback.comments.length ? s.feedback.comments.map((c) => el("div", { class: "comment" },
+    el("span", { class: "chip " + (c.answer || "") }, c.answer || "–"), " ", el("span", { class: "muted small" }, fmtDay(c.day)), el("p", {}, c.comment))) : [el("p", { class: "empty" }, "No comments yet")]));
+
+  byId("note").textContent = fmtDay(s.from) + " – " + fmtDay(s.to) + " (Jakarta days) · updated " + new Date(s.generated).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) +
+    " · your own account" + (s.excluded === 1 ? " is" : "s are") + " left out" + (s.cut ? " · too many events: the oldest part of this period is missing" : "");
+  byId("state").hidden = true; byId("board").hidden = false;
+  drawCharts();  // after the board is visible, so the boxes have a width
+}
+
+async function load() {
+  if (busy) return;
+  busy = true; byId("refresh").disabled = true;
+  try {
+    const { data } = await sb.auth.getSession();
+    const token = data.session ? data.session.access_token : "";
+    if (!token) { byId("note").textContent = ""; showState("Sign in on the app first (with your owner account), then come back to this page.", false, ["/", "Open the app"]); return; }
+    const res = await fetch("/api/admin/stats?days=" + days, { headers: { Authorization: "Bearer " + token } });
+    if (res.status === 404) { byId("note").textContent = ""; showState("This account is not an owner account. Add its id to BEDAHREVIEW_ADMIN_USER_IDS and restart the server.", true); return; }
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) { byId("note").textContent = ""; showState(body.code === "stats_failed" ? "Supabase could not be read (it may be paused). Try again in a moment." : "Something went wrong (" + res.status + "). Try again.", true); return; }
+    render(body);
+  } catch (e) {
+    byId("note").textContent = ""; showState("Could not reach the server. Check your connection and try again.", true);
+  } finally { busy = false; byId("refresh").disabled = false; }
+}
+
+document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+  days = Number(b.dataset.days);
+  document.querySelectorAll(".seg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  load();
+}));
+byId("refresh").addEventListener("click", load);
+
+(async function start() {
+  let cfg = {};
+  try { cfg = await (await fetch("/api/config")).json(); } catch (e) { /* handled below */ }
+  if (!cfg.supabase) { byId("note").textContent = ""; showState("Sign-in is not set up on this server.", true); return; }
+  if (!window.supabase) { await new Promise((ok) => { const s = document.createElement("script"); s.src = "vendor/supabase.js"; s.onload = ok; s.onerror = ok; document.head.append(s); }); }
+  if (!window.supabase) { byId("note").textContent = ""; showState("The sign-in library did not load. Refresh the page.", true); return; }
+  sb = window.supabase.createClient(cfg.supabase.url, cfg.supabase.anon_key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: "pkce", storage: authStorage } });
+  load();
+})();
+</script>
+</body>
+</html>

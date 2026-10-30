@@ -37,12 +37,13 @@ from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs
 
 from .account import UUID_RE, AccountAdmin, AccountError
+from .admin_stats import DEFAULT_DAYS, AdminStats, StatsError
 from .auth import SupabaseAuth
 from .classifier import ClassificationError, classify, resolve_model
 from .competitors import MAX_COMPETITORS, compare_competitors, suggest_competitors
 from .env import has_api_key, load_dotenv
 from .event_store import EventSink
-from .events import clean_batch, clean_event, db_row, log_line
+from .events import clean_batch, clean_event, db_row, log_line, server_event
 from .fetchers import MAX_LIMIT, BudgetError, Fetcher, FetcherConfigError, FetchError, get_fetcher, product_title_from_url, to_review_dicts
 from .fetchers.base import check_mode, check_shopee_product_url, clamp_limit
 from .fetchers.search import SEARCH_PLATFORMS
@@ -70,6 +71,7 @@ READ_TIMEOUT_SECS = 20  # a visitor who stops sending (or sends one byte at a ti
 MAX_CONNECTIONS = 64  # open connections at once; more get an immediate 503
 DEFAULT_MAX_CONCURRENT = 6  # analyses (model or paid-fetch work) running at once; more get a 503 and a Retry-After
 HEAVY_PATHS = ("/api/classify", "/api/competitors/suggest", "/api/competitors/compare")
+STEP_OF = {"/api/classify": "analyse", "/api/competitors/suggest": "suggest", "/api/competitors/compare": "compare"}  # for the failure and limit events
 MAX_DRAIN_BYTES = 2_000_000  # an oversized upload is read and thrown away up to this much, so the error reply is not lost to a connection reset
 DRAIN_SECS = 5
 _BUSY_BODY = b'{"error": "Server is busy."}'
@@ -179,12 +181,13 @@ class DailyQuota:
                 self._counts[user] -= 1
 
 
-def parse_user_ids(text: str) -> frozenset:
-    """BEDAHREVIEW_PAID_USER_IDS: Supabase user ids (as shown under Authentication > Users) of accounts you trust. They may use the paid link box and are not counted by the daily limit."""
+def parse_user_ids(text: str, setting: str = "BEDAHREVIEW_PAID_USER_IDS") -> frozenset:
+    """Supabase user ids (as shown under Authentication > Users), separated by commas. BEDAHREVIEW_PAID_USER_IDS: accounts you trust; they may use
+    the paid link box and are not counted by the daily limit. BEDAHREVIEW_ADMIN_USER_IDS: the accounts that may open /admin."""
     ids = [part.strip().lower() for part in (text or "").split(",") if part.strip()]
     for one in ids:
         if not UUID_RE.fullmatch(one):
-            raise ValueError("BEDAHREVIEW_PAID_USER_IDS must be user ids like 1a029fda-83cc-447d-95ca-bb14ec302d4d, separated by commas.")
+            raise ValueError("%s must be user ids like 1a029fda-83cc-447d-95ca-bb14ec302d4d, separated by commas." % setting)
     return frozenset(ids)
 
 
@@ -374,6 +377,8 @@ class Handler(BaseHTTPRequestHandler):
     supabase_auth: Optional[SupabaseAuth] = None  # checks Supabase sign-in tokens on this server; None means only the access-code cookie works
     paid_users: frozenset = frozenset()  # trusted accounts: may use the paid link box, and are not counted by the daily limit
     account_admin: Optional[AccountAdmin] = None  # deletes an account when the person asks; None when there is no secret key
+    admin_stats: Optional[AdminStats] = None  # the owner's dashboard numbers; None (and /admin is "not found") without the secret key and admin ids
+    admin_ids: frozenset = frozenset()  # the accounts that may open /admin
     contact_email: str = ""  # shown on the privacy page; empty until the owner chooses to publish one
     event_sink: Optional[EventSink] = None  # saves events to Supabase in the background; None means the log line is all there is
     daily_quota: Optional[DailyQuota] = None  # per signed-in account; access-code testers and local runs are not counted here
@@ -490,6 +495,43 @@ class Handler(BaseHTTPRequestHandler):
 
     def _json(self, status: int, payload: Dict[str, Any], extra: Optional[List[Any]] = None) -> None:
         self._send(status, json.dumps(payload, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8", extra)
+        if self.command == "POST" and self.path in STEP_OF and status >= 429:
+            self._note_refusal(status, payload)
+
+    def _note_refusal(self, status: int, payload: Dict[str, Any]) -> None:
+        """An analysis refused by a limit, or one that failed, becomes a server event for the owner's dashboard: only the step and the code or
+        limit name, never the message. Not when the browser asks not to be tracked, like the page's own events. Never breaks the reply."""
+        try:
+            if self.headers.get("DNT") == "1" or self.headers.get("Sec-GPC") == "1":
+                return
+            limit = payload.get("limit") or ("hour" if payload.get("code") == "too_many" else None)
+            if limit and status in (429, 503):
+                self._record([server_event("limit_hit", STEP_OF[self.path], limit)])
+            elif status >= 500:
+                self._record([server_event("analysis_failed", STEP_OF[self.path], payload.get("code") or "other")])
+        except Exception as exc:
+            sys.stderr.write("event not noted: %s\n" % type(exc).__name__)
+
+    def _admin(self, path: str) -> None:
+        """The owner's dashboard. The page itself holds no numbers; the numbers need a signed-in account listed in BEDAHREVIEW_ADMIN_USER_IDS.
+        Anyone else, signed in or not, gets the same "not found" as a page that does not exist."""
+        stats = type(self).admin_stats
+        if stats is None:
+            return self._json(404, {"error": "Not found"})
+        if path == "/admin":
+            return self._send(200, (STATIC / "admin.html").read_bytes(), "text/html; charset=utf-8")
+        uid = self._bearer_user()
+        if not uid or uid not in type(self).admin_ids:
+            return self._json(404, {"error": "Not found"})
+        try:
+            days = int((parse_qs(self.path.partition("?")[2]).get("days") or [DEFAULT_DAYS])[0])
+        except ValueError:
+            days = DEFAULT_DAYS
+        try:
+            self._json(200, stats.summary(days))
+        except StatsError as exc:
+            sys.stderr.write("admin stats failed: %s\n" % exc)
+            self._json(502, {"error": "Supabase could not be read. Try again in a moment.", "code": "stats_failed"})
 
     def _client(self) -> str:
         forwarded = (self.headers.get("X-Forwarded-For") or "").split(",")[-1].strip()  # the proxy appends the real address last
@@ -772,6 +814,8 @@ class Handler(BaseHTTPRequestHandler):
         open_site = type(self).supabase_auth is not None  # Supabase on: the page is public and the sign-in screens are inside it
         if open_site and path == "/code" and self.access_codes:
             return self._login_page(200, "/")  # interviewers and testers with an access code
+        if path in ("/admin", "/api/admin/stats"):
+            return self._admin(path)
         if not self._authed() and path not in PUBLIC_ASSETS and not (open_site and (path in PAGES or path in ASSETS or path in OPEN_API)):
             if path.startswith("/api/"):
                 return self._json(401, {"error": "Please sign in again.", "login": True})
@@ -891,6 +935,8 @@ def make_server(
     account_admin: Optional[AccountAdmin] = None,
     contact_email: str = "",
     paid_users: frozenset = frozenset(),
+    admin_stats: Optional[AdminStats] = None,
+    admin_ids: frozenset = frozenset(),
     max_per_hour: int = DEFAULT_MAX_PER_HOUR,
     paid_per_hour: int = DEFAULT_PAID_PER_HOUR,
     max_concurrent: int = DEFAULT_MAX_CONCURRENT,
@@ -917,6 +963,8 @@ def make_server(
     handler.event_sink = event_sink
     handler.account_admin = account_admin
     handler.paid_users = frozenset(paid_users)
+    handler.admin_ids = frozenset(admin_ids)
+    handler.admin_stats = admin_stats if supabase_auth and admin_ids else None  # the numbers need a signed-in admin account to ask for them
     handler.contact_email = contact_email
     handler.supabase_public = {"url": supabase_auth.project_url, "anon_key": supabase_anon_key} if supabase_auth and supabase_anon_key else None
     if codes:
@@ -986,9 +1034,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     account_admin = AccountAdmin(supabase_url, service_key) if supabase_url and service_key else None
     try:
         paid_users = parse_user_ids(os.environ.get("BEDAHREVIEW_PAID_USER_IDS", ""))
+        admin_ids = parse_user_ids(os.environ.get("BEDAHREVIEW_ADMIN_USER_IDS", ""), "BEDAHREVIEW_ADMIN_USER_IDS")
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 1
+    admin_stats = AdminStats(supabase_url, service_key, exclude=admin_ids) if supabase_url and service_key and admin_ids else None
     contact_email = (os.environ.get("BEDAHREVIEW_CONTACT_EMAIL") or "").strip()
     if contact_email and not re.match(r"^[^\s@<>\"']+@[^\s@<>\"']+\.[^\s@<>\"']+$", contact_email):
         print("BEDAHREVIEW_CONTACT_EMAIL must look like name@example.com.", file=sys.stderr)
@@ -1002,7 +1052,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Setup problem: %s" % exc, file=sys.stderr)
         return 1
     try:
-        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, user_daily=user_daily, event_sink=event_sink, account_admin=account_admin, contact_email=contact_email, paid_users=paid_users, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
+        server = make_server(port, fetcher=fetcher, access_code=access_code, access_codes=access_codes, supabase_auth=supabase_auth, supabase_anon_key=supabase_key, user_daily=user_daily, event_sink=event_sink, account_admin=account_admin, contact_email=contact_email, paid_users=paid_users, admin_stats=admin_stats, admin_ids=admin_ids, public=public, max_per_hour=max_per_hour, paid_per_hour=paid_per_hour, max_concurrent=max_concurrent)
     except OSError as exc:
         print("Could not start on port %d (%s). Try --port 8001." % (port, exc.strerror), file=sys.stderr)
         return 1
@@ -1011,6 +1061,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     print("BedahReview is running on %s  (model: %s)  Press Ctrl+C to stop." % (where, resolve_model()), flush=True)
     print("Usage events: %s" % ("also saved to Supabase per account" if event_sink else "log lines only (add SUPABASE_URL and SUPABASE_SERVICE_KEY to save them per account)"), flush=True)
     print("Account deletion (\"Hapus akun dan data saya\"): %s" % ("on" if account_admin else "off (needs SUPABASE_SERVICE_KEY)"), flush=True)
+    print("Owner dashboard (/admin): %s" % ("on for %d account(s)" % len(admin_ids) if admin_stats else "off (needs SUPABASE_URL, SUPABASE_SERVICE_KEY and BEDAHREVIEW_ADMIN_USER_IDS)"), flush=True)
     print("Product-link box (demo): %s" % ("ON, paid third-party fetch" if fetcher else "off (set FETCHER=apify in .env to turn on)"), flush=True)
     try:
         server.serve_forever()

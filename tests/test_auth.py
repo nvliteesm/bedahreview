@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 
 from bedahreview import web
 from bedahreview.auth import KEYS_TTL_SECS, REFETCH_COOLDOWN_SECS, SupabaseAuth
-from bedahreview.events import EVENTS
+from bedahreview.events import EVENTS, SERVER_EVENTS
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = "https://abcdwxyz.supabase.co"
@@ -223,7 +223,11 @@ class SchemaTests(unittest.TestCase):
 
     def test_the_event_names_match_events_py(self):
         listed = re.search(r"event\s+text not null check \(event in \(([^)]*)\)", self.SQL).group(1)
-        self.assertEqual(set(re.findall(r"'([a-z_]+)'", listed)), set(EVENTS))
+        self.assertEqual(set(re.findall(r"'([a-z_]+)'", listed)), set(EVENTS) | set(SERVER_EVENTS))
+        # a project made with an older list gets the new one too: the constraint is replaced with the same names
+        replaced = re.search(r"add constraint events_event_check check \(event in \(([^)]*)\)", self.SQL).group(1)
+        self.assertEqual(set(re.findall(r"'([a-z_]+)'", replaced)), set(EVENTS) | set(SERVER_EVENTS))
+        self.assertIn("drop constraint if exists events_event_check", self.SQL)
 
     def test_every_table_has_row_level_security_and_no_anon_access(self):
         tables = re.findall(r"create table if not exists public\.(\w+)", self.SQL)

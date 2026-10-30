@@ -2,7 +2,7 @@
 
 One JSON line per event goes to stdout, where Cloud Run logging picks it up. There is no IP address, no user agent, no
 product name and no review text. The only free text is the optional comment a tester types into the feedback box,
-and the page tells them so. See docs/analytics.md.
+and the page tells them so. Two more events (SERVER_EVENTS) are written by the server itself. See docs/analytics.md.
 """
 from __future__ import annotations
 
@@ -26,6 +26,23 @@ EVENTS: Dict[str, Dict[str, tuple]] = {
     "rivals_started": {},
     "feedback": {"answer": ("enum", ("yes", "partly", "no")), "comment": ("text", MAX_COMMENT_CHARS, True)},
 }
+
+# Written by the server itself when an analysis fails or is refused by a limit, so the owner's dashboard can show what goes wrong.
+# The page can never send these. `code` is one of the server's own error codes (a short slug), never a message.
+STEPS = ("analyse", "suggest", "compare")
+LIMITS = ("daily", "hour", "budget", "busy")
+CODE_RE = re.compile(r"^[a-z_]{1,30}$")
+SERVER_EVENTS: Dict[str, tuple] = {"analysis_failed": ("step", "code"), "limit_hit": ("step", "limit")}  # event -> its fields
+SERVER_DEVICE = "server"  # stands where a browser's device id would be in the log line
+
+
+def server_event(name: str, step: str, value: str) -> Dict[str, Any]:
+    """One of SERVER_EVENTS, ready for log_line and db_row. A value outside the fixed choices becomes "other"."""
+    if name == "analysis_failed":
+        return {"event": name, "device": SERVER_DEVICE, "step": step if step in STEPS else "analyse", "code": value if CODE_RE.match(value or "") else "other"}
+    if name == "limit_hit":
+        return {"event": name, "device": SERVER_DEVICE, "step": step if step in STEPS else "analyse", "limit": value if value in LIMITS else "hour"}
+    raise ValueError("unknown server event")
 
 
 def _clean_value(rule: tuple, value: Any) -> Any:

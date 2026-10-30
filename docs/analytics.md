@@ -15,7 +15,7 @@ With Supabase sign-in on, each event is saved against the account (a random user
 
 Events also carry a random device id made in the browser (`localStorage`, `bedahreview-device`). It only appears in the log line below, as a backup for people who signed in with an access code or a local run. It is not saved in Supabase.
 
-If the browser sends "Do Not Track", the page sends no events at all, except a feedback answer the tester presses Send on themselves.
+If the browser sends "Do Not Track" (or Global Privacy Control), the page sends no events at all, except a feedback answer the tester presses Send on themselves, and the server writes no failure or limit event for that request.
 
 ## The fixes list (a separate table, on purpose)
 
@@ -40,6 +40,10 @@ Every event carries `event` and a server timestamp `ts`, plus the fields below (
 | `fix_marked` | "Mark as fixed" is saved | none. The fix itself goes to the fixes table, not into the event. |
 | `rivals_started` | a competitor search starts | none |
 | `feedback` | the tester sends "Was this useful?" | `answer` (`yes`, `partly` or `no`), and `comment` only if they typed one (300 characters at most) |
+| `analysis_failed` | **written by the server**: an analysis, competitor search or compare failed (5xx) | `step` (`analyse`, `suggest` or `compare`), `code` (the server's own error code, such as `model_quota`; never the message) |
+| `limit_hit` | **written by the server**: one of those was refused by a limit | `step`, `limit` (`daily`, `hour`, `budget` or `busy`) |
+
+The last two are `SERVER_EVENTS` in `events.py`: the page can never send them, and their log line has `"device":"server"`. A person's own slip (nothing pasted, a bad link) is not an event; only the app failing or turning someone away is.
 
 ### The one free-text field
 
@@ -60,6 +64,14 @@ Every event carries `event` and a server timestamp `ts`, plus the fields below (
 Limits: 600 requests per visitor per hour in public mode.
 
 ## Reading the numbers
+
+**The owner dashboard** (`/admin`): set `BEDAHREVIEW_ADMIN_USER_IDS` to your own account id (Supabase, Authentication > Users), with `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` set, and restart. Sign in on the app with that account, then open `/admin`. Anyone else, signed in or not, gets "not found". It shows, for the last 7, 30 or 90 days (Jakarta days): accounts and sign-ups, people active per day, who came back on a second day, analyses per day, the funnel from opening to marking a fix, tabs and drafts used, platform and category from the intro, failures and limits, a per-account table, and the "Was this useful?" answers with comments.
+
+- The server reads Supabase with the secret key (`src/bedahreview/admin_stats.py`) and sends the page totals only. From the sign-in accounts it keeps the id, sign-up date, last sign-in and method (Google or email); the email in Supabase's reply is dropped at once. It does not read the shop link, the fixed product or the note. Accounts appear as the first 8 characters of their id.
+- Your own admin accounts are left out of every number, so your testing does not count as a user.
+- Access-code testers have no account, so they are not on the dashboard (their events are log lines only).
+- Numbers are kept for a minute; "Refresh" after that reads Supabase again. If Supabase is paused the page says so.
+
 
 **From Supabase** (the source for unique people): open the SQL editor and run the queries in `db/queries.sql`: accounts per week, analyses per account, and the funnel from opened to analysed to copied a draft.
 
