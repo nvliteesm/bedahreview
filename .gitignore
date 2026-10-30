@@ -17,3 +17,6 @@ eval/results/
 
 # Cached product-link fetches (review text from third-party runs)
 fetch_cache/
+
+# Owner's private working notes (checklists, interview scripts): never committed
+internal/
