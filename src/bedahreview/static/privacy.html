@@ -58,14 +58,14 @@ a { color: var(--accent); font-weight: 600; }
 
   <h2>Yang tidak kami simpan</h2>
   <ul>
-    <li>Teks ulasan yang kamu tempel. Teks itu dikirim untuk dianalisis, lalu tidak kami simpan.</li>
+    <li>Teks ulasan yang kamu tempel. Teks itu dikirim untuk dianalisis, lalu tidak kami simpan. Hasil analisis hanya ditahan di memori server paling lama 10 menit setelah selesai, supaya HP-mu bisa mengambilnya kalau koneksi putus. Setelah itu terhapus, dan tidak pernah masuk ke basis data.</li>
     <li>Nama pembeli.</li>
     <li>Alamat IP dan jenis perangkat di catatan kami sendiri.</li>
   </ul>
 
   <h2>Ke mana datamu pergi</h2>
   <ul>
-    <li><b>Gemini API (Google).</b> Teks ulasan yang kamu tempel dikirim ke sana untuk dianalisis. Cara Google memperlakukan data itu mengikuti ketentuan Gemini API milik Google.</li>
+    <li><b>Layanan AI pihak ketiga (berbayar).</b> Teks ulasan yang kamu tempel dikirim ke sana untuk dianalisis. Kami memakai layanan berbayar, dan menurut ketentuan penyedianya untuk layanan berbayar, teks itu tidak dipakai untuk melatih atau meningkatkan produk mereka. Penyedia dapat menyimpannya sebentar, hanya untuk mendeteksi penyalahgunaan dan memenuhi kewajiban hukum.</li>
     <li><b>Supabase.</b> Menyimpan akun, profil, catatan pemakaian, dan daftar perbaikan.</li>
     <li><b>Google Cloud Run.</b> Tempat aplikasi berjalan. Google Cloud menyimpan catatan permintaan standarnya sendiri, yang bisa memuat alamat IP, di luar kendali kami.</li>
     <li><b>Apify.</b> Saat kamu menempel tautan produk, tautan itu dikirim ke layanan ini untuk mengambil ulasan yang tampil publik di halaman produk. Kalau kamu menempel teks ulasan, Apify tidak dipakai.</li>
@@ -109,14 +109,14 @@ a { color: var(--accent); font-weight: 600; }
 
   <h2>What we do not keep</h2>
   <ul>
-    <li>The review text you paste. It is sent to be analysed, and we do not store it.</li>
+    <li>The review text you paste. It is sent to be analysed, and we do not store it. The result is held in the server's memory for at most 10 minutes after it finishes, so your phone can fetch it if the connection drops. Then it is erased, and it never goes into a database.</li>
     <li>Buyer names.</li>
     <li>IP addresses and device types in our own records.</li>
   </ul>
 
   <h2>Where your data goes</h2>
   <ul>
-    <li><b>Gemini API (Google).</b> The review text you paste is sent there to be analysed. How Google handles it follows Google's Gemini API terms.</li>
+    <li><b>Third-party AI service (paid).</b> The review text you paste is sent there to be analysed. We use a paid service, and under its provider's terms for paid use the text is not used to train or improve their products. The provider may keep it briefly, only to detect abuse and meet legal duties.</li>
     <li><b>Supabase.</b> Holds the account, profile, usage records and fixes list.</li>
     <li><b>Google Cloud Run.</b> Where the app runs. Google Cloud keeps its own standard request logs, which can include IP addresses, outside our control.</li>
     <li><b>Apify.</b> When you paste a product link, the link is sent to this service to read the reviews shown publicly on the product page. If you paste review text instead, Apify is not used.</li>

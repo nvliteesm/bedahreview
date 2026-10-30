@@ -264,8 +264,8 @@ class PrivacyPageTests(unittest.TestCase):
 
     def test_it_says_the_things_a_person_needs_to_know_in_both_languages(self):
         _, page = self.get(self.start(access_codes={"ani": "ani-secret-1"}), "/privacy")
-        for phrase in ("Hapus akun dan data saya", "nama atau tautan produk", "catatan singkatmu", "Gemini API", "Supabase", "Google Cloud Run", "Apify", "alamat IP", "90 hari", "Do Not Track", "cadangan",
-                       "Delete my account and data", "product name or link", "short note", "Google Cloud keeps its own standard request logs", "90 days", "backups"):
+        for phrase in ("Hapus akun dan data saya", "nama atau tautan produk", "catatan singkatmu", "Layanan AI pihak ketiga (berbayar)", "tidak dipakai untuk melatih", "paling lama 10 menit", "Supabase", "Google Cloud Run", "Apify", "alamat IP", "90 hari", "Do Not Track", "cadangan",
+                       "Delete my account and data", "product name or link", "short note", "Third-party AI service (paid)", "not used to train or improve", "at most 10 minutes", "Google Cloud keeps its own standard request logs", "90 days", "backups"):
             self.assertIn(phrase, page, phrase)
 
     def test_it_loads_nothing_from_anywhere_else(self):

@@ -530,6 +530,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
             <button class="ta-clear" id="clear" type="button" hidden data-i18n-label="clear"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
           </div>
         </div>
+        <p class="small muted" id="paste-count" role="status" hidden></p>
         <label class="field" for="product"><span data-i18n="productLabel"></span>
           <input id="product" type="text" maxlength="150" autocomplete="off" data-i18n-ph="productPh">
         </label>
@@ -659,6 +660,8 @@ const TEXT = {
     modeLabel: "Ambil", modeComplaints: "Keluhan dulu (1-3★)", modeLatest: "Ulasan terbaru", limitLabel: "Jumlah", fetchRun: "Ambil & bedah",
     linkNote: "Tautan pendek dari tombol Bagikan juga bisa. Shopee belum bisa lewat tautan: salin dan tempel ulasannya. Mengambil ulasan bisa makan waktu hingga satu menit, dan kadang hasilnya lebih sedikit dari yang diminta.",
     errPaste: "Tempel ulasan dulu.", errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa terhubung ke BedahReview. Periksa koneksi internetmu, lalu coba lagi.",
+    pasteFound: "%s ulasan terdeteksi. Yang pertama: “%s”", pasteTooMany: "%s ulasan terdeteksi, tapi maksimal %s per analisis. Kurangi dulu.",
+    loadingPart: "%s dari %s bagian selesai.", loadingFetching: "Mengambil ulasan dari tautan…", loadingResume: "Melanjutkan analisis tadi…", e_job_gone: "Analisis ini sudah tidak tersedia. Coba bedah lagi.",
     loadingTitle: "Membedah %s ulasan…", loadingFetch: "Mengambil ulasan, lalu membedahnya…", loadingSub: "Memilah: perbaiki, tanggapi, abaikan.",
     results: "Hasil", reviewsWord: "ulasan", print: "Cetak",
     fix: "Perbaiki", fight: "Tanggapi", ignore: "Abaikan", keep: "Pertahankan",
@@ -712,7 +715,7 @@ const TEXT = {
     fixMark: "Tandai sudah diperbaiki", fixNoteLbl: "Catatan singkat (opsional)", fixNotePh: "mis. size chart diganti ke cm", fixSave: "Simpan", fixCancel: "Batal",
     fixMarked: "Ditandai diperbaiki %s", fixBefore: "Sebelum: %s dari %s ulasan mengeluhkan ini.", fixAfter: "Sesudah (%s): %s dari %s ulasan.",
     fixWaiting: "Belum ada analisis baru untuk dibandingkan. Bedah ulasan terbaru produk yang sama nanti.",
-    fixSmallStrong: "Contoh sangat kecil (kurang dari 10 ulasan): selisih ini bisa kebetulan.", fixSmall: "Ini jumlah ulasan, bukan persen. Contoh kecil bisa menyesatkan.",
+    fixSmallStrong: "Contoh sangat kecil (kurang dari 10 ulasan): selisih ini bisa kebetulan.", fixSmall: "Hanya perkiraan, bukan bukti: ini jumlah ulasan (bukan persen), dan ulasan yang diambil bisa berbeda tiap kali.",
     fixEdit: "Ubah", fixDelete: "Hapus", fixDeleteSure: "Yakin hapus?", fixDate: "Tanggal", fixProduct: "Produk: %s", fixNoProduct: "(tanpa nama produk)",
     fixNoName: "Tanpa nama produk: perbaikan ini dicocokkan dengan analisis lain yang juga tanpa nama. Isi nama produk di kotak Tempel agar tepat.",
     fixesCompared: "%s perbaikan yang kamu catat dibandingkan dengan ulasan baru ini.", fixesSee: "Lihat",
@@ -767,7 +770,7 @@ const TEXT = {
     syncOk: "Tersimpan di akunmu.", syncDown: "Riwayat sedang tidak tersedia. Catatanmu tetap tersimpan di perangkat ini dan akan disimpan ke akunmu nanti.",
     syncOff: "Masuk agar catatanmu tersimpan di akunmu dan bisa dibuka dari HP lain.", fixNoteReview: "Catatanmu tampak memuat teks ulasan. Tulis dengan kata-katamu sendiri.",
     limitDaily: "Batas harian tercapai: %s analisis per hari. Coba lagi besok (reset tengah malam WIB).", quotaLeft: "Sisa analisis hari ini: %s dari %s.",
-    e_model_quota: "Kuota atau kredit Gemini sedang habis, jadi ulasan belum bisa dibedah. Coba lagi nanti.",
+    e_model_quota: "Kuota atau kredit layanan AI sedang habis, jadi ulasan belum bisa dibedah. Coba lagi nanti.",
     startHere: "Mulai dari sini", startFix: "Perbaiki “%s”: %s ulasan mengeluhkan ini.", startSeeFix: "Lihat saran", startFight: "Balas ulasan tentang “%s”. Drafnya siap disalin.", startSeeFight: "Lihat draf",
     startNone: "Tidak ada keluhan yang perlu ditindak. Lihat yang dipuji pembeli di Pertahankan.", whySteps: "Kenapa & langkahnya",
     // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
@@ -782,7 +785,7 @@ const TEXT = {
     e_search_platform: "Pencarian pesaing belum tersedia untuk platform ini.", e_pick_count: "Pilih 1 sampai 3 pesaing untuk dibandingkan.", e_pick_other: "Pilih pesaing selain produkmu sendiri.",
     e_suggest_failed: "Pencarian pesaing gagal.", e_compare_failed: "Perbandingan gagal. Coba lagi sebentar lagi.", e_too_many: "Terlalu banyak analisis dalam satu jam. Coba lagi nanti.",
     e_server: "Ada masalah di server. Coba lagi.", e_too_large: "Teksnya kosong atau terlalu panjang. Kurangi jumlah ulasan.", e_no_parse: "Tidak ada ulasan yang terbaca. Tempel minimal satu ulasan.",
-    e_too_many_reviews: "Terlalu banyak ulasan sekaligus. Maksimal %s per analisis.", e_model_bad: "Jawaban model tidak bisa dipakai. Coba lagi.", e_model_down: "Tidak bisa menghubungi Gemini. Coba lagi sebentar lagi.",
+    e_too_many_reviews: "Terlalu banyak ulasan sekaligus. Maksimal %s per analisis.", e_model_bad: "Jawaban model tidak bisa dipakai. Coba lagi.", e_model_down: "Tidak bisa menghubungi layanan AI. Coba lagi sebentar lagi.",
     e_paste: "Kamu bisa menempel ulasannya.", e_pasteRivals: "Kamu bisa menempel tautan pesaing.", e_other: "Coba pesaing lain.",
   },
   en: {
@@ -803,6 +806,8 @@ const TEXT = {
     modeLabel: "Get", modeComplaints: "Complaints first (1-3★)", modeLatest: "Latest reviews", limitLabel: "Reviews", fetchRun: "Fetch & analyse",
     linkNote: "Short links from the Share button work too. Shopee cannot be read from a link yet: copy and paste its reviews instead. Reading the reviews can take up to a minute, and sometimes returns fewer than asked.",
     errPaste: "Paste some reviews first.", errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach BedahReview. Check your internet connection and try again.",
+    pasteFound: "%s reviews found. The first one: “%s”", pasteTooMany: "%s reviews found, but the limit is %s per analysis. Remove some first.",
+    loadingPart: "%s of %s parts done.", loadingFetching: "Fetching reviews from the link…", loadingResume: "Picking up your earlier analysis…", e_job_gone: "This analysis is no longer available. Please run it again.",
     loadingTitle: "Reading %s reviews…", loadingFetch: "Fetching reviews, then reading them…", loadingSub: "Sorting: fix, fight, ignore.",
     results: "Results", reviewsWord: "reviews", print: "Print",
     fix: "Fix", fight: "Respond", ignore: "Ignore", keep: "Keep",
@@ -856,7 +861,7 @@ const TEXT = {
     fixMark: "Mark as fixed", fixNoteLbl: "Short note (optional)", fixNotePh: "e.g. size chart changed to cm", fixSave: "Save", fixCancel: "Cancel",
     fixMarked: "Marked as fixed %s", fixBefore: "Before: %s of %s reviews complained about this.", fixAfter: "After (%s): %s of %s reviews.",
     fixWaiting: "No newer analysis to compare with yet. Analyse the latest reviews of the same product later.",
-    fixSmallStrong: "Very small sample (under 10 reviews): this difference can be chance.", fixSmall: "These are review counts, not percentages. Small samples can mislead.",
+    fixSmallStrong: "Very small sample (under 10 reviews): this difference can be chance.", fixSmall: "Indicative, not proof: these are review counts (not percentages), and a different set of reviews may be fetched each time.",
     fixEdit: "Edit", fixDelete: "Delete", fixDeleteSure: "Really delete?", fixDate: "Date", fixProduct: "Product: %s", fixNoProduct: "(no product name)",
     fixNoName: "No product name: this fix is matched with other analyses that also have no name. Fill in the product name in the Paste box to be exact.",
     fixesCompared: "%s fix(es) you logged were compared with these new reviews.", fixesSee: "See",
@@ -911,7 +916,7 @@ const TEXT = {
     syncOk: "Saved in your account.", syncDown: "History is not available right now. Your notes stay saved on this device and will be saved to your account later.",
     syncOff: "Sign in so your notes are saved in your account and open on another phone.", fixNoteReview: "Your note looks like it contains review text. Write it in your own words.",
     limitDaily: "Daily limit reached: %s analyses a day. Try again tomorrow (resets at midnight Jakarta time).", quotaLeft: "Analyses left today: %s of %s.",
-    e_model_quota: "Gemini has no quota or credit left right now, so the reviews cannot be analysed. Try again later.",
+    e_model_quota: "The AI service has no quota or credit left right now, so the reviews cannot be analysed. Try again later.",
     startHere: "Start here", startFix: "Fix “%s”: %s review(s) complain about this.", startSeeFix: "See the fix", startFight: "Answer the review about “%s”. The draft is ready to copy.", startSeeFight: "See the draft",
     startNone: "No complaints to act on. See what buyers praise under Keep.", whySteps: "Why & steps",
   },
@@ -1018,6 +1023,7 @@ function applyLang() {
   themeLabel(); renderFixBadge(); renderGate(); renderAccount(); setQuota(lastQuota);
   if (currentView === "fixes") renderFixes();
   if (!$("run").disabled) $("run").textContent = tr("run");
+  syncCount();
   if (lastData) render(lastData, false); else renderRival();
 }
 $("lang").addEventListener("click", () => {
@@ -1908,35 +1914,88 @@ function startLoading(title) {
 }
 function stopLoading() { clearInterval(timer); timer = null; }
 
+/* The analysis runs on the server as a background job: the page gets an id, then asks "done yet?" every couple of seconds. A phone that drops the
+   connection, sleeps or reloads loses nothing: the id is kept (it is an opaque token, not review text) and the page picks the job up again. */
+const JOB_KEY = "bedahreview-job", JOB_POLL_MS = 2000, JOB_GIVE_UP_MS = 6 * 60 * 1000, JOB_KEEP_MS = 9 * 60 * 1000;  // the server forgets a job after 10 minutes
+function rememberJob(id) { try { localStorage.setItem(JOB_KEY, JSON.stringify({ id, t: Date.now() })); } catch (e) { /* the job still runs; it just cannot be picked up after a reload */ } }
+function forgetJob() { try { localStorage.removeItem(JOB_KEY); } catch (e) { /* ignore */ } }
+function savedJob() {
+  try { const j = JSON.parse(localStorage.getItem(JOB_KEY) || "null"); return j && typeof j.id === "string" && /^[0-9a-f]{32}$/.test(j.id) && Date.now() - j.t < JOB_KEEP_MS ? j.id : null; } catch (e) { return null; }
+}
+function showProgress(job) {
+  $("loading-sub").textContent = job.step === "fetching" ? tr("loadingFetching") : job.total > 1 ? tr("loadingPart", job.done, job.total) : tr("loadingSub");
+}
+async function pollJob(id) {  // resolves to {status, data} like the plain reply would have been; throws when the server cannot be reached for too long
+  const t0 = Date.now();
+  for (;;) {
+    let res = null;
+    try { res = await api("/api/job/" + id); } catch (e) { /* offline for now: try again */ }
+    if (res) {
+      let job = null;
+      try { job = await res.json(); } catch (e) { /* not JSON */ }
+      if (res.status === 404 || res.status === 401) return { status: res.status, data: job };
+      if (job && job.state === "running") showProgress(job);
+      else if (job && (job.state === "done" || job.state === "failed")) return { status: job.status, data: job.payload };
+    }
+    if (Date.now() - t0 > JOB_GIVE_UP_MS) throw new Error("slow");
+    await new Promise((resolve) => setTimeout(resolve, JOB_POLL_MS));
+  }
+}
+function finishAnalysis(status, data) {  // the one place that turns a reply into the screen: results, the sign-in box, or a plain error
+  stopLoading();
+  if (status === 401) {  // signed out or the sign-in ran out: ask again. Without an account: the free analysis is used up.
+    show("input");
+    if (data && data.code === "free_used") freeRefused(); else handleUnauthorized();
+    return;
+  }
+  if (!(status >= 200 && status < 300) || !data) {
+    show("input");
+    if (data && data.limit === "daily") setQuota({ used: data.max, max: data.max });
+    const toPaste = data && data.fallback === "paste";
+    const unreadable = toPaste && !data.limit;  // a daily limit is not "this link cannot be read"
+    if (toPaste) selectInput("paste", false);  // first: switching tabs clears the error box
+    if (unreadable) setFallback(true);
+    showError(errText(data, tr("errGeneric", status)), unreadable ? tr("errFetchTitle") : "");
+    return;
+  }
+  setQuota(data.quota);
+  if (data.free) markFreeUsed();
+  render(data, true);
+}
 async function send(payload, title) {
   showError(""); setFallback(false);
   const buttons = [$("run"), $("fetch")]; buttons.forEach((b) => { b.disabled = true; });
   startLoading(title);
   try {
-    const res = await api("/api/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const res = await api("/api/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ async: true }, payload)) });
     let data = null;
     try { data = await res.json(); } catch (e) { /* not JSON */ }
-    stopLoading();
-    if (res.status === 401) {  // signed out or the sign-in ran out: ask again. Without an account: the free analysis is used up.
-      show("input");
-      if (data && data.code === "free_used") freeRefused(); else handleUnauthorized();
-      return;
+    let out = { status: res.status, data };
+    if (res.status === 202 && data && data.job) {
+      rememberJob(data.job);
+      out = await pollJob(data.job);
+      forgetJob();
     }
-    if (!res.ok || !data) {
-      show("input");
-      if (data && data.limit === "daily") setQuota({ used: data.max, max: data.max });
-      const toPaste = data && data.fallback === "paste";
-      const unreadable = toPaste && !data.limit;  // a daily limit is not "this link cannot be read"
-      if (toPaste) selectInput("paste", false);  // first: switching tabs clears the error box
-      if (unreadable) setFallback(true);
-      showError(errText(data, tr("errGeneric", res.status)), unreadable ? tr("errFetchTitle") : "");
-      return;
-    }
-    setQuota(data.quota);
-    if (data.free) markFreeUsed();
-    render(data, true);
+    finishAnalysis(out.status, out.data);
   } catch (e) {
     stopLoading(); show("input"); showError(tr("errNetwork"));
+  } finally {
+    buttons.forEach((b) => { b.disabled = false; });
+    $("run").textContent = tr("run");
+  }
+}
+async function resumeJob() {  // the page was reloaded or closed while an analysis ran: pick it up if the server still has it
+  const id = savedJob();
+  if (!id || $("run").disabled) return;
+  const buttons = [$("run"), $("fetch")]; buttons.forEach((b) => { b.disabled = true; });
+  startLoading(tr("loadingResume"));
+  try {
+    const out = await pollJob(id);
+    forgetJob();
+    if (out.status === 404) { stopLoading(); show("input"); return; }  // already gone: nothing to say
+    finishAnalysis(out.status, out.data);
+  } catch (e) {
+    stopLoading(); show("input");
   } finally {
     buttons.forEach((b) => { b.disabled = false; });
     $("run").textContent = tr("run");
@@ -1973,7 +2032,14 @@ $("sample").addEventListener("click", () => {
   ].join("\n");
   $("product").value = "Kaos Boxy Retro"; syncClear(); showError(""); $("paste").focus();
 });
-function syncClear() { $("clear").hidden = !$("paste").value; }  // the × in the review box shows only when there is text to clear
+function syncClear() { $("clear").hidden = !$("paste").value; syncCount(); }  // the × in the review box shows only when there is text to clear
+function syncCount() {  // "12 reviews found": the same split the server makes, so a paste that was cut in the wrong places shows before an analysis is spent
+  const el = $("paste-count"), text = $("paste").value, max = 50;
+  if (!text.trim()) { el.hidden = true; return; }
+  const n = countReviewsRough(text), first = text.trim().split(/\n\s*\n/)[0].trim().split("\n")[0].replace(/^[★☆\s]+/, "").trim();
+  el.textContent = n > max ? tr("pasteTooMany", n, max) : tr("pasteFound", n, first.length > 60 ? first.slice(0, 60) + "…" : first);
+  el.hidden = false;
+}
 $("paste").addEventListener("input", syncClear);
 $("clear").addEventListener("click", () => { $("paste").value = ""; $("product").value = ""; $("url").value = ""; $("shared-note").hidden = true; syncClear(); showError(""); $("paste").focus(); });
 $("paste").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") runPaste(); });
@@ -2312,7 +2378,7 @@ function stepOneText() {  // step 1 names the way in this visitor really has: a 
 $("share-tip").hidden = isIos();  // sharing into a web app does not work on iPhone, so the tip would only mislead
 applyLang();
 takeShared();
-loadConfig();
+loadConfig().then(resumeJob);
 </script>
 </body>
 </html>

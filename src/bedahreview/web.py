@@ -21,6 +21,7 @@ import argparse
 import hashlib
 import hmac
 import html
+import inspect
 import json
 import os
 import re
@@ -71,6 +72,10 @@ READ_TIMEOUT_SECS = 20  # a visitor who stops sending (or sends one byte at a ti
 MAX_CONNECTIONS = 64  # open connections at once; more get an immediate 503
 DEFAULT_MAX_CONCURRENT = 6  # analyses (model or paid-fetch work) running at once; more get a 503 and a Retry-After
 HEAVY_PATHS = ("/api/classify", "/api/competitors/suggest", "/api/competitors/compare")
+SLOT_IN_POST = ("/api/competitors/suggest", "/api/competitors/compare")  # these hold an analysis slot for the whole request; /api/classify takes its slot itself, after the limits, because a background job keeps it after the reply
+JOB_TTL_SECS = 600  # a finished or abandoned background analysis is forgotten after this long (ten minutes)
+MAX_JOBS = 200  # held at once; the analysis slots keep the running ones far below this
+JOB_ID_RE = re.compile(r"^[0-9a-f]{32}$")
 STEP_OF = {"/api/classify": "analyse", "/api/competitors/suggest": "suggest", "/api/competitors/compare": "compare"}  # for the failure and limit events
 MAX_DRAIN_BYTES = 2_000_000  # an oversized upload is read and thrown away up to this much, so the error reply is not lost to a connection reset
 DRAIN_SECS = 5
@@ -346,6 +351,69 @@ def build_response(
     }
 
 
+class Job:
+    """One background analysis. The page asks for it by its id; it holds progress while running and the reply (status and body, exactly as the
+    plain request would have sent) when finished. Held in memory only, for JOB_TTL_SECS, so a phone that lost its connection can fetch the result."""
+
+    def __init__(self, step: str, now: float) -> None:
+        self.step, self.done, self.total = step, 0, 0
+        self.status: Optional[int] = None  # None while running
+        self.payload: Optional[Dict[str, Any]] = None
+        self.touched = now
+
+    def progress(self, done: int, total: int) -> None:
+        self.step, self.done, self.total = "reading", done, total
+
+
+class Jobs:
+    def __init__(self, ttl: float = JOB_TTL_SECS, limit: int = MAX_JOBS, clock: Callable[[], float] = time.time) -> None:
+        self._ttl, self._limit, self._clock = ttl, limit, clock
+        self._jobs: Dict[str, Job] = {}
+        self._lock = threading.Lock()
+
+    def _prune(self, now: float) -> None:
+        for key in [k for k, job in self._jobs.items() if now - job.touched > self._ttl]:
+            del self._jobs[key]
+
+    def create(self, step: str) -> Optional[Tuple[str, Job]]:
+        """A new job, or None when too many are held."""
+        with self._lock:
+            now = self._clock()
+            self._prune(now)
+            if len(self._jobs) >= self._limit:
+                return None
+            key, job = secrets.token_hex(16), Job(step, now)
+            self._jobs[key] = job
+            return key, job
+
+    def finish(self, job: Job, status: int, payload: Dict[str, Any]) -> None:
+        with self._lock:
+            job.status, job.payload, job.touched = status, payload, self._clock()
+
+    def get(self, key: str) -> Optional[Dict[str, Any]]:
+        """What the page is told: still running (with progress), or the finished reply. None when unknown or expired."""
+        with self._lock:
+            self._prune(self._clock())
+            job = self._jobs.get(key)
+            if job is None:
+                return None
+            if job.status is None:
+                return {"state": "running", "step": job.step, "done": job.done, "total": job.total}
+            return {"state": "done" if job.status == 200 else "failed", "status": job.status, "payload": job.payload}
+
+    def size(self) -> int:
+        with self._lock:
+            return len(self._jobs)
+
+
+def _accepts(fn: Callable[..., Any], name: str) -> bool:
+    try:
+        params = inspect.signature(fn).parameters
+    except (TypeError, ValueError):
+        return False
+    return name in params or any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())
+
+
 class _CountingReader:
     """Wraps the request stream and counts what was read, so any unread part of an upload can be thrown away afterwards."""
 
@@ -419,6 +487,9 @@ class Handler(BaseHTTPRequestHandler):
     paid_limiter: Optional[RateLimiter] = None
     event_limiter: Optional[RateLimiter] = None
     analysis_slots: Any = threading.BoundedSemaphore(DEFAULT_MAX_CONCURRENT)  # replaced per server in make_server
+    jobs: Jobs = Jobs()  # background analyses; replaced per server in make_server
+    _capture: Optional[List[Any]] = None  # set on the stand-in handler a background job runs on: replies are kept for the poll instead of being sent
+    _job: Optional[Job] = None  # the job that stand-in belongs to, so the model call can report progress
     timeout = READ_TIMEOUT_SECS  # socketserver applies this to the connection: slow or silent visitors are dropped
 
     def _record(self, events: List[Dict[str, Any]]) -> None:
@@ -521,6 +592,11 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
 
     def _json(self, status: int, payload: Dict[str, Any], extra: Optional[List[Any]] = None) -> None:
+        if self._capture is not None:  # a background job: nobody is waiting on this connection, so the reply is kept for the poll
+            self._capture.append((status, payload))
+            if self.path in STEP_OF and status >= 429:
+                self._note_refusal(status, payload)
+            return
         self._send(status, json.dumps(payload, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8", extra)
         if self.command == "POST" and self.path in STEP_OF and status >= 429:
             self._note_refusal(status, payload)
@@ -653,7 +729,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, fmt: str, *args: Any) -> None:  # one short line per request, no review text
         # The Share menu sends the review text in the query string (/?text=...), so log the path only.
-        sys.stderr.write("%s %s\n" % (self.command, self.path.split("?", 1)[0]))
+        path = self.path.split("?", 1)[0]
+        if path.startswith("/api/job/"):  # the id is a short-lived key to the result, so it stays out of the logs
+            path = "/api/job/<id>"
+        sys.stderr.write("%s %s\n" % (self.command, path))
 
     def _fetch(self, url: str, limit: Any, mode: Any):
         """Fetch reviews from a product link (demo). Returns (reviews, source) or None after sending an error."""
@@ -818,7 +897,7 @@ class Handler(BaseHTTPRequestHandler):
         reader = _CountingReader(self.rfile)
         self.rfile = reader
         try:
-            if self.path in HEAVY_PATHS:
+            if self.path in SLOT_IN_POST:
                 if not self.analysis_slots.acquire(blocking=False):
                     return self._json(503, {"error": "The server is busy. Try again in a moment.", "limit": "busy"}, [("Retry-After", "5")])
                 try:
@@ -858,10 +937,16 @@ class Handler(BaseHTTPRequestHandler):
             return self._login_page(200, "/")  # interviewers and testers with an access code
         if path in ("/admin", "/api/admin/stats"):
             return self._admin(path)
-        if not self._authed() and path not in PUBLIC_ASSETS and not (open_site and (path in PAGES or path in ASSETS or path in OPEN_API)):
+        if not self._authed() and path not in PUBLIC_ASSETS and not (open_site and (path in PAGES or path in ASSETS or path in OPEN_API or path.startswith("/api/job/"))):
             if path.startswith("/api/"):
                 return self._json(401, {"error": "Please sign in again.", "login": True})
             return self._login_page(401, self.path)
+        if path.startswith("/api/job/"):  # the id is a long random token that only the page that started the analysis knows, so a visitor without an account can ask too
+            key = path[len("/api/job/"):]
+            state = type(self).jobs.get(key) if JOB_ID_RE.match(key) else None
+            if state is None:
+                return self._json(404, {"error": "That analysis is no longer available. Start it again.", "code": "job_gone"})
+            return self._json(200, state)
         if path in PAGES:
             return self._send(200, (STATIC / PAGES[path]).read_bytes(), "text/html; charset=utf-8")
         if path in ASSETS:
@@ -934,6 +1019,48 @@ class Handler(BaseHTTPRequestHandler):
                 quota.refund(self._uid)
             if free:
                 trial.refund(self._client())
+
+        slots = type(self).analysis_slots  # the cap on analyses running at once; a background job keeps its slot until it has finished
+        if not slots.acquire(blocking=False):
+            give_back()
+            return self._json(503, {"error": "The server is busy. Try again in a moment.", "limit": "busy"}, [("Retry-After", "5")])
+        if body.get("async") is True:  # the page asks for a background analysis: answer at once with an id and do the work on another thread
+            return self._start_job(slots, body, text, url, product, give_back, quota, used, free, trial)
+        try:
+            self._run_analysis(body, text, url, product, give_back, quota, used, free, trial)
+        finally:
+            slots.release()
+
+    def _start_job(self, slots: Any, body: Dict[str, Any], text: str, url: str, product: str, give_back: Callable[[], None], quota: Optional["DailyQuota"], used: int, free: bool, trial: Optional["FreeTrial"]) -> None:
+        """Run the analysis on its own thread and answer 202 with an id the page can ask about. The slot is released when the work ends, not now."""
+        made = type(self).jobs.create("fetching" if url.strip() else "reading")
+        if made is None:
+            slots.release()
+            give_back()
+            return self._json(503, {"error": "The server is busy. Try again in a moment.", "limit": "busy"}, [("Retry-After", "5")])
+        key, job = made
+        stand_in = object.__new__(type(self))  # a copy of this handler with just what the work reads; its replies are kept for the poll
+        stand_in.headers, stand_in.client_address, stand_in._uid = self.headers, self.client_address, self._uid
+        stand_in.command, stand_in.path = "POST", self.path
+        stand_in._capture, stand_in._job = [], job
+
+        def work() -> None:
+            try:
+                stand_in._run_analysis(body, text, url, product, give_back, quota, used, free, trial)
+            except Exception as exc:
+                give_back()
+                sys.stderr.write("analysis failed: %s\n" % type(exc).__name__)
+                stand_in._capture.append((500, {"error": "Something went wrong on the server. Try again.", "code": "server"}))
+            finally:
+                slots.release()
+                status, payload = stand_in._capture[-1] if stand_in._capture else (500, {"error": "Something went wrong on the server. Try again.", "code": "server"})
+                type(self).jobs.finish(job, status, payload)
+
+        threading.Thread(target=work, daemon=True).start()
+        self._json(202, {"job": key})
+
+    def _run_analysis(self, body: Dict[str, Any], text: str, url: str, product: str, give_back: Callable[[], None], quota: Optional["DailyQuota"], used: int, free: bool, trial: Optional["FreeTrial"]) -> None:
+        """The work of one analysis, after the limits have been taken: read the link or the paste, classify, reply. Used by the plain request and by a background job."""
         source: Optional[Dict[str, Any]] = None
         if url.strip():
             fetched = self._fetch(url, body.get("limit", DEFAULT_LIMIT), body.get("mode", "complaints"))
@@ -941,6 +1068,8 @@ class Handler(BaseHTTPRequestHandler):
                 give_back()
                 return
             reviews, source = fetched
+            if self._job is not None:
+                self._job.step = "reading"
         else:
             reviews = parse_reviews(text)
             name = " ".join(product.split())[:MAX_PRODUCT_CHARS]
@@ -954,7 +1083,10 @@ class Handler(BaseHTTPRequestHandler):
         model = resolve_model()
         try:
             title = (source or {}).get("title") or " ".join(product.split())[:MAX_PRODUCT_CHARS] or None
-            results = type(self).classify_fn(reviews, product=title) if title else type(self).classify_fn(reviews)
+            kwargs: Dict[str, Any] = {"product": title} if title else {}
+            if self._job is not None and _accepts(type(self).classify_fn, "progress"):
+                kwargs["progress"] = self._job.progress  # "batch 2 of 4" for the page
+            results = type(self).classify_fn(reviews, **kwargs)
         except ClassificationError as exc:
             give_back()
             return self._json(502, {"error": "The model's reply could not be used: %s" % str(exc).splitlines()[0], "code": "model_bad"})
@@ -963,8 +1095,8 @@ class Handler(BaseHTTPRequestHandler):
             code = getattr(exc, "code", None)  # an HTTP status such as 429 or 503 helps; the message could echo what was sent, so it is not logged
             sys.stderr.write("classify failed: %s%s\n" % (type(exc).__name__, " (code %s)" % code if isinstance(code, int) else ""))
             if code in (402, 429):  # out of credit, or out of quota: say so, because "try again in a moment" is not the cure for the first
-                return self._json(502, {"error": "Gemini has no quota or credit left (%s). Try again later." % code, "code": "model_quota"})
-            return self._json(502, {"error": "Could not reach Gemini (%s). Try again in a moment." % type(exc).__name__, "code": "model_down"})
+                return self._json(502, {"error": "The AI service has no quota or credit left (%s). Try again later." % code, "code": "model_quota"})
+            return self._json(502, {"error": "Could not reach the AI service (%s). Try again in a moment." % type(exc).__name__, "code": "model_down"})
         out = build_response(reviews, results, model, source)
         if quota:
             out["quota"] = {"used": used, "max": quota.limit}
@@ -1011,6 +1143,7 @@ def make_server(
         handler.compare_fn = staticmethod(compare_fn)
     handler.fetcher = fetcher
     handler.analysis_slots = threading.BoundedSemaphore(max_concurrent)
+    handler.jobs = Jobs()
     handler.timeout = read_timeout
     codes = dict(access_codes or {})
     if access_code:

@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from jsonschema import Draft202012Validator
 
@@ -16,12 +17,13 @@ PROMPT_PATH = ROOT / "prompts" / "classifier.md"
 SCHEMA_PATH = ROOT / "prompts" / "output_schema.json"
 
 DEFAULT_MODEL = "gemini-3.5-flash-lite"
-BATCH_SIZE = 15  # reviews per API call; fake-review signals only work inside one batch
+BATCH_SIZE = 20  # reviews per API call; fake-review signals only work inside one batch, so near-duplicates are put together (see make_batches)
+SIMILAR = 0.4  # word-pair overlap (0 to 1) above which two reviews count as the same template
 MAX_PARALLEL = 3  # batches in flight at once: 50 reviews must finish inside the Cloud Run timeout, and a small cap keeps rate limits calm
 REQUEST_TIMEOUT_MS = 180_000  # SDK-level timeout; it did not stop a hung connection in practice
 REQUEST_DEADLINE_S = 120  # hard wall-clock cap per attempt, enforced by us
 RETRY_DELAYS_S = (2, 6)  # waits before retrying a temporary API error (503, 429, timeout)
-MAX_TOKENS = 16000  # Gemini counts its internal thinking tokens against this too
+MAX_TOKENS = 24000  # Gemini counts its internal thinking tokens against this too; 20 reviews with full reply kits need more room than 15 did
 
 
 class ClassificationError(Exception):
@@ -239,13 +241,50 @@ def _classify_batch(
     raise ClassificationError("invalid reply after retry:\n- " + "\n- ".join(problems[:20]))
 
 
+def _word_pairs(text: str) -> set:
+    words = re.findall(r"\w+", (text or "").lower())
+    return {" ".join(words[i : i + 2]) for i in range(max(len(words) - 1, 1))}
+
+
+def make_batches(reviews: List[Dict[str, Any]], size: int = BATCH_SIZE) -> List[List[Dict[str, Any]]]:
+    """Split reviews into batches of at most `size`, keeping reviews that share a template in the same batch.
+
+    The fake-review signals ("same wording as other reviews") only work among reviews the model sees together, so a planted group
+    must not be cut in two by the batch boundary. A group bigger than `size` is split anyway. Which batch a review is in never changes its place
+    in the final list: results are put back in input order by id.
+    """
+    groups: List[List[Dict[str, Any]]] = []
+    firsts: List[set] = []
+    for review in reviews:
+        pairs = _word_pairs(review.get("text") or "")
+        for group, first in zip(groups, firsts):
+            if pairs and first and len(pairs & first) / len(pairs | first) >= SIMILAR:
+                group.append(review)
+                break
+        else:
+            groups.append([review])
+            firsts.append(pairs)
+    pieces = [g[i : i + size] for g in groups for i in range(0, len(g), size)]
+    batches: List[List[Dict[str, Any]]] = []
+    for piece in sorted(pieces, key=len, reverse=True):  # biggest groups first, then single reviews fill the gaps
+        target = next((b for b in batches if len(b) + len(piece) <= size), None)
+        if target is None:
+            target = []
+            batches.append(target)
+        target.extend(piece)
+    return batches
+
+
 def classify(
     reviews: List[Dict[str, Any]],
     client: Optional[Any] = None,
     model: Optional[str] = None,
     product: Optional[str] = None,
+    progress: Optional[Callable[[int, int], None]] = None,
 ) -> List[Dict[str, Any]]:
     """Triage reviews. Each review: {"id", "stars", "variant", "date", "text"}.
+
+    `progress(done, total)` is called with the number of finished batches, first with 0, so a page can show "batch 2 of 4".
 
     `product` is the listing title when known (for example read from a product link); it helps spot reviews about the wrong product.
 
@@ -269,12 +308,16 @@ def classify(
     blank = {r["id"] for r in reviews if not (r.get("text") or "").strip()}
     texted = [r for r in reviews if r["id"] not in blank]
     by_id: Dict[str, Dict[str, Any]] = {r["id"]: no_text_result(r) for r in reviews if r["id"] in blank}
-    batches = [texted[i : i + BATCH_SIZE] for i in range(0, len(texted), BATCH_SIZE)]
+    batches = make_batches(texted)
     if batches:
+        if progress:
+            progress(0, len(batches))
         with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(batches))) as pool:
             # map keeps batch order and re-raises the first failure, as the old sequential loop did
-            for results in pool.map(lambda batch: _classify_batch(client, model, system, batch, product), batches):
+            for done, results in enumerate(pool.map(lambda batch: _classify_batch(client, model, system, batch, product), batches), 1):
                 for result in results:
                     by_id[result["id"]] = result
+                if progress:
+                    progress(done, len(batches))
     # Input order; a review whose quote could not be verified is missing from the list.
     return [by_id[r["id"]] for r in reviews if r["id"] in by_id]

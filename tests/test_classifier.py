@@ -229,6 +229,49 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual([r["id"] for r in out], [r["id"] for r in many])  # input order survives parallel batches
         self.assertEqual(len(client.calls), 2)
 
+    def test_a_planted_group_is_not_cut_in_two_by_the_batch_boundary(self):
+        size = classifier.BATCH_SIZE
+        template = "Pengiriman cepat sekali, produk kolagen ini bikin kulit sehat sekali, sangat direkomendasikan %s"
+        planted = [{"id": "p%d" % i, "stars": 5, "variant": None, "date": "", "text": template % ("untuk semua")} for i in range(6)]
+        others = ["barang bagus bahan tebal warna %d sesuai foto" % i for i in range(size - 3)] + ["kemasan penyok pas sampai", "ukuran kekecilan"]
+        reviews = [dict(self.reviews[2], id="o%d" % i, text=t) for i, t in enumerate(others)]
+        reviews[size - 5 : size - 5] = planted[:3]  # the group straddles the first batch boundary in plain input order
+        reviews += planted[3:]
+        batches = classifier.make_batches(reviews)
+        homes = {i for i, batch in enumerate(batches) for r in batch if r["id"].startswith("p")}
+        self.assertEqual(len(homes), 1)  # all six planted reviews were sent to the model together
+        self.assertEqual(sorted(r["id"] for b in batches for r in b), sorted(r["id"] for r in reviews))  # nobody lost or repeated
+        self.assertTrue(all(len(b) <= size for b in batches))
+
+    def test_a_group_bigger_than_a_batch_is_split_and_nothing_is_lost(self):
+        size = classifier.BATCH_SIZE
+        many = [dict(self.reviews[2], id="s%d" % i, text="paket sampai bagus sekali terima kasih") for i in range(size * 2 + 3)]
+        batches = classifier.make_batches(many)
+        self.assertEqual(sorted(len(b) for b in batches), [3, size, size])
+        self.assertEqual(sorted(r["id"] for b in batches for r in b), sorted(r["id"] for r in many))
+
+    def test_reviews_that_differ_are_not_grouped_and_fill_whole_batches(self):
+        size = classifier.BATCH_SIZE
+        distinct = [dict(self.reviews[2], id="d%d" % i, text="ulasan nomor %d tentang topik %s" % (i, chr(97 + i) * 5)) for i in range(size + 1)]
+        batches = classifier.make_batches(distinct)
+        self.assertEqual([len(b) for b in batches], [size, 1])  # no wasted calls
+
+    def test_results_keep_input_order_even_when_grouping_moves_reviews_between_batches(self):
+        size = classifier.BATCH_SIZE
+        good = self.good[2]
+        same = "bahannya bagus luamayan tebel paket sampai bagus sekali terima kasih"
+        many = [dict(self.reviews[2], id="r%d" % i, text=(same if i % 2 else "bahannya bagus luamayan tebel ulasan unik %d %s" % (i, "x" * i))) for i in range(size + 5)]
+
+        class InSentOrder(StubClient):
+            def generate_content(inner, model, contents, config):
+                text = _sent_text({"contents": contents})
+                sent = json.loads(text[text.index("["):])
+                inner.replies = [json.dumps([dict(good, id=r["id"]) for r in sent])]  # answers in the order this batch was sent
+                return StubClient.generate_content(inner, model, contents, config)
+
+        out = classify(many, client=InSentOrder())
+        self.assertEqual([r["id"] for r in out], [r["id"] for r in many])
+
     def test_parallel_batches_are_capped(self):
         many = [dict(self.reviews[2], id="r%d" % i) for i in range(classifier.BATCH_SIZE * 5)]
         client, state = self._by_batch_client(many, hold=0.05)
