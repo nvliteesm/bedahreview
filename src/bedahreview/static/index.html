@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="BedahReview">
 <style>
 /* Phone first: one column up to 480px wide, 16px gutters, 44px touch targets, safe-area padding.
-   A 2x2 board of four tabs: Perbaiki (Fix it) and Tanggapi (Fight it) on top as the main ones, Abaikan (Ignore) and Pertahankan (Keep) below. Light and dark follow the system. */
+   A 2x2 board of four tabs: Perbaiki (Fix) and Tanggapi (Respond) on top as the main ones, Abaikan (Ignore) and Pertahankan (Keep) below. Light and dark follow the system. */
 :root {
   --bg: #f6f7f5; --surface: #ffffff; --ink: #17201c; --muted: #5d6963; --line: #dde2de; --quote: #f3f5f2;
   --accent: #0f6b5a; --on-accent: #ffffff; --accent-soft: #dff1ec;
@@ -186,12 +186,15 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 .unlock { justify-items: center; text-align: center; padding: 22px 18px; border-color: var(--accent); }
 .unlock h3 { margin: 0; font-size: 1.1rem; } .unlock p { margin: 0; }
 .unlock .lock { width: 28px; height: 28px; color: var(--accent); }
-#view-results.locked #panels, #view-results.locked #notes, #view-results.locked #feedback, #view-results.locked .legend,
+#view-results.locked #panels, #view-results.locked #notes, #view-results.locked #feedback,
 #view-results.locked #rivals-open, #view-results.locked #start button { display: none !important; }
 .foot a { color: inherit; }
 .unlock a { color: inherit; }
 /* a phone header has room for four things: a visitor gets "Masuk" and the language; the theme switch moves into the account menu */
 .has-acct #theme, .visitor #theme, .visitor #fixes-btn { display: none; }
+.theme.fixes-pill { width: auto; padding: 0 16px 0 12px; border-radius: 999px; display: inline-flex; gap: 8px; font: inherit; font-weight: 700; font-size: 0.9rem; }
+.mitem.m-only { display: none; }
+@media (max-width: 479px) { .has-acct #fixes-btn { display: none; } .has-acct .mitem.m-only { display: flex; } #fixes-btn .lbl { display: none; } .theme.fixes-pill { width: 44px; padding: 0; } }  /* a phone: Fixes moves into the account menu (a local run has no menu, so it keeps its icon) */
 @media (min-width: 1100px) { .has-acct #theme, .visitor #theme { display: grid; } #acct-theme { display: none; } }
 @media (max-width: 399px) { .lang .o:not(.on) { display: none; } }  /* a small phone: the language switch shows only the current one, and a tap still switches */
 .gbtn[disabled], .btn[disabled] { opacity: 0.6; cursor: progress; }
@@ -203,6 +206,9 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 .check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 0.92rem; font-weight: 600; cursor: pointer; }
 .check input { width: 22px; height: 22px; min-height: 22px; padding: 0; margin: 0; accent-color: var(--accent); flex: none; }
 #start { display: grid; gap: 8px; }
+.gate-opts summary { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+.gate-opts summary::after { content: "\00a0\25BE"; }
+.gate-card p a { color: inherit; }
 .gate-links { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
 .gate-links a { color: var(--accent); font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
 @media (min-width: 1100px) { .gate { padding-top: 56px; } .gate-card { padding: 32px; box-shadow: var(--shadow); } }
@@ -390,12 +396,13 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
     <div class="tools">
       <button class="btn pill" id="signin-btn" type="button" hidden data-i18n="signInShort"></button>
       <button class="lang" id="lang" type="button" aria-label="Bahasa / Language"></button>
-      <button class="theme" id="fixes-btn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><span class="badge" id="fixes-count" hidden></span></button>
+      <button class="theme fixes-pill" id="fixes-btn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><span class="lbl" data-i18n="fixesBtn"></span><span class="badge" id="fixes-count" hidden></span></button>
       <button class="theme" id="theme" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="theme-icon" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
       <div class="acct" id="acct" hidden>
         <button class="avatar" id="acct-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="acct-menu" data-i18n-label="acctMenu"><span id="acct-initial" aria-hidden="true"></span></button>
         <div class="acct-menu" id="acct-menu" hidden>
           <div class="acct-who"><span class="small muted" data-i18n="acctAs"></span><b id="acct-email"></b></div>
+          <button class="mitem m-only" id="acct-fixes" type="button"></button>
           <div id="logout-row" hidden><button class="mitem" id="logout" type="button" data-i18n="logout"></button></div>
           <button class="mitem" id="acct-theme" type="button"></button>
           <a class="mitem" href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a>
@@ -420,7 +427,6 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
     <div class="gate-step" id="g-choose">
       <div class="callout" id="g-info" role="status" hidden></div>
       <div><h1 id="gate-h" tabindex="-1" data-i18n="gTitle"></h1><p class="muted" data-i18n="gSub"></p></div>
-      <label class="check" for="g-keep"><input type="checkbox" id="g-keep" checked><span data-i18n="gKeep"></span></label>
       <button class="gbtn" id="g-google" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i18n="gGoogle"></span></button>
       <p class="or" data-i18n="gOr"></p>
       <label class="field" for="g-email"><span data-i18n="gEmail"></span>
@@ -428,6 +434,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
       </label>
       <button class="btn primary" id="g-send" type="button" data-i18n="gSend"></button>
       <p class="small muted"><span data-i18n="gConsent"></span> <a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a></p>
+      <details class="gate-opts"><summary data-i18n="gOpts"></summary><label class="check" for="g-keep"><input type="checkbox" id="g-keep" checked><span data-i18n="gKeep"></span></label></details>
       <div class="callout" id="g-ios" hidden data-i18n="gIosNote"></div>
       <button class="btn ghost" id="g-example" type="button" data-i18n="gExample"></button>
       <div class="gate-links">
@@ -464,7 +471,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
 
   <div class="fhead dsk f">
     <span class="ftile" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 13l2 2 4-4"/></svg></span>
-    <div class="ftext"><p class="eyebrow" data-i18n="f1Eyebrow"></p><h1 id="f1-h" data-i18n="f1Title"></h1><p class="muted" data-i18n="f1Sub"></p></div>
+    <div class="ftext"><h1 id="f1-h" data-i18n="f1Title"></h1><p class="muted" data-i18n="f1Sub"></p></div>
     <div class="fside">
       <div class="pchip" id="pchip" hidden><b id="pchip-name"></b><span id="pchip-meta"></span><button class="plain" id="pchip-change" type="button"></button></div>
       <button class="btn ghost" id="print-d" type="button" hidden></button>
@@ -600,15 +607,14 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
       <button class="plain strong" id="unlock-email" type="button" data-i18n="unlockEmail"></button>
       <p class="small muted"><span data-i18n="unlockNote"></span> <span data-i18n="gConsent"></span> <a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a></p>
     </div>
-    <details class="legend dsk">
+    <details class="legend">
       <summary data-i18n="legendSummary"></summary>
       <div id="legend"></div>
     </details>
     <div id="notes" style="display:grid;gap:8px"></div>
     <div id="panels"></div>
     <div class="card-box" id="feedback" hidden></div>
-    <p class="foot" id="foot"></p>
-    <p class="foot" data-i18n="privNote"></p>
+    <p class="foot" id="foot" hidden></p>
     <p class="foot"><a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a></p>
   </section>
 
@@ -618,7 +624,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
 <aside id="feature2" class="col col-2" aria-labelledby="f2-h">
   <div class="fhead">
     <span class="ftile rival" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg></span>
-    <div class="ftext"><p class="eyebrow rival" data-i18n="f2Eyebrow"></p><h1 id="f2-h" data-i18n="f2Title"></h1><p class="muted" data-i18n="f2Sub"></p></div>
+    <div class="ftext"><h1 id="f2-h" data-i18n="f2Title"></h1><p class="muted" data-i18n="f2Sub"></p></div>
   </div>
   <div id="rival-home" class="stack"></div>
 </aside>
@@ -669,7 +675,7 @@ const TEXT = {
     noteDropped: "%s ulasan dilewati karena kutipan buktinya tidak bisa diverifikasi.",
     noteNoText: "%s ulasan hanya bintang tanpa teks. Dihitung di Abaikan, tidak dianalisis.",
     footFrom: "%s ulasan%s diambil dari tautan produk%s. ", footLow: " bintang rendah", footCached: " (salinan tersimpan, tanpa biaya baru)",
-    footTail: "Saran dan draf ditulis oleh AI: baca dulu sebelum dikirim ke pembeli.",
+    aiNote: "Saran dan draf ditulis oleh AI. Baca dulu sebelum dikirim ke pembeli.",
     stars: "%s dari 5 bintang",
     rival: "Pesaing", rivalRule: "Bandingkan keluhan dan pujian produkmu dengan produk serupa. Ini contoh kecil, bukan seluruh pasar.",
     rivalAsk: "Mau sekalian membandingkan dengan pesaing?", rivalAskBtn: "Ya, cari pesaing",
@@ -684,8 +690,8 @@ const TEXT = {
     rivalWorse: "Keluhan “%s”: %s di produkmu, di pesaing terbaik %s.", rivalOpp: "%s kena %s keluhan “%s” (kamu: %s). Peluang untuk menonjol.",
     rivalPraiseGap: "Pembeli lebih sering memuji “%s” di %s (%s, kamu: %s).", rivalNoInsight: "Belum ada selisih yang jelas. Contohnya masih kecil.", rivalSmall: "%s: kurang dari 5 ulasan yang bisa dipercaya, jadi tidak dipakai untuk kesimpulan.",
     rivalQuotes: "Kutipan ulasan", rivalAgain: "Mulai ulang", rivalShop: "Toko %s", rivalSold: "%s+ terjual",
-    f1Eyebrow: "FITUR 1", f1Title: "Bedah ulasan", f1Sub: "Pilah ulasan produkmu jadi daftar tindakan",
-    f2Eyebrow: "FITUR 2", f2Title: "Analisis pesaing", f2Sub: "Bandingkan keluhan & pujian dengan toko lain",
+    f1Title: "Bedah ulasan", f1Sub: "Pilah ulasan produkmu jadi daftar tindakan",
+    f2Title: "Analisis pesaing", f2Sub: "Bandingkan keluhan & pujian dengan toko lain",
     step1T: "Salin & tempel ulasan", step1D: "dari Shopee, Tokopedia, atau aplikasi toko lain",
     step1TLink: "Tempel tautan atau ulasan", step1DLink: "tautan Tokopedia, TikTok Shop, Lazada, atau teks ulasannya", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
     step3T: "Kamu dapat daftar tugas", step3D: "urut, plus draf balasan siap salin",
@@ -699,7 +705,6 @@ const TEXT = {
     fbQ: "Apakah hasil ini berguna?", fbYes: "Ya", fbPartly: "Sebagian", fbNo: "Tidak", fbComment: "Mau menambahkan sesuatu? (opsional)",
     fbNote: "Komentar hanya disimpan kalau kamu menulisnya. Jangan tulis nama orang atau menempel teks ulasan.", fbSend: "Kirim", fbThanks: "Terima kasih. Jawabanmu membantu.",
     fbReview: "Komentarmu tampak memuat teks ulasan. Hapus bagian itu dulu, supaya tidak ada teks ulasan yang tersimpan.", fbFail: "Tidak terkirim. Coba lagi nanti.",
-    privNote: "Kami mencatat fitur yang dipakai (misalnya tab yang dibuka) per akun, tanpa teks ulasan, nama produk, atau alamat IP. Kalau browsermu mengirim “Do Not Track”, catatan itu tidak dikirim.",
     limitBusy: "Server sedang sibuk. Coba lagi sebentar lagi.", logout: "Keluar", back: "Kembali", fixesBtn: "Perbaikan", fixesTitle: "Perbaikan yang kamu catat", fixesSub: "Disimpan di browser ini saja. Tidak ada yang dikirim ke server.",
     fixesWarn: "Hitungan dari contoh kecil bisa menyesatkan. Keluhan yang berkurang satu bisa kebetulan, dan bukan bukti perbaikanmu berhasil. Analisis baru juga bisa memuat ulasan lama yang sama.",
     fixesNoStore: "Browser ini tidak bisa menyimpan data, jadi catatan hilang saat halaman ditutup. Ekspor ke file JSON supaya tidak hilang.",
@@ -738,7 +743,7 @@ const TEXT = {
     rivalAlone: "Tanpa Bedah ulasan, kami tidak membandingkan dengan produkmu. Jalankan Bedah ulasan untuk melihat selisihnya.", rivalLinkLbl: "Lihat ulasannya",
     rivalLineWorseEx: "%s: %s di %s, di pesaing terbaik %s.", rivalLineOtherEx: "%s: %s di %s, %s di %s.",
     gTitle: "Masuk untuk membedah ulasanmu", gSub: "Gratis, tanpa kata sandi. Pakai Google atau email.", gGoogle: "Masuk dengan Google", gOr: "atau pakai email",
-    gEmail: "Email", gEmailPh: "nama@email.com", gSend: "Kirim kode ke email", gConsent: "Kami mencatat pemakaian per akun (tanpa isi ulasan) untuk riset produk ini.",
+    gEmail: "Email", gEmailPh: "nama@email.com", gSend: "Kirim kode ke email", gConsent: "Kami mencatat fitur yang kamu pakai per akun (misalnya tab yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.", gOpts: "Pengaturan masuk",
     gKeep: "Tetap masuk di HP ini", gIosNote: "Pasang ke layar utama dulu (Safari > Bagikan > Tambah ke Layar Utama), lalu masuk dari ikonnya. Aplikasi yang terpasang menyimpan sesi terpisah dari Safari.",
     gExample: "Coba contoh dulu", gCode: "Punya kode akses? Masuk di sini", gClose: "Nanti saja", signInShort: "Masuk",
     gCodeTitle: "Masukkan kode 6 digit", gCodeSub: "Kami kirim kode ke %s. Kalau belum masuk, cek folder spam.", gVerify: "Masuk", gResend: "Kirim ulang kode", gResendIn: "Kirim ulang kode (%s)",
@@ -800,7 +805,7 @@ const TEXT = {
     errPaste: "Paste some reviews first.", errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach BedahReview. Check your internet connection and try again.",
     loadingTitle: "Reading %s reviews…", loadingFetch: "Fetching reviews, then reading them…", loadingSub: "Sorting: fix, fight, ignore.",
     results: "Results", reviewsWord: "reviews", print: "Print",
-    fix: "Fix it", fight: "Fight it", ignore: "Ignore", keep: "Keep",
+    fix: "Fix", fight: "Respond", ignore: "Ignore", keep: "Keep",
     fixRule: "The product, listing or packing caused it, and you can change it.",
     fightRule: "Prove the cause, file a courier claim, and reply in public. This is not a way to get a review removed: Shopee only removes reviews for narrow reasons.",
     ignoreRule: "Star ratings with no text, or filler with nothing to act on. Counted, not analysed.",
@@ -810,11 +815,11 @@ const TEXT = {
     fullReview: "Full review", noText: "(no text)",
     emptyFix: "Nothing here for you to fix.", emptyFight: "No reviews to answer.", emptyIgnore: "No reviews ignored.",
     keepRule: "What buyers like. Protect it.", emptyKeep: "No clear praise yet.",
-    noteFake: "%s likely-fake review(s) are left out of the counts. They are in the Fight it tab, each with a report text.",
+    noteFake: "%s likely-fake review(s) are left out of the counts. They are in the Respond tab, each with a report text.",
     noteDropped: "%s review(s) were skipped because the model's proof quote could not be verified.",
     noteNoText: "%s review(s) are star-only, with no text. Counted under Ignore, not analysed.",
     footFrom: "%s%s review(s) fetched from the product link%s. ", footLow: " low-star", footCached: " (saved copy, no new charge)",
-    footTail: "Suggestions and drafts are written by AI: read them before you send anything to a buyer. Drafts are always in Bahasa Indonesia; if you do not read it, ask someone who does to check them first.",
+    aiNote: "Suggestions and drafts are written by AI, and the drafts are in Bahasa Indonesia. Read them before you send anything to a buyer.",
     stars: "%s of 5 stars",
     rival: "Rivals", rivalRule: "Compare your complaints and praise with similar products. This is a small sample, not the whole market.",
     rivalAsk: "Also compare with competitors?", rivalAskBtn: "Yes, find competitors",
@@ -829,8 +834,8 @@ const TEXT = {
     rivalWorse: "Complaints about “%s”: %s for you vs %s for the best competitor.", rivalOpp: "%s has %s complaints about “%s” (you: %s). A chance to stand out.",
     rivalPraiseGap: "Buyers praise “%s” more at %s (%s, you: %s).", rivalNoInsight: "No clear gap yet. The sample is still small.", rivalSmall: "%s: fewer than 5 credible reviews, so it is not used for any conclusion.",
     rivalQuotes: "Review quotes", rivalAgain: "Start over", rivalShop: "Shop %s", rivalSold: "%s+ sold",
-    f1Eyebrow: "FEATURE 1", f1Title: "Review triage", f1Sub: "Sort your product's reviews into a to-do list",
-    f2Eyebrow: "FEATURE 2", f2Title: "Competitor analysis", f2Sub: "Compare complaints & praise with other shops",
+    f1Title: "Review checker", f1Sub: "Sort your product's reviews into a to-do list",
+    f2Title: "Competitor analysis", f2Sub: "Compare complaints & praise with other shops",
     step1T: "Copy & paste your reviews", step1D: "from Shopee, Tokopedia or any shop app",
     step1TLink: "Paste a link or the reviews", step1DLink: "a Tokopedia, TikTok Shop or Lazada link, or the review text", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
     step3T: "You get a task list", step3D: "in order, with reply drafts ready to copy",
@@ -844,11 +849,10 @@ const TEXT = {
     fbQ: "Was this useful?", fbYes: "Yes", fbPartly: "Partly", fbNo: "No", fbComment: "Anything to add? (optional)",
     fbNote: "A comment is saved only if you write one. Please do not write names or paste review text.", fbSend: "Send", fbThanks: "Thank you. Your answer helps.",
     fbReview: "Your comment looks like it contains review text. Please remove that part, so no review text is stored.", fbFail: "Could not send. Try again later.",
-    privNote: "We record which features are used (for example which tab was opened) per account, with no review text, product names or IP address. If your browser sends “Do Not Track”, those records are not sent.",
     limitBusy: "The server is busy. Try again in a moment.", logout: "Sign out", back: "Back", fixesBtn: "Fixes", fixesTitle: "Fixes you logged", fixesSub: "Saved in this browser only. Nothing is sent to the server.",
     fixesWarn: "Counts from small samples can mislead. One complaint fewer can be chance, not proof that your fix worked. A new analysis may also include some of the same old reviews.",
     fixesNoStore: "This browser cannot save data, so your log is lost when the page closes. Export it to a JSON file to keep it.",
-    fixesExport: "Export JSON", fixesImport: "Import JSON", fixesEmpty: "No fixes yet. In the Fix it tab, tap “Mark as fixed” on a card.",
+    fixesExport: "Export JSON", fixesImport: "Import JSON", fixesEmpty: "No fixes yet. In the Fix tab, tap “Mark as fixed” on a card.",
     fixMark: "Mark as fixed", fixNoteLbl: "Short note (optional)", fixNotePh: "e.g. size chart changed to cm", fixSave: "Save", fixCancel: "Cancel",
     fixMarked: "Marked as fixed %s", fixBefore: "Before: %s of %s reviews complained about this.", fixAfter: "After (%s): %s of %s reviews.",
     fixWaiting: "No newer analysis to compare with yet. Analyse the latest reviews of the same product later.",
@@ -868,10 +872,10 @@ const TEXT = {
     leadIgnore: "Stars or comments with no content. Counted, not analysed.", leadKeep: "What buyers praise. Show it off on the product page.",
     noRemove: "BedahReview cannot remove reviews.", noRemoveBody: "A report only asks %s to review it; the decision stays with %s. A polite reply stays visible to future buyers.", platformWord: "the marketplace",
     whyLbl: "Why here: ", moreQuotes: "Show %s more quotes",
-    rivalOwnLbl: "Your product, from Review triage", rivalOther: "Use another product", rivalBackOwn: "Use the product from Review triage", rivalTitleAlone: "Compare your product with competitors",
+    rivalOwnLbl: "Your product, from Review checker", rivalOther: "Use another product", rivalBackOwn: "Use the product from Review checker", rivalTitleAlone: "Compare your product with competitors",
     rivalIntroS: "We look for 2–3 similar products on the same platform. You pick the ones that fit, then we count complaints and praise in their reviews.",
     rivalYourLink: "Your product link", rivalYourName: "Product name (helps the search)", rivalYourNamePh: "e.g. Retro Boxy Tee", rivalFindLink: "Find competitors",
-    rivalFreeNote: "Works without Review triage. One comparison uses one of your daily analyses.",
+    rivalFreeNote: "Works without Review checker. One comparison uses one of your daily analyses.",
     rivalSignIn: "Sign in to find and compare competitors. It is free, no password.", rivalSignInNote: "Finding competitors needs a free sign-in. You can see an example without one.", rivalSignInBtn: "Sign in to find competitors", rivalNeedLink: "Paste your product link first.", rivalNeedName: "Enter your product name so we can search for similar ones.",
     stepFind: "Find", stepPick: "Pick", stepCompare: "Compare",
     rivalFound: "We found %s similar products. The %s closest are already ticked; untick any that do not fit.", rivalMost: "Closest", rivalMoreN: "Other products found · %s", rivalShopLbl: "Shop: %s",
@@ -880,10 +884,10 @@ const TEXT = {
     rivalSmallLine: "%s has only %s credible reviews (at least 5 needed), so it is not used for conclusions.", rivalFailLine: "One competitor link could not be opened (the product may be deleted).",
     rivalFakeLine: "%s competitor review(s) look fake and are not counted (%s).", rivalFakeEach: "%s: %s read, %s counted", rivalSmallNote: "%s is not used for the lines above because it has too few reviews.",
     rivalLineWorse: "%s: %s for you, %s for the best competitor.", rivalLineOther: "%s: %s for you, %s at %s.",
-    rivalAlone: "Without Review triage we cannot compare against your product. Run Review triage to see the gap.", rivalLinkLbl: "See the reviews",
+    rivalAlone: "Without Review checker we cannot compare against your product. Run Review checker to see the gap.", rivalLinkLbl: "See the reviews",
     rivalLineWorseEx: "%s: %s for %s, %s for the best competitor.", rivalLineOtherEx: "%s: %s for %s, %s at %s.",
     gTitle: "Sign in to analyse your reviews", gSub: "Free, no password. Use Google or email.", gGoogle: "Continue with Google", gOr: "or use email",
-    gEmail: "Email", gEmailPh: "name@email.com", gSend: "Send code to my email", gConsent: "We record usage per account (never review text) for research on this product.",
+    gEmail: "Email", gEmailPh: "name@email.com", gSend: "Send code to my email", gConsent: "We record which features you use, per account (for example which tab you open), never review text, product names or an IP address.", gOpts: "Sign-in settings",
     gKeep: "Keep me signed in on this phone", gIosNote: "Add to the Home Screen first (Safari > Share > Add to Home Screen), then sign in from the icon. The installed app keeps its own session, apart from Safari.",
     gExample: "Try an example first", gCode: "Have an access code? Sign in here", gClose: "Not now", signInShort: "Sign in",
     gCodeTitle: "Enter the 6-digit code", gCodeSub: "We sent a code to %s. If it has not arrived, check your spam folder.", gVerify: "Sign in", gResend: "Send the code again", gResendIn: "Send the code again (%s)",
@@ -1060,6 +1064,7 @@ function kitText(kit) {  // the explanation and steps follow the page language; 
   const mine = id ? kit.steps_id : kit.steps, other = id ? kit.steps : kit.steps_id;
   return { why, steps: (mine && mine.length ? mine : other) || [] };
 }
+const aiNote = () => h("p", { class: "small muted ai-note", text: tr("aiNote") });  // once above the drafts of a tab, where the Copy buttons are
 function replyCard(item) {
   const kit = item.fight || {};
   const { why, steps } = kitText(kit);
@@ -1285,6 +1290,7 @@ function renderFixBadge() {
   const n = loadFixes().length;
   $("fixes-count").textContent = n; $("fixes-count").hidden = !n;
   $("fixes-btn").setAttribute("aria-label", tr("fixesBtn") + (n ? " (" + n + ")" : "")); $("fixes-btn").title = tr("fixesBtn");
+  $("acct-fixes").textContent = tr("fixesBtn") + (n ? " (" + n + ")" : "");
 }
 const noteCopiesReview = (text) => !!(text && lastData && looksLikeReviewText(String(text).trim(), lastData.items));  // a note is the seller's own words, not a pasted review
 function showFixNoteError(box, msg) {
@@ -1546,14 +1552,14 @@ function render(data, fresh) {
     [h("h3", { class: "phead dsk", text: tr(k) + " · " + counts[k] + " " + tr("reviewsWord") }), h("p", { class: "lead dsk", text: tr("lead" + cap(k)) })],
     extra, body);
   $("panels").replaceChildren(
-    panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") })),
-    panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") }), h("div", { class: "callout hot dsk" }, h("b", { text: tr("noRemove") + " " }), tr("noRemoveBody", plat, plat))),
+    panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") }), fixItems.length ? aiNote() : null),
+    panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") }), [h("div", { class: "callout hot dsk" }, h("b", { text: tr("noRemove") + " " }), tr("noRemoveBody", plat, plat)), fight.length ? aiNote() : null]),
     panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })),
     panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })));
   renderRival(); renderFeedback();
 
   const fromLink = src.kind === "url" ? tr("footFrom", src.count, src.mode === "complaints" ? tr("footLow") : "", src.cached ? tr("footCached") : "") : "";
-  $("foot").textContent = fromLink + tr("footTail", data.model);
+  $("foot").textContent = fromLink.trim(); $("foot").hidden = !fromLink;
 
   const first = fresh === false ? activeTab : (counts.fix ? "fix" : counts.fight ? "fight" : counts.ignore ? "ignore" : counts.keep ? "keep" : "fix");
   selectTab(first, false);
@@ -2078,6 +2084,7 @@ $("acct-btn").addEventListener("click", () => {
 document.addEventListener("click", (e) => { if (!$("acct-menu").hidden && !$("acct").contains(e.target)) setMenu(false); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("acct-menu").hidden) { setMenu(false); $("acct-btn").focus(); } });
 $("acct-theme").addEventListener("click", () => $("theme").click());
+$("acct-fixes").addEventListener("click", () => { setMenu(false); $("fixes-btn").click(); });
 function gateInfo(msg) { $("g-info").textContent = msg || ""; $("g-info").hidden = !msg; }
 function fillSelect(sel, values, label) {
   const keep = sel.value;

@@ -286,7 +286,7 @@ class TriageBoardTests(unittest.TestCase):
             ("3", dict(bucket="keep", fake=True, stars=5)),
         ])
         self.assertEqual(out["counts"], {"fix": 1, "fight": 0, "check": 0, "ignore": 0, "keep": 0})
-        self.assertEqual((out["likely_fake"], out["complaints"], len(out["items"])), (2, 1, 3))  # still returned, for the Fight it tab
+        self.assertEqual((out["likely_fake"], out["complaints"], len(out["items"])), (2, 1, 3))  # still returned, for the Respond tab
         self.assertEqual([g["ids"] for g in out["groups"]], [["1"]])
 
     def test_star_only_reviews_are_counted_under_ignore(self):

@@ -107,9 +107,10 @@ window.__probe = (async () => {
     await until(() => vis("gate"));
     out.gate = vis("gate"); out.workspaceHidden = byId("workspace").hidden;
     out.title = byId("gate-h").textContent; out.google = byId("g-google").textContent.trim();
-    out.consent = byId("g-choose").textContent.includes("Kami mencatat pemakaian per akun (tanpa isi ulasan) untuk riset produk ini.");
+    out.consent = byId("g-choose").textContent.includes("Kami mencatat fitur yang kamu pakai per akun (misalnya tab yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.");
     out.codeLink = vis("g-codelink"); out.signinBtn = vis("signin-btn");
     out.noContactAsk = /hubungi|wawancara|contacted|interview/i.test(byId("gate").textContent);
+    out.keepInOptions = !!byId("g-keep").closest("details.gate-opts") && !byId("g-keep").closest("details").open && byId("g-keep").checked;  // on by default, and out of the way
     out.otp = [byId("otp-0").getAttribute("autocomplete"), byId("otp-0").getAttribute("inputmode"), byId("otp-1").getAttribute("autocomplete"), document.querySelectorAll("#otp input").length];
     byId("lang").click(); out.titleEn = byId("gate-h").textContent; byId("lang").click();
     byId("g-google").click(); await wait(100); out.oauth = calls("oauth")[0].slice(1);
@@ -299,6 +300,7 @@ window.__probe = (async () => {
     out.open = [vis("acct-menu"), byId("acct-btn").getAttribute("aria-expanded"), document.activeElement && document.activeElement.className];
     out.items = [...byId("acct-menu").querySelectorAll(".mitem")].filter((b) => b.offsetParent).map((b) => b.textContent);
     out.deleteRed = getComputedStyle(byId("delete-open")).color !== getComputedStyle(byId("logout")).color;
+    out.fixesLabel = byId("fixes-btn").querySelector(".lbl").textContent; out.fixesMenuHidden = byId("acct-fixes").offsetParent === null;  // a wide enough header shows the word; the menu item is for phones
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); out.escClosed = !vis("acct-menu") && document.activeElement === byId("acct-btn");
     byId("acct-btn").click(); document.body.click(); out.outsideClosed = !vis("acct-menu");
     out.oldFooter = !!document.querySelector("main #logout, main #delete-open");
@@ -398,6 +400,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertTrue(out["consent"])
         self.assertTrue(out["codeLink"])  # interviewers with an access code still have a way in
         self.assertFalse(out["noContactAsk"])  # no "may we contact you" question anywhere
+        self.assertTrue(out["keepInOptions"])
         self.assertEqual(out["otp"], ["one-time-code", "numeric", "off", 6])
         self.assertEqual(out["titleEn"], "Sign in to analyse your reviews")
         self.assertEqual(out["oauth"], ["google", "http://127.0.0.1:%d/" % self.port])
@@ -568,6 +571,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertIn("Kebijakan privasi", out["items"])
         self.assertEqual(out["items"][-1], "Hapus akun dan data saya")  # last, apart from the rest
         self.assertTrue(out["deleteRed"])
+        self.assertEqual((out["fixesLabel"], out["fixesMenuHidden"]), ("Perbaikan", True))
         self.assertTrue(out["escClosed"] and out["outsideClosed"])
         self.assertFalse(out["oldFooter"])  # no longer at the bottom of the results
 

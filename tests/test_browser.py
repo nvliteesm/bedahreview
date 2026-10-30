@@ -73,6 +73,9 @@ window.__probe = (async () => {
     out.cards = document.querySelectorAll("#panel-fix .card").length;
     out.chips = [...document.querySelectorAll("#panel-fight .chip")].map((c) => c.textContent);
     out.keep = document.querySelectorAll("#panel-keep blockquote").length;
+    out.legendShown = getComputedStyle(document.querySelector(".legend")).display !== "none";  // the 4 groups are explained on a phone too
+    out.aiNotes = [...document.querySelectorAll(".ai-note")].map((n) => n.closest("[role=tabpanel]").id);  // one note above the drafts of each tab
+    out.footHidden = document.getElementById("foot").hidden; out.noDev = !/analytics\.md|Model:|Demo:/.test(document.body.innerText);
     const cache = await caches.open("bedahreview-shell-v1");
     out.cachedPaths = (await cache.keys()).map((r) => new URL(r.url).pathname);
     out.copyButtons = document.querySelectorAll(".copy").length;
@@ -370,10 +373,13 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(out["cards"], 1)  # the two colour complaints become one card
         self.assertIn("Kurir? Cek dulu", out["chips"])
         self.assertGreaterEqual(out["keep"], 1)  # praise sits in its own Pertahankan tab
+        self.assertTrue(out["legendShown"])
+        self.assertEqual(out["aiNotes"], ["panel-fix", "panel-fight"])
+        self.assertTrue(out["footHidden"] and out["noDev"])  # pasted reviews: no footer note, and no developer text anywhere
         self.assertIn("/", out["cachedPaths"])  # the app shell is cached...
         self.assertFalse([p for p in out["cachedPaths"] if p.startswith("/api/")], out["cachedPaths"])  # ...reviews never are
         self.assertGreaterEqual(out["copyButtons"], 3)
-        self.assertEqual(out["enTabs"][:3], ["2Fix it", "1Fight it", "0Ignore"])
+        self.assertEqual(out["enTabs"][:3], ["2Fix", "1Respond", "0Ignore"])
         self.assertTrue(out["enTabs"][3].endswith("Keep"), out["enTabs"])
         self.assertEqual(out["enLang"], "en")
         self.assertEqual(out["draftStillBahasa"], "Ganti foto varian.")  # drafts stay Bahasa in English mode

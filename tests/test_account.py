@@ -277,7 +277,7 @@ class PrivacyPageTests(unittest.TestCase):
     def test_the_app_links_to_it_from_the_sign_in_and_the_footer(self):
         html = (web.STATIC / "index.html").read_text(encoding="utf-8")
         self.assertGreaterEqual(html.count('href="/privacy"'), 2)
-        self.assertIn("Kami mencatat pemakaian per akun (tanpa isi ulasan) untuk riset produk ini.", html)
+        self.assertIn("Kami mencatat fitur yang kamu pakai per akun (misalnya tab yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.", html)
 
 
 if __name__ == "__main__":
