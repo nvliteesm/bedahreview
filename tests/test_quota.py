@@ -145,17 +145,26 @@ class ServerTests(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertNotIn("quota", data)
 
-    def test_a_normal_account_can_never_start_a_paid_fetch(self):
+    def test_a_normal_account_may_read_a_link_but_never_search_competitors(self):
         status, data = self.call("POST", "/api/classify", {"url": "https://www.tokopedia.com/toko/produk"}, self.bearer())
-        self.assertEqual((status, data["code"]), (403, "paid_off"))
+        self.assertEqual((status, data["code"]), (502, "fetch_failed"))  # it reached the fetcher, which the test makes fail
         self.assertEqual(self.call("POST", "/api/competitors/suggest", {"url": "https://www.tokopedia.com/toko/produk", "title": "Kaos"}, self.bearer())[0], 403)
         self.assertEqual(self.call("POST", "/api/competitors/compare", {"url": "", "title": "", "own": [], "competitors": [{"url": "https://www.tokopedia.com/a/b"}]}, self.bearer())[0], 403)
-        self.assertEqual(self.fetcher.fetched, [])
+        self.assertEqual(self.fetcher.fetched, ["https://www.tokopedia.com/toko/produk"])  # the link only, never a competitor
 
-    def test_the_link_box_is_only_offered_to_access_code_testers(self):
-        self.assertFalse(self.call("GET", "/api/config")[1]["url_box"])  # signed out
-        self.assertFalse(self.call("GET", "/api/config", headers=self.bearer())[1]["url_box"])  # a normal account
-        self.assertTrue(self.call("GET", "/api/config", headers=self.cookie())[1]["url_box"])  # an access-code tester
+    def test_the_daily_limit_is_checked_before_a_paid_fetch(self):
+        link = {"url": "https://www.tokopedia.com/toko/produk"}
+        self.assertEqual(self.call("POST", "/api/classify", link, self.bearer())[0], 502)  # a failed fetch gives the turn back
+        for _ in range(2):
+            self.assertEqual(self.analyse(self.bearer())[0], 200)
+        status, data = self.call("POST", "/api/classify", link, self.bearer())
+        self.assertEqual((status, data["code"]), (429, "daily_limit"))
+        self.assertEqual(len(self.fetcher.fetched), 1)  # the refused one never reached the paid fetcher
+
+    def test_everyone_gets_the_link_box_and_only_testers_get_competitors(self):
+        for headers, rivals in (({}, False), (self.bearer(), False), (self.cookie(), True)):  # signed out, a normal account, an access-code tester
+            cfg = self.call("GET", "/api/config", headers=headers)[1]
+            self.assertEqual((cfg["url_box"], cfg["rivals"]), (True, rivals))
 
 
 class TrustedAccountTests(unittest.TestCase):
@@ -196,14 +205,14 @@ class TrustedAccountTests(unittest.TestCase):
                 web.parse_user_ids(bad)
 
     def test_a_trusted_account_sees_the_link_box_and_may_use_it(self):
-        self.assertTrue(self.call("GET", "/api/config", sub=self.ME)[1]["url_box"])
+        self.assertTrue(self.call("GET", "/api/config", sub=self.ME)[1]["rivals"])
         status, data = self.call("POST", "/api/classify", {"url": "https://www.tokopedia.com/toko/produk"}, sub=self.ME)
         self.assertNotEqual(data.get("code"), "paid_off")  # it got as far as the fetcher (which the test makes fail)
         self.assertEqual(self.fetcher.fetched, ["https://www.tokopedia.com/toko/produk"])
 
-    def test_any_other_account_still_cannot(self):
-        self.assertFalse(self.call("GET", "/api/config", sub=self.OTHER)[1]["url_box"])
-        status, data = self.call("POST", "/api/classify", {"url": "https://www.tokopedia.com/toko/produk"}, sub=self.OTHER)
+    def test_any_other_account_gets_no_competitor_search(self):
+        self.assertFalse(self.call("GET", "/api/config", sub=self.OTHER)[1]["rivals"])
+        status, data = self.call("POST", "/api/competitors/suggest", {"url": "https://www.tokopedia.com/toko/produk", "title": "Kaos"}, sub=self.OTHER)
         self.assertEqual((status, data["code"]), (403, "paid_off"))
         self.assertEqual(self.fetcher.fetched, [])
 

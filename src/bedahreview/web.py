@@ -496,10 +496,11 @@ class Handler(BaseHTTPRequestHandler):
         sys.stdout.flush()
         self._json(200, {"ok": True})
 
-    def _paid_ok(self) -> bool:
+    def _paid_ok(self, rivals: bool = True) -> bool:
         """Count one paid action for this visitor; send the 429 and return False when they are at the hourly limit.
-        With Supabase on, paid actions are only for access-code testers: a normal account never spends the Apify budget."""
-        if type(self).supabase_auth is not None and self._uid and self._uid not in type(self).paid_users:
+        Reading reviews from a product link is open to everyone (a visitor's one free analysis, and every account within its daily limit).
+        With Supabase on, the competitor search and compare (rivals=True) stay with access-code testers and trusted accounts."""
+        if rivals and type(self).supabase_auth is not None and self._uid and self._uid not in type(self).paid_users:
             self._json(403, {"error": "Reading reviews from a link is not available for this account. Paste the reviews instead.", "fallback": "paste", "code": "paid_off"})
             return False
         if self.paid_limiter and not self.paid_limiter.take(self._client()):
@@ -672,7 +673,7 @@ class Handler(BaseHTTPRequestHandler):
         except FetchError as exc:  # includes LinkError
             self._json(400, {"error": str(exc), "code": exc.code})
             return None
-        if not self._paid_ok():  # a saved copy costs nothing but is counted too; the limit is per visitor and generous enough
+        if not self._paid_ok(rivals=False):  # a saved copy costs nothing but is counted too; the limit is per visitor and generous enough
             return None
         try:
             fetched = fetcher.fetch_reviews(url, limit, mode)
@@ -861,8 +862,8 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/example":
             return self._json(200, example_response())
         if path == "/api/config":
-            on = type(self).fetcher is not None and (type(self).supabase_auth is None or self._cookie_user() or self._uid in type(self).paid_users)  # with accounts on, the link box is for access-code testers and trusted accounts only
-            cfg = {"url_box": on, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes), "signed_in": self._authed(), "can_delete": type(self).account_admin is not None, "contact": type(self).contact_email, "free": type(self).free_trial is not None}
+            rivals = type(self).fetcher is not None and (type(self).supabase_auth is None or self._cookie_user() or self._uid in type(self).paid_users)  # with accounts on, competitors are for access-code testers and trusted accounts only
+            cfg = {"url_box": type(self).fetcher is not None, "rivals": rivals, "max_limit": MAX_LIMIT, "default_limit": DEFAULT_LIMIT, "access": bool(self.access_codes), "signed_in": self._authed(), "can_delete": type(self).account_admin is not None, "contact": type(self).contact_email, "free": type(self).free_trial is not None}
             if type(self).supabase_public:
                 cfg["supabase"] = type(self).supabase_public
             return self._json(200, cfg)
@@ -911,23 +912,7 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, UnicodeDecodeError):
             return self._json(400, {"error": "Body must be JSON like {\"text\": \"...\"}"})
 
-        if free and url.strip():  # a link costs money: never without an account
-            return self._json(401, {"error": "Sign in to read reviews from a link.", "login": True, "code": "free_paste_only"})
-        source: Optional[Dict[str, Any]] = None
-        if url.strip():
-            fetched = self._fetch(url, body.get("limit", DEFAULT_LIMIT), body.get("mode", "complaints"))
-            if fetched is None:  # _fetch already sent the error
-                return
-            reviews, source = fetched
-        else:
-            reviews = parse_reviews(text)
-            name = " ".join(product.split())[:MAX_PRODUCT_CHARS]
-            source = {"kind": "paste", "title": name} if name else None
-        if not reviews:
-            return self._json(400, {"error": "No reviews found. Paste at least one review.", "code": "no_parse"})
-        if len(reviews) > MAX_REVIEWS:
-            return self._json(400, {"error": "%d reviews pasted; v1 handles up to %d at a time." % (len(reviews), MAX_REVIEWS), "code": "too_many_reviews", "max": MAX_REVIEWS})
-
+        # the limits come before the work: a link fetch costs money, so nobody over a limit may start one
         quota = type(self).daily_quota if self._uid and self._uid not in type(self).paid_users else None
         used = 0
         if quota:
@@ -942,6 +927,23 @@ class Handler(BaseHTTPRequestHandler):
                 quota.refund(self._uid)
             if free:
                 trial.refund(self._client())
+        source: Optional[Dict[str, Any]] = None
+        if url.strip():
+            fetched = self._fetch(url, body.get("limit", DEFAULT_LIMIT), body.get("mode", "complaints"))
+            if fetched is None:  # _fetch already sent the error
+                give_back()
+                return
+            reviews, source = fetched
+        else:
+            reviews = parse_reviews(text)
+            name = " ".join(product.split())[:MAX_PRODUCT_CHARS]
+            source = {"kind": "paste", "title": name} if name else None
+        if not reviews:
+            give_back()
+            return self._json(400, {"error": "No reviews found. Paste at least one review.", "code": "no_parse"})
+        if len(reviews) > MAX_REVIEWS:
+            give_back()
+            return self._json(400, {"error": "%d reviews pasted; v1 handles up to %d at a time." % (len(reviews), MAX_REVIEWS), "code": "too_many_reviews", "max": MAX_REVIEWS})
         model = resolve_model()
         try:
             title = (source or {}).get("title") or " ".join(product.split())[:MAX_PRODUCT_CHARS] or None

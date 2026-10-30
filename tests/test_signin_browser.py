@@ -11,6 +11,7 @@ from pathlib import Path
 from bedahreview import web
 from bedahreview.account import TABLES, AccountAdmin
 from bedahreview.auth import SupabaseAuth
+from bedahreview.fetchers.base import Fetcher, Review
 
 try:
     from test_auth import URL, USER, FakeSupabase, new_key, token
@@ -18,6 +19,19 @@ try:
 except ImportError:  # run as tests.<module>
     from tests.test_auth import URL, USER, FakeSupabase, new_key, token
     from tests.test_browser import CHROME, _read_probe, _stub_classify
+
+class LinkFetch(Fetcher):
+    """Stands in for the paid review service: any link gives the same three reviews."""
+    last_platform = "tokopedia"
+
+    def check_link(self, url):
+        return url
+
+    def fetch_reviews(self, url, limit, mode="latest"):
+        return [Review(3, "warna tulisannya ijo pas dateng hitem", "Putih, M", "2026-10-01", 0, False, "Kaos Boxy Retro"),
+                Review(2, "Pas sampe koyak bajunya", "Hitam, L", "2026-10-02", 0, False, "Kaos Boxy Retro"),
+                Review(5, "bahannya tebel, bagus", "Putih, L", "2026-10-03", 0, False, "Kaos Boxy Retro")]
+
 
 FAKE_SUPABASE = """
 <script>
@@ -234,6 +248,15 @@ window.__probe = (async () => {
     out.after = { unlock: vis("unlock"), panels: shown("panels"), acct: vis("acct"), signinBtn: vis("signin-btn"), email: byId("acct-email").textContent, queued: eventQueue.map((e) => e.event) };
   }
 
+  if (hash === "#free-link") {
+    await until(() => !byId("workspace").hidden && !byId("intab-link").hidden);
+    out.linkFirst = byId("intab-link").getAttribute("aria-selected") === "true" && !byId("in-link").hidden;
+    out.noDemo = !/demo|sen dolar|cents/i.test(byId("view-input").textContent);
+    byId("url").value = "https://www.tokopedia.com/toko/kaos-boxy"; byId("fetch").click();
+    await until(() => !byId("view-results").hidden, 80);
+    out.locked = { unlock: vis("unlock"), panels: shown("panels"), counts: [...document.querySelectorAll("#tabs button .n")].map((n) => n.textContent), summary: byId("summary").textContent };
+  }
+
   if (hash === "#free-google") {
     await until(() => !byId("workspace").hidden);
     if (!window.__back) {
@@ -326,7 +349,7 @@ class SignInBrowserTests(unittest.TestCase):
         cls.admin_calls = []
         cls.server = web.make_server(0, classify_fn=_stub_classify, access_codes={"ani": "ani-secret-1"}, public=True,
                                      account_admin=AccountAdmin(URL, "sb_secret_x", request=lambda m, u, h, b: (cls.admin_calls.append((m, u.replace(URL, ""))) or 204)),
-                                     supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key="sb_publishable_x", free_per_visitor=50)
+                                     supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key="sb_publishable_x", free_per_visitor=50, fetcher=LinkFetch())
         cls.port = cls.server.server_address[1]
         threading.Thread(target=cls.server.serve_forever, daemon=True).start()
 
@@ -497,6 +520,14 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual(after["email"], "ani@example.com")  # shown in this browser's menu only
         self.assertIn("free_unlocked", after["queued"])
         self.assertIn("analysed", after["queued"])  # the free analysis now counts for the account
+
+    def test_a_visitor_can_use_a_product_link_for_the_free_analysis(self):
+        out = self.probe("#free-link")
+        self.assertTrue(out["linkFirst"])  # the link is the way in, on a phone too
+        self.assertTrue(out["noDemo"])  # no "demo" or cost talk in front of sellers
+        self.assertEqual((out["locked"]["unlock"], out["locked"]["panels"]), (True, False))
+        self.assertEqual(out["locked"]["counts"], ["1", "1", "0", "1"])  # the four numbers show; the quotes and drafts wait for a sign-in
+        self.assertIn("Kaos Boxy Retro", out["locked"]["summary"])
 
     def test_a_free_analysis_waits_in_the_tab_during_the_google_sign_in(self):
         out = self.probe("#free-google")

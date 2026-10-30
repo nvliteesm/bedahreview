@@ -13,6 +13,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from bedahreview import web
 from bedahreview.auth import KEYS_TTL_SECS, REFETCH_COOLDOWN_SECS, SupabaseAuth
 from bedahreview.events import EVENTS, SERVER_EVENTS
+from bedahreview.fetchers.base import Fetcher, FetchError
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = "https://abcdwxyz.supabase.co"
@@ -218,6 +219,21 @@ class SupabaseOnlyTests(unittest.TestCase):
         self.assertEqual(status("/code"), 401)  # nothing to type a code into
 
 
+class RecordingFetch(Fetcher):
+    """A link fetcher that records each link it is asked for, then fails like a real fetch can."""
+    last_platform = "tokopedia"
+
+    def __init__(self):
+        self.fetched = []
+
+    def check_link(self, url):
+        return url
+
+    def fetch_reviews(self, url, limit, mode="latest"):
+        self.fetched.append(url)
+        raise FetchError("The review service did not answer.", "fetch_failed")
+
+
 class FreeAnalysisTests(unittest.TestCase):
     """With accounts on, a visitor gets one analysis before signing in: paste only, a few per visitor address, a fixed number a day for everyone."""
     BODY = json.dumps({"text": "warna beda dari foto\nbahannya tipis"}).encode()
@@ -264,10 +280,15 @@ class FreeAnalysisTests(unittest.TestCase):
         self.assertNotIn("free", out)
         self.assertEqual(self.server.RequestHandlerClass.free_trial.done, 0)
 
-    def test_a_link_never_runs_without_an_account(self):
-        self.start()
-        status, out = self.post(json.dumps({"url": "https://www.tokopedia.com/toko/produk"}).encode())
-        self.assertEqual((status, out["code"], out["login"]), (401, "free_paste_only", True))
+    def test_a_visitors_free_analysis_may_use_a_link_and_a_used_turn_never_reaches_the_fetcher(self):
+        fetcher = RecordingFetch()
+        self.start(fetcher=fetcher, free_per_visitor=1)
+        link = json.dumps({"url": "https://www.tokopedia.com/toko/produk"}).encode()
+        self.assertEqual(self.post(link)[0], 502)  # it reached the fetcher (which fails here), and the turn was given back
+        self.assertEqual(self.post()[0], 200)  # the one free turn
+        status, out = self.post(link)
+        self.assertEqual((status, out["code"]), (401, "free_used"))
+        self.assertEqual(fetcher.fetched, ["https://www.tokopedia.com/toko/produk"])  # the refused one cost nothing
 
     def test_a_sign_in_that_ran_out_is_asked_again_not_treated_as_a_stranger(self):
         self.start()

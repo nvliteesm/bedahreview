@@ -228,7 +228,6 @@ main, #view-results, #view-fixes, .panel, .stack { grid-template-columns: minmax
 .group h3 { display: flex; align-items: baseline; gap: 8px; }
 .group h3 small { font-weight: 500; color: var(--muted); font-size: 0.85rem; }
 .group.learn h3 { color: var(--keep); } .group.avoid h3 { color: var(--fix); } .group.ignore h3 { color: var(--ignore); }
-.demo { margin-left: 4px; }
 .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .card-head .chips { justify-content: flex-end; }
 .lbl-b { font-weight: 800; color: var(--ink); }
@@ -483,12 +482,11 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
     <button class="plain dsk" id="back-results" type="button" hidden></button>
     <div class="card-box">
       <div class="seg" role="tablist" id="intabs" hidden>
-        <button role="tab" id="intab-link" aria-controls="in-link" aria-selected="false" tabindex="-1" type="button" data-t="link" hidden><span data-i18n="tabLink"></span> <span class="chip fix demo">Demo</span></button>
+        <button role="tab" id="intab-link" aria-controls="in-link" aria-selected="false" tabindex="-1" type="button" data-t="link" hidden><span data-i18n="tabLink"></span></button>
         <button role="tab" id="intab-paste" aria-controls="in-paste" aria-selected="true" type="button" data-t="paste" data-i18n="tabPaste"></button>
       </div>
 
       <div id="in-link" role="tabpanel" aria-labelledby="intab-link" style="display:grid;gap:12px" hidden>
-        <div class="callout warn mob" data-i18n="linkDemo"></div>
         <label class="field" for="url"><span data-i18n="linkLabel"></span>
           <input id="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" data-i18n-ph="linkPh" placeholder="It supports Tokopedia, Lazada, TikTok Shop">
         </label>
@@ -651,9 +649,9 @@ const TEXT = {
     install: "Pasang di layar utama",
     sharedOk: "Teks dari menu Bagikan sudah masuk. Ketuk Bedah ulasan.",
     sharedLinkOnly: "Yang dikirim hanya tautan, bukan teks ulasan. Salin teks ulasannya, lalu tempel.",
-    linkDemo: "Demo saja: ulasan diambil lewat layanan pihak ketiga yang berbayar.", linkLabel: "Tautan produk", linkPh: "Mendukung Tokopedia, Lazada, TikTok Shop",
+    linkLabel: "Tautan produk", linkPh: "Mendukung Tokopedia, Lazada, TikTok Shop",
     modeLabel: "Ambil", modeComplaints: "Keluhan dulu (1-3★)", modeLatest: "Ulasan terbaru", limitLabel: "Jumlah", fetchRun: "Ambil & bedah",
-    linkNote: "Tempel tautan produk Tokopedia, Lazada, atau TikTok Shop. Platformnya dikenali otomatis, tautan pendek dari tombol Bagikan juga bisa. Shopee belum bisa lewat tautan: tempel ulasannya. Biayanya beberapa sen dolar AS per pengambilan. Bisa gagal atau kurang dari yang diminta. Tempel selalu bisa.",
+    linkNote: "Tautan pendek dari tombol Bagikan juga bisa. Shopee belum bisa lewat tautan: salin dan tempel ulasannya. Mengambil ulasan bisa makan waktu hingga satu menit, dan kadang hasilnya lebih sedikit dari yang diminta.",
     errPaste: "Tempel ulasan dulu.", errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa terhubung ke BedahReview. Periksa koneksi internetmu, lalu coba lagi.",
     loadingTitle: "Membedah %s ulasan…", loadingFetch: "Mengambil ulasan, lalu membedahnya…", loadingSub: "Memilah: perbaiki, tanggapi, abaikan.",
     results: "Hasil", reviewsWord: "ulasan", print: "Cetak",
@@ -714,7 +712,7 @@ const TEXT = {
     fixNoName: "Tanpa nama produk: perbaikan ini dicocokkan dengan analisis lain yang juga tanpa nama. Isi nama produk di kotak Tempel agar tepat.",
     fixesCompared: "%s perbaikan yang kamu catat dibandingkan dengan ulasan baru ini.", fixesSee: "Lihat",
     importOk: "Diimpor: %s perbaikan. Dilewati karena tidak valid: %s.", importBad: "File ini tidak bisa dibaca sebagai daftar perbaikan BedahReview.", importBig: "File terlalu besar.", fixSaveFail: "Tidak bisa menyimpan di browser ini. Ekspor JSON supaya catatan tidak hilang.",
-    limitBudget: "Batas demo hari ini tercapai. Tempel ulasannya saja.", limitBudgetRival: "Batas demo hari ini tercapai. Coba lagi besok.", limitHour: "Terlalu banyak pengambilan lewat tautan dalam satu jam. Coba lagi nanti, atau tempel ulasannya.",
+    limitBudget: "Membaca lewat tautan sedang tidak tersedia hari ini. Salin dan tempel ulasannya saja.", limitBudgetRival: "Pencarian pesaing sedang tidak tersedia hari ini. Coba lagi besok.", limitHour: "Terlalu banyak pengambilan lewat tautan dalam satu jam. Coba lagi nanti, atau tempel ulasannya.",
     fbTitle: "Cara lain: tempel ulasannya", fbSteps: ["Buka produk di marketplace, lalu buka Ulasan.", "Salin teks ulasannya.", "Tempel di bawah, satu ulasan per baris."], fbRetry: "Coba tautan lagi",
     errFetchTitle: "Ulasan dari tautan ini tidak bisa dibaca", backResults: "← Kembali ke hasil", pastedName: "Ulasan yang ditempel",
     change: "Ubah", shown: "Ditampilkan", themeDark: "Mode gelap", themeLight: "Mode terang",
@@ -795,9 +793,9 @@ const TEXT = {
     install: "Add to home screen",
     sharedOk: "Text from the Share menu is in. Tap Bedah ulasan.",
     sharedLinkOnly: "Only a link was shared, not the review text. Copy the review text and paste it.",
-    linkDemo: "Demo only: reviews are fetched through a paid third-party service.", linkLabel: "Product link", linkPh: "It supports Tokopedia, Lazada, TikTok Shop",
+    linkLabel: "Product link", linkPh: "It supports Tokopedia, Lazada, TikTok Shop",
     modeLabel: "Get", modeComplaints: "Complaints first (1-3★)", modeLatest: "Latest reviews", limitLabel: "Reviews", fetchRun: "Fetch & analyse",
-    linkNote: "Paste a Tokopedia, Lazada or TikTok Shop product link. The platform is detected for you, and short links from the Share button work too. Shopee cannot be read from a link yet: paste its reviews. Each fetch costs a few US cents. It can fail or return fewer than you ask for. Pasting always works.",
+    linkNote: "Short links from the Share button work too. Shopee cannot be read from a link yet: copy and paste its reviews instead. Reading the reviews can take up to a minute, and sometimes returns fewer than asked.",
     errPaste: "Paste some reviews first.", errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach BedahReview. Check your internet connection and try again.",
     loadingTitle: "Reading %s reviews…", loadingFetch: "Fetching reviews, then reading them…", loadingSub: "Sorting: fix, fight, ignore.",
     results: "Results", reviewsWord: "reviews", print: "Print",
@@ -858,7 +856,7 @@ const TEXT = {
     fixNoName: "No product name: this fix is matched with other analyses that also have no name. Fill in the product name in the Paste box to be exact.",
     fixesCompared: "%s fix(es) you logged were compared with these new reviews.", fixesSee: "See",
     importOk: "Imported: %s fix(es). Skipped as invalid: %s.", importBad: "This file could not be read as a BedahReview fixes list.", importBig: "The file is too large.", fixSaveFail: "Could not save in this browser. Export JSON so your log is not lost.",
-    limitBudget: "Demo limit reached today. Paste the reviews instead.", limitBudgetRival: "Demo limit reached today. Try again tomorrow.", limitHour: "Too many link look-ups this hour. Try again later, or paste the reviews.",
+    limitBudget: "Reading from a link is not available for the rest of today. Copy and paste the reviews instead.", limitBudgetRival: "Competitor search is not available for the rest of today. Try again tomorrow.", limitHour: "Too many link look-ups this hour. Try again later, or paste the reviews.",
     fbTitle: "Another way: paste the reviews", fbSteps: ["Open the product on the marketplace, then open Reviews.", "Copy the review text.", "Paste it below, one review per line."], fbRetry: "Try the link again",
     errFetchTitle: "The reviews from this link could not be read", backResults: "← Back to results", pastedName: "Pasted reviews",
     change: "Change", shown: "Showing", themeDark: "Dark mode", themeLight: "Light mode",
@@ -1567,7 +1565,7 @@ function render(data, fresh) {
 /* ---------- competitor analysis ---------- */
 const RIVAL_COST_IDR = 500;  // about 3 US cents per competitor, shown while we test
 const MAX_RIVALS = 3;
-let rivalWant = 3, linkBoxOn = null;  // how many competitors the seller wants (1 to 3); linkBoxOn is null until the server says
+let rivalWant = 3, linkBoxOn = null, rivalsOn = null;  // how many competitors the seller wants (1 to 3); linkBoxOn (read reviews from a link) and rivalsOn (competitor search) are null until the server says
 const MIN_CREDIBLE = 5;  // same rule as the server: fewer credible reviews than this and a shop is shown but not used for a statement
 // The free example comparison. Everything here is made up: no real shop, product, buyer or review. Same shape as /api/competitors/compare.
 const EXAMPLE_COMPARE = {
@@ -1636,7 +1634,7 @@ function wantSelector() {
   return h("div", { class: "want" }, h("span", { text: tr("rivalWantLbl") }), h("div", { class: "seg", role: "group", "aria-label": tr("rivalWantLbl") },
     [1, 2, 3].map((n) => h("button", { type: "button", "aria-pressed": rivalWant === n ? "true" : "false", text: String(n), onclick: () => { rivalWant = n; renderRival(); } }))));
 }
-const noBoxNote = () => (linkBoxOn === false ? h("div", { class: "callout warn", text: tr("rivalNoBox") }) : null);
+const noBoxNote = () => (rivalsOn === false ? h("div", { class: "callout warn", text: tr("rivalNoBox") }) : null);
 function exampleLink() {  // a built-in comparison, free for every visitor, clearly labelled as made up
   return h("button", { class: "plain strong", type: "button", text: tr("rivalExampleBtn"), onclick: () => { rival = { step: "result", data: Object.assign({ example: true }, EXAMPLE_COMPARE) }; rivalRun += 1; renderRival(); } });
 }
@@ -1946,7 +1944,7 @@ function runPaste() {
   send({ text, product: $("product").value.trim() }, tr("loadingTitle", countReviewsRough(text)));
 }
 function runFetch() {
-  if (!ensureSignedIn()) return;
+  if (!ensureSignedIn(true)) return;
   const url = $("url").value.trim();
   if (!url) { showError(tr("errLink")); $("url").focus(); return; }
   send({ url, limit: parseInt($("limit").value, 10) || 10, mode: $("mode").value }, tr("loadingFetch"));
@@ -2006,7 +2004,7 @@ function unlockFree() {  // just signed in: show the free analysis in full, and 
   try { pending = JSON.parse(sessionStorage.getItem(PENDING_KEY) || "null"); } catch (e) { /* nothing waiting */ }
   dropPending();
   if (pending && pending.free && Array.isArray(pending.items)) render(pending, true);  // back from Google: the page was reloaded
-  else if (freeLocked && lastData) { setLocked(false); track("analysed", { reviews: Math.min(lastData.reviews, 50), source: "paste", lang }); show("results"); $("results-h").focus({ preventScroll: true }); }
+  else if (freeLocked && lastData) { setLocked(false); track("analysed", { reviews: Math.min(lastData.reviews, 50), source: (lastData.source || {}).kind === "url" ? "link" : "paste", lang }); show("results"); $("results-h").focus({ preventScroll: true }); }
   else return;
   track("free_unlocked");
 }
@@ -2273,11 +2271,11 @@ if ("serviceWorker" in navigator) {
 }
 
 function applyBox(cfg, first) {  // the link box: shown only when the server says this visitor may use it
-  linkBoxOn = !!cfg.url_box; renderRival(); stepOneText();
+  linkBoxOn = !!cfg.url_box; rivalsOn = cfg.rivals === undefined ? linkBoxOn : !!cfg.rivals; renderRival(); stepOneText();
   $("intab-link").hidden = !cfg.url_box; $("intabs").hidden = !cfg.url_box;  // paste alone needs no tabs
   if (cfg.url_box) {
     $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
-    if (first && desktop() && !$("paste").value && !location.search) selectInput("link", false);  // on a wide screen the link comes first
+    if (first && !$("paste").value && !location.search) selectInput("link", false);  // a link is the quickest way in, on a phone too
   } else if ($("intab-link").getAttribute("aria-selected") === "true") selectInput("paste", false);
 }
 async function refreshBox() {  // after a sign-in the answer can change: a trusted account gets the link box that a normal one does not
