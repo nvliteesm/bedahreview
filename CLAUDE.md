@@ -43,5 +43,8 @@ Phone-first PWA that sorts Indonesian marketplace reviews into Fix / Fight / Ign
 ## Not verified yet
 Real phone Share-menu and iPhone install/Google sign-in, the Docker build and a Cloud Run deploy with these changes, a real account deletion, real email codes (needs the Supabase templates to contain `{{ .Token }}` and a custom email sender; Supabase's own sender allows 2 emails an hour), the Bahasa drafts with a native speaker, `/admin` against the real Supabase project (the admin users list and the new event names need `db/schema.sql` re-run), Google's Gemini data terms, platform terms.
 
+## Next: free first analysis (owner decision 2026-10-30)
+Anyone can run one analysis without an account. The results show the counts per group, but the quotes, suggestions and drafts stay hidden behind a "sign in to see" box. Signing in unlocks them, and the account then counts on `/admin` as proof of real users. Not built yet. Still open: whether anonymous visitors get the paid link box or paste only (ask the owner), a cap on free runs per browser, and events for "free analysis done" and "signed in after it".
+
 ## Open work
 Deploy (secrets into Secret Manager, redeploy, set Site URL and redirect URLs in Supabase and Google), email sender for the code option, publish the Google consent screen (Audience) before inviting testers, a security review of the sign-in work, keeping a free Supabase project awake, Gemini cost measurement and Groq backup, Shopee route (browser extension), file/CSV upload, fresh hand-labelled test set.

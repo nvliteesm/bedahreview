@@ -83,6 +83,8 @@ main { max-width: 480px; margin: 0 auto; display: grid; gap: 14px; align-content
 label.field, .fld { display: grid; gap: 4px; font-size: 0.82rem; font-weight: 700; color: var(--muted); }
 textarea, input, select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; width: 100%; }
 textarea { min-height: 190px; resize: vertical; font: 0.9rem/1.6 var(--font-mono); padding: 12px; }
+.ta-wrap { position: relative; } .ta-wrap textarea { padding-right: 52px; }
+.ta-clear { position: absolute; top: 4px; right: 4px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer; }
 input, select { min-height: 44px; padding: 0 12px; font-size: 1rem; /* 16px stops iOS zooming into the field */ }
 textarea::placeholder, input::placeholder { color: var(--muted); opacity: 0.8; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 12px; border: 1px solid transparent; font: inherit; font-weight: 700; cursor: pointer; }
@@ -428,7 +430,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   </div>
 
   <ol class="steps dsk g" id="view-steps">
-    <li><span class="num">1</span><div><b data-i18n="step1T"></b><span data-i18n="step1D"></span></div></li>
+    <li><span class="num">1</span><div><b id="step1-t" data-i18n="step1T"></b><span id="step1-d" data-i18n="step1D"></span></div></li>
     <li><span class="num">2</span><div><b data-i18n="step2T"></b><span data-i18n="step2D"></span></div></li>
     <li><span class="num">3</span><div><b data-i18n="step3T"></b><span data-i18n="step3D"></span></div></li>
   </ol>
@@ -437,10 +439,9 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   <section id="view-input" aria-label="Ulasan baru" data-i18n-label="newReviews">
     <button class="plain dsk" id="back-results" type="button" hidden></button>
     <div class="card-box">
-      <div class="seg" role="tablist" id="intabs">
+      <div class="seg" role="tablist" id="intabs" hidden>
         <button role="tab" id="intab-link" aria-controls="in-link" aria-selected="false" tabindex="-1" type="button" data-t="link" hidden><span data-i18n="tabLink"></span> <span class="chip fix demo">Demo</span></button>
         <button role="tab" id="intab-paste" aria-controls="in-paste" aria-selected="true" type="button" data-t="paste" data-i18n="tabPaste"></button>
-        <button role="tab" id="intab-share" aria-controls="in-share" aria-selected="false" tabindex="-1" type="button" data-t="share" data-i18n="tabShare"></button>
       </div>
 
       <div id="in-link" role="tabpanel" aria-labelledby="intab-link" style="display:grid;gap:12px" hidden>
@@ -474,31 +475,32 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
         </div>
         <p class="muted" data-i18n="pasteHint"></p>
         <div class="callout" id="shared-note" hidden></div>
+        <div class="fld">
+          <label for="paste" data-i18n="reviewsLabel"></label>
+          <div class="ta-wrap">
+            <textarea id="paste" spellcheck="false" placeholder="★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem&#10;★★☆☆☆  Hitam, L   Pas sampe koyak bajunya"></textarea>
+            <button class="ta-clear" id="clear" type="button" hidden data-i18n-label="clear"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
+        </div>
         <label class="field" for="product"><span data-i18n="productLabel"></span>
           <input id="product" type="text" maxlength="150" autocomplete="off" data-i18n-ph="productPh">
         </label>
-        <label class="field" for="paste"><span data-i18n="reviewsLabel"></span>
-          <textarea id="paste" spellcheck="false" placeholder="★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem&#10;★★☆☆☆  Hitam, L   Pas sampe koyak bajunya"></textarea>
-        </label>
+        <button class="btn primary" id="run" type="button" data-i18n="run"></button>
+        <p class="small muted" id="quota-note" role="status" hidden></p>
+        <button class="btn ghost" id="fb-retry" type="button" hidden data-i18n="fbRetry"></button>
+        <p><button class="plain strong" id="sample" type="button" data-i18n="sample"></button></p>
         <details>
           <summary data-i18n="howSummary"></summary>
           <pre data-i18n="howBody"></pre>
         </details>
-        <button class="btn primary" id="run" type="button" data-i18n="run"></button>
-        <p class="small muted" id="quota-note" role="status" hidden></p>
-        <div class="row">
-          <button class="btn ghost" id="fb-retry" type="button" hidden data-i18n="fbRetry"></button>
-          <button class="btn ghost" id="sample" type="button" data-i18n="sample"></button>
-          <button class="btn ghost" id="clear" type="button" data-i18n="clear"></button>
-        </div>
-      </div>
-
-      <div id="in-share" role="tabpanel" aria-labelledby="intab-share" style="display:grid;gap:12px" hidden>
-        <p class="muted" data-i18n="shareHint"></p>
-        <ol class="steps-list" id="share-steps"></ol>
-        <div class="callout warn" data-i18n="shareCaveat"></div>
-        <p class="small muted" data-i18n="iosNote"></p>
-        <button class="btn ghost" id="install" type="button" hidden data-i18n="install"></button>
+        <details id="share-tip">
+          <summary data-i18n="shareTip"></summary>
+          <div style="display:grid;gap:8px;padding-bottom:4px">
+            <ol class="steps-list" id="share-steps"></ol>
+            <p class="small muted" data-i18n="shareCaveat"></p>
+            <button class="btn ghost" id="install" type="button" hidden data-i18n="install"></button>
+          </div>
+        </details>
       </div>
 
       <div class="error" id="error" role="alert" tabindex="-1" hidden>
@@ -596,23 +598,22 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
 const TEXT = {
   id: {
     navCheck: "Periksa", navNew: "Ulasan baru", newReviews: "Ulasan baru",
-    tabPaste: "Tempel", tabShare: "Bagikan", tabLink: "Tautan",
-    pasteHint: "Salin ulasan dari aplikasi Shopee, lalu tempel di sini.",
+    tabPaste: "Tempel", tabLink: "Tautan",
+    pasteHint: "Salin ulasan dari aplikasi Shopee, Tokopedia, atau toko lain, lalu tempel apa adanya di sini.",
     productLabel: "Nama produk (opsional)", productPh: "mis. Kaos Boxy Retro", reviewsLabel: "Ulasan",
-    howSummary: "Cara menempel",
-    howBody: "Satu ulasan per baris. Kalau satu ulasan terdiri dari beberapa baris, beri baris kosong di antara ulasan.\nBintang dan varian boleh ditulis, urutannya begini:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya\n\nBintang bisa ★, \"4★\", \"4/5\" atau \"bintang 4\". Varian perlu koma (\"Putih, L\") atau \" | \" setelahnya.",
-    run: "Bedah ulasan", running: "Membedah…", sample: "Contoh ulasan", clear: "Hapus",
-    shareHint: "Di Shopee, pilih teks ulasan lalu ketuk Bagikan.",
+    howSummary: "Tips agar hasilnya lebih tepat",
+    howBody: "Satu ulasan per baris paling mudah dibaca. Kalau satu ulasan terdiri dari beberapa baris, beri baris kosong di antara ulasan.\n\nBintang dan varian boleh ditulis di depan, tidak wajib:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya",
+    run: "Bedah ulasan", running: "Membedah…", sample: "Belum punya ulasan? Coba dengan contoh", clear: "Hapus teks",
+    shareTip: "Di Android: bagikan langsung dari aplikasi toko",
     shareSteps: ["Pasang BedahReview di layar utama (Android Chrome: menu ⋮ > Pasang aplikasi).", "Di Shopee, tekan lama teks ulasan, lalu pilih Bagikan.", "Pilih BedahReview. Teksnya masuk ke kotak Tempel. Ketuk Bedah ulasan."],
-    shareCaveat: "Belum diuji dengan Shopee atau Tokopedia di HP asli. Kalau teksnya tidak masuk, pakai Tempel.",
-    iosNote: "iPhone: menu Bagikan ke aplikasi web belum bisa dipakai, sejauh yang kami tahu. Di iPhone, pakai Tempel. Untuk memasang: Safari > Bagikan > Tambah ke Layar Utama.",
+    shareCaveat: "Kalau teksnya tidak masuk, salin dan tempel saja.",
     install: "Pasang di layar utama",
     sharedOk: "Teks dari menu Bagikan sudah masuk. Ketuk Bedah ulasan.",
     sharedLinkOnly: "Yang dikirim hanya tautan, bukan teks ulasan. Salin teks ulasannya, lalu tempel.",
     linkDemo: "Demo saja: ulasan diambil lewat layanan pihak ketiga yang berbayar.", linkLabel: "Tautan produk", linkPh: "Mendukung Tokopedia, Lazada, TikTok Shop",
     modeLabel: "Ambil", modeComplaints: "Keluhan dulu (1-3★)", modeLatest: "Ulasan terbaru", limitLabel: "Jumlah", fetchRun: "Ambil & bedah",
     linkNote: "Tempel tautan produk Tokopedia, Lazada, atau TikTok Shop. Platformnya dikenali otomatis, tautan pendek dari tombol Bagikan juga bisa. Shopee belum bisa lewat tautan: tempel ulasannya. Biayanya beberapa sen dolar AS per pengambilan. Bisa gagal atau kurang dari yang diminta. Tempel selalu bisa.",
-    errPaste: "Tempel ulasan dulu.", errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa menghubungi aplikasi. Apakah jendela terminal masih menjalankannya?",
+    errPaste: "Tempel ulasan dulu.", errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa terhubung ke BedahReview. Periksa koneksi internetmu, lalu coba lagi.",
     loadingTitle: "Membedah %s ulasan…", loadingFetch: "Mengambil ulasan, lalu membedahnya…", loadingSub: "Memilah: perbaiki, tanggapi, abaikan.",
     results: "Hasil", reviewsWord: "ulasan", print: "Cetak",
     fix: "Perbaiki", fight: "Tanggapi", ignore: "Abaikan", keep: "Pertahankan",
@@ -628,8 +629,8 @@ const TEXT = {
     noteFake: "%s ulasan diduga palsu dan tidak dihitung. Ada di tab Tanggapi, lengkap dengan teks laporan.",
     noteDropped: "%s ulasan dilewati karena kutipan buktinya tidak bisa diverifikasi.",
     noteNoText: "%s ulasan hanya bintang tanpa teks. Dihitung di Abaikan, tidak dianalisis.",
-    footFrom: "Demo: %s ulasan%s diambil dari tautan produk lewat layanan pihak ketiga%s. ", footLow: " bintang rendah", footCached: " (salinan tersimpan, tanpa biaya baru)",
-    footTail: "Model: %s. Saran dan draf ditulis mesin: baca dulu, dan minta penutur Bahasa memeriksa sebelum dikirim ke pembeli.",
+    footFrom: "%s ulasan%s diambil dari tautan produk%s. ", footLow: " bintang rendah", footCached: " (salinan tersimpan, tanpa biaya baru)",
+    footTail: "Saran dan draf ditulis oleh AI: baca dulu sebelum dikirim ke pembeli.",
     stars: "%s dari 5 bintang",
     rival: "Pesaing", rivalRule: "Bandingkan keluhan dan pujian produkmu dengan produk serupa. Ini contoh kecil, bukan seluruh pasar.",
     rivalAsk: "Mau sekalian membandingkan dengan pesaing?", rivalAskBtn: "Ya, cari pesaing",
@@ -646,7 +647,8 @@ const TEXT = {
     rivalQuotes: "Kutipan ulasan", rivalAgain: "Mulai ulang", rivalShop: "Toko %s", rivalSold: "%s+ terjual",
     f1Eyebrow: "FITUR 1", f1Title: "Bedah ulasan", f1Sub: "Pilah ulasan produkmu jadi daftar tindakan",
     f2Eyebrow: "FITUR 2", f2Title: "Analisis pesaing", f2Sub: "Bandingkan keluhan & pujian dengan toko lain",
-    step1T: "Tempel tautan", step1D: "dari Tokopedia, TikTok Shop, atau Lazada", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
+    step1T: "Salin & tempel ulasan", step1D: "dari Shopee, Tokopedia, atau aplikasi toko lain",
+    step1TLink: "Tempel tautan atau ulasan", step1DLink: "tautan Tokopedia, TikTok Shop, Lazada, atau teks ulasannya", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
     step3T: "Kamu dapat daftar tugas", step3D: "urut, plus draf balasan siap salin",
     linkHint: "Kami membaca hingga 10 ulasan terbaru yang berisi teks. Nama pembeli tidak disimpan.", linkOpts: "Pilihan lain", trySample: "Belum punya tautan? Coba dengan contoh",
     navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Bandingkan dengan pesaing",
@@ -658,7 +660,7 @@ const TEXT = {
     fbQ: "Apakah hasil ini berguna?", fbYes: "Ya", fbPartly: "Sebagian", fbNo: "Tidak", fbComment: "Mau menambahkan sesuatu? (opsional)",
     fbNote: "Komentar hanya disimpan kalau kamu menulisnya. Jangan tulis nama orang atau menempel teks ulasan.", fbSend: "Kirim", fbThanks: "Terima kasih. Jawabanmu membantu.",
     fbReview: "Komentarmu tampak memuat teks ulasan. Hapus bagian itu dulu, supaya tidak ada teks ulasan yang tersimpan.", fbFail: "Tidak terkirim. Coba lagi nanti.",
-    privNote: "Kami mencatat kejadian pemakaian (misalnya tab yang dibuka) per akun, tanpa teks ulasan, nama produk, atau alamat IP. Kalau browsermu mengirim “Do Not Track”, kejadian itu tidak dikirim. Daftar lengkapnya ada di docs/analytics.md.",
+    privNote: "Kami mencatat fitur yang dipakai (misalnya tab yang dibuka) per akun, tanpa teks ulasan, nama produk, atau alamat IP. Kalau browsermu mengirim “Do Not Track”, catatan itu tidak dikirim.",
     limitBusy: "Server sedang sibuk. Coba lagi sebentar lagi.", logout: "Keluar", back: "Kembali", fixesBtn: "Perbaikan", fixesTitle: "Perbaikan yang kamu catat", fixesSub: "Disimpan di browser ini saja. Tidak ada yang dikirim ke server.",
     fixesWarn: "Hitungan dari contoh kecil bisa menyesatkan. Keluhan yang berkurang satu bisa kebetulan, dan bukan bukti perbaikanmu berhasil. Analisis baru juga bisa memuat ulasan lama yang sama.",
     fixesNoStore: "Browser ini tidak bisa menyimpan data, jadi catatan hilang saat halaman ditutup. Ekspor ke file JSON supaya tidak hilang.",
@@ -736,23 +738,22 @@ const TEXT = {
   },
   en: {
     navCheck: "Check", navNew: "New reviews", newReviews: "New reviews",
-    tabPaste: "Paste", tabShare: "Share", tabLink: "Link",
-    pasteHint: "Copy reviews from the Shopee app, then paste them here.",
+    tabPaste: "Paste", tabLink: "Link",
+    pasteHint: "Copy reviews from the Shopee, Tokopedia or any shop app, then paste them here as they are.",
     productLabel: "Product name (optional)", productPh: "e.g. Retro Boxy Tee", reviewsLabel: "Reviews",
-    howSummary: "How to paste",
-    howBody: "One review per line. If a review has several lines, put a blank line between reviews.\nStars and variant are optional, in this order:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya\n\nStars can be ★ symbols, \"4★\", \"4/5\" or \"bintang 4\". A variant needs a comma (\"Putih, L\") or \" | \" after it.",
-    run: "Bedah ulasan", running: "Working…", sample: "Sample reviews", clear: "Clear",
-    shareHint: "In Shopee, select the review text and tap Share.",
+    howSummary: "Tips for better results",
+    howBody: "One review per line reads best. If a review has several lines, put a blank line between reviews.\n\nStars and variant can go first, but they are optional:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya",
+    run: "Bedah ulasan", running: "Working…", sample: "No reviews at hand? Try an example", clear: "Clear the text",
+    shareTip: "On Android: share straight from the shop app",
     shareSteps: ["Install BedahReview to your home screen (Android Chrome: ⋮ menu > Install app).", "In Shopee, long-press the review text and choose Share.", "Pick BedahReview. The text lands in the Paste box. Tap Bedah ulasan."],
-    shareCaveat: "Not yet tested with Shopee or Tokopedia on a real phone. If the text does not arrive, use Paste.",
-    iosNote: "iPhone: sharing into a web app does not work, as far as we know. On iPhone, use Paste. To install: Safari > Share > Add to Home Screen.",
+    shareCaveat: "If the text does not arrive, copy and paste it instead.",
     install: "Add to home screen",
     sharedOk: "Text from the Share menu is in. Tap Bedah ulasan.",
     sharedLinkOnly: "Only a link was shared, not the review text. Copy the review text and paste it.",
     linkDemo: "Demo only: reviews are fetched through a paid third-party service.", linkLabel: "Product link", linkPh: "It supports Tokopedia, Lazada, TikTok Shop",
     modeLabel: "Get", modeComplaints: "Complaints first (1-3★)", modeLatest: "Latest reviews", limitLabel: "Reviews", fetchRun: "Fetch & analyse",
     linkNote: "Paste a Tokopedia, Lazada or TikTok Shop product link. The platform is detected for you, and short links from the Share button work too. Shopee cannot be read from a link yet: paste its reviews. Each fetch costs a few US cents. It can fail or return fewer than you ask for. Pasting always works.",
-    errPaste: "Paste some reviews first.", errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach the app. Is the terminal window still running it?",
+    errPaste: "Paste some reviews first.", errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach BedahReview. Check your internet connection and try again.",
     loadingTitle: "Reading %s reviews…", loadingFetch: "Fetching reviews, then reading them…", loadingSub: "Sorting: fix, fight, ignore.",
     results: "Results", reviewsWord: "reviews", print: "Print",
     fix: "Fix it", fight: "Fight it", ignore: "Ignore", keep: "Keep",
@@ -768,8 +769,8 @@ const TEXT = {
     noteFake: "%s likely-fake review(s) are left out of the counts. They are in the Fight it tab, each with a report text.",
     noteDropped: "%s review(s) were skipped because the model's proof quote could not be verified.",
     noteNoText: "%s review(s) are star-only, with no text. Counted under Ignore, not analysed.",
-    footFrom: "Demo: %s%s review(s) fetched from the product link via a third-party service%s. ", footLow: " low-star", footCached: " (saved copy, no new charge)",
-    footTail: "Model: %s. Suggestions and drafts are machine-written: read them, and have a Bahasa speaker check any text before you send it to a buyer. Drafts are always in Bahasa Indonesia; the explanations and steps on Fight it cards follow the page language.",
+    footFrom: "%s%s review(s) fetched from the product link%s. ", footLow: " low-star", footCached: " (saved copy, no new charge)",
+    footTail: "Suggestions and drafts are written by AI: read them before you send anything to a buyer. Drafts are always in Bahasa Indonesia; if you do not read it, ask someone who does to check them first.",
     stars: "%s of 5 stars",
     rival: "Rivals", rivalRule: "Compare your complaints and praise with similar products. This is a small sample, not the whole market.",
     rivalAsk: "Also compare with competitors?", rivalAskBtn: "Yes, find competitors",
@@ -786,7 +787,8 @@ const TEXT = {
     rivalQuotes: "Review quotes", rivalAgain: "Start over", rivalShop: "Shop %s", rivalSold: "%s+ sold",
     f1Eyebrow: "FEATURE 1", f1Title: "Review triage", f1Sub: "Sort your product's reviews into a to-do list",
     f2Eyebrow: "FEATURE 2", f2Title: "Competitor analysis", f2Sub: "Compare complaints & praise with other shops",
-    step1T: "Paste a link", step1D: "from Tokopedia, TikTok Shop or Lazada", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
+    step1T: "Copy & paste your reviews", step1D: "from Shopee, Tokopedia or any shop app",
+    step1TLink: "Paste a link or the reviews", step1DLink: "a Tokopedia, TikTok Shop or Lazada link, or the review text", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
     step3T: "You get a task list", step3D: "in order, with reply drafts ready to copy",
     linkHint: "We read up to 10 of the newest reviews that have text. Buyer names are not saved.", linkOpts: "More options", trySample: "No link yet? Try an example",
     navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Compare with competitors",
@@ -798,7 +800,7 @@ const TEXT = {
     fbQ: "Was this useful?", fbYes: "Yes", fbPartly: "Partly", fbNo: "No", fbComment: "Anything to add? (optional)",
     fbNote: "A comment is saved only if you write one. Please do not write names or paste review text.", fbSend: "Send", fbThanks: "Thank you. Your answer helps.",
     fbReview: "Your comment looks like it contains review text. Please remove that part, so no review text is stored.", fbFail: "Could not send. Try again later.",
-    privNote: "We record usage events (for example which tab was opened) per account, with no review text, product names or IP address. If your browser sends “Do Not Track”, those events are not sent. The full list is in docs/analytics.md.",
+    privNote: "We record which features are used (for example which tab was opened) per account, with no review text, product names or IP address. If your browser sends “Do Not Track”, those records are not sent.",
     limitBusy: "The server is busy. Try again in a moment.", logout: "Sign out", back: "Back", fixesBtn: "Fixes", fixesTitle: "Fixes you logged", fixesSub: "Saved in this browser only. Nothing is sent to the server.",
     fixesWarn: "Counts from small samples can mislead. One complaint fewer can be chance, not proof that your fix worked. A new analysis may also include some of the same old reviews.",
     fixesNoStore: "This browser cannot save data, so your log is lost when the page closes. Export it to a JSON file to keep it.",
@@ -1813,7 +1815,7 @@ function tabKeys(listEl, selector, onSelect) {
 tabKeys($("tabs"), "button", (t) => { selectTab(t.dataset.b, true); track("tab_viewed", { tab: t.dataset.b }); });
 
 function selectInput(which, focus) {
-  for (const t of ["paste", "share", "link"]) {
+  for (const t of ["paste", "link"]) {
     const on = t === which;
     $("intab-" + t).setAttribute("aria-selected", on ? "true" : "false"); $("intab-" + t).tabIndex = on ? 0 : -1;
     $("in-" + t).hidden = !on;
@@ -1902,9 +1904,11 @@ $("sample").addEventListener("click", () => {
     "★★☆☆☆  Hitam, L   Pas sampe koyak bajunya",
     "★☆☆☆☆  Putih, L   produk tidak sesuai deskripsi, warna hijau tapi realitanya hitam, kalo emg terima dari pabrikan nya hitam kenapa ga pasang foto hitam aja?",
   ].join("\n");
-  $("product").value = "Kaos Boxy Retro"; showError(""); $("paste").focus();
+  $("product").value = "Kaos Boxy Retro"; syncClear(); showError(""); $("paste").focus();
 });
-$("clear").addEventListener("click", () => { $("paste").value = ""; $("product").value = ""; $("url").value = ""; $("shared-note").hidden = true; showError(""); $("paste").focus(); });
+function syncClear() { $("clear").hidden = !$("paste").value; }  // the × in the review box shows only when there is text to clear
+$("paste").addEventListener("input", syncClear);
+$("clear").addEventListener("click", () => { $("paste").value = ""; $("product").value = ""; $("url").value = ""; $("shared-note").hidden = true; syncClear(); showError(""); $("paste").focus(); });
 $("paste").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") runPaste(); });
 
 /* ---------- Share menu: /?title=...&text=...&url=... ---------- */
@@ -1922,7 +1926,7 @@ function takeShared() {
     if (!$("intab-link").hidden) { $("url").value = shared; selectInput("link", false); }
     return;
   }
-  $("paste").value = shared;
+  $("paste").value = shared; syncClear();
   note.textContent = tr("sharedOk"); note.hidden = false;
   selectInput("paste", false);
 }
@@ -2161,8 +2165,8 @@ if ("serviceWorker" in navigator) {
 }
 
 function applyBox(cfg, first) {  // the link box: shown only when the server says this visitor may use it
-  linkBoxOn = !!cfg.url_box; renderRival();
-  $("intab-link").hidden = !cfg.url_box;
+  linkBoxOn = !!cfg.url_box; renderRival(); stepOneText();
+  $("intab-link").hidden = !cfg.url_box; $("intabs").hidden = !cfg.url_box;  // paste alone needs no tabs
   if (cfg.url_box) {
     $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
     if (first && desktop() && !$("paste").value && !location.search) selectInput("link", false);  // on a wide screen the link comes first
@@ -2182,6 +2186,12 @@ async function loadConfig() {
   document.body.classList.add("ready");
 }
 
+function stepOneText() {  // step 1 names the way in this visitor really has: a link only when the link box is on
+  $("step1-t").dataset.i18n = linkBoxOn ? "step1TLink" : "step1T"; $("step1-d").dataset.i18n = linkBoxOn ? "step1DLink" : "step1D";
+  $("step1-t").textContent = tr($("step1-t").dataset.i18n); $("step1-d").textContent = tr($("step1-d").dataset.i18n);
+}
+
+$("share-tip").hidden = isIos();  // sharing into a web app does not work on iPhone, so the tip would only mislead
 applyLang();
 takeShared();
 loadConfig();
