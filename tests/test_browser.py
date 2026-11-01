@@ -61,6 +61,7 @@ window.__probe = (async () => {
   const m = await (await fetch(link.href)).json();
   out.manifest = { display: m.display, theme: m.theme_color, share: m.share_target && m.share_target.method, icons: m.icons.length };
   out.prefill = document.getElementById("paste").value;
+  out.product = document.getElementById("product").value;
   out.search = location.search;
   out.sharedNote = !document.getElementById("shared-note").hidden;
   out.tabSelected = document.getElementById("intab-paste").getAttribute("aria-selected");
@@ -99,7 +100,7 @@ window.__probe = (async () => {
     document.getElementById("run").click();
     for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
     out.hostAfter = document.getElementById("rival-body").parentNode.id;
-    out.start = (document.querySelector("#start .st") || {}).textContent || "";
+    out.start = (document.querySelector("#start .prow b") || {}).textContent || "";
     out.rivalTab = !!document.getElementById("tab-rival");
     out.board = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
     out.chip = document.getElementById("pchip").hidden;
@@ -167,6 +168,43 @@ window.__probe = (async () => {
     const del = () => [...document.querySelectorAll("#fixes-list button")].find((b) => b.textContent === "Hapus" || b.textContent === "Yakin hapus?");
     del().click(); del().click();
     out.fl.afterDelete = [JSON.parse(localStorage.getItem("bedahreview-fixes-v1")).length, document.getElementById("fixes-count").hidden];
+  }
+
+  if (location.hash === "#planflow") {
+    localStorage.removeItem("bedahreview-fixes-v1"); localStorage.removeItem("bedahreview-plans-v1");
+    const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
+    const btn = (sel, text) => [...document.querySelectorAll(sel)].find((b) => b.textContent === text);
+    document.getElementById("sample").click();
+    document.getElementById("run").click();
+    await until(() => !document.getElementById("view-results").hidden);
+    out.pl = { rows: [...document.querySelectorAll("#start .prow b")].map((b) => b.textContent), headline: document.getElementById("results-h").textContent, badge: document.getElementById("tasks-count").textContent };
+    document.getElementById("tab-fight").click();  // a tile opens the sheet with that group
+    out.pl.sheet = [!document.getElementById("sheet").hidden, document.getElementById("sheet-h").textContent, !document.getElementById("panel-fight").hidden];
+    document.getElementById("sheet-x").click(); await wait(450);
+    out.pl.sheetClosed = document.getElementById("sheet").hidden;
+    document.getElementById("plan-go").click();
+    out.pl.step1 = [!document.getElementById("view-plan").hidden, document.getElementById("plan-h").textContent];
+    document.querySelector("input[name=fixopt][value=own]").click();
+    const own = document.querySelector("#view-plan .own input"); own.value = "ganti foto katalog"; own.dispatchEvent(new Event("input"));
+    btn("#view-plan .seg button", "+14 hari").click(); btn("#view-plan .seg button", "Tidak usah").click();
+    btn("#view-plan .stickyfoot button", "Simpan & lanjut").click();
+    const fix = JSON.parse(localStorage.getItem("bedahreview-fixes-v1"))[0];
+    out.pl.fix = [fix.note, fix.checkOn === addDays(14), fix.remind, fix.theme];
+    out.pl.toast = document.getElementById("toast2").textContent.indexOf("Tersimpan di Tugas") === 0;
+    out.pl.step2 = document.getElementById("plan-h").textContent;
+    [...document.querySelectorAll("#view-plan .reply button")].find((b) => b.textContent.indexOf("Salin") === 0).click();
+    await until(() => document.querySelector("#view-plan .ask"));
+    out.pl.asked = document.querySelector("#view-plan .ask p").textContent;
+    btn("#view-plan .ask button", "Sudah").click();
+    out.pl.sent = [document.querySelectorAll("#view-plan .reply.sent").length, JSON.parse(localStorage.getItem("bedahreview-plans-v1"))[0].replies];
+    btn("#view-plan .stickyfoot button", "Lanjut").click();
+    out.pl.step3 = [document.getElementById("plan-h").textContent, document.getElementById("plan-line").value.length > 0];
+    btn("#view-plan .stickyfoot button", "Lihat ringkasan").click();
+    out.pl.sum = [document.getElementById("plan-h").textContent, [...document.querySelectorAll("#view-plan .dlist li")].map((li) => li.textContent)];
+    out.pl.planText = localStorage.getItem("bedahreview-plans-v1");
+    document.getElementById("nav-tasks").click();
+    out.pl.tasks = [!document.getElementById("view-fixes").hidden, [...document.querySelectorAll("#tasks-body .task b")].map((b) => b.textContent), document.getElementById("tasks-count").textContent];
+    out.pl.watched = document.getElementById("fixes-list").textContent.indexOf("ganti foto katalog") >= 0;
   }
 
   if (location.hash === "#events") {
@@ -352,9 +390,9 @@ class BrowserTests(unittest.TestCase):
         self.assertTrue(out["sharedNote"])
         self.assertEqual((out["tabSelected"], out["lang"]), ("true", "id"))
 
-    def test_share_with_title_and_text_joins_them(self):
+    def test_share_with_title_and_text_puts_the_title_in_the_product_name(self):
         out = self.probe("/?title=" + quote("Kaos Boxy") + "&text=" + quote("bagus banget"))
-        self.assertEqual(out["prefill"], "Kaos Boxy\nbagus banget")
+        self.assertEqual((out["prefill"], out["product"]), ("bagus banget", "Kaos Boxy"))  # the title is not counted as a review
 
     def test_shared_link_only_is_not_treated_as_a_review(self):
         out = self.probe("/?text=" + quote("https://shopee.co.id/Kaos-i.1.2"))
@@ -393,7 +431,7 @@ class BrowserTests(unittest.TestCase):
         out = self.probe("/#desktop", width=1300)
         self.assertEqual(len(out["cols"]), 2)
         self.assertAlmostEqual(out["cols"][0] / sum(out["cols"]), 0.6, places=2)  # review triage 60%, competitors 40%
-        self.assertTrue(out["start"].startswith("Perbaiki"))  # the "start here" line names the biggest fix
+        self.assertEqual(out["start"], "Catat perbaikan warna beda dari foto")  # the plan starts with the biggest fix
         self.assertEqual((out["hostBefore"], out["formBefore"]), ("rival-home", True))
         self.assertEqual(out["hostAfter"], "rival-home")  # it stays put when results arrive
         self.assertFalse(out["rivalTab"])  # the competitor section is not a tab of the results any more
@@ -424,11 +462,33 @@ class BrowserTests(unittest.TestCase):
         self.assertTrue(fl["noNull"])
         self.assertTrue(fl["noText"])  # only counts and the seller's own note are stored, no review text
         self.assertTrue(fl["cardAfterSave"])
-        self.assertEqual(fl["badge"], "1")
+        self.assertEqual(fl["badge"], "2")  # Tugas counts open steps: the fix is logged, a reply and the listing line are left
         self.assertTrue(fl["comparedNote"])
         self.assertEqual(fl["after"], [1, 2])
         self.assertEqual(fl["listShows"], [True, True, True, True])
-        self.assertEqual(fl["afterDelete"], [0, True])
+        self.assertEqual(fl["afterDelete"], [0, False])  # the fix is gone; the open steps keep the Tugas count
+
+    def test_results_become_a_plan_with_three_steps_and_a_summary(self):
+        pl = self.probe("/#planflow")["pl"]
+        self.assertEqual(pl["rows"], ["Catat perbaikan warna beda dari foto", "Balas 1 ulasan buruk", "Tambah 1 kalimat di deskripsi"])
+        self.assertEqual(pl["headline"], "Keluhan terbanyak cuma satu: warna beda dari foto.")
+        self.assertEqual(pl["badge"], "3")  # three open steps on the Tugas tab
+        self.assertEqual(pl["sheet"], [True, "Tanggapi · 1 ulasan", True])  # a tile opens the sheet with that group's quotes and drafts
+        self.assertTrue(pl["sheetClosed"])
+        self.assertEqual(pl["step1"], [True, "Catat perbaikan untuk warna beda dari foto"])
+        self.assertEqual(pl["fix"], ["ganti foto katalog", True, "none", "Colour vs photo"])  # the seller's own step, a check date 14 days out, no reminder
+        self.assertTrue(pl["toast"])
+        self.assertEqual(pl["step2"], "Balas 1 ulasan buruk")
+        self.assertEqual(pl["asked"], "Sudah kamu kirim?")  # a reply only counts once the seller says it went out
+        self.assertEqual(pl["sent"], [1, {"4": "sent"}])
+        self.assertEqual(pl["step3"], ["Tambah 1 kalimat di deskripsi", True])  # the line starts from the buyers' own praise
+        self.assertEqual(pl["sum"][0], "Ringkasan hari ini")  # the listing line is not done yet, so this is the partly-done summary
+        self.assertIn("1 dari 1 balasan terkirim", pl["sum"][1])
+        self.assertTrue(any(t.startswith("Kalimat deskripsi belum ditambahkan") for t in pl["sum"][1]), pl["sum"][1])
+        for word in ("koyak", "ijo", "bagus", "tulisannya"):  # the stored plan holds ids and counts, never review text
+            self.assertNotIn(word, pl["planText"])
+        self.assertEqual(pl["tasks"], [True, ["Tambah 1 kalimat di deskripsi"], "1"])
+        self.assertTrue(pl["watched"])  # the logged fix is tracked on the Tugas screen
 
     def test_usage_events_and_the_feedback_question(self):
         buf = io.StringIO()

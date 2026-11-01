@@ -54,10 +54,17 @@ create table if not exists public.fixes (
   after_total   integer check (after_total between 0 and 100000),
   after_sig     text check (char_length(after_sig) <= 40),
   after_on      date,
+  check_on      date,
+  remind        text not null default 'none' check (remind in ('whatsapp', 'calendar', 'none')),
   primary key (user_id, id),
   check (before_count <= before_total),
   check ((after_count is null and after_total is null) or (after_count is not null and after_total is not null and after_count <= after_total))
 );
+-- Added with today's plan (2026-11): when the seller wants to look again, and how they asked to be reminded. A project made before has the table without them.
+alter table public.fixes add column if not exists check_on date;
+alter table public.fixes add column if not exists remind text not null default 'none';
+alter table public.fixes drop constraint if exists fixes_remind_check;
+alter table public.fixes add constraint fixes_remind_check check (remind in ('whatsapp', 'calendar', 'none'));
 
 -- ---------- row level security: on, and each person sees only their own rows ----------
 alter table public.profiles enable row level security;

@@ -1,7 +1,7 @@
 // Caches the app shell only, so the app opens without a network after the first visit.
 // Anything under /api/ (reviews go there and come back) is never touched, never cached.
 const CACHE = 'bedahreview-shell-v1';
-const SHELL = ['./', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
+const SHELL = ['./', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './fonts/plus-jakarta-sans.woff2', './fonts/jetbrains-mono.woff2'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

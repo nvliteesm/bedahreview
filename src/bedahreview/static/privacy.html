@@ -51,8 +51,8 @@ a { color: var(--accent); font-weight: 600; }
     <li><b>Akun.</b> Alamat email kamu, lewat Google atau kode yang dikirim ke email. Disimpan oleh Supabase (layanan masuk). Kami tidak pernah melihat kata sandi Google-mu.</li>
     <li><b>Profil (opsional).</b> Platform jualan, tautan toko, kategori produk, dan bahasa. Boleh dilewati.</li>
     <li><b>Catatan pemakaian, per akun.</b> Kejadian seperti “membuka aplikasi”, “membuka tab”, “menyalin draf”, jumlah ulasan yang dibedah, dan saat analisis gagal atau kena batas (hanya jenis kesalahannya). Tanpa isi ulasan, tanpa nama produk, tanpa alamat IP. Satu-satunya teks bebas adalah komentar yang kamu ketik sendiri di pertanyaan “Apakah hasil ini berguna?”.</li>
-    <li><b>Daftar perbaikan, kalau kamu memakainya.</b> Saat kamu menekan “Tandai sudah diperbaiki”, kami menyimpan tema keluhan, varian, tanggal, jumlah keluhan sebelum dan sesudah, <b>nama atau tautan produk</b>, dan <b>catatan singkatmu</b>. Ini agar daftarmu bisa dibuka dari HP lain. Lewat aplikasi, hanya akunmu yang bisa membacanya; pembuat aplikasi bisa melihatnya di dasbor Supabase. Jangan menulis nama orang di catatan.</li>
-    <li><b>Di perangkatmu.</b> Sesi masuk, pilihan bahasa dan tema, salinan daftar perbaikan, dan penanda acak perangkat. Semuanya di penyimpanan browser (localStorage), bukan cookie pelacak.</li>
+    <li><b>Daftar perbaikan, kalau kamu memakainya.</b> Saat kamu mencatat perbaikan (“Tandai sudah diperbaiki”, atau langkah Catat di rencana hari ini), kami menyimpan tema keluhan, varian, tanggal, jumlah keluhan sebelum dan sesudah, tanggal cek berikutnya, pilihan pengingat (WhatsApp, kalender, atau tidak), <b>nama atau tautan produk</b>, dan <b>catatan singkatmu</b>. Ini agar daftarmu bisa dibuka dari HP lain. Lewat aplikasi, hanya akunmu yang bisa membacanya; pembuat aplikasi bisa melihatnya di dasbor Supabase. Jangan menulis nama orang di catatan.</li>
+    <li><b>Di perangkatmu.</b> Sesi masuk, pilihan bahasa dan tema, salinan daftar perbaikan, rencana hari ini (langkah mana yang sudah dikerjakan, nomor ulasan, dan jumlah; tanpa teks ulasan, dihapus setelah 7 hari atau saat kamu keluar), dan penanda acak perangkat. Semuanya di penyimpanan browser (localStorage), bukan cookie pelacak.</li>
     <li><b>Analisis gratis sebelum masuk.</b> Tanpa akun, kamu bisa membedah ulasan sekali. Server tidak menyimpan apa pun darinya: hanya hitungan jumlahnya. Browser mencatat bahwa analisis gratis sudah dipakai. Kalau kamu masuk dengan Google, hasilnya menunggu di penyimpanan tab ini (sessionStorage) selama kamu ke halaman Google, lalu langsung dihapus begitu tampil lagi.</li>
   </ul>
 
@@ -82,7 +82,7 @@ a { color: var(--accent); font-weight: 600; }
   <ul>
     <li><b>Hapus akun dan data saya.</b> Tombolnya ada di bagian bawah aplikasi. Ini menghapus akunmu, profilmu, catatan pemakaianmu, dan daftar perbaikanmu di server kami, serta salinannya di perangkat itu. Tidak bisa dibatalkan.</li>
     <li><b>Do Not Track.</b> Kalau browsermu mengirimnya, catatan pemakaian tidak dikirim.</li>
-    <li><b>Ekspor.</b> Daftar perbaikan bisa diekspor ke file JSON.</li>
+    <li><b>Simpan cadangan.</b> Daftar perbaikan bisa disimpan ke file di perangkatmu. Pengingat WhatsApp hanya membuka WhatsApp dengan teks untuk kamu kirim sendiri; kami tidak mengirim pesan apa pun.</li>
   </ul>
   <p class="note">Batas yang jujur: layanan pihak ketiga (Supabase, Google) bisa menyimpan salinan sementara di sistem cadangannya setelah penghapusan. Tidak ada sistem yang sempurna, dan satu orang bisa membuat dua akun.</p>
 
@@ -102,8 +102,8 @@ a { color: var(--accent); font-weight: 600; }
     <li><b>Account.</b> Your email address, through Google or a code sent to your email. It is kept by Supabase (the sign-in service). We never see your Google password.</li>
     <li><b>Profile (optional).</b> Where you sell, your shop link, product category and language. You can skip it.</li>
     <li><b>Usage records, per account.</b> Events like “opened the app”, “opened a tab”, “copied a draft”, how many reviews were analysed, and when an analysis fails or hits a limit (only the kind of error). No review text, no product names, no IP address. The only free text is a comment you type yourself under “Was this useful?”.</li>
-    <li><b>Your fixes list, if you use it.</b> When you tap “Mark as fixed” we keep the complaint theme, variant, date, complaint counts before and after, the <b>product name or link</b> and your <b>short note</b>. This is so your list opens on another phone. Through the app only your account can read it; the person who runs the app can see it in the Supabase dashboard. Please do not write people's names in a note.</li>
-    <li><b>On your device.</b> Your sign-in session, language and theme choice, a copy of your fixes list, and a random device marker. All in browser storage (localStorage), not tracking cookies.</li>
+    <li><b>Your fixes list, if you use it.</b> When you log a fix (“Mark as fixed”, or the Log step of today's plan) we keep the complaint theme, variant, date, complaint counts before and after, the next check date, your reminder choice (WhatsApp, calendar or none), the <b>product name or link</b> and your <b>short note</b>. This is so your list opens on another phone. Through the app only your account can read it; the person who runs the app can see it in the Supabase dashboard. Please do not write people's names in a note.</li>
+    <li><b>On your device.</b> Your sign-in session, language and theme choice, a copy of your fixes list, today's plan (which steps are done, review numbers and counts; no review text, removed after 7 days or when you sign out), and a random device marker. All in browser storage (localStorage), not tracking cookies.</li>
     <li><b>The free analysis before signing in.</b> Without an account you can analyse reviews once. The server keeps nothing from it except a count. Your browser notes that the free analysis was used. If you sign in with Google, the result waits in this tab's storage (sessionStorage) while you are on Google's page, and is removed as soon as it is shown again.</li>
   </ul>
 
@@ -133,7 +133,7 @@ a { color: var(--accent); font-weight: 600; }
   <ul>
     <li><b>Delete my account and data.</b> The button is at the bottom of the app. It deletes your account, profile, usage records and fixes list on our server, and the copy on that device. It cannot be undone.</li>
     <li><b>Do Not Track.</b> If your browser sends it, usage records are not sent.</li>
-    <li><b>Export.</b> The fixes list can be exported to a JSON file.</li>
+    <li><b>Save a backup.</b> The fixes list can be saved to a file on your device. A WhatsApp reminder only opens WhatsApp with a text for you to send yourself; we send no messages.</li>
   </ul>
   <p class="note">An honest limit: third-party services (Supabase, Google) may keep a copy in their backups for a while after deletion. No system is perfect, and one person can make two accounts.</p>
 

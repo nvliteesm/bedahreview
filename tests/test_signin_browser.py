@@ -451,7 +451,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual(out["queueLeft"], 0)
         self.assertEqual((out["explicit"], out["total"]), (True, 2))  # the server accepted it, and it did not wait
 
-    EXPECTED_COLUMNS = sorted(["user_id", "id", "updated_at", "theme", "variant", "product", "product_label", "note", "fixed_on", "before_count", "before_total", "before_sig", "after_count", "after_total", "after_sig", "after_on"])
+    EXPECTED_COLUMNS = sorted(["user_id", "id", "updated_at", "theme", "variant", "product", "product_label", "note", "fixed_on", "before_count", "before_total", "before_sig", "after_count", "after_total", "after_sig", "after_on", "check_on", "remind"])
 
     def test_the_first_sign_in_merges_this_browsers_fixes_with_the_accounts(self):
         out = self.probe("#sync-first")
@@ -474,7 +474,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertIn("Riwayat sedang tidak tersedia", out["status"])
         self.assertIn("warn", out["statusWarn"])
         self.assertTrue(out["saved"])
-        self.assertEqual((out["local"], out["upserts"], out["badge"]), (["aaa1", "ccc3"], 0, "2"))  # still saved on the device, nothing pushed
+        self.assertEqual((out["local"], out["upserts"], out["badge"]), (["aaa1", "ccc3"], 0, "0"))  # still saved on the device, nothing pushed; the Tugas count is open steps and due check-ups only
 
     def test_edits_and_deletes_follow_to_the_account(self):
         out = self.probe("#sync-edit")
@@ -571,7 +571,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertIn("Kebijakan privasi", out["items"])
         self.assertEqual(out["items"][-1], "Hapus akun dan data saya")  # last, apart from the rest
         self.assertTrue(out["deleteRed"])
-        self.assertEqual((out["fixesLabel"], out["fixesMenuHidden"]), ("Perbaikan", True))
+        self.assertEqual((out["fixesLabel"], out["fixesMenuHidden"]), ("Tugas", True))
         self.assertTrue(out["escClosed"] and out["outsideClosed"])
         self.assertFalse(out["oldFooter"])  # no longer at the bottom of the results
 

@@ -195,7 +195,7 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 .theme.fixes-pill { width: auto; padding: 0 16px 0 12px; border-radius: 999px; display: inline-flex; gap: 8px; font: inherit; font-weight: 700; font-size: 0.9rem; }
 .mitem.m-only { display: none; }
 @media (max-width: 479px) { .has-acct #fixes-btn { display: none; } .has-acct .mitem.m-only { display: flex; } #fixes-btn .lbl { display: none; } .theme.fixes-pill { width: 44px; padding: 0; } }  /* a phone: Fixes moves into the account menu (a local run has no menu, so it keeps its icon) */
-@media (min-width: 1100px) { .has-acct #theme, .visitor #theme { display: grid; } #acct-theme { display: none; } }
+@media (min-width: 900px) { .has-acct #theme, .visitor #theme { display: grid; } #acct-theme { display: none; } }
 @media (max-width: 399px) { .lang .o:not(.on) { display: none; } }  /* a small phone: the language switch shows only the current one, and a tap still switches */
 .gbtn[disabled], .btn[disabled] { opacity: 0.6; cursor: progress; }
 .or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.85rem; }
@@ -211,7 +211,7 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 .gate-card p a { color: inherit; }
 .gate-links { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
 .gate-links a { color: var(--accent); font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
-@media (min-width: 1100px) { .gate { padding-top: 56px; } .gate-card { padding: 32px; box-shadow: var(--shadow); } }
+@media (min-width: 900px) { .gate { padding-top: 56px; } .gate-card { padding: 32px; box-shadow: var(--shadow); } }
 main, #view-results, #view-fixes, .panel, .stack { grid-template-columns: minmax(0, 1fr); }  /* one column that never grows past its box, even for a long product name */
 .start { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--accent-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
 .start > div { flex: 1 1 220px; min-width: 0; display: grid; gap: 2px; }
@@ -227,7 +227,7 @@ main, #view-results, #view-fixes, .panel, .stack { grid-template-columns: minmax
 .workspace[data-section="rivals"] > main { display: none; }
 .workspace[data-section="rivals"] > .col-2 { display: grid; gap: 14px; align-content: start; max-width: 480px; margin: 0 auto;
   padding: 16px max(var(--gutter), env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left)); }
-@media (max-width: 1099px) { .col-2 .ftile, .col-2 .eyebrow { display: none; } .col-2 .fhead h1 { font-size: 1.3rem; margin: 0; } }
+@media (max-width: 899px) { .col-2 .ftile, .col-2 .eyebrow { display: none; } .col-2 .fhead h1 { font-size: 1.3rem; margin: 0; } }
 .want { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.85rem; font-weight: 700; color: var(--muted); }
 .want .seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 52px; }
 .group { display: grid; gap: 10px; }
@@ -295,7 +295,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
 .cmp-title { padding: 14px 10px 4px; }
 #legend .lg-fix { color: var(--fix); } #legend .lg-fight { color: var(--fight); } #legend .lg-ignore { color: var(--ignore); } #legend .lg-keep { color: var(--keep); }
 
-@media (min-width: 1100px) {
+@media (min-width: 900px) {
   :root { --radius: 22px; --bar: #e6eae7; --shadow: 0 1px 2px rgba(23, 32, 28, 0.05), 0 8px 24px rgba(23, 32, 28, 0.04); }
   :root[data-theme="dark"] { --bar: #1a211e; --shadow: none; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bar: #1a211e; --shadow: none; } }
@@ -375,10 +375,297 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   #feature2, .fhead, .steps, .legend { display: none !important; }
 }
 @media (pointer: fine) and (min-width: 481px) { main { padding-top: 24px; } }
-@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } * { transition-duration: 0.01ms !important; } }
+
+/* ==========================================================================================================
+   Final design (canvas page 6): self-hosted fonts, a quieter header, errors where the tap was, rows that look
+   like they open, results as a plan with three steps and a summary, a Tugas tab, a bottom sheet for quotes
+   (a side panel on a wide screen), and short motion on the main actions. Rules below win over the ones above.
+   ========================================================================================================== */
+@font-face { font-family: "Plus Jakarta Sans"; src: url("fonts/plus-jakarta-sans.woff2") format("woff2"); font-weight: 200 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+:root { --scrim: rgba(23, 32, 28, 0.38); --wa: #dcf8c6; --line-strong: #bfc8c3; --ease: cubic-bezier(0.2, 0.7, 0.2, 1); }
+:root[data-theme="dark"] { --scrim: rgba(0, 0, 0, 0.55); --wa: #1f3b2c; --line-strong: #48544e; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --scrim: rgba(0, 0, 0, 0.55); --wa: #1f3b2c; --line-strong: #48544e; } }
+body { -webkit-font-smoothing: antialiased; transition: background-color 0.2s, color 0.2s; }
+
+/* header: the wordmark, "Masuk" as the one pill, language as a small outlined ID / EN */
+.brand { font-weight: 500; font-size: 1rem; gap: 7px; }
+.wm { font-size: 18.5px; line-height: 1; letter-spacing: -0.035em; white-space: nowrap; }
+.wm b { font-weight: 700; color: var(--ink); } .wm i { font-style: normal; font-weight: 500; color: var(--accent); }
+.tools { gap: 6px; }
+.lang { min-height: 44px; min-width: 44px; padding: 0 2px; border: 0; background: none; justify-content: center; }
+.lang .pill { display: inline-flex; gap: 4px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 700; color: var(--muted); }
+.lang .pill em { font-style: normal; color: var(--ink); }
+@media (max-width: 359px) { .lang .alt { display: none; } }  /* the smallest phones: only the current language, a tap still switches */
+#signin-btn { min-height: 44px; padding: 0 16px; font-size: 15px; font-weight: 700; color: var(--accent); background: var(--surface); border: 1px solid var(--line); }
+.acct-menu { transform-origin: top right; }
+.acct-menu:not([hidden]) { animation: pop 0.16s var(--ease); }
+#acct-fixes { display: none !important; }  /* Tugas has its own tab now */
+@media (max-width: 899px) { #fixes-btn { display: none !important; } }
+@media (min-width: 900px) { .visitor #fixes-btn, .has-acct #fixes-btn { display: inline-flex; } #fixes-btn .lbl { display: inline; } .theme.fixes-pill { width: auto; padding: 0 16px; } }
+#fixes-btn .badge { position: static; min-width: 22px; height: 22px; border-radius: 999px; font-size: 12px; }
+@media (min-width: 900px) { #signin-btn { order: 5; } }  /* a wide header: Tugas, language, theme, then Masuk last */
+body.gated .ptabs, body:not(.ready) .ptabs { display: none !important; }
+body.sheet-open { overflow: hidden; }
+body.free-locked #panels, body.free-locked #board-cap { display: none !important; }  /* a free result before sign-in: the counts show, the quotes and drafts wait */
+
+/* phone, and a tablet held upright: one column, a little wider from 600px */
+@media (min-width: 600px) and (max-width: 899px) {
+  main, .workspace[data-section="rivals"] > .col-2, .topbar-in, .bottombar-in { max-width: 600px; }
+  .ptabs:not([hidden]) { display: grid; }
+}
+.ptabs { display: none; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin: 12px auto 0; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); width: calc(100% - 32px); max-width: 568px; }
+.ptabs button { min-height: 44px; border: 0; border-radius: 999px; background: none; color: var(--muted); font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+.ptabs button[aria-current="page"] { background: var(--ink); color: var(--surface); }
+.bottombar-in { grid-template-columns: repeat(3, 1fr); }
+.nav .ic { position: relative; display: inline-flex; }
+.nav .badge { top: -7px; right: auto; left: 13px; border: 2px solid var(--surface); }
+.badge:not([hidden]) { animation: pop 0.2s var(--ease); }
+
+/* first screen: what the app does, and how, folded */
+.hero { display: grid; gap: 10px; }
+.hero h1 { font-size: 23px; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em; }
+@media (max-width: 359px) { .hero h1 { font-size: 20px; } }
+.howdots { display: inline-flex; gap: 4px; margin-left: 10px; }
+.howdots span { width: 20px; height: 20px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 800; display: grid; place-items: center; }
+.numsteps { list-style: none; padding: 0 0 12px; display: grid; gap: 10px; }
+.numsteps li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; font-size: 15px; color: var(--ink); }
+.numsteps .n { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: 12.5px; font-weight: 800; }
+
+/* rows that open: ink text, a grey chevron on the right that turns, thin lines above and below */
+details.xp { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+details.xp + details.xp { border-top: 0; }
+details.xp > summary { list-style: none; color: var(--ink); font-weight: 600; font-size: 0.95rem; justify-content: space-between; gap: 12px; padding: 0 2px; }
+details.xp > summary::-webkit-details-marker { display: none; }
+details.xp > summary::after { content: ""; width: 8px; height: 8px; flex: none; margin: 0 6px 4px 0; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform 0.22s var(--ease); }
+details.xp[open] > summary::after { transform: translate(0, 4px) rotate(-135deg); }
+details.xp.closing > summary::after { transform: rotate(45deg); }
+.board button[data-on][data-b="fix"] { background: var(--fix-soft); border: 2px solid var(--fix); } .board button[data-on][data-b="fight"] { background: var(--fight-soft); border: 2px solid var(--fight); }
+.board button[data-on][data-b="ignore"] { background: var(--ignore-soft); border: 2px solid var(--ignore); } .board button[data-on][data-b="keep"] { background: var(--keep-soft); border: 2px solid var(--keep); }
+#fixes-btn.on { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+#stabs { position: sticky; top: 50px; z-index: 1; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); justify-self: stretch; border-radius: 12px; }
+#stabs { margin-bottom: 12px; }
+#stabs button { padding: 0 6px; border-radius: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sheet-box { grid-template-columns: minmax(0, 1fr); }
+[tabindex="-1"]:focus { outline: none; }  /* headings take focus so screen readers start there; the ring is for keyboard targets */
+@media (max-width: 899px) { #fixes-back { display: none; } }
+.stephd .stepper { flex: 0 1 auto; min-width: 0; } .stephd .stepper li { padding: 4px 6px; gap: 4px; font-size: 0.78rem; } .stephd .stepper .dot { width: 22px; height: 22px; }
+@media (max-width: 459px) { .stephd .stepper li:not(.on) .full, .stephd .stepper li:not(.on) .short { display: none; } }  /* a phone: only the current step keeps its name */
+details.xp > .xp-body { padding: 2px 2px 12px; display: grid; gap: 8px; }
+.gate-opts summary::after { content: none; }
+
+/* fields, errors and notices: the message sits where the seller tapped */
+input.filled { border: 2px solid var(--accent); }
+input[aria-invalid="true"] { border: 2px solid var(--fight); }
+.ferr { display: flex; gap: 8px; align-items: flex-start; color: var(--fight); font-size: 0.88rem; font-weight: 600; margin-top: -4px; }
+.ferr svg { margin-top: 3px; }
+.notice { display: grid; gap: 10px; padding: 12px; border-radius: 12px; background: var(--fix-soft); border: 1px solid var(--fix); color: var(--ink); font-size: 0.92rem; font-weight: 600; }
+.notice .t { display: flex; gap: 8px; align-items: flex-start; } .notice .t svg { color: var(--fix); margin-top: 3px; }
+.notice .btn.ghost { width: 100%; }
+.hint { font-size: 0.88rem; color: var(--muted); margin-top: -4px; } .hint b { color: var(--ink); }
+.quota { font-size: 0.9rem; font-weight: 700; color: var(--ink); text-align: center; }
+.btn.off, .btn[aria-disabled="true"] { background: var(--ignore-soft); color: var(--muted); border-color: var(--line); }
+.error:not([hidden]), .ferr:not([hidden]), .notice:not([hidden]) { animation: rise 0.22s var(--ease); }
+.error .btn.ghost { margin-top: 8px; width: 100%; }
+.error .sub { display: block; font-weight: 500; font-size: 0.85rem; margin-top: 2px; }
+
+/* results: one calm headline, four equal tiles, then the plan */
+.res-top { display: grid; gap: 6px; }
+.res-meta { font-size: 0.88rem; color: var(--muted); overflow-wrap: anywhere; }
+#results-h { font-size: 20px; line-height: 1.3; font-weight: 800; letter-spacing: -0.01em; }
+.res-lead { font-size: 0.95rem; color: var(--muted); }
+.res-tools { display: flex; gap: 8px; } .res-tools .btn { flex: 1; }
+.board button, .board button.main { min-height: 84px; transition: transform 0.12s, border-color 0.2s, background-color 0.2s; }
+.board .n, .board button.main .n { font-size: 2rem; }
+.board .l, .board button.main .l { font-size: 0.95rem; }
+.board-cap { font-size: 0.85rem; color: var(--muted); margin-top: -4px; }
+.btn, .nav, .copy, .task, .opt { transition: transform 0.12s, background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s; }
+.btn:active:not([disabled]), .board button:active, .nav:active, .task:active { transform: scale(0.97); }
+.plan { background: var(--accent-soft); border: 1px solid var(--line); border-radius: 16px; padding: 4px 14px 8px; display: grid; }
+.plan .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; }
+.eb { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.plan .meta { font-size: 0.8rem; font-weight: 700; color: var(--accent); }
+.plan h3 { font-size: 17px; font-weight: 800; line-height: 1.3; padding-bottom: 6px; }
+.plan .go-d { display: none; }
+.prow { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 52px; padding: 6px 0; border: 0; border-top: 1px solid var(--line); background: none; color: inherit; font: inherit; text-align: left; width: 100%; cursor: pointer; }
+.prow .k { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); display: grid; place-items: center; font-size: 12.5px; font-weight: 800; background: var(--surface); transition: background-color 0.25s, color 0.25s; }
+.prow .k svg { width: 14px; height: 14px; stroke-width: 3; }
+.prow.done .k { background: var(--accent); color: var(--on-accent); }
+.prow .t { display: grid; min-width: 0; } .prow .t b { font-size: 15px; font-weight: 700; line-height: 1.35; } .prow .t span { font-size: 13px; color: var(--muted); }
+.prow .tm { font-size: 12.5px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.prow .ev { display: none; }
+.stickyfoot { position: sticky; bottom: calc(56px + env(safe-area-inset-bottom)); z-index: 5; display: grid; gap: 2px; margin: 0 calc(-1 * var(--gutter)); padding: 10px var(--gutter) 8px; background: var(--bg); border-top: 1px solid var(--line); }
+.stickyfoot .plain { justify-self: center; min-height: 44px; }
+.stickyfoot .of { display: none; }
+
+/* the three steps */
+#view-plan { display: grid; gap: 14px; }
+.stephd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.back { min-height: 44px; display: inline-flex; align-items: center; gap: 2px; font: inherit; font-weight: 700; font-size: 0.9rem; color: var(--accent); background: none; border: 0; margin-left: -6px; padding: 0 6px; cursor: pointer; }
+.stephd .stepper { flex: 1; max-width: 270px; }
+.stepper { gap: 2px; padding: 4px; }
+.stepper li { justify-content: center; gap: 5px; padding: 4px 6px; min-height: 36px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; border-radius: 999px; transition: color 0.2s; }
+.stepper .dot { width: 24px; height: 24px; font-size: 0.72rem; transition: background-color 0.25s, border-color 0.25s, color 0.25s; }
+.stepper .short { display: none; }
+@media (max-width: 359px) { .stepper .full { display: none; } .stepper .short { display: inline; } }
+.stask { display: grid; gap: 8px; }
+.tag { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; border: 0; padding: 0; margin: 0; background: none; border-radius: 0; }
+.tag.fix { color: var(--fix); } .tag.fight { color: var(--fight); } .tag.keep { color: var(--keep); }
+.h2s { font-size: 20px; line-height: 1.3; font-weight: 800; letter-spacing: -0.01em; }
+.q { font-size: 0.88rem; font-weight: 800; }
+.linkbtn { min-height: 44px; display: inline-flex; align-items: center; gap: 4px; justify-self: start; font: inherit; font-weight: 700; font-size: 0.9rem; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; }
+.opt { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; align-items: start; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
+.opt input[type="radio"] { width: 20px; height: 20px; min-height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.opt:has(input:checked) { border: 2px solid var(--accent); padding: 11px; background: var(--accent-soft); }
+.opt b { font-size: 15px; display: block; } .opt .s { font-size: 13px; color: var(--muted); display: block; }
+.opt .own { margin-top: 8px; }
+.when { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.when .d { display: grid; } .when .d b { font-size: 15px; }
+.when .seg { padding: 3px; } .when .seg button { min-height: 44px; padding: 0 10px; font-size: 0.82rem; }
+.reply { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.reply.sent { gap: 4px; padding: 6px 14px 10px; }
+.reply.sent:not(.was) { animation: rise 0.22s var(--ease); }
+.mono { font-family: var(--font-mono); }
+.pquote { font: 0.85rem/1.6 var(--font-mono); padding: 10px 12px; border-radius: 10px; background: var(--quote); border-left: 3px solid var(--line); overflow-wrap: anywhere; }
+.pquote.fix { border-left-color: var(--fix); } .pquote.fight { border-left-color: var(--fight); } .pquote.keep { border-left-color: var(--keep); }
+.pdraft { font-size: 0.9rem; line-height: 1.55; padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--line-strong); white-space: pre-wrap; overflow-wrap: anywhere; }
+.ask { display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); animation: rise 0.22s var(--ease); }
+.ask p { font-size: 0.9rem; font-weight: 700; }
+.ask .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sentrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.sentrow .ok { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; color: var(--accent); font-size: 0.9rem; }
+.sentrow .q2 { font: 0.82rem var(--font-mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.undo { min-height: 44px; display: inline-flex; align-items: center; font: inherit; font-size: 0.85rem; font-weight: 700; color: var(--muted); text-decoration: underline; padding: 0 4px; flex: none; background: none; border: 0; cursor: pointer; }
+.chip.star { color: var(--ink); }
+textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px 14px; border-radius: 12px; background: var(--surface); border-left: 3px solid var(--keep); }
+.okbadge { width: 60px; height: 60px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; flex: none; animation: pop 0.3s var(--ease); }
+.okbadge.part { background: var(--accent-soft); }
+.okbadge svg { width: 30px; height: 30px; stroke: var(--on-accent); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.okbadge.part svg { stroke: var(--accent); }
+.sumhd { display: flex; gap: 14px; align-items: center; } .sumhd h1 { font-size: 23px; line-height: 1.25; font-weight: 800; }
+.dlist { display: grid; gap: 8px; list-style: none; padding: 0; }
+.dlist li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.dlist li svg { color: var(--accent); margin-top: 3px; }
+.dlist.todo li { justify-content: space-between; align-items: center; padding: 0 4px 0 12px; }
+.trk { background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--accent); border-radius: 16px; padding: 14px; display: grid; gap: 6px; min-width: 0; }
+.trk.due { border-top-color: var(--fix); }
+.trk .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; } .trk h3 { font-size: 16px; }
+.chip.due { color: var(--ink); background: var(--fix-soft); border-color: var(--fix); }
+.wa { background: var(--wa); border-radius: 12px 12px 12px 4px; padding: 10px 12px; font-size: 0.85rem; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.pbar { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.pbar i { display: block; height: 100%; background: var(--accent); transition: width 0.4s var(--ease); }
+.sumgrid, .tasksgrid { display: grid; gap: 14px; }
+
+/* Tugas: open steps first, then the fixes being watched */
+#view-fixes { gap: 14px !important; }
+.tasks-h { display: grid; gap: 2px; } .tasks-h h2 { font-size: 23px; line-height: 1.25; }
+.task { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 60px; padding: 8px 12px; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.task .k { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--accent); }
+.task .t { display: grid; min-width: 0; } .task .t b { font-size: 15px; line-height: 1.35; } .task .t span { font-size: 13px; color: var(--muted); }
+.task > svg { color: var(--muted); }
+.empty2 { display: grid; justify-items: center; text-align: center; gap: 14px; padding: 40px 12px 8px; }
+.empty2 .ill { width: 72px; height: 72px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; }
+.empty2 .ill svg { width: 32px; height: 32px; }
+.empty2 p { font-size: 17px; font-weight: 700; max-width: 280px; }
+.empty2 .btn.primary { max-width: 280px; }
+.signbox { background: var(--surface); border: 1.5px solid var(--accent); border-radius: 16px; padding: 20px 16px; display: grid; gap: 12px; text-align: center; }
+.signbox .lock { width: 24px; height: 24px; margin: 0 auto; color: var(--accent); }
+.signbox h2, .signbox h3 { font-size: 18px; font-weight: 800; }
+.signbox .btn.ghost, .unlock .btn.ghost { width: 100%; min-height: 44px; }
+.sched { list-style: none; padding: 0 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.sched li { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
+.sched li:last-child { border-bottom: 0; color: var(--muted); }
+.fixtools { display: flex; gap: 8px; } .fixtools .btn { flex: 1; }
+.fnote { display: flex; gap: 8px; align-items: flex-start; font-size: 0.85rem; color: var(--muted); }
+.fnote svg { margin-top: 3px; }
+.privrow { min-height: 44px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-weight: 700; }
+
+/* quotes: a bottom sheet on a phone, a side panel on a wide screen */
+#sheet { position: fixed; inset: 0; z-index: 40; }
+#sheet .scrim { position: absolute; inset: 0; background: var(--scrim); opacity: 0; transition: opacity 0.24s; }
+#sheet.open .scrim { opacity: 1; }
+.sheet-box { position: absolute; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 600px; max-height: 85vh; overflow-y: auto; overscroll-behavior: contain; background: var(--bg); border-radius: 20px 20px 0 0; padding: 8px 16px calc(20px + env(safe-area-inset-bottom)); display: grid; gap: 12px; align-content: start; transform: translateY(100%); transition: transform 0.3s var(--ease); }
+#sheet.open .sheet-box { transform: none; }
+.sheet-box .grab { width: 40px; height: 4px; border-radius: 999px; background: var(--line-strong); margin: 4px auto 0; }
+.sheet-hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; position: sticky; top: -8px; background: var(--bg); padding: 6px 0; z-index: 1; }
+.sheet-hd h2 { font-size: 18px; } .sheet-hd h2:focus { outline: none; }
+.xbtn { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); border: 1px solid var(--line); background: var(--surface); cursor: pointer; flex: none; padding: 0; }
+#sheet.dlg .sheet-box { top: 50%; bottom: auto; left: 50%; right: auto; width: min(480px, calc(100% - 32px)); border-radius: 22px; padding: 24px; transform: translate(-50%, -46%); opacity: 0; transition: transform 0.24s var(--ease), opacity 0.24s; background: var(--surface); }
+#sheet.dlg.open .sheet-box { transform: translate(-50%, -50%); opacity: 1; }
+#sheet.dlg .grab { display: none; }
+.toast2 { position: fixed; left: 16px; right: 16px; bottom: calc(150px + env(safe-area-inset-bottom)); z-index: 45; max-width: 440px; margin: 0 auto; background: var(--ink); color: var(--bg); font-size: 0.85rem; font-weight: 600; padding: 10px 14px; border-radius: 12px; text-align: center; animation: rise 0.24s var(--ease); }
+
+/* motion: short, and only where something moves or appears; off when the system asks for less motion */
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes fwd { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes bwd { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+.enter { animation: rise 0.26s var(--ease); }
+.enter-fwd { animation: fwd 0.26s var(--ease); }
+.enter-bwd { animation: bwd 0.26s var(--ease); }
+
+@media (min-width: 900px) {
+  .hero { display: none !important; }
+  #results-h { font-size: 30px; line-height: 1.2; letter-spacing: -0.02em; }
+  .res-lead { font-size: 1rem; max-width: 760px; }
+  .board { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .board button, .board button.main { display: grid; grid-template-columns: none; grid-template-areas: none; justify-items: stretch; align-content: start; gap: 2px; min-height: 0; padding: 14px 16px; border-radius: 22px; text-align: left; }
+  .board button .ic { display: none; }
+  .board .n, .board button.main .n, .board .l, .board button.main .l { grid-area: auto; }
+  .res-meta { display: none; }  /* the product chip in the column header already names it */
+  .board .n, .board button.main .n { display: block; font-size: 40px; line-height: 1.05; }
+  .board .n::after { content: none; }
+  .board .l, .board button.main .l { font-size: 15px; color: var(--ink); }
+  .board button::after, .board button[aria-selected="true"]::after { content: attr(data-th); grid-area: auto; font-size: 13px; font-weight: 500; color: var(--muted); background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 8px 0 0; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .board button[aria-selected="true"] { padding: 13px 15px; }
+  .plan { border-radius: 22px; padding: 16px 20px 8px; }
+  .plan .hd { padding-bottom: 10px; }
+  .plan h3 { font-size: 20px; padding: 0; }
+  .plan .go-d { display: inline-flex; width: auto; }
+  .plan + .stickyfoot { display: none; }
+  .prow { grid-template-columns: 30px minmax(0, 1fr) 64px; gap: 14px; min-height: 62px; }
+  .prow .tm { text-align: right; }
+  .stickyfoot { position: sticky; bottom: -56px; margin: 0 -36px -56px; padding: 12px 36px; display: flex; align-items: center; gap: 16px; }
+  .stickyfoot .btn.primary { width: auto; }
+  .stickyfoot .of { display: inline; margin-left: auto; font-size: 0.88rem; color: var(--muted); }
+  .rgrid { display: grid; gap: 16px; align-items: start; grid-template-columns: 210px minmax(0, 1fr); }
+  .rlist { display: grid; gap: 8px; align-content: start; }
+  .ritem { display: grid; gap: 4px; padding: 12px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); min-width: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .ritem[aria-current="true"] { border: 2px solid var(--accent); padding: 11px 13px; }
+  .ritem .st { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.8rem; font-weight: 700; }
+  .ritem .st .ok { color: var(--accent); display: inline-flex; gap: 6px; align-items: center; }
+  .reply.detail { border-radius: 22px; padding: 20px; gap: 12px; }
+  .sumgrid { grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  .sumgrid > .col3 { grid-column: 1 / -1; }
+  .tasksgrid { grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  .tasksgrid > .col3 { grid-column: 1 / -1; }
+  .workspace.tasks-full { display: block; }
+  .workspace.tasks-full > .col-2 { display: none !important; }
+  .workspace.tasks-full > main.col { height: 100%; padding: 20px 24px 56px; }
+  .workspace.tasks-full .fhead { display: none; }
+  #sheet:not(.dlg) .sheet-box { left: auto; right: 0; top: 72px; bottom: 0; width: 480px; max-width: none; max-height: none; border-radius: 0; border-left: 1px solid var(--line); box-shadow: -18px 0 40px -20px rgba(0, 0, 0, 0.35); padding: 22px 26px; transform: translateX(100%); }
+  #sheet.open:not(.dlg) .sheet-box { transform: none; }
+  #sheet:not(.dlg) .scrim { top: 72px; }
+  #sheet .grab { display: none; }
+  .toast2 { bottom: 32px; }
+}
+@media (min-width: 1200px) {
+  .prow { grid-template-columns: 30px minmax(0, 1.1fr) minmax(0, 1fr) 64px; }
+  .prow .ev { display: block; min-width: 0; padding: 6px 10px; border-radius: 8px; background: var(--surface); border-left: 3px solid var(--line); font: 0.8rem var(--font-mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rgrid { grid-template-columns: 300px minmax(0, 1fr); }
+  .sumgrid { grid-template-columns: 1fr 1fr 1.1fr; } .sumgrid > .col3 { grid-column: auto; }
+  .tasksgrid { grid-template-columns: 1.1fr 1.1fr 0.9fr; gap: 28px; } .tasksgrid > .col3 { grid-column: auto; }
+  .workspace.tasks-full > main.col { padding: 20px 48px 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+  .spinner { animation-duration: 3s !important; animation-iteration-count: infinite !important; }
+}
 @media print {
   :root { --bg: #fff; --surface: #fff; --ink: #000; --muted: #333; --line: #bbb; }
-  .topbar, .bottombar, #view-input, .board, .copy, #print { display: none !important; }
+  .topbar, .bottombar, #view-input, .board, .copy, #print, #plan, .stickyfoot, .res-tools, #sheet .scrim, .sheet-hd .xbtn { display: none !important; }
+  #sheet, #sheet .sheet-box { position: static !important; transform: none !important; max-height: none !important; width: auto !important; box-shadow: none !important; }
+  #sheet[hidden] { display: block !important; } #sheet .sheet-hd, #sheet-extra, #view-plan, #view-fixes, .toast2 { display: none !important; }
   .panel[hidden] { display: grid !important; }
   .card, .draft { break-inside: avoid; }
   main { max-width: none; padding-bottom: 0; }
@@ -390,13 +677,13 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
 <header class="topbar">
   <div class="topbar-in">
     <div class="brand">
-      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="13" cy="13" r="9" fill="none" stroke="currentColor" stroke-width="3"/><path d="M20 20l8 8" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/><path d="M13 8.2l1.5 3.1 3.4.5-2.5 2.4.6 3.4-3-1.6-3 1.6.6-3.4-2.5-2.4 3.4-.5z" fill="var(--accent)"/></svg>
-      <span class="wm">bedah<span>review</span></span>
+      <svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><circle cx="20" cy="20" r="12.5" fill="none" stroke="currentColor" stroke-width="4.2"/><path transform="translate(10.4 10) scale(0.4)" d="M24 5 L29 18.12 L43.02 18.82 L32.08 27.63 L35.76 41.18 L24 33.5 L12.24 41.18 L15.92 27.63 L4.98 18.82 L19 18.12 Z" fill="var(--accent)"/><path d="M28.6 32 L32 28.6 L45.2 42.6 Q45.6 45.6 42.6 45.2 Z" fill="currentColor"/></svg>
+      <span class="wm"><b>bedah</b><i>review</i></span>
     </div>
     <div class="tools">
       <button class="btn pill" id="signin-btn" type="button" hidden data-i18n="signInShort"></button>
+      <button class="theme fixes-pill" id="fixes-btn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="lbl" data-i18n="fixesBtn"></span><span class="badge" id="fixes-count" hidden></span></button>
       <button class="lang" id="lang" type="button" aria-label="Bahasa / Language"></button>
-      <button class="theme fixes-pill" id="fixes-btn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><span class="lbl" data-i18n="fixesBtn"></span><span class="badge" id="fixes-count" hidden></span></button>
       <button class="theme" id="theme" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="theme-icon" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
       <div class="acct" id="acct" hidden>
         <button class="avatar" id="acct-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="acct-menu" data-i18n-label="acctMenu"><span id="acct-initial" aria-hidden="true"></span></button>
@@ -466,6 +753,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   </div>
 </section>
 
+<nav class="ptabs" id="ptabs" aria-label="Bagian" data-i18n-label="sections"><button type="button" id="ptab-mine" aria-current="page" data-i18n="ptabMine"></button><button type="button" id="ptab-rivals" aria-current="false" data-i18n="ptabRivals"></button></nav>
 <div class="workspace" id="workspace" data-section="checker">
 <main id="main" class="col col-1">
 
@@ -484,6 +772,15 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
     <li><span class="num">3</span><div><b data-i18n="step3T"></b><span data-i18n="step3D"></span></div></li>
   </ol>
 
+  <!-- first screen on a phone: what the app does, and how, folded -->
+  <div class="hero" id="hero">
+    <h1 data-i18n="heroTitle"></h1>
+    <details class="xp" id="how">
+      <summary><span><span data-i18n="howTitle"></span><span class="howdots" aria-hidden="true"><span>1</span><span>2</span><span>3</span></span></span></summary>
+      <div class="xp-body"><ol class="numsteps"><li><span class="n">1</span><span data-i18n="how1"></span></li><li><span class="n">2</span><span data-i18n="how2"></span></li><li><span class="n">3</span><span data-i18n="how3"></span></li></ol></div>
+    </details>
+  </div>
+
   <!-- input -->
   <section id="view-input" aria-label="Ulasan baru" data-i18n-label="newReviews">
     <button class="plain dsk" id="back-results" type="button" hidden></button>
@@ -495,12 +792,18 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
 
       <div id="in-link" role="tabpanel" aria-labelledby="intab-link" style="display:grid;gap:12px" hidden>
         <label class="field" for="url"><span data-i18n="linkLabel"></span>
-          <input id="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" data-i18n-ph="linkPh" placeholder="It supports Tokopedia, Lazada, TikTok Shop">
+          <input id="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" data-i18n-ph="linkPh" placeholder="It supports Tokopedia, Lazada, TikTok Shop" aria-describedby="url-error">
         </label>
+        <p class="ferr" id="url-error" role="alert" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span id="url-error-text"></span></p>
+        <div class="notice" id="shopee-note" role="status" hidden>
+          <div class="t"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="shopeeNote"></span></div>
+          <button class="btn ghost" id="shopee-paste" type="button" data-i18n="toPaste"></button>
+        </div>
+        <p class="hint" id="shopee-hint"><span data-i18n="shopeeHintA"></span> <b data-i18n="tabPaste"></b>.</p>
         <p class="small muted dsk" data-i18n="linkHint"></p>
-        <details class="opts">
+        <details class="opts xp">
           <summary data-i18n="linkOpts"></summary>
-          <div class="row" style="padding-bottom:8px">
+          <div class="row xp-body" style="display:flex">
             <label class="fld" for="mode" style="flex:1 1 150px"><span data-i18n="modeLabel"></span>
               <select id="mode"><option value="complaints" data-i18n="modeComplaints"></option><option value="latest" data-i18n="modeLatest"></option></select>
             </label>
@@ -509,11 +812,13 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
             </label>
           </div>
         </details>
+        <p class="quota" id="quota-link" role="status" hidden></p>
         <div class="actions">
           <button class="btn primary" id="fetch" type="button" data-i18n="fetchRun"></button>
-          <button class="plain strong dsk i" id="try-sample" type="button" data-i18n="trySample"></button>
+          <button class="plain strong" id="try-sample" type="button" data-i18n="trySample"></button>
         </div>
-        <p class="small muted" data-i18n="linkNote"></p>
+        <span id="fetch-anchor" hidden></span>
+        <p class="small muted" id="link-note" data-i18n="linkNote"></p>
       </div>
 
       <div id="in-paste" role="tabpanel" aria-labelledby="intab-paste" style="display:grid;gap:12px">
@@ -521,9 +826,9 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
           <h3 data-i18n="fbTitle"></h3>
           <ol class="steps-list" id="fb-steps"></ol>
         </div>
-        <p class="muted" data-i18n="pasteHint"></p>
+        <p class="muted" id="paste-hint" data-i18n="pasteHint"></p>
         <div class="callout" id="shared-note" hidden></div>
-        <div class="fld">
+        <div class="fld" id="paste-fld">
           <label for="paste" data-i18n="reviewsLabel"></label>
           <div class="ta-wrap">
             <textarea id="paste" spellcheck="false" placeholder="★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem&#10;★★☆☆☆  Hitam, L   Pas sampe koyak bajunya"></textarea>
@@ -531,30 +836,33 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
           </div>
         </div>
         <p class="small muted" id="paste-count" role="status" hidden></p>
-        <label class="field" for="product"><span data-i18n="productLabel"></span>
+        <label class="field" for="product" id="product-fld"><span data-i18n="productLabel"></span>
           <input id="product" type="text" maxlength="150" autocomplete="off" data-i18n-ph="productPh">
         </label>
+        <p class="quota" id="quota-note" role="status" hidden></p>
         <button class="btn primary" id="run" type="button" data-i18n="run"></button>
-        <p class="small muted" id="quota-note" role="status" hidden></p>
+        <span id="run-anchor" hidden></span>
         <button class="btn ghost" id="fb-retry" type="button" hidden data-i18n="fbRetry"></button>
         <p><button class="plain strong" id="sample" type="button" data-i18n="sample"></button></p>
-        <details>
-          <summary data-i18n="howSummary"></summary>
-          <pre data-i18n="howBody"></pre>
-        </details>
-        <details id="share-tip">
-          <summary data-i18n="shareTip"></summary>
-          <div style="display:grid;gap:8px;padding-bottom:4px">
-            <ol class="steps-list" id="share-steps"></ol>
-            <p class="small muted" data-i18n="shareCaveat"></p>
-            <button class="btn ghost" id="install" type="button" hidden data-i18n="install"></button>
-          </div>
-        </details>
+        <div>
+          <details class="xp">
+            <summary data-i18n="howSummary"></summary>
+            <div class="xp-body"><pre data-i18n="howBody"></pre></div>
+          </details>
+          <details class="xp" id="share-tip">
+            <summary data-i18n="shareTip"></summary>
+            <div class="xp-body">
+              <ol class="numsteps" id="share-steps"></ol>
+              <p class="small muted" data-i18n="shareCaveat"></p>
+              <button class="btn ghost" id="install" type="button" hidden data-i18n="install"></button>
+            </div>
+          </details>
+        </div>
       </div>
 
       <div class="error" id="error" role="alert" tabindex="-1" hidden>
         <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-        <div><strong id="error-title" hidden></strong><span id="error-text"></span></div>
+        <div><strong id="error-title" hidden></strong><span id="error-text"></span><span class="sub" id="error-sub" hidden></span><button class="btn ghost" id="error-paste" type="button" hidden data-i18n="toPaste"></button></div>
       </div>
     </div>
   </section>
@@ -568,52 +876,60 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   </section>
 
   <!-- fixes the seller logged (saved in this browser only) -->
-  <section id="view-fixes" hidden aria-labelledby="fixes-h" style="display:grid;gap:12px">
-    <div class="res-head">
-      <div><h2 id="fixes-h" tabindex="-1" data-i18n="fixesTitle"></h2><p class="small muted" id="fixes-sub"></p></div>
-      <button class="btn ghost" id="fixes-back" type="button" data-i18n="back"></button>
+  <!-- Tugas: open steps from today's plans, and the fixes being watched (kept in this browser, and in the account when signed in) -->
+  <section id="view-fixes" hidden aria-labelledby="fixes-h" style="display:grid;gap:14px">
+    <button class="back dsk i" id="fixes-back" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span data-i18n="back"></span></button>
+    <div class="res-head" style="align-items:flex-end;flex-wrap:wrap">
+      <div class="tasks-h"><h2 id="fixes-h" tabindex="-1" data-i18n="fixesTitle"></h2><p class="small muted" id="tasks-sub"></p></div>
+      <div class="row dsk f" id="tasks-filter" role="group"></div>
     </div>
-    <div class="callout warn" data-i18n="fixesWarn"></div>
-    <div class="callout hot" id="fixes-nostore" hidden data-i18n="fixesNoStore"></div>
-    <div class="callout" id="fixes-sync" role="status" hidden></div>
-    <div class="row">
-      <button class="btn ghost" id="fixes-export" type="button" data-i18n="fixesExport"></button>
-      <button class="btn ghost" id="fixes-import" type="button" data-i18n="fixesImport"></button>
-      <input type="file" id="fixes-file" accept="application/json,.json" hidden aria-label="JSON">
+    <div id="tasks-body" style="display:grid;gap:14px"></div>
+    <div id="tasks-fixes" style="display:grid;gap:12px">
+      <p class="small muted" id="fixes-sub"></p>
+      <div class="callout hot" id="fixes-nostore" hidden data-i18n="fixesNoStore"></div>
+      <div class="callout" id="fixes-sync" role="status" hidden></div>
+      <div class="callout" id="fixes-msg" role="status" hidden></div>
+      <div class="fixtools">
+        <button class="btn ghost" id="fixes-export" type="button" data-i18n="fixesExport"></button>
+        <button class="btn ghost" id="fixes-import" type="button" data-i18n="fixesImport"></button>
+        <input type="file" id="fixes-file" accept="application/json,.json" hidden aria-label="JSON">
+      </div>
+      <p class="fnote"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="fixesWarn"></span></p>
     </div>
-    <div class="callout" id="fixes-msg" role="status" hidden></div>
-    <div id="fixes-list" class="stack"></div>
   </section>
+
+  <!-- the three steps of today's plan, then the summary -->
+  <section id="view-plan" hidden aria-labelledby="plan-h"></section>
 
   <!-- results -->
   <section id="view-results" hidden aria-labelledby="results-h" style="display:grid;gap:12px">
-    <div class="res-head mob">
-      <div>
-        <h2 id="results-h" tabindex="-1"></h2>
-        <p class="small muted" id="summary"></p>
-      </div>
-      <div class="row" style="flex:none">
-        <button class="btn ghost" id="new-mob" type="button" data-i18n="newMob"></button>
-        <button class="btn ghost" id="print" type="button" data-i18n="print"></button>
-      </div>
+    <div class="res-top">
+      <p class="res-meta" id="summary"></p>
+      <h2 id="results-h" tabindex="-1"></h2>
+      <p class="res-lead" id="res-lead"></p>
     </div>
+    <div class="res-tools mob">
+      <button class="btn ghost" id="new-mob" type="button" data-i18n="newMob"></button>
+      <button class="btn ghost" id="print" type="button" data-i18n="print"></button>
+    </div>
+    <div class="board" id="tabs" role="group"></div>
+    <p class="board-cap" id="board-cap" data-i18n="boardCap"></p>
     <div id="start"></div>
-    <button class="btn ghost mob" id="rivals-open" type="button" data-i18n="rivalsOpen"></button>
-    <div class="board" id="tabs" role="tablist"></div>
     <div class="card-box unlock" id="unlock" hidden aria-labelledby="unlock-h">
       <svg class="i lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
       <h3 id="unlock-h" tabindex="-1" data-i18n="unlockTitle"></h3>
       <p class="muted" data-i18n="unlockBody"></p>
       <button class="gbtn" id="unlock-google" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i18n="gGoogle"></span></button>
-      <button class="plain strong" id="unlock-email" type="button" data-i18n="unlockEmail"></button>
-      <p class="small muted"><span data-i18n="unlockNote"></span> <span data-i18n="gConsent"></span> <a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a></p>
+      <button class="btn ghost" id="unlock-email" type="button" data-i18n="unlockEmail"></button>
+      <p class="small muted"><span data-i18n="unlockNote"></span> <span data-i18n="gConsent"></span></p>
+      <a class="privrow" href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a>
     </div>
-    <details class="legend">
+    <details class="legend xp">
       <summary data-i18n="legendSummary"></summary>
-      <div id="legend"></div>
+      <div class="xp-body" id="legend"></div>
     </details>
     <div id="notes" style="display:grid;gap:8px"></div>
-    <div id="panels"></div>
+    <button class="btn ghost mob" id="rivals-open" type="button" data-i18n="rivalsOpen"></button>
     <div class="card-box" id="feedback" hidden></div>
     <p class="foot" id="foot" hidden></p>
     <p class="foot"><a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a></p>
@@ -631,9 +947,22 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
 </aside>
 </div>
 
+<!-- a group's quotes and drafts: a bottom sheet on a phone, a side panel on a wide screen; also the sign-in dialog for Tugas on a wide screen -->
+<div id="sheet" hidden>
+  <div class="scrim" id="sheet-scrim"></div>
+  <div class="sheet-box" role="dialog" aria-modal="true" aria-labelledby="sheet-h">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-hd"><h2 id="sheet-h" tabindex="-1"></h2><button class="xbtn" id="sheet-x" type="button" data-i18n-label="close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div id="panels"></div>
+    <div id="sheet-extra" hidden></div>
+  </div>
+</div>
+<div class="toast2" id="toast2" role="status" hidden></div>
+
 <nav class="bottombar" aria-label="Menu">
   <div class="bottombar-in">
     <button class="nav" id="nav-check" type="button" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg><span data-i18n="navChecker"></span></button>
+    <button class="nav" id="nav-tasks" type="button" aria-current="false"><span class="ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="badge" id="tasks-count" hidden></span></span><span data-i18n="navTasks"></span></button>
     <button class="nav" id="nav-rivals" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg><span data-i18n="navRivals"></span></button>
   </div>
 </nav>
@@ -658,7 +987,7 @@ const TEXT = {
     sharedLinkOnly: "Yang dikirim hanya tautan, bukan teks ulasan. Salin teks ulasannya, lalu tempel.",
     linkLabel: "Tautan produk", linkPh: "Mendukung Tokopedia, Lazada, TikTok Shop",
     modeLabel: "Ambil", modeComplaints: "Keluhan dulu (1-3★)", modeLatest: "Ulasan terbaru", limitLabel: "Jumlah", fetchRun: "Ambil & bedah",
-    linkNote: "Tautan pendek dari tombol Bagikan juga bisa. Shopee belum bisa lewat tautan: salin dan tempel ulasannya. Mengambil ulasan bisa makan waktu hingga satu menit, dan kadang hasilnya lebih sedikit dari yang diminta.",
+    linkNote: "Tautan pendek dari tombol Bagikan juga bisa. Mengambil ulasan bisa makan waktu hingga satu menit, dan kadang hasilnya lebih sedikit dari yang diminta.",
     errPaste: "Tempel ulasan dulu.", errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa terhubung ke BedahReview. Periksa koneksi internetmu, lalu coba lagi.",
     pasteFound: "%s ulasan terdeteksi. Yang pertama: “%s”", pasteTooMany: "%s ulasan terdeteksi, tapi maksimal %s per analisis. Kurangi dulu.",
     loadingPart: "%s dari %s bagian selesai.", loadingFetching: "Mengambil ulasan dari tautan…", loadingResume: "Melanjutkan analisis tadi…", e_job_gone: "Analisis ini sudah tidak tersedia. Coba bedah lagi.",
@@ -697,8 +1026,8 @@ const TEXT = {
     f2Title: "Analisis pesaing", f2Sub: "Bandingkan keluhan & pujian dengan toko lain",
     step1T: "Salin & tempel ulasan", step1D: "dari Shopee, Tokopedia, atau aplikasi toko lain",
     step1TLink: "Tempel tautan atau ulasan", step1DLink: "tautan Tokopedia, TikTok Shop, Lazada, atau teks ulasannya", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
-    step3T: "Kamu dapat daftar tugas", step3D: "urut, plus draf balasan siap salin",
-    linkHint: "Kami membaca hingga 10 ulasan terbaru yang berisi teks. Nama pembeli tidak disimpan.", linkOpts: "Pilihan lain", trySample: "Belum punya tautan? Coba dengan contoh",
+    step3T: "Kamu dapat rencana singkat", step3D: "plus draf balasan siap kirim",
+    linkHint: "Kami membaca hingga 10 ulasan terbaru yang berisi teks. Nama pembeli tidak disimpan.", linkOpts: "Atur jumlah ulasan", trySample: "Belum punya tautan? Coba dengan contoh",
     navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Bandingkan dengan pesaing",
     rivalWantLbl: "Berapa pesaing?", rivalExampleBtn: "Lihat contoh (gratis)", rivalExampleHead: "Contoh, bukan data nyata.",
     rivalExampleBody: "Angka dan kutipan di bawah dibuat untuk contoh. “Contoh Kaos Boxy” bukan produkmu: tidak ada toko atau pembeli sungguhan, dan tidak ada biaya.",
@@ -708,10 +1037,10 @@ const TEXT = {
     fbQ: "Apakah hasil ini berguna?", fbYes: "Ya", fbPartly: "Sebagian", fbNo: "Tidak", fbComment: "Mau menambahkan sesuatu? (opsional)",
     fbNote: "Komentar hanya disimpan kalau kamu menulisnya. Jangan tulis nama orang atau menempel teks ulasan.", fbSend: "Kirim", fbThanks: "Terima kasih. Jawabanmu membantu.",
     fbReview: "Komentarmu tampak memuat teks ulasan. Hapus bagian itu dulu, supaya tidak ada teks ulasan yang tersimpan.", fbFail: "Tidak terkirim. Coba lagi nanti.",
-    limitBusy: "Server sedang sibuk. Coba lagi sebentar lagi.", logout: "Keluar", back: "Kembali", fixesBtn: "Perbaikan", fixesTitle: "Perbaikan yang kamu catat", fixesSub: "Disimpan di browser ini saja. Tidak ada yang dikirim ke server.",
+    limitBusy: "Server sedang sibuk. Coba lagi sebentar lagi.", logout: "Keluar", back: "Kembali", fixesBtn: "Tugas", fixesTitle: "Tugas", fixesSub: "Perbaikan disimpan di browser ini saja. Tidak ada yang dikirim ke server.",
     fixesWarn: "Hitungan dari contoh kecil bisa menyesatkan. Keluhan yang berkurang satu bisa kebetulan, dan bukan bukti perbaikanmu berhasil. Analisis baru juga bisa memuat ulasan lama yang sama.",
-    fixesNoStore: "Browser ini tidak bisa menyimpan data, jadi catatan hilang saat halaman ditutup. Ekspor ke file JSON supaya tidak hilang.",
-    fixesExport: "Ekspor JSON", fixesImport: "Impor JSON", fixesEmpty: "Belum ada perbaikan. Di tab Perbaiki, ketuk “Tandai sudah diperbaiki” pada sebuah kartu.",
+    fixesNoStore: "Browser ini tidak bisa menyimpan data, jadi catatan hilang saat halaman ditutup. Simpan cadangan supaya tidak hilang.",
+    fixesExport: "Simpan cadangan", fixesImport: "Pulihkan cadangan", fixesEmpty: "Belum ada perbaikan yang dipantau.",
     fixMark: "Tandai sudah diperbaiki", fixNoteLbl: "Catatan singkat (opsional)", fixNotePh: "mis. size chart diganti ke cm", fixSave: "Simpan", fixCancel: "Batal",
     fixMarked: "Ditandai diperbaiki %s", fixBefore: "Sebelum: %s dari %s ulasan mengeluhkan ini.", fixAfter: "Sesudah (%s): %s dari %s ulasan.",
     fixWaiting: "Belum ada analisis baru untuk dibandingkan. Bedah ulasan terbaru produk yang sama nanti.",
@@ -719,7 +1048,7 @@ const TEXT = {
     fixEdit: "Ubah", fixDelete: "Hapus", fixDeleteSure: "Yakin hapus?", fixDate: "Tanggal", fixProduct: "Produk: %s", fixNoProduct: "(tanpa nama produk)",
     fixNoName: "Tanpa nama produk: perbaikan ini dicocokkan dengan analisis lain yang juga tanpa nama. Isi nama produk di kotak Tempel agar tepat.",
     fixesCompared: "%s perbaikan yang kamu catat dibandingkan dengan ulasan baru ini.", fixesSee: "Lihat",
-    importOk: "Diimpor: %s perbaikan. Dilewati karena tidak valid: %s.", importBad: "File ini tidak bisa dibaca sebagai daftar perbaikan BedahReview.", importBig: "File terlalu besar.", fixSaveFail: "Tidak bisa menyimpan di browser ini. Ekspor JSON supaya catatan tidak hilang.",
+    importOk: "Diimpor: %s perbaikan. Dilewati karena tidak valid: %s.", importBad: "File ini tidak bisa dibaca sebagai cadangan BedahReview.", importBig: "File terlalu besar.", fixSaveFail: "Tidak bisa menyimpan di browser ini. Simpan cadangan supaya catatan tidak hilang.",
     limitBudget: "Membaca lewat tautan sedang tidak tersedia hari ini. Salin dan tempel ulasannya saja.", limitBudgetRival: "Pencarian pesaing sedang tidak tersedia hari ini. Coba lagi besok.", limitHour: "Terlalu banyak pengambilan lewat tautan dalam satu jam. Coba lagi nanti, atau tempel ulasannya.",
     fbTitle: "Cara lain: tempel ulasannya", fbSteps: ["Buka produk di marketplace, lalu buka Ulasan.", "Salin teks ulasannya.", "Tempel di bawah, satu ulasan per baris."], fbRetry: "Coba tautan lagi",
     errFetchTitle: "Ulasan dari tautan ini tidak bisa dibaca", backResults: "← Kembali ke hasil", pastedName: "Ulasan yang ditempel",
@@ -736,7 +1065,7 @@ const TEXT = {
     rivalYourLink: "Tautan produkmu", rivalYourName: "Nama produk (membantu pencarian)", rivalYourNamePh: "mis. Kaos Boxy Retro", rivalFindLink: "Cari pesaing",
     rivalFreeNote: "Bisa dipakai tanpa Bedah ulasan. Satu perbandingan memakai satu jatah analisis harianmu.",
     rivalSignIn: "Masuk untuk mencari dan membandingkan pesaing. Gratis, tanpa kata sandi.", rivalSignInNote: "Mencari pesaing perlu masuk dulu (gratis). Contohnya bisa dilihat tanpa masuk.", rivalSignInBtn: "Masuk untuk mencari pesaing", rivalNeedLink: "Tempel tautan produkmu dulu.", rivalNeedName: "Isi nama produkmu supaya kami bisa mencari yang serupa.",
-    stepFind: "Cari", stepPick: "Pilih", stepCompare: "Bandingkan",
+    stepFind: "Cari", stepPick: "Pilih", stepCompare: "Bandingkan", stepCompareShort: "Banding",
     rivalFound: "Kami menemukan %s produk mirip. %s yang paling mirip sudah dicentang, hapus centang kalau tidak cocok.", rivalMost: "Paling mirip", rivalMoreN: "Produk lain yang ditemukan · %s", rivalShopLbl: "Toko: %s",
     rivalSeen: "Yang terlihat dari angka", rivalByTheme: "Jumlah ulasan per tema", rivalThemeCol: "Tema", nReviewsCol: "%s ulasan", rivalNote: "Catatan data",
     tagSmall: "terlalu sedikit", tagFail: "gagal", tagSkip: "tidak dihitung",
@@ -766,13 +1095,41 @@ const TEXT = {
     unlockTitle: "Hasilnya sudah siap", unlockBody: "Masuk gratis untuk melihat kutipan asli pembeli, apa yang perlu diperbaiki, dan draf balasan yang siap disalin.",
     unlockEmail: "Pakai email saja", unlockNote: "Tanpa kata sandi. Hasil ini tetap ada setelah kamu masuk.",
     gFreeUsed: "Analisis gratismu sudah terpakai. Masuk untuk lanjut, tetap gratis.",
-    fixesSubAccount: "Disimpan di akunmu (nama produk, tautan, dan catatanmu) supaya bisa dibuka dari HP lain. Jangan menulis nama orang.",
+    fixesSubAccount: "Perbaikan disimpan di akunmu (nama produk, tautan, catatanmu, dan tanggal cek) supaya bisa dibuka dari HP lain. Jangan menulis nama orang.",
     syncOk: "Tersimpan di akunmu.", syncDown: "Riwayat sedang tidak tersedia. Catatanmu tetap tersimpan di perangkat ini dan akan disimpan ke akunmu nanti.",
     syncOff: "Masuk agar catatanmu tersimpan di akunmu dan bisa dibuka dari HP lain.", fixNoteReview: "Catatanmu tampak memuat teks ulasan. Tulis dengan kata-katamu sendiri.",
     limitDaily: "Batas harian tercapai: %s analisis per hari. Coba lagi besok (reset tengah malam WIB).", quotaLeft: "Sisa analisis hari ini: %s dari %s.",
     e_model_quota: "Kuota atau kredit layanan AI sedang habis, jadi ulasan belum bisa dibedah. Coba lagi nanti.",
     startHere: "Mulai dari sini", startFix: "Perbaiki “%s”: %s ulasan mengeluhkan ini.", startSeeFix: "Lihat saran", startFight: "Balas ulasan tentang “%s”. Drafnya siap disalin.", startSeeFight: "Lihat draf",
     startNone: "Tidak ada keluhan yang perlu ditindak. Lihat yang dipuji pembeli di Pertahankan.", whySteps: "Kenapa & langkahnya",
+    // final design: first screen, link tab, results plan, the three steps, summary, Tugas
+    heroTitle: "Pilah ulasan produkmu jadi daftar tindakan", howTitle: "Cara kerjanya", how1: "Tempel tautan atau ulasan", how2: "Kami pilah ulasannya jadi 4 kelompok, dengan kutipan asli", how3: "Kamu dapat rencana singkat, plus draf balasan siap kirim",
+    shopeeNote: "Shopee belum bisa lewat tautan. Salin ulasannya dari aplikasi Shopee, lalu tempel.", toPaste: "Tempel ulasan", shopeeHintA: "Shopee? Pakai tab", refunded: "Jatah analisis hari ini dikembalikan.",
+    boardCap: "Ketuk kelompok untuk melihat kutipan asli.", close: "Tutup", navTasks: "Tugas", ptabMine: "Analisis saya", ptabRivals: "Pesaing", sections: "Bagian", sheetT: "%s · %s ulasan",
+    hOne: "Keluhan terbanyak cuma satu: %s.", hTop: "Keluhan terbanyak: %s.", hFight: "Tidak ada yang perlu diperbaiki, tapi %s ulasan perlu dibalas.", hNone: "Tidak ada keluhan yang perlu ditindak.",
+    lFix: "%s dari %s ulasan menyebutnya, dan itu bisa diperbaiki.", lFight: "%s ulasan perlu dibalas.", lKeep: "%s pembeli memuji %s.", lKeepAny: "%s pembeli memuji produkmu.", and: "dan",
+    planMeta: "%s langkah · ±%s menit", planH: "Rencana hari ini", planGo: "Mulai kerjakan", planGoOn: "Lanjutkan", planAllDone: "Lihat ringkasan",
+    s1: "Catat perbaikan %s", s1s: "Keluhan terbanyak", s1Done: "Dipantau, cek %s", s1Logged: "Dicatat", s2: "Balas %s ulasan buruk", s2s: "%s dari %s terkirim", s3: "Tambah 1 kalimat di deskripsi", s3s: "Dari pujian pembeli", s3Done: "Sudah ditambahkan", mins: "±%s mnt",
+    backRes: "Hasil", st1: "Catat", st2: "Balas", st3: "Deskripsi", st3Short: "Deskripsi", stepsLbl: "Langkah",
+    t1h: "Catat perbaikan untuk %s", t1p: "%s dari %s ulasan mengeluhkan ini. Kamu tidak perlu selesai hari ini, cukup putuskan langkahnya.", seeQ: "Lihat %s kutipan",
+    q1: "Apa yang akan kamu lakukan?", oAi: "Saran AI untuk keluhan ini. Baca dulu, ubah kalau perlu.", oOwn: "Tulis langkahku sendiri", oOwnS: "Boleh langkah yang butuh waktu, misalnya ganti pemasok.", oOwnPh: "mis. ganti ke bahan yang lebih tebal",
+    q2: "Cek hasilnya", whenS: "Kami bandingkan dengan ulasan baru.", plusDays: "+%s hari", q3: "Ingatkan aku lewat", rWa: "WhatsApp", rCal: "Kalender", rNone: "Tidak usah",
+    save1: "Simpan & lanjut", skip: "Lewati dulu", next: "Lanjut", toSum: "Lihat ringkasan", needChoice: "Pilih langkahnya dulu, atau ketuk Lewati dulu.", needOwn: "Tulis langkahmu dulu.",
+    savedToast: "Tersimpan di Tugas. Cek lagi %s.", already1: "Perbaikan ini sudah dicatat.", alreadyCheck: "Cek lagi %s.",
+    t2h: "Balas %s ulasan buruk", t2p: "Pembeli baru membaca balasanmu. Salin, kirim di %s, lalu kembali ke sini.", aiShort: "Ditulis AI, baca dulu sebelum dikirim.",
+    copyOpen: "Salin & buka %s", copyOnly: "Salin balasan", copyAgain: "Salin lagi & buka %s", asked: "Sudah kamu kirim?", yes: "Sudah", notYet: "Belum", sentOk: "Terkirim", undo: "Batal", notCopied: "Belum disalin", reviewOf: "Ulasan %s dari %s",
+    t3h: "Tambah 1 kalimat di deskripsi", t3p: "%s pembeli memuji produkmu. Pakai kata-kata mereka untuk meyakinkan pembeli baru.", lineLbl: "Kalimat dari pujian pembeli (boleh diubah)", copyLine: "Salin & buka halaman produk", copyLineOnly: "Salin kalimat", askLine: "Sudah kamu tambahkan?", lineDone: "Sudah ada di deskripsi",
+    stepOf: "Langkah %s dari %s",
+    doneH: "Hari ini beres", partH: "Ringkasan hari ini", doneP: "Semua yang bisa dikerjakan hari ini sudah selesai.", partP: "Sisanya bisa kamu lanjutkan dari Tugas kapan saja.",
+    did: "Sudah dikerjakan", todo: "Belum", tracked: "Sedang dipantau", dR: "%s dari %s balasan terkirim", dL: "Kalimat pujian ditambahkan ke deskripsi", dF: "Perbaikan %s dicatat", nothingYet: "Belum ada yang dikerjakan.",
+    uR: "%s balasan belum terkirim", uL: "Kalimat deskripsi belum ditambahkan", uF: "Perbaikan %s belum dicatat", doIt: "Kerjakan", progress: "%s dari %s hal hari ini selesai", left: "Sisa ±%s mnt",
+    trCheck: "Cek lagi %s", trRem: "Pengingat lewat %s", waCap: "Teks yang terbuka di WhatsApp, untuk dikirim ke dirimu sendiri:", waMsg: "BedahReview · %s\nCek lagi %s: apakah keluhan “%s” berkurang?", backRes2: "Kembali ke hasil", another: "Bedah produk lain",
+    calTitle: "Cek ulasan: %s", calBody: "Bedah ulasan terbaru %s di BedahReview, lalu lihat apakah keluhan “%s” berkurang.",
+    tasksSub: "Langkah yang belum selesai dan perbaikan yang sedang dipantau.", tasksSubAll: "Langkah yang belum selesai dan perbaikan yang sedang dipantau, untuk semua produkmu.",
+    today: "Hari ini · %s", watched: "Dipantau · %s", sched: "Jadwal cek", schedToday: "Hari ini", schedNext: "Berikutnya", schedNextP: "Tanggal cek muncul di sini setelah kamu mencatat perbaikan.",
+    dueChip: "Waktunya cek", loggedOn: "%s · dicatat %s", reanalyse: "Bedah ulasan terbaru", skippedNote: "Langkah yang dilewati tetap di sini sampai kamu kerjakan.", noneToday: "Tidak ada langkah yang tersisa.",
+    tasksEmpty: "Belum ada tugas. Bedah ulasan produk untuk mulai.", tasksStart: "Bedah ulasan", tasksSignT: "Masuk untuk menyimpan tugasmu", tasksSignP: "Perbaikan dan tanggal cekmu tersimpan di akunmu, jadi tidak hilang saat browser ditutup.",
+    later: "Nanti saja", allProducts: "Semua produk", open: "Buka", goneNote: "Hasil analisis ini sudah tidak ada di perangkat ini. Bedah ulasan lagi untuk melanjutkan.", dismiss: "Hapus dari Tugas", noProductName: "Ulasan yang ditempel",
     // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
     e_not_link: "Itu tidak terlihat seperti tautan.", e_link_https: "Tempel tautan https lengkap dari produk Tokopedia, Lazada, atau TikTok Shop.", e_not_product: "Itu tidak terlihat seperti tautan produk.",
     e_short_bad: "Tautan pendek itu tidak mengarah ke produk Tokopedia, Lazada, atau TikTok Shop.", e_short_open: "Tautan pendek itu tidak bisa dibuka. Buka produknya, lalu salin tautan lengkapnya.",
@@ -795,16 +1152,16 @@ const TEXT = {
     productLabel: "Product name (optional)", productPh: "e.g. Retro Boxy Tee", reviewsLabel: "Reviews",
     howSummary: "Tips for better results",
     howBody: "One review per line reads best. If a review has several lines, put a blank line between reviews.\n\nStars and variant can go first, but they are optional:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya",
-    run: "Bedah ulasan", running: "Working…", sample: "No reviews at hand? Try an example", clear: "Clear the text",
+    run: "Check reviews", running: "Working…", sample: "No reviews at hand? Try an example", clear: "Clear the text",
     shareTip: "On Android: share straight from the shop app",
-    shareSteps: ["Install BedahReview to your home screen (Android Chrome: ⋮ menu > Install app).", "In Shopee, long-press the review text and choose Share.", "Pick BedahReview. The text lands in the Paste box. Tap Bedah ulasan."],
+    shareSteps: ["Install BedahReview to your home screen (Android Chrome: ⋮ menu > Install app).", "In Shopee, long-press the review text and choose Share.", "Pick BedahReview. The text lands in the Paste box. Tap Check reviews."],
     shareCaveat: "If the text does not arrive, copy and paste it instead.",
     install: "Add to home screen",
-    sharedOk: "Text from the Share menu is in. Tap Bedah ulasan.",
+    sharedOk: "Text from the Share menu is in. Tap Check reviews.",
     sharedLinkOnly: "Only a link was shared, not the review text. Copy the review text and paste it.",
     linkLabel: "Product link", linkPh: "It supports Tokopedia, Lazada, TikTok Shop",
     modeLabel: "Get", modeComplaints: "Complaints first (1-3★)", modeLatest: "Latest reviews", limitLabel: "Reviews", fetchRun: "Fetch & analyse",
-    linkNote: "Short links from the Share button work too. Shopee cannot be read from a link yet: copy and paste its reviews instead. Reading the reviews can take up to a minute, and sometimes returns fewer than asked.",
+    linkNote: "Short links from the Share button work too. Reading the reviews can take up to a minute, and sometimes returns fewer than asked.",
     errPaste: "Paste some reviews first.", errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach BedahReview. Check your internet connection and try again.",
     pasteFound: "%s reviews found. The first one: “%s”", pasteTooMany: "%s reviews found, but the limit is %s per analysis. Remove some first.",
     loadingPart: "%s of %s parts done.", loadingFetching: "Fetching reviews from the link…", loadingResume: "Picking up your earlier analysis…", e_job_gone: "This analysis is no longer available. Please run it again.",
@@ -843,8 +1200,8 @@ const TEXT = {
     f2Title: "Competitor analysis", f2Sub: "Compare complaints & praise with other shops",
     step1T: "Copy & paste your reviews", step1D: "from Shopee, Tokopedia or any shop app",
     step1TLink: "Paste a link or the reviews", step1DLink: "a Tokopedia, TikTok Shop or Lazada link, or the review text", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
-    step3T: "You get a task list", step3D: "in order, with reply drafts ready to copy",
-    linkHint: "We read up to 10 of the newest reviews that have text. Buyer names are not saved.", linkOpts: "More options", trySample: "No link yet? Try an example",
+    step3T: "You get a short plan", step3D: "plus reply drafts ready to send",
+    linkHint: "We read up to 10 of the newest reviews that have text. Buyer names are not saved.", linkOpts: "Set number of reviews", trySample: "No link yet? Try an example",
     navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Compare with competitors",
     rivalWantLbl: "How many competitors?", rivalExampleBtn: "See an example (free)", rivalExampleHead: "Example, not live data.",
     rivalExampleBody: "The numbers and quotes below were made up for this example. “Contoh Kaos Boxy” is not your product: no real shops or buyers, and no cost.",
@@ -854,10 +1211,10 @@ const TEXT = {
     fbQ: "Was this useful?", fbYes: "Yes", fbPartly: "Partly", fbNo: "No", fbComment: "Anything to add? (optional)",
     fbNote: "A comment is saved only if you write one. Please do not write names or paste review text.", fbSend: "Send", fbThanks: "Thank you. Your answer helps.",
     fbReview: "Your comment looks like it contains review text. Please remove that part, so no review text is stored.", fbFail: "Could not send. Try again later.",
-    limitBusy: "The server is busy. Try again in a moment.", logout: "Sign out", back: "Back", fixesBtn: "Fixes", fixesTitle: "Fixes you logged", fixesSub: "Saved in this browser only. Nothing is sent to the server.",
+    limitBusy: "The server is busy. Try again in a moment.", logout: "Sign out", back: "Back", fixesBtn: "Tasks", fixesTitle: "Tasks", fixesSub: "Fixes are saved in this browser only. Nothing is sent to the server.",
     fixesWarn: "Counts from small samples can mislead. One complaint fewer can be chance, not proof that your fix worked. A new analysis may also include some of the same old reviews.",
-    fixesNoStore: "This browser cannot save data, so your log is lost when the page closes. Export it to a JSON file to keep it.",
-    fixesExport: "Export JSON", fixesImport: "Import JSON", fixesEmpty: "No fixes yet. In the Fix tab, tap “Mark as fixed” on a card.",
+    fixesNoStore: "This browser cannot save data, so your log is lost when the page closes. Save a backup to keep it.",
+    fixesExport: "Save a backup", fixesImport: "Restore a backup", fixesEmpty: "No fixes being tracked yet.",
     fixMark: "Mark as fixed", fixNoteLbl: "Short note (optional)", fixNotePh: "e.g. size chart changed to cm", fixSave: "Save", fixCancel: "Cancel",
     fixMarked: "Marked as fixed %s", fixBefore: "Before: %s of %s reviews complained about this.", fixAfter: "After (%s): %s of %s reviews.",
     fixWaiting: "No newer analysis to compare with yet. Analyse the latest reviews of the same product later.",
@@ -865,7 +1222,7 @@ const TEXT = {
     fixEdit: "Edit", fixDelete: "Delete", fixDeleteSure: "Really delete?", fixDate: "Date", fixProduct: "Product: %s", fixNoProduct: "(no product name)",
     fixNoName: "No product name: this fix is matched with other analyses that also have no name. Fill in the product name in the Paste box to be exact.",
     fixesCompared: "%s fix(es) you logged were compared with these new reviews.", fixesSee: "See",
-    importOk: "Imported: %s fix(es). Skipped as invalid: %s.", importBad: "This file could not be read as a BedahReview fixes list.", importBig: "The file is too large.", fixSaveFail: "Could not save in this browser. Export JSON so your log is not lost.",
+    importOk: "Imported: %s fix(es). Skipped as invalid: %s.", importBad: "This file could not be read as a BedahReview backup.", importBig: "The file is too large.", fixSaveFail: "Could not save in this browser. Save a backup so your log is not lost.",
     limitBudget: "Reading from a link is not available for the rest of today. Copy and paste the reviews instead.", limitBudgetRival: "Competitor search is not available for the rest of today. Try again tomorrow.", limitHour: "Too many link look-ups this hour. Try again later, or paste the reviews.",
     fbTitle: "Another way: paste the reviews", fbSteps: ["Open the product on the marketplace, then open Reviews.", "Copy the review text.", "Paste it below, one review per line."], fbRetry: "Try the link again",
     errFetchTitle: "The reviews from this link could not be read", backResults: "← Back to results", pastedName: "Pasted reviews",
@@ -882,7 +1239,7 @@ const TEXT = {
     rivalYourLink: "Your product link", rivalYourName: "Product name (helps the search)", rivalYourNamePh: "e.g. Retro Boxy Tee", rivalFindLink: "Find competitors",
     rivalFreeNote: "Works without Review checker. One comparison uses one of your daily analyses.",
     rivalSignIn: "Sign in to find and compare competitors. It is free, no password.", rivalSignInNote: "Finding competitors needs a free sign-in. You can see an example without one.", rivalSignInBtn: "Sign in to find competitors", rivalNeedLink: "Paste your product link first.", rivalNeedName: "Enter your product name so we can search for similar ones.",
-    stepFind: "Find", stepPick: "Pick", stepCompare: "Compare",
+    stepFind: "Find", stepPick: "Pick", stepCompare: "Compare", stepCompareShort: "Compare",
     rivalFound: "We found %s similar products. The %s closest are already ticked; untick any that do not fit.", rivalMost: "Closest", rivalMoreN: "Other products found · %s", rivalShopLbl: "Shop: %s",
     rivalSeen: "What the numbers show", rivalByTheme: "Reviews per theme", rivalThemeCol: "Theme", nReviewsCol: "%s reviews", rivalNote: "Data notes",
     tagSmall: "too few", tagFail: "failed", tagSkip: "not counted",
@@ -912,13 +1269,40 @@ const TEXT = {
     unlockTitle: "Your results are ready", unlockBody: "Sign in for free to see the buyers' exact quotes, what to fix, and reply drafts ready to copy.",
     unlockEmail: "Use email instead", unlockNote: "No password. These results stay here after you sign in.",
     gFreeUsed: "You have used your free analysis. Sign in to keep going; it is still free.",
-    fixesSubAccount: "Saved in your account (the product name, link and your note) so it opens on another phone. Please do not write people's names.",
+    fixesSubAccount: "Fixes are saved in your account (the product name, link, your note and the check date) so it opens on another phone. Please do not write people's names.",
     syncOk: "Saved in your account.", syncDown: "History is not available right now. Your notes stay saved on this device and will be saved to your account later.",
     syncOff: "Sign in so your notes are saved in your account and open on another phone.", fixNoteReview: "Your note looks like it contains review text. Write it in your own words.",
     limitDaily: "Daily limit reached: %s analyses a day. Try again tomorrow (resets at midnight Jakarta time).", quotaLeft: "Analyses left today: %s of %s.",
     e_model_quota: "The AI service has no quota or credit left right now, so the reviews cannot be analysed. Try again later.",
     startHere: "Start here", startFix: "Fix “%s”: %s review(s) complain about this.", startSeeFix: "See the fix", startFight: "Answer the review about “%s”. The draft is ready to copy.", startSeeFight: "See the draft",
     startNone: "No complaints to act on. See what buyers praise under Keep.", whySteps: "Why & steps",
+    heroTitle: "Turn your product reviews into a to-do list", howTitle: "How it works", how1: "Paste a link or reviews", how2: "We sort the reviews into 4 groups, with the buyers' own words", how3: "You get a short plan, plus reply drafts ready to send",
+    shopeeNote: "Shopee links don't work yet. Copy the reviews from the Shopee app, then paste them.", toPaste: "Paste reviews", shopeeHintA: "Shopee? Use the", refunded: "Today's analysis was given back.",
+    boardCap: "Tap a group to see the exact quotes.", close: "Close", navTasks: "Tasks", ptabMine: "My analysis", ptabRivals: "Competitors", sections: "Sections", sheetT: "%s · %s reviews",
+    hOne: "There is only one big complaint: %s.", hTop: "The biggest complaint: %s.", hFight: "Nothing to fix, but %s review(s) need a reply.", hNone: "No complaints to act on.",
+    lFix: "%s of %s reviews mention it, and it can be fixed.", lFight: "%s review(s) need a reply.", lKeep: "%s buyer(s) praise %s.", lKeepAny: "%s buyer(s) praise your product.", and: "and",
+    planMeta: "%s steps · ~%s min", planH: "Today's plan", planGo: "Start", planGoOn: "Continue", planAllDone: "See the summary",
+    s1: "Log a fix for %s", s1s: "Biggest complaint", s1Done: "Tracked, check %s", s1Logged: "Logged", s2: "Reply to %s bad review(s)", s2s: "%s of %s sent", s3: "Add 1 line to the description", s3s: "From buyer praise", s3Done: "Added", mins: "~%s min",
+    backRes: "Results", st1: "Log", st2: "Reply", st3: "Listing", st3Short: "Listing", stepsLbl: "Steps",
+    t1h: "Log a fix for %s", t1p: "%s of %s reviews complain about this. You do not have to finish today, just decide the step.", seeQ: "See %s quotes",
+    q1: "What will you do?", oAi: "The AI's suggestion for this complaint. Read it, change it if needed.", oOwn: "Write my own step", oOwnS: "A slower step is fine, such as a new supplier.", oOwnPh: "e.g. switch to a thicker fabric",
+    q2: "Check the result", whenS: "We compare it with new reviews.", plusDays: "+%s days", q3: "Remind me by", rWa: "WhatsApp", rCal: "Calendar", rNone: "No reminder",
+    save1: "Save & continue", skip: "Skip for now", next: "Continue", toSum: "See the summary", needChoice: "Pick a step first, or tap Skip for now.", needOwn: "Write your step first.",
+    savedToast: "Saved in Tasks. Check again %s.", already1: "This fix is already logged.", alreadyCheck: "Check again %s.",
+    t2h: "Reply to %s bad review(s)", t2p: "New buyers read your replies. Copy, send it in %s, then come back here.", aiShort: "Written by AI, read before sending.",
+    copyOpen: "Copy & open %s", copyOnly: "Copy the reply", copyAgain: "Copy again & open %s", asked: "Did you send it?", yes: "Sent", notYet: "Not yet", sentOk: "Sent", undo: "Undo", notCopied: "Not copied yet", reviewOf: "Review %s of %s",
+    t3h: "Add 1 line to the description", t3p: "%s buyer(s) praise your product. Use their words to convince new buyers.", lineLbl: "A line from buyer praise (you can edit it)", copyLine: "Copy & open the product page", copyLineOnly: "Copy the line", askLine: "Did you add it?", lineDone: "It is in the description",
+    stepOf: "Step %s of %s",
+    doneH: "Done for today", partH: "Today's summary", doneP: "Everything you can do today is done.", partP: "Pick up the rest from Tasks any time.",
+    did: "Done", todo: "Not yet", tracked: "Being tracked", dR: "%s of %s replies sent", dL: "Praise line added to the description", dF: "Fix for %s logged", nothingYet: "Nothing done yet.",
+    uR: "%s replies not sent yet", uL: "Description line not added yet", uF: "Fix for %s not logged yet", doIt: "Do it", progress: "%s of %s things done today", left: "~%s min left",
+    trCheck: "Check again %s", trRem: "Reminder by %s", waCap: "The text that opens in WhatsApp, to send to yourself:", waMsg: "BedahReview · %s\nCheck again %s: are there fewer “%s” complaints?", backRes2: "Back to results", another: "Analyse another product",
+    calTitle: "Check reviews: %s", calBody: "Analyse the latest reviews of %s in BedahReview and see if the “%s” complaints went down.",
+    tasksSub: "Open steps and the fixes being tracked.", tasksSubAll: "Open steps and the fixes being tracked, for all your products.",
+    today: "Today · %s", watched: "Tracked · %s", sched: "Check schedule", schedToday: "Today", schedNext: "Next", schedNextP: "Check dates show here once you log a fix.",
+    dueChip: "Time to check", loggedOn: "%s · logged %s", reanalyse: "Analyse the latest reviews", skippedNote: "Skipped steps stay here until you do them.", noneToday: "No steps left.",
+    tasksEmpty: "No tasks yet. Analyse a product's reviews to start.", tasksStart: "Check reviews", tasksSignT: "Sign in to keep your tasks", tasksSignP: "Your fixes and check dates are saved in your account, so they are not lost when the browser closes.",
+    later: "Not now", allProducts: "All products", open: "Open", goneNote: "This analysis is no longer on this device. Analyse the reviews again to carry on.", dismiss: "Remove from Tasks", noProductName: "Pasted reviews",
   },
 };
 const THEME_ID = {
@@ -977,7 +1361,7 @@ const BOARD_ICON = {
   ignore: ["M12 2a10 10 0 100 20 10 10 0 000-20z", "M8 12h8"],
   keep: ["M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z"],
 };
-const desktopQuery = window.matchMedia("(min-width: 1100px)");  // two columns side by side: the competitor panel gets its own column
+const desktopQuery = window.matchMedia("(min-width: 900px)");  // two columns side by side: the competitor panel gets its own column
 const desktop = () => desktopQuery.matches;
 function toTop() { const opts = { top: 0, behavior: reduceMotion() ? "auto" : "smooth" }; if (desktop()) $("main").scrollTo(opts); else window.scrollTo(opts); }
 function platformName(url) {
@@ -1015,16 +1399,19 @@ function applyLang() {
   document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = tr(el.dataset.i18n); });
   document.querySelectorAll("[data-i18n-ph]").forEach((el) => { el.placeholder = tr(el.dataset.i18nPh); });
   document.querySelectorAll("[data-i18n-label]").forEach((el) => { el.setAttribute("aria-label", tr(el.dataset.i18nLabel)); });
-  $("share-steps").replaceChildren(...TEXT[lang].shareSteps.map((s) => h("li", { text: s })));
+  $("share-steps").replaceChildren(...TEXT[lang].shareSteps.map((s, i) => h("li", {}, h("span", { class: "n", text: String(i + 1) }), h("span", { text: s }))));
   $("fb-steps").replaceChildren(...TEXT[lang].fbSteps.map((t) => h("li", { text: t })));
-  $("lang").replaceChildren(h("span", { class: "o" + (lang === "id" ? " on" : ""), text: "ID" }), h("span", { class: "o" + (lang === "en" ? " on" : ""), text: "EN" }));
+  const other = lang === "id" ? "EN" : "ID";  // the current language first and darker; the other one goes on the smallest phones
+  $("lang").replaceChildren(h("span", { class: "pill" }, h("em", { text: lang.toUpperCase() }), h("span", { class: "alt", "aria-hidden": "true", text: "/" }), h("span", { class: "alt", text: other })));
   $("pchip-change").textContent = tr("change"); $("back-results").textContent = tr("backResults"); $("print-d").textContent = tr("print");
   $("legend").replaceChildren(...["fix", "fight", "ignore", "keep"].map((k) => h("p", {}, h("b", { class: "lg-" + k, text: tr(k) }), tr("legend" + k[0].toUpperCase() + k.slice(1)))));
   themeLabel(); renderFixBadge(); renderGate(); renderAccount(); setQuota(lastQuota);
   if (currentView === "fixes") renderFixes();
   if (!$("run").disabled) $("run").textContent = tr("run");
-  syncCount();
+  syncCount(); syncShopee();
   if (lastData) render(lastData, false); else renderRival();
+  if (currentView === "plan") renderPlanView();
+  if (!$("sheet").hidden && sheetBucket) sheetTitle();
 }
 $("lang").addEventListener("click", () => {
   lang = lang === "id" ? "en" : "id";
@@ -1123,11 +1510,7 @@ function startHere(groups, fight, byId) {  // the one task to do first: the bigg
   } else {
     return h("div", { class: "start" }, h("div", {}, h("p", { class: "eb", text: tr("startHere") }), h("p", { class: "st", text: tr("startNone") })));
   }
-  const go = h("button", { class: "btn primary", type: "button", text: label, onclick: () => {
-    selectTab(tab, false);
-    const card = $("panel-" + tab).querySelector(".card");
-    if (card) card.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
-  } });
+  const go = h("button", { class: "btn primary", type: "button", text: label, onclick: () => openSheet(tab) });
   return h("div", { class: "start" }, h("div", {}, h("p", { class: "eb", text: tr("startHere") }), h("p", { class: "st", text }), detail ? h("p", { class: "small muted", lang: "id", text: detail }) : null), go);
 }
 function keepBody(keep) {
@@ -1215,7 +1598,7 @@ function renderFeedback() {
    Kept in this browser first (localStorage, with an in-memory fallback). A record holds the theme, variant, product link or name, the seller's own
    note, the date and complaint counts with the sample size. Never review text, never a reviewer name. When signed in with Supabase the list is also
    saved in the seller's account (the fixes table, only they can read it) so it opens on another phone; the browser copy always works without it. */
-const FIX_KEY = "bedahreview-fixes-v1", MAX_FIXES = 200, NOTE_MAX = 200, SMALL_SAMPLE = 10, MAX_IMPORT_BYTES = 500000;
+const FIX_KEY = "bedahreview-fixes-v1", MAX_FIXES = 200, NOTE_MAX = 200, SMALL_SAMPLE = 10, MAX_IMPORT_BYTES = 500000, REMINDERS = ["whatsapp", "calendar", "none"];
 let memFixes = [], fixStorageOk = true, memOnly = false;  // memOnly: the last save failed, so the in-memory list is newer than storage
 const fxStr = (s, max) => (typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, max) : "");
 const fxInt = (n) => (Number.isInteger(n) && n >= 0 && n <= 100000 ? n : null);
@@ -1232,7 +1615,8 @@ function cleanFix(f) {  // anything read back from storage or an imported file p
   const theme = fxStr(f.theme, 80), id = fxStr(f.id, 40), before = cleanCounts(f.before, false), date = fxDate(f.date);
   if (!theme || !id || !before || !date) return null;
   const updated = Number.isFinite(f.updated) && f.updated > 0 && f.updated < 4e12 ? Math.floor(f.updated) : 0;  // when it last changed: the newer copy wins when two phones disagree
-  return { id, theme, variant: fxStr(f.variant, 60), product: fxStr(f.product, 300), productLabel: fxStr(f.productLabel, 150), note: fxStr(f.note, NOTE_MAX), date, before, after: cleanCounts(f.after, true), updated };
+  return { id, theme, variant: fxStr(f.variant, 60), product: fxStr(f.product, 300), productLabel: fxStr(f.productLabel, 150), note: fxStr(f.note, NOTE_MAX), date, before, after: cleanCounts(f.after, true), updated,
+    checkOn: fxDate(f.checkOn), remind: REMINDERS.includes(f.remind) ? f.remind : "none" };  // when to look again, and how the seller wanted to be reminded
 }
 const cleanFixes = (list) => (Array.isArray(list) ? list : []).map(cleanFix).filter(Boolean).slice(0, MAX_FIXES);
 function loadFixes() {
@@ -1260,11 +1644,12 @@ function countTheme(items, theme, variant) {  // complaints on this theme (and v
   const count = real.filter((it) => it.theme === theme && ["fix", "fight", "check"].includes(it.bucket) && (!variant || baseVariant(it.variant) === variant)).length;
   return { count, total: real.length };
 }
-function makeFix(group, note, src, items) {
+function makeFix(group, note, src, items, checkOn, remind) {
   const now = countTheme(items, group.theme, group.variant || "");
   return {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), theme: group.theme, variant: group.variant || "", note: fxStr(note, NOTE_MAX), date: today(), updated: Date.now(),
     product: productKey(src), productLabel: fxStr((src || {}).title || (src || {}).url, 150), before: { count: now.count, total: now.total, sig: reviewSig(items), date: "" }, after: null,
+    checkOn: fxDate(checkOn), remind: REMINDERS.includes(remind) ? remind : "none",
   };
 }
 function applyAnalysis(fixes, key, items) {  // set the "after" counts on every saved fix for this product, unless these are the very reviews it was marked on
@@ -1292,12 +1677,19 @@ function mergeImport(current, text) {  // a file in, strictly checked; same id r
   return { fixes: [...byId.values()].slice(0, MAX_FIXES), added: good.length, skipped: raw.length - good.length };
 }
 function fmtDate(iso) { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(lang === "id" ? "id-ID" : "en-GB", { day: "numeric", month: "short", year: "numeric" }); }
-function renderFixBadge() {
-  const n = loadFixes().length;
-  $("fixes-count").textContent = n; $("fixes-count").hidden = !n;
+function renderFixBadge() {  // the Tugas count: open steps of recent plans, plus fixes whose check date has come (none for a visitor without an account)
+  const n = !!sb && !signedIn ? 0 : openSteps().length + loadFixes().filter(isDue).length;
+  for (const id of ["fixes-count", "tasks-count"]) { $(id).textContent = n; $(id).hidden = !n; }
   $("fixes-btn").setAttribute("aria-label", tr("fixesBtn") + (n ? " (" + n + ")" : "")); $("fixes-btn").title = tr("fixesBtn");
+  $("nav-tasks").setAttribute("aria-label", tr("navTasks") + (n ? " (" + n + ")" : ""));
   $("acct-fixes").textContent = tr("fixesBtn") + (n ? " (" + n + ")" : "");
 }
+/* ---------- dates for check-ups and reminders ---------- */
+function isoDay(d) { const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
+function addDays(n, from) { const d = from ? new Date(from + "T12:00:00") : new Date(); d.setDate(d.getDate() + n); return isoDay(d); }
+function fmtDay(iso) { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(lang === "id" ? "id-ID" : "en-GB", { weekday: "long", day: "numeric", month: "short" }); }
+const isDue = (f) => !!f.checkOn && f.checkOn <= today();
+const lowerTheme = (t) => { const n = themeName(t); return lang === "id" ? n.toLowerCase() : n.charAt(0).toLowerCase() + n.slice(1); };
 const noteCopiesReview = (text) => !!(text && lastData && looksLikeReviewText(String(text).trim(), lastData.items));  // a note is the seller's own words, not a pasted review
 function showFixNoteError(box, msg) {
   let el = box.querySelector(".fixnote-error");
@@ -1346,19 +1738,28 @@ const FIX_OWNER_KEY = "bedahreview-fixes-owner", FIX_PUSH_DELAY_MS = 1200, FIX_C
 const fixSync = { state: "off", userId: null, synced: new Map(), busy: false, dirty: false, timer: null };  // state: off | ok | down
 const fixOwner = () => { try { return localStorage.getItem(FIX_OWNER_KEY) || ""; } catch (e) { return ""; } };
 const setFixOwner = (id) => { try { if (id) localStorage.setItem(FIX_OWNER_KEY, id); else localStorage.removeItem(FIX_OWNER_KEY); } catch (e) { /* ignore */ } };
+let fixColsOld = false;  // the account's table has no check_on / remind columns yet (db/schema.sql not re-run): save without them
 function fixToRow(f, uid) {  // the exact columns of the fixes table, in a fixed order so two copies compare equal
-  return { user_id: uid, id: f.id, updated_at: new Date(f.updated || 1).toISOString(), theme: f.theme, variant: f.variant, product: f.product, product_label: f.productLabel, note: f.note, fixed_on: f.date,
+  const row = { user_id: uid, id: f.id, updated_at: new Date(f.updated || 1).toISOString(), theme: f.theme, variant: f.variant, product: f.product, product_label: f.productLabel, note: f.note, fixed_on: f.date,
     before_count: f.before.count, before_total: f.before.total, before_sig: f.before.sig, after_count: f.after ? f.after.count : null, after_total: f.after ? f.after.total : null,
     after_sig: f.after ? f.after.sig : null, after_on: f.after && f.after.date ? f.after.date : null };
+  if (!fixColsOld) Object.assign(row, { check_on: f.checkOn || null, remind: f.remind || "none" });
+  return row;
 }
 function fixFromRow(r) {
   if (!r || typeof r !== "object") return null;
   return cleanFix({ id: r.id, theme: r.theme, variant: r.variant, product: r.product, productLabel: r.product_label, note: r.note, date: r.fixed_on, updated: Date.parse(r.updated_at),
-    before: { count: r.before_count, total: r.before_total, sig: r.before_sig, date: "" }, after: r.after_count == null ? null : { count: r.after_count, total: r.after_total, sig: r.after_sig, date: r.after_on || "" } });
+    before: { count: r.before_count, total: r.before_total, sig: r.before_sig, date: "" }, after: r.after_count == null ? null : { count: r.after_count, total: r.after_total, sig: r.after_sig, date: r.after_on || "" },
+    checkOn: r.check_on || "", remind: r.remind || "none" });
 }
+const missingColumn = (err) => !!err && (err.code === "PGRST204" || err.code === "42703");  // PostgREST / Postgres: "no such column"
 function mergeFixes(local, remote) {
   const byId = new Map(remote.map((f) => [f.id, f]));
-  local.forEach((f) => { const other = byId.get(f.id); if (!other || f.updated > other.updated) byId.set(f.id, f); });
+  local.forEach((f) => {
+    const other = byId.get(f.id);
+    if (!other || f.updated > other.updated) byId.set(f.id, f);
+    else if (!other.checkOn && f.checkOn) byId.set(f.id, Object.assign({}, other, { checkOn: f.checkOn, remind: f.remind }));  // an account table without the check date columns: keep this browser's
+  });
   return [...byId.values()].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)).slice(-MAX_FIXES);
 }
 function renderSyncStatus() {
@@ -1399,8 +1800,13 @@ async function pushFixes() {
     const changed = rows.filter((r) => fixSync.synced.get(r.id) !== JSON.stringify(r));
     const keep = new Set(list.map((f) => f.id)), gone = [...fixSync.synced.keys()].filter((id) => !keep.has(id));
     for (let i = 0; i < changed.length; i += FIX_CHUNK) {
-      const part = changed.slice(i, i + FIX_CHUNK);
-      const { error } = await withTimeout(sb.from("fixes").upsert(part, { onConflict: "user_id,id" }), 8000);
+      let part = changed.slice(i, i + FIX_CHUNK);
+      let { error } = await withTimeout(sb.from("fixes").upsert(part, { onConflict: "user_id,id" }), 8000);
+      if (error && missingColumn(error) && !fixColsOld) {  // an older table: keep the check date in this browser only, and save the rest
+        fixColsOld = true;
+        part = part.map((r) => { const c = Object.assign({}, r); delete c.check_on; delete c.remind; return c; });
+        ({ error } = await withTimeout(sb.from("fixes").upsert(part, { onConflict: "user_id,id" }), 8000));
+      }
       if (error) throw error;
       part.forEach((r) => fixSync.synced.set(r.id, JSON.stringify(r)));
     }
@@ -1419,6 +1825,7 @@ async function leaveWithFixes() {  // on "Keluar": save what is pending, then cl
   try { clearTimeout(fixSync.timer); await withTimeout(pushFixes(), 5000); } catch (e) { /* keep the local copy */ }
   const pending = loadFixes().some((f) => fixSync.synced.get(f.id) !== JSON.stringify(fixToRow(f, userId))) || [...fixSync.synced.keys()].some((id) => !loadFixes().some((f) => f.id === id));
   if (fixSync.state === "ok" && !pending) { memFixes = []; memOnly = false; try { localStorage.removeItem(FIX_KEY); } catch (e) { /* ignore */ } setFixOwner(""); }
+  memPlans = []; try { localStorage.removeItem(PLAN_KEY); } catch (e) { /* ignore */ }  // today's steps live in this browser only: not for the next person on a shared phone
 }
 let currentView = "input", viewBeforeFixes = "input", checkerView = "input", lastChanged = [];
 function openRivals(fromResults) {  // from the results button (product already filled in) or the bottom bar; a wide screen already shows the section
@@ -1427,26 +1834,34 @@ function openRivals(fromResults) {  // from the results button (product already 
   if (desktop()) { renderRival(); $("feature2").scrollTo({ top: 0, behavior: reduceMotion() ? "auto" : "smooth" }); return; }
   renderRival(); show("rivals"); toTop();
 }
-function openFixes() { if (currentView !== "fixes") viewBeforeFixes = currentView; renderFixes(); show("fixes"); toTop(); $("fixes-h").focus({ preventScroll: true }); }
-function fixItem(f) {
-  const body = h("div", { class: "fixitem" });
+function openFixes() {
+  if (!!sb && !signedIn && desktop()) { openSignDialog(); return; }  // a wide screen: the sign-in asks over the work, as a dialog
+  if (currentView !== "fixes") viewBeforeFixes = currentView;
+  track("tab_viewed", { tab: "tasks" });
+  renderFixes(); show("fixes"); toTop(); $("fixes-h").focus({ preventScroll: true });
+}
+const ICON_CHECK = ["M9 12l2 2 4-4", "M12 2a10 10 0 100 20 10 10 0 000-20z"], ICON_NEXT = ["M9 6l6 6-6 6"], ICON_LOCK = ["M7 11h10a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6a2 2 0 012-2z", "M8 11V7a4 4 0 018 0v4"];
+function fixItem(f) {  // a fix being tracked: what was decided, when to look again, before and after
+  const body = h("article", { class: "trk" + (isDue(f) ? " due" : "") });
   const draw = (editing, sure) => {
-    const head = h("div", { class: "card-head" }, h("h3", { text: themeName(f.theme) }),
-      h("div", { class: "chips" }, f.variant ? h("span", { class: "chip soft", text: f.variant }) : null, h("span", { class: "chip", text: fmtDate(f.date) })));
-    const meta = h("p", { class: "small muted", text: tr("fixProduct", f.productLabel || tr("fixNoProduct")) });
+    const chip = isDue(f) ? h("span", { class: "chip due", text: tr("dueChip") }) : h("span", { class: "chip", text: f.checkOn ? tr("trCheck", fmtDay(f.checkOn)) : fmtDate(f.date) });
+    const head = h("div", { class: "hd" }, h("h3", { text: themeName(f.theme) + (f.variant ? " · " + f.variant : "") }), chip);
+    const meta = h("p", { class: "small muted", text: isDue(f) ? tr("loggedOn", f.productLabel || tr("fixNoProduct"), fmtDate(f.date)) : [f.productLabel || tr("fixNoProduct"), f.note].filter(Boolean).join(" · ") });
     if (editing) {
       const note = h("input", { type: "text", maxlength: String(NOTE_MAX), value: f.note, "aria-label": tr("fixNoteLbl") });
       const date = h("input", { type: "date", value: f.date, "aria-label": tr("fixDate") });
+      const check = h("input", { type: "date", value: f.checkOn || "", "aria-label": tr("q2") });
       const save = h("button", { class: "btn primary", type: "button", text: tr("fixSave") });
       save.addEventListener("click", () => {
         const d = fxDate(date.value) || f.date;
         if (noteCopiesReview(note.value)) { showFixNoteError(body, tr("fixNoteReview")); return; }
-        saveFixes(loadFixes().map((x) => (x.id === f.id ? Object.assign({}, x, { note: fxStr(note.value, NOTE_MAX), date: d, updated: Date.now() }) : x)));
+        saveFixes(loadFixes().map((x) => (x.id === f.id ? Object.assign({}, x, { note: fxStr(note.value, NOTE_MAX), date: d, checkOn: fxDate(check.value), updated: Date.now() }) : x)));
         renderFixes();
       });
       const cancel = h("button", { class: "btn ghost", type: "button", text: tr("fixCancel") });
       cancel.addEventListener("click", () => draw(false, false));
-      body.replaceChildren(head, meta, h("label", { class: "field" }, h("span", { text: tr("fixNoteLbl") }), note), h("label", { class: "field" }, h("span", { text: tr("fixDate") }), date), h("div", { class: "row" }, save, cancel));
+      body.replaceChildren(head, meta, h("label", { class: "field" }, h("span", { text: tr("fixNoteLbl") }), note), h("label", { class: "field" }, h("span", { text: tr("fixDate") }), date),
+        h("label", { class: "field" }, h("span", { text: tr("q2") }), check), h("div", { class: "row" }, save, cancel));
       return;
     }
     const edit = h("button", { class: "btn ghost", type: "button", text: tr("fixEdit") });
@@ -1457,17 +1872,73 @@ function fixItem(f) {
       saveFixes(loadFixes().filter((x) => x.id !== f.id));
       renderFixes();
     });
-    body.replaceChildren(head, meta, f.note ? h("p", { class: "note", text: f.note }) : null, trackLines(f), h("div", { class: "row" }, edit, del));
+    body.replaceChildren(...[head, meta, isDue(f) && f.note ? h("p", { class: "note", text: f.note }) : null, trackLines(f),
+      f.remind && f.remind !== "none" ? h("p", { class: "small muted", text: tr("trRem", tr(f.remind === "whatsapp" ? "rWa" : "rCal")) }) : null,
+      isDue(f) ? h("button", { class: "btn primary", type: "button", text: tr("reanalyse"), onclick: () => reanalyse(f.product, f.productLabel) }) : null,
+      h("div", { class: "row" }, edit, del)].filter(Boolean));
   };
   draw(false, false);
-  return h("article", { class: "card", style: "--c: var(--keep)" }, body);
+  return body;
 }
-function renderFixes(message) {
+const fixesListEl = h("div", { class: "stack", id: "fixes-list" });  // one node, so the list keeps its place when the Tugas screen is drawn again
+let taskFilter = "";  // a product key, or "" for every product (the filter shows on a wide screen)
+function signBox(titleKey, bodyKey, withLater) {  // the account is what keeps tasks: Google first, email second
+  const g = h("button", { class: "gbtn", type: "button" }, $("g-google").querySelector("svg").cloneNode(true), h("span", { text: tr("gGoogle") }));
+  g.addEventListener("click", () => { closeSheet(); googleSignIn(); });
+  const mail = h("button", { class: "btn ghost", type: "button", text: tr("unlockEmail"), onclick: () => { closeSheet(); showGate("choose"); } });
+  const lock = svgIcon(ICON_LOCK); lock.classList.add("lock");
+  return h("section", { class: "signbox" }, lock, h("h2", { text: tr(titleKey) }), h("p", { class: "muted", text: tr(bodyKey) }), g, mail,
+    withLater ? h("button", { class: "plain strong", type: "button", text: tr("later"), style: "justify-self:center;min-height:44px", onclick: () => closeSheet() }) : null);
+}
+function openSignDialog() { openDialog([signBox("tasksSignT", "tasksSignP", true)], "tasksSignT"); }
+function taskRow(t) {
+  const row = h("button", { class: "task", type: "button" }, h("span", { class: "k", "aria-hidden": "true" }),
+    h("span", { class: "t" }, h("b", { text: t.title }), h("span", { text: t.sub })), svgIcon(ICON_NEXT));
+  row.addEventListener("click", () => openTask(t));
+  return row;
+}
+function reanalyse(product, label) {  // back to the start with the product filled in, so a check-up is one tap
+  closeSheet(); show("input"); toTop();
+  if (/^https:\/\//.test(product || "") && !$("intab-link").hidden) { selectInput("link", false); $("url").value = product; syncShopee(); $("url").focus(); }
+  else { selectInput("paste", false); if (label && !/^https?:/.test(label)) $("product").value = label; $("paste").focus(); }
+}
+function renderFixes(message) {  // the Tugas screen
   renderSyncStatus();
-  const list = loadFixes();
+  const visitorNow = !!sb && !signedIn;
+  const all = loadFixes(), steps = openSteps();
+  const products = [...new Map(all.map((f) => [f.product, f.productLabel || tr("fixNoProduct")]).concat(steps.map((t) => [t.plan.product, t.plan.label || tr("noProductName")]))).entries()];
+  if (taskFilter && !products.some(([k]) => k === taskFilter)) taskFilter = "";
+  const keep = (key) => !taskFilter || key === taskFilter;
+  const fixes = all.filter((f) => keep(f.product)).sort((a, b) => (isDue(b) - isDue(a)) || String(a.checkOn || "9").localeCompare(String(b.checkOn || "9")) || (a.date < b.date ? 1 : -1));
+  const todo = steps.filter((t) => keep(t.plan.product));
+  $("tasks-sub").textContent = tr(desktop() ? "tasksSubAll" : "tasksSub");
+  $("tasks-filter").replaceChildren(...(products.length > 1 && !visitorNow ? [["", tr("allProducts")]].concat(products.slice(0, 4)).map(([k, label]) =>
+    h("button", { class: "btn pill", type: "button", "aria-pressed": taskFilter === k ? "true" : "false", style: taskFilter === k ? "background:var(--ink);color:var(--surface);border-color:var(--ink)" : "", text: label,
+      onclick: () => { taskFilter = k; renderFixes(); } })) : []));
   $("fixes-nostore").hidden = fixStorageOk;
-  $("fixes-list").replaceChildren(...(list.length ? list.slice().reverse().map(fixItem) : [h("div", { class: "empty", text: tr("fixesEmpty") })]));
+  $("tasks-fixes").hidden = visitorNow;
+  fixesListEl.replaceChildren(...(fixes.length ? fixes.map(fixItem) : [h("p", { class: "small muted", text: tr("fixesEmpty") })]));
   const msg = $("fixes-msg"); msg.textContent = message || ""; msg.hidden = !message;
+  if (visitorNow) { $("tasks-body").replaceChildren(signBox("tasksSignT", "tasksSignP", false)); return; }
+  if (!all.length && !steps.length) {
+    $("tasks-body").replaceChildren(h("div", { class: "empty2" }, h("span", { class: "ill" }, svgIcon(["M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"])), h("p", { text: tr("tasksEmpty") }),
+      h("button", { class: "btn primary", type: "button", text: tr("tasksStart"), onclick: () => { show("input"); toTop(); } })), fixesListEl);
+    fixesListEl.hidden = true;
+    return;
+  }
+  fixesListEl.hidden = false;
+  const mins = todo.reduce((a, t) => a + t.mins, 0);
+  const sched = all.filter((f) => f.checkOn && keep(f.product)).sort((a, b) => a.checkOn.localeCompare(b.checkOn)).slice(0, 8);
+  $("tasks-body").replaceChildren(h("div", { class: "tasksgrid" },
+    h("section", { class: "stack", style: "align-content:start" },
+      h("div", { class: "row", style: "justify-content:space-between;align-items:center" }, h("p", { class: "eb", text: tr("today", todo.length) }), todo.length ? h("span", { class: "small muted", text: tr("mins", mins) }) : null),
+      todo.length ? todo.map(taskRow) : h("p", { class: "small muted", text: tr("noneToday") }),
+      todo.length ? h("p", { class: "small muted dsk", text: tr("skippedNote") }) : null),
+    h("section", { class: "stack", style: "align-content:start" }, h("p", { class: "eb", text: tr("watched", fixes.length) }), fixesListEl),
+    h("section", { class: "stack col3 dsk", style: "align-content:start" }, h("p", { class: "eb", text: tr("sched") }),
+      h("ul", { class: "sched" }, sched.map((f) => h("li", {}, h("b", { text: isDue(f) ? tr("schedToday") : fmtDay(f.checkOn) }),
+        h("span", { text: [themeName(f.theme), f.productLabel, f.remind !== "none" ? tr(f.remind === "whatsapp" ? "rWa" : "rCal") : ""].filter(Boolean).join(" · ") }))),
+        h("li", {}, h("b", { text: tr("schedNext") }), h("span", { text: tr("schedNextP") }))))));
 }
 function exportFixes() {
   const blob = new Blob([JSON.stringify({ app: "bedahreview", version: 1, exported: today(), fixes: loadFixes() }, null, 2)], { type: "application/json" });
@@ -1484,24 +1955,416 @@ async function importFixes(file) {
   renderFixes(tr("importOk", out.added, out.skipped));
 }
 
+/* ---------- today's plan: up to three steps from one analysis, then a summary ----------
+   Step ticks stay in this browser only (the owner's choice); the check date and reminder of a logged fix travel with the fix to the account.
+   A plan holds the product key and label, the theme of the biggest complaint, review ids and counts, and what the seller has done:
+   never review text, never a reviewer name. Plans older than a week are dropped. */
+const PLAN_KEY = "bedahreview-plans-v1", MAX_PLANS = 20, PLAN_DAYS = 7;
+let memPlans = [], planStep = "fix", planUi = {};
+function cleanPlan(p) {
+  if (!p || typeof p !== "object" || typeof p.sig !== "string" || !/^[a-z0-9]{1,14}\.\d{1,4}$/.test(p.sig)) return null;
+  const created = Number.isFinite(p.created) ? p.created : 0;
+  if (Date.now() - created > PLAN_DAYS * 864e5) return null;
+  const ids = (a) => (Array.isArray(a) ? a.filter((x) => typeof x === "string" && x.length <= 20).slice(0, 50) : []);
+  const fix = p.fix && typeof p.fix.theme === "string" ? { theme: fxStr(p.fix.theme, 80), variant: fxStr(p.fix.variant, 60), n: fxInt(p.fix.n) || 0, total: fxInt(p.fix.total) || 0 } : null;
+  const replies = {};
+  if (p.replies && typeof p.replies === "object") for (const [k, v] of Object.entries(p.replies)) if (k.length <= 20 && (v === "sent" || v === "copied")) replies[k] = v;
+  return { sig: p.sig, created, product: fxStr(p.product, 300), label: fxStr(p.label, 150), url: /^https:\/\//.test(p.url || "") ? fxStr(p.url, 300) : "", platform: fxStr(p.platform, 20),
+    fix, fight: ids(p.fight), keep: fxInt(p.keep) || 0, replies, line: ["copied", "done"].includes(p.line) ? p.line : "", dismissed: !!p.dismissed };
+}
+function loadPlans() {
+  try { const raw = localStorage.getItem(PLAN_KEY); if (raw != null) { const list = JSON.parse(raw); memPlans = (Array.isArray(list) ? list : []).map(cleanPlan).filter(Boolean); } } catch (e) { /* the memory copy stands */ }
+  return memPlans;
+}
+function savePlans(list) { memPlans = list.slice(-MAX_PLANS); try { localStorage.setItem(PLAN_KEY, JSON.stringify(memPlans)); } catch (e) { /* the memory copy stands */ } renderFixBadge(); }
+function bestPraise(keep) {  // the buyer's own words for the listing line: the longest praise quote that still reads as one line
+  const qs = keep.map((k) => String(k.proof_quote || "").trim()).filter((q) => q.length >= 8);
+  if (!qs.length) return "";
+  const fit = qs.filter((q) => q.length <= 140);
+  return (fit.length ? fit : qs).sort((a, b) => b.length - a.length)[0].slice(0, 200);
+}
+const replyText = (it) => (it.fight ? it.fight.public_reply || it.fight.chat_to_buyer || "" : "");
+function planParts(data) {  // what a plan is made of, read from one analysis
+  const g = (data.groups || [])[0] || null;
+  const fight = data.items.filter((it) => (it.bucket === "fight" || it.bucket === "check") && replyText(it));
+  const keep = data.items.filter((it) => !isFake(it) && it.bucket === "keep" && it.proof_quote);
+  return { g, fight, keep };
+}
+function planFor(data) {  // the stored plan for these exact reviews, made the first time they are shown
+  if (!data || data.example || freeLocked) return null;
+  const sig = reviewSig(data.items), plans = loadPlans();
+  const found = plans.find((x) => x.sig === sig);
+  if (found) return found;
+  const { g, fight, keep } = planParts(data);
+  if (!g && !fight.length && !keep.length) return null;
+  const src = data.source || {}, c = g ? countTheme(data.items, g.theme, g.variant || "") : null;
+  const p = cleanPlan({ sig, created: Date.now(), product: productKey(src), label: src.title || "", url: src.kind === "url" ? src.url : "", platform: src.kind === "url" ? platformName(src.url) : "",
+    fix: g ? { theme: g.theme, variant: g.variant || "", n: c.count, total: c.total } : null, fight: fight.map((it) => String(it.id)), keep: keep.length });
+  if (p) savePlans(plans.filter((x) => x.sig !== sig).concat(p));
+  return p;
+}
+function updatePlan(p, change) { const next = Object.assign({}, p, change); savePlans(loadPlans().map((x) => (x.sig === p.sig ? next : x))); return next; }
+const loggedFix = (p) => (p.fix ? loadFixes().find((f) => sameFix(f, p.product, p.fix.theme, p.fix.variant)) || null : null);
+const sentCount = (p) => p.fight.filter((id) => p.replies[id] === "sent").length;
+function stepsOf(p) {  // the steps this plan has, in order, each with whether it is done and roughly how long it takes
+  const out = [];
+  if (p.fix) out.push({ key: "fix", done: !!loggedFix(p), mins: 1 });
+  if (p.fight.length) out.push({ key: "fight", done: sentCount(p) === p.fight.length, mins: Math.max(1, p.fight.length) });
+  if (p.keep) out.push({ key: "keep", done: p.line === "done", mins: 1 });
+  return out;
+}
+function openSteps() {  // the open steps of recent plans: the Tugas screen and its count
+  const out = [];
+  for (const p of loadPlans()) {
+    if (p.dismissed) continue;
+    for (const s of stepsOf(p)) {
+      if (s.done) continue;
+      const left = s.key === "fight" ? p.fight.length - sentCount(p) : 1;
+      const title = s.key === "fix" ? tr("s1", lowerTheme(p.fix.theme)) : s.key === "fight" ? tr("s2", left) : tr("s3");
+      const sub = [p.label || tr("noProductName"), s.key === "fight" ? tr("s2s", sentCount(p), p.fight.length) : null, tr("mins", left)].filter(Boolean).join(" · ");
+      out.push({ plan: p, step: s.key, title, sub, mins: left });
+    }
+  }
+  return out.reverse();  // the newest plan first
+}
+function openTask(t) {  // the analysis is still on this page: go straight to the step; otherwise say so and offer a fresh analysis
+  if (lastData && !lastData.example && reviewSig(lastData.items) === t.plan.sig) { openStep(t.step); return; }
+  openDialog([h("p", { text: tr("goneNote") }),
+    h("button", { class: "btn primary", type: "button", text: tr("reanalyse"), onclick: () => reanalyse(t.plan.url || t.plan.product, t.plan.label) }),
+    h("button", { class: "btn ghost", type: "button", text: tr("dismiss"), onclick: () => { updatePlan(t.plan, { dismissed: true }); closeSheet(); renderFixes(); } })], "planH");
+}
+const fmtDayShort = (iso) => { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(lang === "id" ? "id-ID" : "en-GB", { day: "numeric", month: "short" }); };
+const ICON_OPEN = ["M14 4h6v6", "M20 4l-9 9", "M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"], ICON_TICK = ["M5 12l5 5 9-10"];
+function planCard(p, data) {  // "Mulai dari sini": today's plan on the results screen
+  const steps = stepsOf(p), done = steps.filter((s) => s.done).length, mins = steps.reduce((a, s) => a + s.mins, 0);
+  const { g, fight, keep } = planParts(data);
+  const byId = {}; data.items.forEach((it) => { byId[it.id] = it; });
+  const fixQuote = g ? (g.ids.map((id) => byId[id]).find((m) => m && m.proof_quote) || {}).proof_quote : "";
+  const row = (s, i) => {
+    let title, sub, ev;
+    if (s.key === "fix") { const f = loggedFix(p); title = tr("s1", lowerTheme(p.fix.theme)); sub = f ? (f.checkOn ? tr("s1Done", fmtDayShort(f.checkOn)) : tr("s1Logged")) : tr("s1s"); ev = fixQuote; }
+    else if (s.key === "fight") { title = tr("s2", p.fight.length); sub = tr("s2s", sentCount(p), p.fight.length); ev = (fight[0] || {}).proof_quote; }
+    else { title = tr("s3"); sub = s.done ? tr("s3Done") : tr("s3s"); ev = bestPraise(keep); }
+    return h("button", { class: "prow" + (s.done ? " done" : ""), type: "button", onclick: () => openStep(s.key) },
+      h("span", { class: "k", "aria-hidden": "true" }, s.done ? svgIcon(ICON_TICK) : String(i + 1)), h("span", { class: "t" }, h("b", { text: title }), h("span", { text: sub })),
+      h("span", { class: "ev", lang: "id", text: ev ? "“" + ev + "”" : "" }), h("span", { class: "tm", text: tr("mins", s.mins) }));
+  };
+  const label = done === steps.length ? tr("planAllDone") : done ? tr("planGoOn") : tr("planGo");
+  const go = () => { const next = steps.find((s) => !s.done); openStep(next ? next.key : "sum"); };
+  const wide = desktop();
+  return [h("section", { class: "plan", "aria-labelledby": "plan-title" },
+      h("div", { class: "hd" },
+        h("div", { style: "display:grid;gap:2px" }, h("span", { class: "eb", text: tr("startHere") + (wide ? " · " + tr("planMeta", steps.length, mins) : "") }), wide ? h("h3", { id: "plan-title", text: tr("planH") }) : null),
+        wide ? h("button", { class: "btn primary go-d", type: "button", text: label, onclick: go }) : h("span", { class: "meta", text: tr("planMeta", steps.length, mins) })),
+      wide ? null : h("h3", { id: "plan-title", text: tr("planH") }),
+      steps.map(row)),
+    h("div", { class: "stickyfoot" }, h("button", { class: "btn primary", type: "button", id: "plan-go", text: label, onclick: go }))];
+}
+function openStep(key, back) {
+  const p = lastData && planFor(lastData);
+  if (!p) return;
+  const order = stepsOf(p).map((s) => s.key).concat("sum"), was = currentView === "plan";
+  const anim = !was ? "rise" : back || order.indexOf(key) < order.indexOf(planStep) ? "bwd" : "fwd";
+  if (!was || planUi.sig !== p.sig) planUi = { sig: p.sig, choice: null, own: "", days: 7, remind: "whatsapp", line: null, cur: null };
+  planStep = key; closeSheet();
+  show("plan"); renderPlanView(anim); toTop();
+  const hd = $("plan-h"); if (hd) hd.focus({ preventScroll: true });
+}
+function renderPlanView(anim) {
+  const view = $("view-plan"), p = lastData && planFor(lastData);
+  if (!p) { show(lastData ? "results" : "input"); return; }
+  const keys = stepsOf(p).map((s) => s.key);
+  if (planStep !== "sum" && !keys.includes(planStep)) planStep = keys[0] || "sum";
+  const body = planStep === "sum" ? summaryView(p) : planStep === "fix" ? step1(p) : planStep === "fight" ? step2(p) : step3(p);
+  view.replaceChildren(...[body].flat(Infinity).filter(Boolean));
+  if (anim) animateIn(view, anim === "fwd" ? "enter-fwd" : anim === "bwd" ? "enter-bwd" : "enter");
+}
+function stepHead(p) {  // "‹ Hasil", the pill stepper, and on a wide screen the reply counter on the same line
+  const steps = stepsOf(p), at = steps.findIndex((s) => s.key === planStep);
+  const names = { fix: ["st1", "st1"], fight: ["st2", "st2"], keep: ["st3", "st3Short"] };
+  return h("div", { class: "stephd" },
+    h("button", { class: "back", type: "button", onclick: () => { show("results"); toTop(); } }, svgIcon(["M15 6l-6 6 6 6"]), tr("backRes")),
+    h("ol", { class: "stepper", "aria-label": tr("stepsLbl") }, steps.map((s, i) => h("li", { class: i === at ? "on" : s.done ? "done" : "", "aria-current": i === at ? "step" : null },
+      h("span", { class: "dot" }, s.done && i !== at ? svgIcon(ICON_TICK) : String(i + 1)), h("span", { class: "full", text: tr(names[s.key][0]) }), h("span", { class: "short", text: tr(names[s.key][1]) })))),
+    planStep === "fight" && desktop() ? h("span", { class: "chip", text: tr("s2s", sentCount(p), p.fight.length) }) : null);
+}
+function stepFoot(p, label, onGo, onSkip) {
+  const steps = stepsOf(p), at = steps.findIndex((s) => s.key === planStep);
+  return h("div", { class: "stickyfoot" }, h("button", { class: "btn primary", type: "button", text: label, onclick: onGo }),
+    onSkip ? h("button", { class: "plain strong", type: "button", text: tr("skip"), onclick: onSkip }) : null,
+    at >= 0 ? h("span", { class: "of", text: tr("stepOf", at + 1, steps.length) }) : null);
+}
+function nextStep() { const p = planFor(lastData), keys = stepsOf(p).map((s) => s.key), i = keys.indexOf(planStep); openStep(i >= 0 && i < keys.length - 1 ? keys[i + 1] : "sum"); }
+function stepIntro(kind, title, lead, quotes, bucket) {
+  return h("div", { class: "stask" }, h("span", { class: "tag " + kind, text: tr(bucket) }), h("h1", { class: "h2s", id: "plan-h", tabindex: "-1", text: title }), h("p", { class: "small muted", text: lead }),
+    quotes ? h("button", { class: "linkbtn", type: "button", onclick: () => openSheet(bucket) }, tr("seeQ", quotes), svgIcon(ICON_NEXT)) : null);
+}
+function segChoice(label, options, current, onPick) {  // a row of pressable choices; the pressed one is what will be saved
+  const seg = h("div", { class: "seg", role: "group", "aria-label": label });
+  options.forEach(([value, text]) => {
+    const b = h("button", { type: "button", "aria-pressed": value === current ? "true" : "false", text });
+    b.addEventListener("click", () => { seg.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false")); onPick(value); });
+    seg.append(b);
+  });
+  return seg;
+}
+function step1(p) {  // Catat: decide the fix for the biggest complaint, when to look again, and how to be reminded
+  const g = lastData.groups[0], f = loggedFix(p), ui = planUi;
+  const byId = {}; lastData.items.forEach((it) => { byId[it.id] = it; });
+  const sugg = [...new Set(g.ids.map((id) => (byId[id] || {}).fix_suggestion_id).filter(Boolean))][0] || "";
+  const intro = stepIntro("fix", tr("t1h", lowerTheme(g.theme)), tr("t1p", p.fix.n, p.fix.total), g.n, "fix");
+  if (f) {
+    return [stepHead(p), intro, h("div", { class: "callout" }, tr("already1") + (f.checkOn ? " " + tr("alreadyCheck", fmtDay(f.checkOn)) : "")),
+      f.note ? h("p", { class: "note", lang: "id", text: f.note }) : null, stepFoot(p, tr("next"), nextStep)];
+  }
+  if (ui.choice == null && sugg) ui.choice = "ai";
+  const err = h("div", { class: "callout warn", role: "alert", hidden: true });
+  const fail = (key) => { err.textContent = tr(key); err.hidden = false; };
+  const own = h("input", { type: "text", maxlength: String(NOTE_MAX), autocomplete: "off", placeholder: tr("oOwnPh"), "aria-label": tr("oOwn") });
+  own.value = ui.own; own.addEventListener("input", () => { ui.own = own.value; err.hidden = true; });
+  const ownWrap = h("div", { class: "own", hidden: ui.choice !== "own" }, own);
+  const radio = (value, title, sub, extra) => {
+    const input = h("input", { type: "radio", name: "fixopt", value });
+    input.checked = ui.choice === value;
+    input.addEventListener("change", () => { ui.choice = value; err.hidden = true; ownWrap.hidden = value !== "own"; if (value === "own") own.focus(); });
+    return h("label", { class: "opt" }, input, h("span", {}, h("b", { lang: value === "ai" ? "id" : null, text: title }), h("span", { class: "s", text: sub }), extra));
+  };
+  const dateText = h("b", { text: fmtDay(addDays(ui.days)) });
+  const save = () => {
+    if (!ui.choice) { fail("needChoice"); return; }
+    const note = ui.choice === "ai" ? sugg : ui.own.trim();
+    if (ui.choice === "own" && !note) { fail("needOwn"); own.focus(); return; }
+    if (ui.choice === "own" && noteCopiesReview(note)) { fail("fixNoteReview"); own.focus(); return; }
+    const checkOn = addDays(ui.days), fix = makeFix(g, note, lastData.source, lastData.items, checkOn, ui.remind);
+    if (!saveFixes(loadFixes().concat(fix))) { fail("fixSaveFail"); return; }
+    track("fix_marked");
+    remindNow(fix);
+    showToast(tr("savedToast", fmtDay(checkOn)));
+    nextStep();
+  };
+  return [stepHead(p), intro,
+    h("div", { class: "stask", role: "radiogroup", "aria-labelledby": "q1-h" }, h("p", { class: "q", id: "q1-h", text: tr("q1") }),
+      sugg ? radio("ai", sugg, tr("oAi")) : null, radio("own", tr("oOwn"), tr("oOwnS"), ownWrap)),
+    h("div", { class: "stask" }, h("p", { class: "q", text: tr("q2") }), h("div", { class: "when" }, h("span", { class: "d" }, dateText, h("span", { class: "small muted", text: tr("whenS") })),
+      segChoice(tr("q2"), [7, 14, 30].map((n) => [n, tr("plusDays", n)]), ui.days, (n) => { ui.days = n; dateText.textContent = fmtDay(addDays(n)); }))),
+    h("div", { class: "stask" }, h("p", { class: "q", text: tr("q3") }), segChoice(tr("q3"), [["whatsapp", tr("rWa")], ["calendar", tr("rCal")], ["none", tr("rNone")]], ui.remind, (v) => { ui.remind = v; })),
+    err, stepFoot(p, tr("save1"), save, nextStep)];
+}
+function reasonText(it) { return (it.stars ? "★".repeat(it.stars) + " · " : "") + (it.check_first ? tr("chipCourier") : themeName(it.theme)); }
+async function copyPlain(text, node) {  // the clipboard, or the text left selected so a long-press can copy it
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall through */ }
+  if (node) { if (node.select) node.select(); else selectNode(node); }
+  try { return document.execCommand("copy"); } catch (e) { return false; }
+}
+function step2(p) {  // Balas: copy a draft, send it on the marketplace, then say whether it went out
+  const byId = {}; lastData.items.forEach((it) => { byId[String(it.id)] = it; });
+  const list = p.fight.map((id) => byId[id]).filter(Boolean), plat = p.platform || tr("platformWord");
+  const setState = (id, st) => { const r = Object.assign({}, p.replies); if (st) r[id] = st; else delete r[id]; updatePlan(p, { replies: r }); planUi.cur = id; renderPlanView(); };
+  const copyOpen = async (it, box) => {
+    const ok = await copyPlain(replyText(it), box.querySelector(".pdraft"));
+    announce(ok ? tr("copiedAnn", tr("dPublic")) : tr("selectIt"));
+    track("draft_copied", { kind: it.fight.public_reply ? "public" : "chat" });
+    if (p.url) window.open(p.url, "_blank", "noopener");
+    setState(String(it.id), "copied");
+  };
+  const card = (it, i, detail) => {
+    const id = String(it.id), st = p.replies[id];
+    if (st === "sent") {
+      return h("article", { class: "reply sent" + (detail ? " detail" : "") + (planUi.cur === id ? "" : " was") },
+        h("div", { class: "sentrow" }, h("span", { class: "ok" }, svgIcon(ICON_CHECK), tr("sentOk")), h("button", { class: "undo", type: "button", text: tr("undo"), onclick: () => setState(id, null) })),
+        h("p", { class: "sentrow" }, h("span", { class: "q2", lang: "id", text: "“" + (it.proof_quote || "") + "”" })));
+    }
+    const box = h("article", { class: "reply" + (detail ? " detail" : "") });
+    const go = h("button", { class: "btn ghost", type: "button" }, p.url ? svgIcon(ICON_OPEN) : copyIcon(), p.url ? tr(st === "copied" ? "copyAgain" : "copyOpen", plat) : tr("copyOnly"));
+    go.addEventListener("click", () => copyOpen(it, box));
+    box.append(...[
+      detail ? h("div", { class: "row", style: "justify-content:space-between;align-items:center" }, h("span", { class: "chip star", text: reasonText(it) }), h("span", { class: "small muted", text: tr("reviewOf", i + 1, list.length) }))
+        : h("span", { class: "chip star", style: "justify-self:start", text: reasonText(it) }),
+      h("p", { class: "pquote fight", lang: "id", text: "“" + (it.proof_quote || "") + "”" }),
+      detail ? h("p", { class: "small muted", text: tr("aiShort") }) : null,
+      h("p", { class: "pdraft", lang: "id", text: replyText(it) }),
+      st === "copied" ? h("div", { class: "ask" }, h("p", { text: tr("asked") }), h("div", { class: "row2" },
+        h("button", { class: "btn ghost", type: "button", text: tr("yes"), onclick: () => setState(id, "sent") }), h("button", { class: "btn ghost", type: "button", text: tr("notYet"), onclick: () => setState(id, null) }))) : null,
+      st === "copied" && !detail ? null : go].filter(Boolean));
+    return box;
+  };
+  const intro = stepIntro("fight", tr("t2h", list.length), tr("t2p", plat), 0, "fight");
+  const foot = stepFoot(p, tr("next"), nextStep, nextStep);
+  if (!desktop()) {
+    return [stepHead(p), intro, h("div", { class: "row", style: "justify-content:space-between;align-items:center;flex-wrap:nowrap" }, h("p", { class: "small muted", text: tr("aiShort") }), h("span", { class: "chip", style: "flex:none", text: tr("s2s", sentCount(p), list.length) })),
+      list.map((it, i) => card(it, i, false)), foot];
+  }
+  const cur = list.find((it) => String(it.id) === planUi.cur) || list.find((it) => p.replies[String(it.id)] !== "sent") || list[0];
+  const items = list.map((it) => {
+    const st = p.replies[String(it.id)];
+    return h("button", { class: "ritem", type: "button", "aria-current": it === cur ? "true" : "false", onclick: () => { planUi.cur = String(it.id); renderPlanView(); } },
+      h("span", { class: "st" }, st === "sent" ? h("span", { class: "ok" }, svgIcon(ICON_CHECK), tr("sentOk")) : h("span", { class: st ? "" : "muted", text: st === "copied" ? tr("asked") : tr("notCopied") }), h("span", { class: "muted", text: reasonText(it) })),
+      h("span", { class: "sentrow" }, h("span", { class: "q2", lang: "id", text: "“" + (it.proof_quote || "") + "”" })));
+  });
+  return [stepHead(p), intro, h("div", { class: "rgrid" }, h("div", { class: "rlist" }, items), card(cur, list.indexOf(cur), true)), foot];
+}
+function step3(p) {  // Deskripsi: one line for the listing, in the buyers' own words, which the seller can edit
+  const { keep } = planParts(lastData);
+  if (planUi.line == null) planUi.line = bestPraise(keep);
+  const area = h("textarea", { class: "lineq", id: "plan-line", maxlength: "300", lang: "id", spellcheck: "false" });
+  area.value = planUi.line; area.addEventListener("input", () => { planUi.line = area.value; });
+  const set = (v) => { updatePlan(p, { line: v }); renderPlanView(); };
+  const copy = h("button", { class: "btn ghost", type: "button" }, p.url ? svgIcon(ICON_OPEN) : copyIcon(), tr(p.url ? "copyLine" : "copyLineOnly"));
+  copy.addEventListener("click", async () => {
+    const ok = await copyPlain(area.value, area);
+    announce(ok ? tr("copiedAnn", tr("s3")) : tr("selectIt"));
+    if (p.url) window.open(p.url, "_blank", "noopener");
+    set("copied");
+  });
+  const state = p.line === "done"
+    ? h("div", { class: "sentrow", style: "padding:4px 2px" }, h("span", { class: "ok" }, svgIcon(ICON_CHECK), tr("lineDone")), h("button", { class: "undo", type: "button", text: tr("undo"), onclick: () => set("") }))
+    : [copy, p.line === "copied" ? h("div", { class: "ask" }, h("p", { text: tr("askLine") }), h("div", { class: "row2" },
+        h("button", { class: "btn ghost", type: "button", text: tr("yes"), onclick: () => set("done") }), h("button", { class: "btn ghost", type: "button", text: tr("notYet"), onclick: () => set("") }))) : null];
+  return [stepHead(p), stepIntro("keep", tr("t3h"), tr("t3p", p.keep), p.keep, "keep"),
+    h("label", { class: "field", for: "plan-line" }, h("span", { text: tr("lineLbl") }), area), state, stepFoot(p, tr("toSum"), () => openStep("sum"))];
+}
+function trackedCard(f) {
+  const label = f.productLabel || tr("fixNoProduct");
+  return h("article", { class: "trk" }, h("div", { class: "hd" }, h("h3", { text: themeName(f.theme) }), f.checkOn ? h("span", { class: "chip", text: tr("trCheck", fmtDay(f.checkOn)) }) : null),
+    f.note ? h("p", { lang: "id", style: "font-size:15px", text: f.note }) : null, h("p", { class: "small muted", text: tr("fixBefore", f.before.count, f.before.total) }),
+    f.remind !== "none" ? h("p", { class: "small muted", text: tr("trRem", tr(f.remind === "whatsapp" ? "rWa" : "rCal")) }) : null,
+    f.remind === "whatsapp" && f.checkOn ? [h("p", { class: "small muted", text: tr("waCap") }), h("div", { class: "wa", text: tr("waMsg", label, fmtDay(f.checkOn), lowerTheme(f.theme)) })] : null);
+}
+function summaryView(p) {  // an honest ending: what got done, what is left, and the slow fix that stays tracked
+  const steps = stepsOf(p), all = steps.every((s) => s.done), f = loggedFix(p), sent = sentCount(p);
+  const did = [], todo = [];
+  if (p.fight.length) { if (sent) did.push(tr("dR", sent, p.fight.length)); if (sent < p.fight.length) todo.push([tr("uR", p.fight.length - sent), "fight"]); }
+  if (p.keep) { if (p.line === "done") did.push(tr("dL")); else todo.push([tr("uL"), "keep"]); }
+  if (p.fix) { if (f) did.push(tr("dF", lowerTheme(p.fix.theme))); else todo.push([tr("uF", lowerTheme(p.fix.theme)), "fix"]); }
+  const things = (p.fix ? 1 : 0) + (p.keep ? 1 : 0) + p.fight.length, doneN = (f ? 1 : 0) + (p.line === "done" ? 1 : 0) + sent;
+  const left = todo.reduce((a, [, k]) => a + (k === "fight" ? p.fight.length - sent : 1), 0);
+  const pct = Math.round((100 * doneN) / Math.max(1, things));
+  const bar = h("i", { style: "width:0%" });
+  requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct + "%"; }));  // the bar fills in, so the progress reads as progress
+  return [
+    h("div", { class: "sumhd" }, h("div", { class: "okbadge" + (all ? "" : " part"), "aria-hidden": "true" }, svgIcon(["M5 12l5 5L20 7"])),
+      h("div", { style: "display:grid;gap:2px" }, h("h1", { id: "plan-h", tabindex: "-1", text: tr(all ? "doneH" : "partH") }), h("p", { class: "muted", text: tr(all ? "doneP" : "partP") }))),
+    h("div", { style: "display:grid;gap:8px" }, h("div", { class: "small muted", style: "display:flex;justify-content:space-between;gap:8px" }, h("span", { text: tr("progress", doneN, things) }), left ? h("span", { text: tr("left", left) }) : null),
+      h("div", { class: "pbar", role: "progressbar", "aria-label": tr("progress", doneN, things), "aria-valuemin": "0", "aria-valuemax": String(things), "aria-valuenow": String(doneN) }, bar)),
+    h("div", { class: "sumgrid" },
+      h("div", { class: "stack", style: "align-content:start;gap:10px" }, h("p", { class: "eb", text: tr("did") }),
+        did.length ? h("ul", { class: "dlist" }, did.map((t) => h("li", {}, svgIcon(ICON_CHECK), h("span", { text: t })))) : h("p", { class: "small muted", text: tr("nothingYet") })),
+      todo.length ? h("div", { class: "stack", style: "align-content:start;gap:10px" }, h("p", { class: "eb", style: "color:var(--muted)", text: tr("todo") }),
+        h("ul", { class: "dlist todo" }, todo.map(([t, k]) => h("li", {}, h("span", { text: t }), h("button", { class: "plain strong", type: "button", style: "padding:0 10px;min-height:44px", text: tr("doIt"), onclick: () => openStep(k, true) }))))) : null,
+      f ? h("div", { class: "stack col3", style: "align-content:start;gap:10px" }, h("p", { class: "eb", text: tr("tracked") }), trackedCard(f)) : null),
+    h("div", { class: "row", style: "align-items:center;gap:12px" }, h("button", { class: "btn ghost", type: "button", text: tr("backRes2"), onclick: () => { show("results"); toTop(); } }),
+      h("button", { class: "plain strong", type: "button", text: tr("another"), onclick: () => { show("input"); toTop(); } })),
+  ];
+}
+function remindNow(f) {  // the seller asked to be reminded: open WhatsApp with the text to send to themselves, or hand over a calendar file
+  const label = f.productLabel || tr("fixNoProduct"), theme = lowerTheme(f.theme);
+  if (f.remind === "whatsapp") { try { window.open("https://wa.me/?text=" + encodeURIComponent(tr("waMsg", label, fmtDay(f.checkOn), theme)), "_blank", "noopener"); } catch (e) { /* the summary still shows the text */ } }
+  else if (f.remind === "calendar") downloadIcs(f.checkOn, tr("calTitle", label), tr("calBody", label, theme));
+}
+function downloadIcs(day, title, body) {  // one all-day event on the check date
+  const esc = (s) => String(s).replace(/[\\;,]/g, (m) => "\\" + m).replace(/\n/g, "\\n");
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//BedahReview//ID", "BEGIN:VEVENT", "UID:" + Date.now().toString(36) + "@bedahreview", "DTSTAMP:" + stamp,
+    "DTSTART;VALUE=DATE:" + day.replace(/-/g, ""), "DTEND;VALUE=DATE:" + addDays(1, day).replace(/-/g, ""), "SUMMARY:" + esc(title), "DESCRIPTION:" + esc(body), "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+  const a = h("a", { href: URL.createObjectURL(new Blob([ics], { type: "text/calendar" })), download: "bedahreview-cek-" + day + ".ics" });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ---------- the sheet: a group's quotes and drafts (bottom sheet / side panel), or a small dialog ---------- */
+let sheetBucket = null, sheetPushed = false, sheetReturn = null, lastCounts = null, toastTimer = null;
+function sheetTitle() { if (sheetBucket && lastCounts) $("sheet-h").textContent = tr("sheetT", tr(sheetBucket), lastCounts[sheetBucket]); }
+function openSheetBox(dialog) {
+  const s = $("sheet"), box = s.querySelector(".sheet-box");
+  if (!s.classList.contains("open")) sheetReturn = document.activeElement;
+  s.classList.toggle("dlg", dialog); $("panels").hidden = dialog; $("sheet-extra").hidden = !dialog; s.querySelector(".sheet-hd").hidden = dialog;
+  if (s.hidden) { s.hidden = false; void s.offsetWidth; if (!sheetPushed) { try { history.pushState({ sheet: 1 }, ""); sheetPushed = true; } catch (e) { /* Back simply leaves the page */ } } }
+  s.classList.add("open"); document.body.classList.add("sheet-open"); box.scrollTop = 0;
+}
+function openSheet(bucket) {
+  sheetBucket = bucket; openSheetBox(false); selectTab(bucket, false); sheetTitle();
+  document.querySelectorAll("#tabs button").forEach((b) => { if (b.dataset.b === bucket) b.dataset.on = "1"; else delete b.dataset.on; });
+  $("sheet-h").focus({ preventScroll: true });
+}
+function openDialog(nodes, titleKey) {
+  sheetBucket = null; $("sheet-h").textContent = tr(titleKey);
+  $("sheet-extra").replaceChildren(...nodes.flat(Infinity).filter(Boolean));
+  openSheetBox(true);
+  const first = $("sheet-extra").querySelector("button"); if (first) first.focus({ preventScroll: true });
+}
+function closeSheet(fromPop) {
+  const s = $("sheet");
+  if (!s.classList.contains("open")) return;
+  s.classList.remove("open"); document.body.classList.remove("sheet-open");
+  document.querySelectorAll("#tabs button[data-on]").forEach((b) => { delete b.dataset.on; });
+  const hide = () => { if (!s.classList.contains("open")) s.hidden = true; };
+  if (reduceMotion()) hide(); else setTimeout(hide, 320);
+  if (sheetPushed) { sheetPushed = false; if (!fromPop) { try { history.back(); } catch (e) { /* ignore */ } } }
+  if (sheetReturn && document.contains(sheetReturn) && sheetReturn.focus) sheetReturn.focus({ preventScroll: true });
+  sheetReturn = null;
+}
+window.addEventListener("popstate", () => { if ($("sheet").classList.contains("open")) { sheetPushed = false; closeSheet(true); } });  // Back closes the sheet
+$("sheet-scrim").addEventListener("click", () => closeSheet());
+$("sheet-x").addEventListener("click", () => closeSheet());
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("sheet").classList.contains("open")) closeSheet(); });
+function showToast(msg) { const t = $("toast2"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3200); }
+function animateIn(el, cls) { if (!el || reduceMotion()) return; el.classList.remove("enter", "enter-fwd", "enter-bwd"); void el.offsetWidth; el.classList.add(cls || "enter"); }
+function smoothDetails(d) {  // a row that opens grows to its height, and shrinks back, instead of jumping
+  if (d.dataset.smooth) return;
+  d.dataset.smooth = "1";
+  const sum = d.querySelector(":scope > summary"), body = d.querySelector(":scope > .xp-body");
+  if (!sum || !body) return;
+  sum.addEventListener("click", (e) => {
+    if (reduceMotion() || !body.animate) return;
+    e.preventDefault();
+    if (d.dataset.busy) return;
+    d.dataset.busy = "1";
+    const end = () => { body.style.overflow = ""; delete d.dataset.busy; };
+    if (d.open) {
+      const tall = body.offsetHeight; d.classList.add("closing"); body.style.overflow = "hidden";
+      body.animate([{ height: tall + "px", opacity: 1 }, { height: "0px", opacity: 0 }], { duration: 200, easing: "ease-in" }).onfinish = () => { d.open = false; d.classList.remove("closing"); end(); };
+    } else {
+      d.open = true; const tall = body.offsetHeight; body.style.overflow = "hidden";
+      body.animate([{ height: "0px", opacity: 0 }, { height: tall + "px", opacity: 1 }], { duration: 240, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" }).onfinish = end;
+    }
+  });
+}
+
 /* ---------- results ---------- */
 const TABS = ["fix", "fight", "ignore", "keep"];
 const MAIN_TABS = ["fix", "fight"];
 let lastData = null, activeTab = "fix", lastQuota = null;
-function setQuota(q) {  // how many analyses are left today, shown under the button once the server has said (accounts only)
+let quotaDay = "";
+function setQuota(q) {  // how many analyses are left today, shown right above the buttons once the server has said (accounts only)
+  if (q && q !== lastQuota) quotaDay = today();
   lastQuota = q || null;
-  const note = $("quota-note"); note.hidden = !lastQuota;
-  if (lastQuota) note.textContent = tr("quotaLeft", Math.max(0, lastQuota.max - lastQuota.used), lastQuota.max);
+  for (const id of ["quota-note", "quota-link"]) {
+    const note = $(id); note.hidden = !lastQuota;
+    if (lastQuota) note.textContent = tr("quotaLeft", Math.max(0, lastQuota.max - lastQuota.used), lastQuota.max);
+  }
+  syncShopee();
 }
+const quotaOut = () => !!lastQuota && lastQuota.used >= lastQuota.max && quotaDay === today();  // used up today: the buttons look off, and a tap says why instead of doing nothing
 let rival = { step: "idle" }, rivalRun = 0;  // competitor analysis state; rivalRun lets a late reply notice that a new analysis has started
-function selectTab(key, focus) {
+function selectTab(key, focus) {  // which group the sheet shows; its own tabs switch between the four groups
   activeTab = key;
   for (const k of TABS) {
-    const on = k === key;
-    $("tab-" + k).setAttribute("aria-selected", on ? "true" : "false"); $("tab-" + k).tabIndex = on ? 0 : -1;
+    const on = k === key, st = $("stab-" + k);
+    if (st) { st.setAttribute("aria-selected", on ? "true" : "false"); st.tabIndex = on ? 0 : -1; if (on && focus) st.focus(); }
     $("panel-" + k).hidden = !on;
-    if (on && focus) $("tab-" + k).focus();
   }
+}
+function headline(groups, fight, keep, items) {  // one calm sentence and one line of context, counts only
+  let hd = tr("hNone");
+  if (groups.length) hd = tr(groups.length === 1 ? "hOne" : "hTop", lowerTheme(groups[0].theme));
+  else if (fight.length) hd = tr("hFight", fight.length);
+  const parts = [];
+  if (groups.length) { const c = countTheme(items, groups[0].theme, groups[0].variant || ""); parts.push(tr("lFix", c.count, c.total)); if (fight.length) parts.push(tr("lFight", fight.length)); }
+  if (keep.length) {
+    const th = [...new Set(keep.map((k) => plainTheme(k.theme).toLowerCase()))].slice(0, 2);
+    parts.push(th.length ? tr("lKeep", keep.length, th.join(" " + tr("and") + " ")) : tr("lKeepAny", keep.length));
+  }
+  return { h: hd, lead: parts.join(" ") };
 }
 function render(data, fresh) {
   lastData = data;
@@ -1517,9 +2380,10 @@ function render(data, fresh) {
   const counts = { fix: data.counts.fix, fight: data.counts.fight + data.counts.check, ignore: data.counts.ignore, keep: keep.length };
 
   const src = data.source || {};
-  const name = src.title ? src.title + " · " : "";
-  $("results-h").textContent = tr("results");
-  $("summary").textContent = name + data.reviews + " " + tr("reviewsWord") + (data.star_avg ? " · " + data.star_avg + "★" : "");
+  lastCounts = counts;
+  $("summary").textContent = [src.title || (src.kind === "url" ? "" : tr("pastedName")), data.reviews + " " + tr("reviewsWord"), src.kind === "url" ? platformName(src.url) : data.star_avg ? data.star_avg + "★" : ""].filter(Boolean).join(" · ");
+  const head = headline(fixItems, fight, keep, data.items);
+  $("results-h").textContent = head.h; $("res-lead").textContent = head.lead; $("res-lead").hidden = !head.lead;
 
   if (data.example) lastChanged = [];
   if (fresh !== false && !data.example) {  // new reviews: compare them with every fix saved for this product
@@ -1537,27 +2401,37 @@ function render(data, fresh) {
   if (data.no_text) notes.push(h("div", { class: "callout", text: tr("noteNoText", data.no_text) }));
   if (data.dropped) notes.push(h("div", { class: "callout warn", text: tr("noteDropped", data.dropped) }));
   $("notes").replaceChildren(...notes);
-  $("start").replaceChildren(...[data.example ? h("div", { class: "callout warn", role: "note", text: tr("exampleNote") }) : null, startHere(fixItems, fight, byId)].filter(Boolean));
+  const plan = planFor(data);  // none for the example, a locked free result, or reviews with nothing to do
+  $("start").replaceChildren(...[data.example ? h("div", { class: "callout warn", role: "note", text: tr("exampleNote") }) : null, plan ? planCard(plan, data) : startHere(fixItems, fight, byId)].flat().filter(Boolean));
+  renderFixBadge();
 
   const cap = (k) => k[0].toUpperCase() + k.slice(1);
   $("pchip-name").textContent = src.title || tr("pastedName");
   $("pchip-meta").textContent = " · " + data.reviews + " " + tr("reviewsWord") + (data.star_avg ? " · " + data.star_avg + "★" : "");
+  const topKeep = Object.entries(keep.reduce((a, k) => { const t = plainTheme(k.theme); a[t] = (a[t] || 0) + 1; return a; }, {})).sort((a, b) => b[1] - a[1])[0];
+  const tileTheme = {  // the line under each count on a wide screen: what the group is mostly about
+    fix: fixItems.length ? themeName(fixItems[0].theme) + " · " + fixItems[0].n : "",
+    fight: [...new Set(fight.map((it) => (it.check_first ? tr("chipCourier") : themeName(it.theme))))].slice(0, 3).join(", "),
+    ignore: ignore.length ? themeName("No text") : "", keep: topKeep ? topKeep[0] + " · " + topKeep[1] : "",
+  };
   $("tabs").replaceChildren(...TABS.map((k) => {
-    const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, class: MAIN_TABS.includes(k) ? "main" : "", "aria-controls": "panel-" + k, "data-b": k, "data-shown": tr("shown") },
+    const tab = h("button", { type: "button", id: "tab-" + k, class: MAIN_TABS.includes(k) ? "main" : "", "aria-haspopup": "dialog", "aria-controls": "sheet", "data-b": k, "data-th": tileTheme[k] || " " },
       h("span", { class: "ic", "aria-hidden": "true" }, svgIcon(BOARD_ICON[k])),
-      h("span", { class: "n", text: counts[k], "data-d": tr("board" + cap(k)) }), h("span", { class: "l", text: tr(k) }));
+      h("span", { class: "n", text: counts[k] }), h("span", { class: "l", text: tr(k) }));
     tab.addEventListener("click", () => {
-      if (freeLocked) { $("unlock").scrollIntoView({ block: "center", behavior: "smooth" }); $("unlock-h").focus({ preventScroll: true }); return; }  // the details need a sign-in first
-      selectTab(k, false); track("tab_viewed", { tab: k });
+      if (freeLocked) { $("unlock").scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" }); $("unlock-h").focus({ preventScroll: true }); return; }  // the details need a sign-in first
+      openSheet(k); track("tab_viewed", { tab: k });
     });
     return tab;
   }));
+  const stabs = h("div", { class: "seg", role: "tablist", id: "stabs", "aria-label": tr("sections") }, TABS.map((k) => h("button", { type: "button", role: "tab", id: "stab-" + k, "aria-controls": "panel-" + k, "data-b": k, text: tr(k),
+    onclick: () => { sheetBucket = k; selectTab(k, false); sheetTitle(); track("tab_viewed", { tab: k }); } })));
+  tabKeys(stabs, "button", (t) => { sheetBucket = t.dataset.b; selectTab(t.dataset.b, true); sheetTitle(); });
   const plat = platformName(src.url || "");
-  const panel = (k, body, extra) => h("div", { class: "panel", role: "tabpanel", id: "panel-" + k, "aria-labelledby": "tab-" + k, "data-b": k, hidden: true },
-    h("p", { class: "rule mob", text: tr(k + "Rule") }),
-    [h("h3", { class: "phead dsk", text: tr(k) + " · " + counts[k] + " " + tr("reviewsWord") }), h("p", { class: "lead dsk", text: tr("lead" + cap(k)) })],
+  const panel = (k, body, extra) => h("div", { class: "panel", role: "tabpanel", id: "panel-" + k, "aria-labelledby": "stab-" + k, "data-b": k, hidden: true },
+    h("p", { class: "rule mob", text: tr(k + "Rule") }), h("p", { class: "lead dsk", text: tr("lead" + cap(k)) }),
     extra, body);
-  $("panels").replaceChildren(
+  $("panels").replaceChildren(stabs,
     panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") }), fixItems.length ? aiNote() : null),
     panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") }), [h("div", { class: "callout hot dsk" }, h("b", { text: tr("noRemove") + " " }), tr("noRemoveBody", plat, plat)), fight.length ? aiNote() : null]),
     panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })),
@@ -1567,7 +2441,8 @@ function render(data, fresh) {
   const fromLink = src.kind === "url" ? tr("footFrom", src.count, src.mode === "complaints" ? tr("footLow") : "", src.cached ? tr("footCached") : "") : "";
   $("foot").textContent = fromLink.trim(); $("foot").hidden = !fromLink;
 
-  const first = fresh === false ? activeTab : (counts.fix ? "fix" : counts.fight ? "fight" : counts.ignore ? "ignore" : counts.keep ? "keep" : "fix");
+  const first = fresh === false ? (sheetBucket || activeTab) : (counts.fix ? "fix" : counts.fight ? "fight" : counts.ignore ? "ignore" : counts.keep ? "keep" : "fix");
+  if (fresh !== false) closeSheet();
   selectTab(first, false);
   if (fresh !== false) {
     show("results");
@@ -1639,9 +2514,9 @@ function slugTitle(url) {  // a rough product name from the link's last path par
   } catch (e) { return ""; }
 }
 function stepper(active) {  // 1 Find, 2 Pick, 3 Compare, 4 all done
-  const names = [tr("stepFind"), tr("stepPick"), tr("stepCompare")];
-  return h("ol", { class: "stepper" }, names.map((n, i) => h("li", { class: i + 1 < active ? "done" : i + 1 === active ? "on" : "", "aria-current": i + 1 === active ? "step" : null },
-    h("span", { class: "dot" }, i + 1 < active ? svgIcon(["M5 12l5 5 9-10"]) : String(i + 1)), n)));
+  const names = [[tr("stepFind")], [tr("stepPick")], [tr("stepCompare"), tr("stepCompareShort")]];  // the third one gets a short form below 360px so it never clips
+  return h("ol", { class: "stepper" }, names.map(([n, short], i) => h("li", { class: i + 1 < active ? "done" : i + 1 === active ? "on" : "", "aria-current": i + 1 === active ? "step" : null },
+    h("span", { class: "dot" }, i + 1 < active ? svgIcon(["M5 12l5 5 9-10"]) : String(i + 1)), short ? [h("span", { class: "full", text: n }), h("span", { class: "short", text: short })] : n)));
 }
 function wantSelector() {
   return h("div", { class: "want" }, h("span", { text: tr("rivalWantLbl") }), h("div", { class: "seg", role: "group", "aria-label": tr("rivalWantLbl") },
@@ -1838,32 +2713,45 @@ async function rivalCompare() {
   rival = next; renderRival();
 }
 $("rivals-open").addEventListener("click", () => openRivals(true));
-desktopQuery.addEventListener("change", () => { if (desktop() && currentView === "rivals") show(checkerView); if (lastData) render(lastData, false); else renderRival(); });
+desktopQuery.addEventListener("change", () => {  // crossing 900px: the plan, the steps and Tugas are laid out differently
+  if (desktop() && currentView === "rivals") show(checkerView);
+  if (lastData) render(lastData, false); else renderRival();
+  if (currentView === "plan") renderPlanView(); else if (currentView === "fixes") renderFixes();
+});
 
 /* ---------- views ---------- */
+const VIEWS = { input: "view-input", loading: "view-loading", results: "view-results", fixes: "view-fixes", plan: "view-plan" };
 function show(view) {
+  const before = currentView;
   currentView = view;
-  if (view !== "rivals") checkerView = view;
+  if (view !== "rivals" && view !== "fixes") checkerView = view;  // where the Bedah ulasan tab goes back to
   $("workspace").dataset.section = view === "rivals" ? "rivals" : "checker";  // on a phone the two sections take turns; a wide screen shows both
-  $("view-fixes").hidden = view !== "fixes";
-  $("view-input").hidden = view !== "input";
-  $("view-loading").hidden = view !== "loading";
-  $("view-results").hidden = view !== "results";
+  $("workspace").classList.toggle("tasks-full", view === "fixes");  // a wide screen: Tugas takes the whole width
+  for (const [v, id] of Object.entries(VIEWS)) $(id).hidden = view !== v;
+  $("hero").hidden = view !== "input";
   $("view-steps").hidden = view !== "input";
-  $("pchip").hidden = !(lastData && view === "results"); $("print-d").hidden = view !== "results";
+  $("pchip").hidden = !(lastData && (view === "results" || view === "plan")); $("print-d").hidden = view !== "results";
   $("back-results").hidden = !(lastData && view === "input");
-  $("nav-check").setAttribute("aria-current", view === "rivals" ? "false" : "page");
+  $("nav-check").setAttribute("aria-current", view === "rivals" || view === "fixes" ? "false" : "page");
+  $("nav-tasks").setAttribute("aria-current", view === "fixes" ? "page" : "false");
   $("nav-rivals").setAttribute("aria-current", view === "rivals" ? "page" : "false");
+  $("ptab-mine").setAttribute("aria-current", view === "rivals" ? "false" : "page"); $("ptab-rivals").setAttribute("aria-current", view === "rivals" ? "page" : "false");
+  $("ptabs").hidden = view === "fixes";
+  $("fixes-btn").classList.toggle("on", view === "fixes");
+  if (before !== view && view !== "plan") animateIn(view === "rivals" ? $("feature2") : $(VIEWS[view]));  // a new screen rises in; the steps slide sideways instead
 }
 $("nav-check").addEventListener("click", () => { show(currentView === "rivals" || currentView === "fixes" ? (checkerView === "loading" ? "input" : checkerView) : currentView); toTop(); });
 $("nav-rivals").addEventListener("click", () => openRivals(false));
+$("nav-tasks").addEventListener("click", () => openFixes());
+$("ptab-mine").addEventListener("click", () => $("nav-check").click());
+$("ptab-rivals").addEventListener("click", () => openRivals(false));
 $("new-mob").addEventListener("click", () => { show("input"); toTop(); });
 $("pchip-change").addEventListener("click", () => { show("input"); toTop(); });
 $("back-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
 $("print-d").addEventListener("click", () => window.print());
 $("logout").addEventListener("click", async () => { await leaveWithFixes(); if (sb) { try { await sb.auth.signOut(); } catch (e) { /* reload anyway */ } } try { await fetch("/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); } catch (e) { /* reload anyway */ } location.reload(); });
 $("fixes-btn").addEventListener("click", () => { if (currentView === "fixes") { $("fixes-back").click(); } else openFixes(); });
-$("fixes-back").addEventListener("click", () => { show(viewBeforeFixes === "loading" || (viewBeforeFixes === "results" && !lastData) ? "input" : viewBeforeFixes); toTop(); });
+$("fixes-back").addEventListener("click", () => { const v = viewBeforeFixes; show(v === "loading" || v === "fixes" || ((v === "results" || v === "plan") && !lastData) ? "input" : v); toTop(); });
 $("fixes-export").addEventListener("click", exportFixes);
 $("fixes-import").addEventListener("click", () => $("fixes-file").click());
 $("fixes-file").addEventListener("change", async (e) => { await importFixes(e.target.files[0]); e.target.value = ""; });
@@ -1880,7 +2768,6 @@ function tabKeys(listEl, selector, onSelect) {
     e.preventDefault(); onSelect(tabs[j]);
   });
 }
-tabKeys($("tabs"), "button", (t) => { selectTab(t.dataset.b, true); track("tab_viewed", { tab: t.dataset.b }); });
 
 function selectInput(which, focus) {
   for (const t of ["paste", "link"]) {
@@ -1897,12 +2784,34 @@ $("fb-retry").addEventListener("click", () => { setFallback(false); selectInput(
 $("try-sample").addEventListener("click", () => { setFallback(false); selectInput("paste", false); $("sample").click(); });
 tabKeys($("intabs"), "button", (t) => selectInput(t.dataset.t, true));
 
-function showError(msg, title) {
-  const e = $("error");
+function showError(msg, title, opts) {  // right under the button that was tapped, scrolled into view, and read out
+  opts = opts || {};
+  const e = $("error"), where = opts.where || ($("in-link").hidden ? "paste" : "link");
+  const anchor = $(where === "link" ? "fetch-anchor" : "run-anchor");
+  if (anchor.nextElementSibling !== e) anchor.after(e);
   $("error-title").textContent = title || ""; $("error-title").hidden = !title;
-  $("error-text").textContent = msg; e.hidden = !msg;
-  if (msg) e.focus();
+  $("error-text").textContent = msg;
+  $("error-sub").textContent = opts.sub || ""; $("error-sub").hidden = !opts.sub;
+  $("error-paste").hidden = !opts.toPaste;
+  e.hidden = !msg;
+  if (msg) { e.focus({ preventScroll: true }); e.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" }); }
 }
+function showUrlError(msg) {  // a link that is not right: the field turns red and says why, right under it
+  $("url-error-text").textContent = msg || ""; $("url-error").hidden = !msg;
+  if (msg) { $("url").setAttribute("aria-invalid", "true"); $("url").focus(); } else $("url").removeAttribute("aria-invalid");
+}
+const isShopee = (u) => { try { return /(^|\.)shopee\./i.test(new URL(u.trim()).hostname); } catch (e) { return /shopee\./i.test(u); } };
+function syncShopee() {  // a Shopee link gets "not yet" and a way forward before anything is spent; the fetch button looks quiet until there is a link
+  const u = $("url").value, shopee = !!u.trim() && isShopee(u);
+  $("shopee-note").hidden = !shopee; $("shopee-hint").hidden = shopee;
+  const out = quotaOut();
+  $("fetch").classList.toggle("off", out || shopee || !u.trim()); $("fetch").setAttribute("aria-disabled", out || shopee ? "true" : "false");
+  $("run").classList.toggle("off", out); $("run").setAttribute("aria-disabled", out ? "true" : "false");
+}
+function toPaste(withSteps) { showError(""); setFallback(!!withSteps); selectInput("paste", false); $("paste").focus(); }
+$("url").addEventListener("input", () => { showUrlError(""); syncShopee(); });
+$("shopee-paste").addEventListener("click", () => toPaste(false));
+$("error-paste").addEventListener("click", () => toPaste(true));
 
 /* ---------- sending ---------- */
 let timer = null;
@@ -1941,6 +2850,7 @@ async function pollJob(id) {  // resolves to {status, data} like the plain reply
     await new Promise((resolve) => setTimeout(resolve, JOB_POLL_MS));
   }
 }
+const LINK_FIELD_CODES = ["not_link", "link_https", "not_product", "short_bad", "short_open", "lazada_link", "tiktok_link", "tokopedia_link", "link_unsupported"];  // problems with the link itself
 function finishAnalysis(status, data) {  // the one place that turns a reply into the screen: results, the sign-in box, or a plain error
   stopLoading();
   if (status === 401) {  // signed out or the sign-in ran out: ask again. Without an account: the free analysis is used up.
@@ -1951,9 +2861,13 @@ function finishAnalysis(status, data) {  // the one place that turns a reply int
   if (!(status >= 200 && status < 300) || !data) {
     show("input");
     if (data && data.limit === "daily") setQuota({ used: data.max, max: data.max });
-    const toPaste = data && data.fallback === "paste";
-    const unreadable = toPaste && !data.limit;  // a daily limit is not "this link cannot be read"
-    if (toPaste) selectInput("paste", false);  // first: switching tabs clears the error box
+    const code = data && data.code, onLink = !$("in-link").hidden;
+    if (code === "shopee" && onLink) { syncShopee(); $("shopee-note").hidden = false; $("shopee-hint").hidden = true; $("shopee-paste").focus(); return; }
+    if (LINK_FIELD_CODES.includes(code) && onLink) { showUrlError(errText(data, tr("errGeneric", status))); return; }  // the link itself is wrong: say so on the field
+    const pasteWay = data && data.fallback === "paste";
+    const unreadable = pasteWay && !data.limit;  // a daily limit is not "this link cannot be read"
+    if (unreadable && onLink) { showError(errText(data, tr("errGeneric", status)), tr("errFetchTitle"), { where: "link", toPaste: true, sub: tr("refunded") }); return; }
+    if (pasteWay) selectInput("paste", false);  // first: switching tabs clears the error box
     if (unreadable) setFallback(true);
     showError(errText(data, tr("errGeneric", status)), unreadable ? tr("errFetchTitle") : "");
     return;
@@ -2007,6 +2921,7 @@ function countReviewsRough(text) {
 }
 function runPaste() {
   if (!ensureSignedIn(true)) return;
+  if (quotaOut()) { showError(tr("limitDaily", lastQuota.max), "", { where: "paste" }); return; }
   const text = $("paste").value;
   if (!text.trim()) { showError(tr("errPaste")); $("paste").focus(); return; }
   $("shared-note").hidden = true;
@@ -2014,8 +2929,11 @@ function runPaste() {
 }
 function runFetch() {
   if (!ensureSignedIn(true)) return;
+  if (quotaOut()) { showError(tr("limitDaily", lastQuota.max), "", { where: "link" }); return; }
   const url = $("url").value.trim();
-  if (!url) { showError(tr("errLink")); $("url").focus(); return; }
+  if (!url) { showUrlError(tr("errLink")); return; }
+  if (isShopee(url)) { syncShopee(); $("shopee-paste").focus(); return; }  // nothing to spend: Shopee is not read from a link
+  showUrlError("");
   send({ url, limit: parseInt($("limit").value, 10) || 10, mode: $("mode").value }, tr("loadingFetch"));
 }
 $("run").addEventListener("click", runPaste);
@@ -2045,24 +2963,31 @@ $("clear").addEventListener("click", () => { $("paste").value = ""; $("product")
 $("paste").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") runPaste(); });
 
 /* ---------- Share menu: /?title=...&text=...&url=... ---------- */
-function sharedFrom(search) {
-  const q = new URLSearchParams(search);
-  return [q.get("title"), q.get("text"), q.get("url")].filter(Boolean).join("\n").trim();
+function sharedFrom(search) {  // a shop app sends the product title as "title" and the review as "text": the title is the product name, not a review
+  const q = new URLSearchParams(search), title = (q.get("title") || "").trim(), text = (q.get("text") || "").trim(), url = (q.get("url") || "").trim();
+  const all = [title, text, url].filter(Boolean).join("\n").trim();
+  if (!text) return { all, reviews: all, product: "" };  // only a title (or a link) came: that is what there is to read
+  return { all, reviews: [text, url].filter(Boolean).join("\n").trim(), product: title.slice(0, 150) };
 }
 function takeShared() {
   const shared = sharedFrom(location.search);
-  if (!shared) return;
+  if (!shared.all) return;
   try { history.replaceState(null, "", location.pathname); } catch (e) { /* keep the query */ }  // do not leave review text in the address bar
   const note = $("shared-note");
-  if (/^https?:\/\/\S+$/.test(shared)) {  // only a link arrived, not review text
+  if (/^https?:\/\/\S+$/.test(shared.all)) {  // only a link arrived, not review text
     note.textContent = tr("sharedLinkOnly"); note.hidden = false;
-    if (!$("intab-link").hidden) { $("url").value = shared; selectInput("link", false); }
+    if (!$("intab-link").hidden) { $("url").value = shared.all; selectInput("link", false); }
     return;
   }
-  $("paste").value = shared; syncClear();
+  $("paste").value = shared.reviews; syncClear();
+  if (shared.product) {  // filled for you: the name goes first so it is the first thing checked
+    $("product").value = shared.product; $("product").classList.add("filled");
+    $("shared-note").after($("product-fld"));
+  }
   note.textContent = tr("sharedOk"); note.hidden = false;
   selectInput("paste", false);
 }
+$("product").addEventListener("input", () => $("product").classList.remove("filled"));
 
 /* ---------- sign-in (Supabase) ----------
    Only when the server says Supabase is on. The browser talks to Supabase directly, so its per-address limits count each person apart;
@@ -2073,7 +2998,7 @@ let sb = null, cachedToken = "", signedIn = true, userId = null, userEmail = "",
 const FREE_KEY = "bedahreview-free-used", PENDING_KEY = "bedahreview-free-result";
 const freeUsed = () => { try { return localStorage.getItem(FREE_KEY) === "1"; } catch (e) { return false; } };
 function markFreeUsed() { try { localStorage.setItem(FREE_KEY, "1"); } catch (e) { /* the server still counts */ } }
-function setLocked(on) { freeLocked = on; $("view-results").classList.toggle("locked", on); $("unlock").hidden = !on; }
+function setLocked(on) { freeLocked = on; $("view-results").classList.toggle("locked", on); document.body.classList.toggle("free-locked", on); $("unlock").hidden = !on; if (on) closeSheet(); }
 function dropPending() { try { sessionStorage.removeItem(PENDING_KEY); } catch (e) { /* ignore */ } }
 function unlockFree() {  // just signed in: show the free analysis in full, and count it for this account
   let pending = null;
@@ -2248,6 +3173,7 @@ async function saveIntro(skip) {
 async function enterApp(session) {
   if (!session || !session.user || userId === session.user.id) return;
   userId = session.user.id; userEmail = session.user.email || ""; signedIn = true; hideApp();  // the email is only shown in this browser's menu, never sent anywhere
+  renderAccount();  // the header shows the account initial as soon as the code is accepted, also on the intro questions
   await maybeIntro();
   showApp();
 }
@@ -2321,7 +3247,7 @@ $("delete-confirm").addEventListener("click", async () => {
   btn.disabled = false; btn.textContent = tr("delConfirm");
   if (!done) { resetFixSync(); syncFixes(); return; }  // nothing was deleted: carry on as before
   try { await sb.auth.signOut({ scope: "local" }); } catch (e) { /* the account is gone either way */ }
-  try { [FIX_KEY, FIX_OWNER_KEY, DEVICE_KEY].forEach((k) => localStorage.removeItem(k)); sessionStorage.setItem("bedahreview-deleted", "1"); } catch (e) { /* ignore */ }
+  try { [FIX_KEY, FIX_OWNER_KEY, DEVICE_KEY, PLAN_KEY].forEach((k) => localStorage.removeItem(k)); sessionStorage.setItem("bedahreview-deleted", "1"); } catch (e) { /* ignore */ }
   location.reload();  // a clean page: no review, result or note is left in memory
 });
 $("signin-btn").addEventListener("click", () => showGate("choose"));
@@ -2376,6 +3302,7 @@ function stepOneText() {  // step 1 names the way in this visitor really has: a 
 }
 
 $("share-tip").hidden = isIos();  // sharing into a web app does not work on iPhone, so the tip would only mislead
+document.querySelectorAll("details.xp").forEach(smoothDetails);
 applyLang();
 takeShared();
 loadConfig().then(resumeJob);
