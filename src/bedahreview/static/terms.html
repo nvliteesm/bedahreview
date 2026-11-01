@@ -8,34 +8,51 @@
 <title>Syarat penggunaan · BedahReview</title>
 <link rel="icon" href="icons/icon-192.png">
 <style>
-:root { --bg: #f6f7f5; --surface: #ffffff; --ink: #17201c; --muted: #5d6963; --line: #dde2de; --accent: #0f6b5a; --soft: #dff1ec; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --accent: #4fc2a8; --soft: #163a33; } }
-:root[data-theme="dark"] { --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --accent: #4fc2a8; --soft: #163a33; }
+/* Same tokens, fonts and header as the app (index.html), so the legal pages feel like part of it. */
+:root { --bg: #f6f7f5; --surface: #ffffff; --ink: #17201c; --muted: #5d6963; --line: #dde2de; --accent: #0f6b5a; --on-accent: #ffffff; --accent-soft: #dff1ec; --bar: #ffffff; --radius: 14px; --font-ui: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --accent: #4fc2a8; --on-accent: #0b1411; --accent-soft: #163a33; --bar: #1a211e; } }
+:root[data-theme="dark"] { --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --accent: #4fc2a8; --on-accent: #0b1411; --accent-soft: #163a33; --bar: #1a211e; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("fonts/plus-jakarta-sans.woff2") format("woff2"); font-weight: 200 800; font-style: normal; font-display: swap; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-header { position: sticky; top: 0; background: var(--surface); border-bottom: 1px solid var(--line); }
-.bar { max-width: 760px; margin: 0 auto; min-height: 56px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.brand { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.02em; color: var(--ink); text-decoration: none; }
-.brand span { color: var(--accent); }
-.lang { display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
-.lang button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
-.lang button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
-main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
-h1 { font-size: 1.7rem; line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 6px; }
-h2 { font-size: 1.15rem; margin: 28px 0 6px; }
-p, ul { margin: 0 0 12px; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; transition: background-color 0.2s, color 0.2s; }
+h1, h2, p, ul { margin: 0; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.topbar { position: sticky; top: 0; z-index: 10; background: var(--bar); border-bottom: 1px solid var(--line); padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); }
+.topbar-in { max-width: 720px; margin: 0 auto; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 7px; color: var(--ink); text-decoration: none; }
+.logo { width: 30px; height: 30px; color: var(--ink); flex: none; }
+.wm { font-size: 18.5px; line-height: 1; letter-spacing: -0.035em; white-space: nowrap; }
+.wm b { font-weight: 700; color: var(--ink); } .wm i { font-style: normal; font-weight: 500; color: var(--accent); }
+.tools { display: flex; align-items: center; gap: 6px; }
+.lang { min-height: 44px; min-width: 44px; padding: 0 2px; border: 0; background: none; display: inline-flex; align-items: center; justify-content: center; font: inherit; cursor: pointer; }
+.lang .pill { display: inline-flex; gap: 4px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 700; color: var(--muted); }
+.lang .pill em { font-style: normal; color: var(--ink); }
+@media (max-width: 359px) { .lang .alt { display: none; } }
+.theme { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
+svg.i { width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+main { max-width: 720px; margin: 0 auto; display: grid; gap: 14px; align-content: start; padding: 16px max(16px, env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+article { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 18px; display: grid; gap: 10px; }
+h1 { font-size: 1.4rem; line-height: 1.25; font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: 1.1rem; line-height: 1.3; font-weight: 800; margin-top: 14px; }
 ul { padding-left: 1.2em; display: grid; gap: 6px; }
-.muted { color: var(--muted); }
-.note { background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 16px 0; }
+.muted { color: var(--muted); font-size: 0.85rem; }
+.note { border-radius: 10px; padding: 10px 12px; font-size: 0.88rem; font-weight: 600; background: var(--accent-soft); color: var(--ink); border: 1px solid var(--line); }
 a { color: var(--accent); font-weight: 600; }
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--accent); font: inherit; font-weight: 700; font-size: 0.9rem; text-decoration: none; justify-self: start; }
 </style>
 </head>
 <body>
-<header><div class="bar">
-  <a class="brand" href="/">bedah<span>review</span></a>
-  <div class="lang" role="group" aria-label="Bahasa / Language"><button type="button" data-l="id" aria-pressed="true">ID</button><button type="button" data-l="en" aria-pressed="false">EN</button></div>
+<header class="topbar"><div class="topbar-in">
+  <a class="brand" href="/" aria-label="BedahReview">
+    <svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><circle cx="20" cy="20" r="12.5" fill="none" stroke="currentColor" stroke-width="4.2"/><path transform="translate(10.4 10) scale(0.4)" d="M24 5 L29 18.12 L43.02 18.82 L32.08 27.63 L35.76 41.18 L24 33.5 L12.24 41.18 L15.92 27.63 L4.98 18.82 L19 18.12 Z" fill="var(--accent)"/><path d="M28.6 32 L32 28.6 L45.2 42.6 Q45.6 45.6 42.6 45.2 Z" fill="currentColor"/></svg>
+    <span class="wm"><b>bedah</b><i>review</i></span>
+  </a>
+  <div class="tools">
+    <button class="lang" id="lang" type="button" aria-label="Bahasa / Language"></button>
+    <button class="theme" id="theme" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="theme-icon" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+  </div>
 </div></header>
 
 <main>
@@ -78,7 +95,7 @@ a { color: var(--accent); font-weight: 600; }
   <p>Syarat ini bisa berubah. Tanggal di atas menunjukkan versi terbaru. Kalau kamu terus memakai aplikasi setelah perubahan, berarti kamu menerima versi barunya. Hukum Indonesia berlaku untuk syarat ini.</p>
 
   <h2>Kontak</h2>
-  <p class="contact" data-none="Alamat kontak belum dipublikasikan. Hubungi pembuat lewat orang yang membagikan tautan ini kepadamu.">…</p>
+  <p class="contact"><a href="mailto:bedahreview@gmail.com">bedahreview@gmail.com</a></p>
 </article>
 
 <article lang="en" id="p-en" hidden>
@@ -120,35 +137,61 @@ a { color: var(--accent); font-weight: 600; }
   <p>These terms may change. The date above shows the latest version. If you keep using the app after a change, you accept the new version. Indonesian law applies to these terms.</p>
 
   <h2>Contact</h2>
-  <p class="contact" data-none="No contact address is published yet. Reach the builder through whoever shared this link with you.">…</p>
+  <p class="contact"><a href="mailto:bedahreview@gmail.com">bedahreview@gmail.com</a></p>
 </article>
-<p><a href="/" id="back">← Kembali ke aplikasi</a></p>
+<a class="btn" href="/" id="back">← Kembali ke aplikasi</a>
 </main>
 
 <script>
 (function () {
-  var lang = "id";
+  var TITLES = { id: "Syarat penggunaan", en: "Terms of use" };
+  var BACK = { id: "← Kembali ke aplikasi", en: "← Back to the app" };
+  var THEME = { id: ["Mode gelap", "Mode terang"], en: ["Dark mode", "Light mode"] };
+  var MOON = "M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z";
+  var SUN = "M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3L4.9 4.9M19.1 19.1l-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4M12 8a4 4 0 100 8 4 4 0 000-8z";
+  var root = document.documentElement, lang = "id";
   try { if (localStorage.getItem("bedahreview-lang") === "en") lang = "en"; } catch (e) { /* storage blocked */ }
+  function darkNow() { return root.dataset.theme ? root.dataset.theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  function themeLabel() {
+    var dark = darkNow(), btn = document.getElementById("theme"), label = THEME[lang][dark ? 1 : 0];
+    btn.setAttribute("aria-label", label); btn.title = label;
+    document.getElementById("theme-icon").setAttribute("d", dark ? SUN : MOON);
+  }
   function show(l) {
     lang = l;
-    document.documentElement.lang = l;
+    root.lang = l;
     document.getElementById("p-id").hidden = l !== "id";
     document.getElementById("p-en").hidden = l !== "en";
-    document.getElementById("back").textContent = l === "id" ? "← Kembali ke aplikasi" : "← Back to the app";
-    document.title = (l === "id" ? "Syarat penggunaan" : "Terms of use") + " · BedahReview";
-    document.querySelectorAll(".lang button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.l === l ? "true" : "false"); });
+    document.getElementById("back").textContent = BACK[l];
+    document.title = TITLES[l] + " · BedahReview";
+    var pill = document.createElement("span"), cur = document.createElement("em"), slash = document.createElement("span"), alt = document.createElement("span");
+    pill.className = "pill"; cur.textContent = l.toUpperCase();
+    slash.className = "alt"; slash.setAttribute("aria-hidden", "true"); slash.textContent = "/";
+    alt.className = "alt"; alt.textContent = l === "id" ? "EN" : "ID";
+    pill.append(cur, slash, alt);
+    document.getElementById("lang").replaceChildren(pill);
+    themeLabel();
   }
-  document.querySelectorAll(".lang button").forEach(function (b) {
-    b.addEventListener("click", function () { show(b.dataset.l); try { localStorage.setItem("bedahreview-lang", b.dataset.l); } catch (e) { /* ignore */ } });
+  document.getElementById("lang").addEventListener("click", function () {
+    var next = lang === "id" ? "en" : "id";
+    show(next);
+    try { localStorage.setItem("bedahreview-lang", next); } catch (e) { /* ignore */ }
   });
-  try { var th = localStorage.getItem("bedahreview-theme"); if (th === "dark" || th === "light") document.documentElement.dataset.theme = th; } catch (e) { /* ignore */ }
+  try { var th = localStorage.getItem("bedahreview-theme"); if (th === "dark" || th === "light") { root.dataset.theme = th; root.style.colorScheme = th; } } catch (e) { /* ignore */ }
+  document.getElementById("theme").addEventListener("click", function () {
+    var next = darkNow() ? "light" : "dark";
+    root.dataset.theme = next; root.style.colorScheme = next; themeLabel();
+    try { localStorage.setItem("bedahreview-theme", next); } catch (e) { /* ignore */ }
+  });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", themeLabel);
   show(lang);
+  // The address above is the default; BEDAHREVIEW_CONTACT_EMAIL, when set, replaces it.
   fetch("/api/config").then(function (r) { return r.json(); }).then(function (cfg) {
+    if (!cfg || !cfg.contact) return;
     document.querySelectorAll(".contact").forEach(function (p) {
-      if (cfg && cfg.contact) { p.textContent = ""; var a = document.createElement("a"); a.href = "mailto:" + cfg.contact; a.textContent = cfg.contact; p.append(a); }
-      else p.textContent = p.dataset.none;
+      p.textContent = ""; var a = document.createElement("a"); a.href = "mailto:" + cfg.contact; a.textContent = cfg.contact; p.append(a);
     });
-  }).catch(function () { document.querySelectorAll(".contact").forEach(function (p) { p.textContent = p.dataset.none; }); });
+  }).catch(function () { /* keep the default address */ });
 })();
 </script>
 </body>
