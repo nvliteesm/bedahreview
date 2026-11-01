@@ -107,7 +107,7 @@ window.__probe = (async () => {
     await until(() => vis("gate"));
     out.gate = vis("gate"); out.workspaceHidden = byId("workspace").hidden;
     out.title = byId("gate-h").textContent; out.google = byId("g-google").textContent.trim();
-    out.consent = byId("g-choose").textContent.includes("Kami mencatat fitur yang kamu pakai per akun (misalnya tab yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.");
+    out.consent = byId("g-choose").textContent.includes("Kami mencatat fitur yang kamu pakai per akun (misalnya bagian yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.");
     out.codeLink = vis("g-codelink"); out.signinBtn = vis("signin-btn");
     out.noContactAsk = /hubungi|wawancara|contacted|interview/i.test(byId("gate").textContent);
     out.keepInOptions = !!byId("g-keep").closest("details.gate-opts") && !byId("g-keep").closest("details").open && byId("g-keep").checked;  // on by default, and out of the way
@@ -194,7 +194,7 @@ window.__probe = (async () => {
       out.local = loadFixes().map((f) => f.id); out.owner = localStorage.getItem("bedahreview-fixes-owner"); out.upserts = window.__sb.calls.filter((c) => c[0] === "upsert-fixes").length;
     }
     if (hash === "#sync-down") {
-      openFixes(); out.status = byId("fixes-sync").textContent; out.statusWarn = byId("fixes-sync").className;
+      openFixes(); out.status = byId("fixes-sync").textContent; out.statusWarn = byId("fixes-sync").className; out.moreHidden = byId("fixes-more").hidden;
       out.saved = saveFixes(loadFixes().concat(Object.assign({}, loadFixes()[0], { id: "ccc3" })));
       await wait(1800);
       out.local = loadFixes().map((f) => f.id).sort(); out.upserts = window.__sb.calls.filter((c) => c[0] === "upsert-fixes").length; out.badge = byId("fixes-count").textContent;
@@ -473,6 +473,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual(out["state"], "down")
         self.assertIn("Riwayat sedang tidak tersedia", out["status"])
         self.assertIn("warn", out["statusWarn"])
+        self.assertTrue(out["moreHidden"])  # signed in: the file backup is not offered
         self.assertTrue(out["saved"])
         self.assertEqual((out["local"], out["upserts"], out["badge"]), (["aaa1", "ccc3"], 0, "0"))  # still saved on the device, nothing pushed; the Tugas count is open steps and due check-ups only
 

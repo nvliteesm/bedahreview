@@ -384,9 +384,9 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
    ========================================================================================================== */
 @font-face { font-family: "Plus Jakarta Sans"; src: url("fonts/plus-jakarta-sans.woff2") format("woff2"); font-weight: 200 800; font-style: normal; font-display: swap; }
 @font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
-:root { --scrim: rgba(23, 32, 28, 0.38); --wa: #dcf8c6; --line-strong: #bfc8c3; --ease: cubic-bezier(0.2, 0.7, 0.2, 1); }
-:root[data-theme="dark"] { --scrim: rgba(0, 0, 0, 0.55); --wa: #1f3b2c; --line-strong: #48544e; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --scrim: rgba(0, 0, 0, 0.55); --wa: #1f3b2c; --line-strong: #48544e; } }
+:root { --scrim: rgba(23, 32, 28, 0.38); --line-strong: #bfc8c3; --ease: cubic-bezier(0.2, 0.7, 0.2, 1); }
+:root[data-theme="dark"] { --scrim: rgba(0, 0, 0, 0.55); --line-strong: #48544e; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --scrim: rgba(0, 0, 0, 0.55); --line-strong: #48544e; } }
 body { -webkit-font-smoothing: antialiased; transition: background-color 0.2s, color 0.2s; }
 
 /* header: the wordmark, "Masuk" as the one pill, language as a small outlined ID / EN */
@@ -520,9 +520,7 @@ input[aria-invalid="true"] { border: 2px solid var(--fight); }
 .opt:has(input:checked) { border: 2px solid var(--accent); padding: 11px; background: var(--accent-soft); }
 .opt b { font-size: 15px; display: block; } .opt .s { font-size: 13px; color: var(--muted); display: block; }
 .opt .own { margin-top: 8px; }
-.when { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
-.when .d { display: grid; } .when .d b { font-size: 15px; }
-.when .seg { padding: 3px; } .when .seg button { min-height: 44px; padding: 0 10px; font-size: 0.82rem; }
+.checkline { font-weight: 700; font-size: 0.95rem; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
 .reply { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
 .reply.sent { gap: 4px; padding: 6px 14px 10px; }
 .reply.sent:not(.was) { animation: rise 0.22s var(--ease); }
@@ -552,7 +550,13 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 .trk.due { border-top-color: var(--fix); }
 .trk .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; } .trk h3 { font-size: 16px; }
 .chip.due { color: var(--ink); background: var(--fix-soft); border-color: var(--fix); }
-.wa { background: var(--wa); border-radius: 12px 12px 12px 4px; padding: 10px 12px; font-size: 0.85rem; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.trk .act { font-size: 17px; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
+.btn.big { min-height: 56px; font-size: 1.05rem; }
+.trk .more-link { justify-self: start; min-height: 44px; padding: 0; font-size: 0.88rem; }
+.wablock { display: grid; gap: 6px; }
+.wabtn { text-decoration: none; width: 100%; }
+.morebox summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--accent); font-weight: 700; font-size: 0.9rem; }
+.morebox .fixtools { padding-top: 4px; }
 .pbar { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
 .pbar i { display: block; height: 100%; background: var(--accent); transition: width 0.4s var(--ease); }
 .sumgrid, .tasksgrid { display: grid; gap: 14px; }
@@ -576,7 +580,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 .sched { list-style: none; padding: 0 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .sched li { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
 .sched li:last-child { border-bottom: 0; color: var(--muted); }
-.fixtools { display: flex; gap: 8px; } .fixtools .btn { flex: 1; }
+.fixtools { display: flex; gap: 8px; flex-wrap: wrap; } .fixtools .btn { flex: 1; }
 .fnote { display: flex; gap: 8px; align-items: flex-start; font-size: 0.85rem; color: var(--muted); }
 .fnote svg { margin-top: 3px; }
 .privrow { min-height: 44px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-weight: 700; }
@@ -892,11 +896,14 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
       <div class="callout hot" id="fixes-nostore" hidden data-i18n="fixesNoStore"></div>
       <div class="callout" id="fixes-sync" role="status" hidden></div>
       <div class="callout" id="fixes-msg" role="status" hidden></div>
-      <div class="fixtools">
-        <button class="btn ghost" id="fixes-export" type="button" data-i18n="fixesExport"></button>
-        <button class="btn ghost" id="fixes-import" type="button" data-i18n="fixesImport"></button>
-        <input type="file" id="fixes-file" accept="application/json,.json" hidden aria-label="JSON">
-      </div>
+      <details class="morebox" id="fixes-more">
+        <summary data-i18n="more"></summary>
+        <div class="fixtools">
+          <button class="btn ghost" id="fixes-export" type="button" data-i18n="fixesExport"></button>
+          <button class="btn ghost" id="fixes-import" type="button" data-i18n="fixesImport"></button>
+          <input type="file" id="fixes-file" accept="application/json,.json" hidden aria-label="JSON">
+        </div>
+      </details>
       <p class="fnote"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="fixesWarn"></span></p>
     </div>
   </section>
@@ -977,7 +984,7 @@ const TEXT = {
   id: {
     navCheck: "Periksa", navNew: "Ulasan baru", newReviews: "Ulasan baru",
     tabPaste: "Tempel", tabLink: "Tautan",
-    pasteHint: "Salin ulasan dari aplikasi Shopee, Tokopedia, atau toko lain, lalu tempel apa adanya di sini.",
+    pasteHint: "Cukup 10–20 ulasan bintang 1–3. Salin dari aplikasi Shopee atau Tokopedia, lalu tempel apa adanya di sini.",
     productLabel: "Nama produk (opsional)", productPh: "mis. Kaos Boxy Retro", reviewsLabel: "Ulasan",
     howSummary: "Tips agar hasilnya lebih tepat",
     howBody: "Satu ulasan per baris paling mudah dibaca. Kalau satu ulasan terdiri dari beberapa baris, beri baris kosong di antara ulasan.\n\nBintang dan varian boleh ditulis di depan, tidak wajib:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya",
@@ -1000,8 +1007,8 @@ const TEXT = {
     fixRule: "Penyebabnya produk, listing, atau pengemasan, dan bisa kamu ubah.",
     fightRule: "Buktikan penyebabnya, ajukan klaim ke kurir, dan balas di publik. Ini bukan cara menghapus ulasan: Shopee hanya menghapus ulasan untuk alasan tertentu.",
     ignoreRule: "Bintang tanpa teks atau komentar tanpa isi. Dihitung, tidak dianalisis.",
-    chipOf: "%s dari %s keluhan", chipCourier: "Kurir? Cek dulu", chipCheck: "Cek sendiri", chipFake: "Diduga palsu", chipLow: "Keyakinan rendah",
-    dFix: "Yang bisa dilakukan", dCheckSide: "Cek di sisi toko", dChat: "Chat ke pembeli", dPublic: "Balasan publik", dReport: "Teks laporan ulasan",
+    chipOf: "%s dari %s keluhan", chipCourier: "Kurir? Cek dulu", chipCheck: "Cek sendiri", chipFake: "Diduga palsu", chipLow: "Kurang yakin",
+    dFix: "Yang bisa dilakukan", dCheckSide: "Cek di sisi toko", dChat: "Chat ke pembeli", dPublic: "Balasan publik", dReport: "Teks untuk melaporkan ulasan",
     copy: "Salin", copied: "Tersalin", selectIt: "Teks dipilih, salin manual", copiedAnn: "Disalin: %s",
     fullReview: "Ulasan lengkap", noText: "(tanpa teks)",
     emptyFix: "Tidak ada keluhan yang bisa kamu perbaiki di sini.", emptyFight: "Tidak ada ulasan yang perlu ditanggapi.", emptyIgnore: "Tidak ada ulasan yang diabaikan.",
@@ -1042,8 +1049,8 @@ const TEXT = {
     fbReview: "Komentarmu tampak memuat teks ulasan. Hapus bagian itu dulu, supaya tidak ada teks ulasan yang tersimpan.", fbFail: "Tidak terkirim. Coba lagi nanti.",
     limitBusy: "Server sedang sibuk. Coba lagi sebentar lagi.", logout: "Keluar", back: "Kembali", fixesBtn: "Tugas", fixesTitle: "Tugas", fixesSub: "Perbaikan disimpan di browser ini saja. Tidak ada yang dikirim ke server.",
     fixesWarn: "Hitungan dari contoh kecil bisa menyesatkan. Keluhan yang berkurang satu bisa kebetulan, dan bukan bukti perbaikanmu berhasil. Analisis baru juga bisa memuat ulasan lama yang sama.",
-    fixesNoStore: "Browser ini tidak bisa menyimpan data, jadi catatan hilang saat halaman ditutup. Simpan cadangan supaya tidak hilang.",
-    fixesExport: "Simpan cadangan", fixesImport: "Pulihkan cadangan", fixesEmpty: "Belum ada perbaikan yang dipantau.",
+    fixesNoStore: "Browser ini tidak bisa menyimpan data, jadi catatan hilang saat halaman ditutup. Buka Lainnya, lalu Simpan ke file, supaya tidak hilang.",
+    fixesExport: "Simpan ke file", fixesImport: "Buka dari file", fixesEmpty: "Belum ada perbaikan yang dipantau.",
     fixMark: "Tandai sudah diperbaiki", fixNoteLbl: "Catatan singkat (opsional)", fixNotePh: "mis. size chart diganti ke cm", fixSave: "Simpan", fixCancel: "Batal",
     fixMarked: "Ditandai diperbaiki %s", fixBefore: "Sebelum: %s dari %s ulasan mengeluhkan ini.", fixAfter: "Sesudah (%s): %s dari %s ulasan.",
     fixWaiting: "Belum ada analisis baru untuk dibandingkan. Bedah ulasan terbaru produk yang sama nanti.",
@@ -1051,15 +1058,15 @@ const TEXT = {
     fixEdit: "Ubah", fixDelete: "Hapus", fixDeleteSure: "Yakin hapus?", fixDate: "Tanggal", fixProduct: "Produk: %s", fixNoProduct: "(tanpa nama produk)",
     fixNoName: "Tanpa nama produk: perbaikan ini dicocokkan dengan analisis lain yang juga tanpa nama. Isi nama produk di kotak Tempel agar tepat.",
     fixesCompared: "%s perbaikan yang kamu catat dibandingkan dengan ulasan baru ini.", fixesSee: "Lihat",
-    importOk: "Diimpor: %s perbaikan. Dilewati karena tidak valid: %s.", importBad: "File ini tidak bisa dibaca sebagai cadangan BedahReview.", importBig: "File terlalu besar.", fixSaveFail: "Tidak bisa menyimpan di browser ini. Simpan cadangan supaya catatan tidak hilang.",
+    importOk: "Diimpor: %s perbaikan. Dilewati karena tidak valid: %s.", importBad: "File ini tidak bisa dibuka sebagai catatan BedahReview.", importBig: "File terlalu besar.", fixSaveFail: "Tidak bisa menyimpan di browser ini. Buka Lainnya di Tugas, lalu Simpan ke file, supaya catatan tidak hilang.",
     limitBudget: "Membaca lewat tautan sedang tidak tersedia hari ini. Salin dan tempel ulasannya saja.", limitBudgetRival: "Pencarian pesaing sedang tidak tersedia hari ini. Coba lagi besok.", limitHour: "Terlalu banyak pengambilan lewat tautan dalam satu jam. Coba lagi nanti, atau tempel ulasannya.",
     fbTitle: "Cara lain: tempel ulasannya", fbSteps: ["Buka produk di marketplace, lalu buka Ulasan.", "Salin teks ulasannya.", "Tempel di bawah, satu ulasan per baris."], fbRetry: "Coba tautan lagi",
     errFetchTitle: "Ulasan dari tautan ini tidak bisa dibaca", backResults: "← Kembali ke hasil", pastedName: "Ulasan yang ditempel",
     change: "Ubah", shown: "Ditampilkan", themeDark: "Mode gelap", themeLight: "Mode terang",
     boardFix: "ulasan bisa kamu perbaiki sendiri", boardFight: "ulasan perlu kamu balas", boardIgnore: "ulasan tanpa isi, lewati saja", boardKeep: "ulasan memuji produkmu",
-    legendSummary: "Apa arti 4 kelompok ini?", legendFix: "Keluhan yang asalnya dari tokomu, misalnya ukuran atau foto. Bisa kamu ubah sendiri.", legendFight: "Bukan salahmu (kurir, diduga palsu), tapi tetap perlu dibalas.",
+    legendSummary: "Apa arti 4 kelompok ini?", legendFix: "Keluhan yang asalnya dari tokomu, misalnya ukuran atau foto. Bisa kamu ubah sendiri.", legendFight: "Kemungkinan bukan dari tokomu (kurir, diduga palsu). Cek buktinya dulu, lalu balas dengan sopan.",
     legendIgnore: "Hanya bintang tanpa isi. Tidak ada yang perlu dilakukan.", legendKeep: "Hal yang dipuji pembeli. Tonjolkan di halaman produk.",
-    leadFix: "Keluhan dari tokomu sendiri. Tiap kartu berisi saran dan kutipan asli pembeli.", leadFight: "Bukan salahmu, tapi perlu dibalas. Pilih draf, lalu salin.",
+    leadFix: "Keluhan dari tokomu sendiri. Tiap kartu berisi saran dan kutipan asli pembeli.", leadFight: "Mungkin bukan salahmu, tapi cek dulu sebelum membalas. Minta foto ke pembeli, lalu pilih draf dan salin.",
     leadIgnore: "Hanya bintang atau komentar tanpa isi. Dihitung, tidak dianalisis.", leadKeep: "Hal yang dipuji pembeli. Tonjolkan di halaman produk.",
     noRemove: "BedahReview tidak bisa menghapus ulasan.", noRemoveBody: "Laporan hanya meminta %s meninjau; keputusan tetap ada di %s. Balasan yang sopan tetap terlihat oleh calon pembeli.", platformWord: "marketplace",
     whyLbl: "Kenapa di sini: ", moreQuotes: "Lihat %s kutipan lainnya",
@@ -1070,18 +1077,18 @@ const TEXT = {
     rivalSignIn: "Masuk untuk mencari dan membandingkan pesaing. Gratis, tanpa kata sandi.", rivalSignInNote: "Mencari pesaing perlu masuk dulu (gratis). Contohnya bisa dilihat tanpa masuk.", rivalSignInBtn: "Masuk untuk mencari pesaing", rivalNeedLink: "Tempel tautan produkmu dulu.", rivalNeedName: "Isi nama produkmu supaya kami bisa mencari yang serupa.",
     stepFind: "Cari", stepPick: "Pilih", stepCompare: "Bandingkan", stepCompareShort: "Banding",
     rivalFound: "Kami menemukan %s produk mirip. %s yang paling mirip sudah dicentang, hapus centang kalau tidak cocok.", rivalMost: "Paling mirip", rivalMoreN: "Produk lain yang ditemukan · %s", rivalShopLbl: "Toko: %s",
-    rivalSeen: "Yang terlihat dari angka", rivalByTheme: "Jumlah ulasan per tema", rivalThemeCol: "Tema", nReviewsCol: "%s ulasan", rivalNote: "Catatan data",
+    rivalSeen: "Yang terlihat dari angka", rivalByTheme: "Jumlah ulasan per jenis keluhan", rivalThemeCol: "Jenis keluhan", nReviewsCol: "%s ulasan", rivalNote: "Catatan data",
     tagSmall: "terlalu sedikit", tagFail: "gagal", tagSkip: "tidak dihitung",
-    rivalSmallLine: "%s hanya punya %s ulasan kredibel (perlu minimal 5), jadi tidak dipakai untuk kesimpulan.", rivalFailLine: "Satu tautan pesaing tidak bisa dibuka (produk mungkin dihapus).",
+    rivalSmallLine: "%s hanya punya %s ulasan yang bisa dipercaya (perlu minimal 5), jadi tidak dipakai untuk kesimpulan.", rivalFailLine: "Satu tautan pesaing tidak bisa dibuka (produk mungkin dihapus).",
     rivalFakeLine: "%s ulasan pesaing diduga palsu dan tidak dihitung (%s).", rivalFakeEach: "%s: %s dibaca, %s dihitung", rivalSmallNote: "%s tidak dipakai untuk kalimat di atas karena ulasannya terlalu sedikit.",
     rivalLineWorse: "%s: %s di produkmu, di pesaing terbaik %s.", rivalLineOther: "%s: %s di produkmu, %s di %s.",
     rivalAlone: "Tanpa Bedah ulasan, kami tidak membandingkan dengan produkmu. Jalankan Bedah ulasan untuk melihat selisihnya.", rivalLinkLbl: "Lihat ulasannya",
     rivalLineWorseEx: "%s: %s di %s, di pesaing terbaik %s.", rivalLineOtherEx: "%s: %s di %s, %s di %s.",
     gTitle: "Masuk untuk membedah ulasanmu", gSub: "Gratis, tanpa kata sandi. Pakai Google atau email.", gGoogle: "Masuk dengan Google", gOr: "atau pakai email",
-    gEmail: "Email", gEmailPh: "nama@email.com", gSend: "Kirim kode ke email", gConsent: "Kami mencatat fitur yang kamu pakai per akun (misalnya tab yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.", gOpts: "Pengaturan masuk",
-    gKeep: "Tetap masuk di HP ini", gIosNote: "Pasang ke layar utama dulu (Safari > Bagikan > Tambah ke Layar Utama), lalu masuk dari ikonnya. Aplikasi yang terpasang menyimpan sesi terpisah dari Safari.",
+    gEmail: "Email", gEmailPh: "nama@email.com", gSend: "Kirim kode ke email", gConsent: "Kami mencatat fitur yang kamu pakai per akun (misalnya bagian yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.", gOpts: "Pengaturan masuk",
+    gKeep: "Tetap masuk di HP ini", gIosNote: "Pasang ke layar utama dulu (Safari > Bagikan > Tambah ke Layar Utama), lalu masuk dari ikonnya. Di aplikasi yang terpasang, kamu perlu masuk sekali lagi.",
     gExample: "Coba contoh dulu", gCode: "Punya kode akses? Masuk di sini", gClose: "Nanti saja", signInShort: "Masuk",
-    gCodeTitle: "Masukkan kode 6 digit", gCodeSub: "Kami kirim kode ke %s. Kalau belum masuk, cek folder spam.", gVerify: "Masuk", gResend: "Kirim ulang kode", gResendIn: "Kirim ulang kode (%s)",
+    gCodeTitle: "Masukkan kode 6 digit", gCodeSub: "Kode 6 digit sudah kami kirim ke %s. Buka email, salin kodenya, lalu tempel di kotak pertama. Belum ada? Cek folder spam.", gVerify: "Masuk", gResend: "Kirim ulang kode", gResendIn: "Kirim ulang kode (%s)",
     gSentAgain: "Kode baru sudah dikirim.", gChange: "Ganti email", gDigit: "Digit %s dari 6",
     gIntroTitle: "Sedikit tentang tokomu", gIntroSub: "Boleh dilewati. Ini membantu kami memahami siapa yang memakai BedahReview.", gPlatform: "Jualan di mana?", gPick: "Pilih…", gOther: "Lainnya",
     gShop: "Tautan toko (opsional)", gShopPh: "https://…", gCategory: "Kategori produk", gSave: "Simpan & mulai", gSkip: "Lewati",
@@ -1116,8 +1123,8 @@ const TEXT = {
     backRes: "Hasil", st1: "Catat", st2: "Balas", st3: "Deskripsi", st3Short: "Deskripsi", stepsLbl: "Langkah",
     t1h: "Catat perbaikan untuk %s", t1p: "%s dari %s ulasan mengeluhkan ini. Kamu tidak perlu selesai hari ini, cukup putuskan langkahnya.", seeQ: "Lihat %s kutipan",
     q1: "Apa yang akan kamu lakukan?", oAi: "Saran AI untuk keluhan ini. Baca dulu, ubah kalau perlu.", oOwn: "Tulis langkahku sendiri", oOwnS: "Boleh langkah yang butuh waktu, misalnya ganti pemasok.", oOwnPh: "mis. ganti ke bahan yang lebih tebal",
-    q2: "Cek hasilnya", whenS: "Kami bandingkan dengan ulasan baru.", plusDays: "+%s hari", q3: "Ingatkan aku lewat", rWa: "WhatsApp", rCal: "Kalender", rNone: "Tidak usah",
-    save1: "Simpan & lanjut", skip: "Lewati dulu", next: "Lanjut", toSum: "Lihat ringkasan", needChoice: "Pilih langkahnya dulu, atau ketuk Lewati dulu.", needOwn: "Tulis langkahmu dulu.",
+    q2: "Cek lagi tanggal", checkLine: "Cek lagi tanggal %s.",
+    save1: "Simpan", skip: "Lewati dulu", next: "Lanjut", toSum: "Lihat ringkasan", needChoice: "Pilih langkahnya dulu, atau ketuk Lewati dulu.", needOwn: "Tulis langkahmu dulu.",
     savedToast: "Tersimpan di Tugas. Cek lagi %s.", already1: "Perbaikan ini sudah dicatat.", alreadyCheck: "Cek lagi %s.",
     t2h: "Balas %s ulasan buruk", t2p: "Pembeli baru membaca balasanmu. Salin, kirim di %s, lalu kembali ke sini.", aiShort: "Ditulis AI, baca dulu sebelum dikirim.",
     copyOpen: "Salin & buka %s", copyOnly: "Salin balasan", copyAgain: "Salin lagi & buka %s", asked: "Sudah kamu kirim?", yes: "Sudah", notYet: "Belum", sentOk: "Terkirim", undo: "Batal", notCopied: "Belum disalin", reviewOf: "Ulasan %s dari %s",
@@ -1126,8 +1133,7 @@ const TEXT = {
     doneH: "Hari ini beres", partH: "Ringkasan hari ini", doneP: "Semua yang bisa dikerjakan hari ini sudah selesai.", partP: "Sisanya bisa kamu lanjutkan dari Tugas kapan saja.",
     did: "Sudah dikerjakan", todo: "Belum", tracked: "Sedang dipantau", dR: "%s dari %s balasan terkirim", dL: "Kalimat pujian ditambahkan ke deskripsi", dF: "Perbaikan %s dicatat", nothingYet: "Belum ada yang dikerjakan.",
     uR: "%s balasan belum terkirim", uL: "Kalimat deskripsi belum ditambahkan", uF: "Perbaikan %s belum dicatat", doIt: "Kerjakan", progress: "%s dari %s hal hari ini selesai", left: "Sisa ±%s mnt",
-    trCheck: "Cek lagi %s", trRem: "Pengingat lewat %s", waCap: "Teks yang terbuka di WhatsApp, untuk dikirim ke dirimu sendiri:", waMsg: "BedahReview · %s\nCek lagi %s: apakah keluhan “%s” berkurang?", backRes2: "Kembali ke hasil", another: "Bedah produk lain",
-    calTitle: "Cek ulasan: %s", calBody: "Bedah ulasan terbaru %s di BedahReview, lalu lihat apakah keluhan “%s” berkurang.",
+    trCheck: "Cek lagi %s", more: "Lainnya", doneBtn: "Sudah dikerjakan", fixAct: "Perbaiki %s", waBtn: "Kirim ke WhatsApp", waNote: "WhatsApp terbuka dengan pesan siap kirim. Kami tidak mengirim apa pun sendiri.", waHead: "Perbaikan BedahReview", waCheck: "cek lagi %s", backRes2: "Kembali ke hasil", another: "Bedah produk lain",
     tasksSub: "Langkah yang belum selesai dan perbaikan yang sedang dipantau.", tasksSubAll: "Langkah yang belum selesai dan perbaikan yang sedang dipantau, untuk semua produkmu.",
     today: "Hari ini · %s", watched: "Dipantau · %s", sched: "Jadwal cek", schedToday: "Hari ini", schedNext: "Berikutnya", schedNextP: "Tanggal cek muncul di sini setelah kamu mencatat perbaikan.",
     dueChip: "Waktunya cek", loggedOn: "%s · dicatat %s", reanalyse: "Bedah ulasan terbaru", skippedNote: "Langkah yang dilewati tetap di sini sampai kamu kerjakan.", noneToday: "Tidak ada langkah yang tersisa.",
@@ -1151,7 +1157,7 @@ const TEXT = {
   en: {
     navCheck: "Check", navNew: "New reviews", newReviews: "New reviews",
     tabPaste: "Paste", tabLink: "Link",
-    pasteHint: "Copy reviews from the Shopee, Tokopedia or any shop app, then paste them here as they are.",
+    pasteHint: "10–20 reviews with 1–3 stars is enough. Copy them from the Shopee or Tokopedia app, then paste them here as they are.",
     productLabel: "Product name (optional)", productPh: "e.g. Retro Boxy Tee", reviewsLabel: "Reviews",
     howSummary: "Tips for better results",
     howBody: "One review per line reads best. If a review has several lines, put a blank line between reviews.\n\nStars and variant can go first, but they are optional:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya",
@@ -1216,8 +1222,8 @@ const TEXT = {
     fbReview: "Your comment looks like it contains review text. Please remove that part, so no review text is stored.", fbFail: "Could not send. Try again later.",
     limitBusy: "The server is busy. Try again in a moment.", logout: "Sign out", back: "Back", fixesBtn: "Tasks", fixesTitle: "Tasks", fixesSub: "Fixes are saved in this browser only. Nothing is sent to the server.",
     fixesWarn: "Counts from small samples can mislead. One complaint fewer can be chance, not proof that your fix worked. A new analysis may also include some of the same old reviews.",
-    fixesNoStore: "This browser cannot save data, so your log is lost when the page closes. Save a backup to keep it.",
-    fixesExport: "Save a backup", fixesImport: "Restore a backup", fixesEmpty: "No fixes being tracked yet.",
+    fixesNoStore: "This browser cannot save data, so your log is lost when the page closes. Open More, then Save to a file, to keep it.",
+    fixesExport: "Save to a file", fixesImport: "Open from a file", fixesEmpty: "No fixes being tracked yet.",
     fixMark: "Mark as fixed", fixNoteLbl: "Short note (optional)", fixNotePh: "e.g. size chart changed to cm", fixSave: "Save", fixCancel: "Cancel",
     fixMarked: "Marked as fixed %s", fixBefore: "Before: %s of %s reviews complained about this.", fixAfter: "After (%s): %s of %s reviews.",
     fixWaiting: "No newer analysis to compare with yet. Analyse the latest reviews of the same product later.",
@@ -1225,15 +1231,15 @@ const TEXT = {
     fixEdit: "Edit", fixDelete: "Delete", fixDeleteSure: "Really delete?", fixDate: "Date", fixProduct: "Product: %s", fixNoProduct: "(no product name)",
     fixNoName: "No product name: this fix is matched with other analyses that also have no name. Fill in the product name in the Paste box to be exact.",
     fixesCompared: "%s fix(es) you logged were compared with these new reviews.", fixesSee: "See",
-    importOk: "Imported: %s fix(es). Skipped as invalid: %s.", importBad: "This file could not be read as a BedahReview backup.", importBig: "The file is too large.", fixSaveFail: "Could not save in this browser. Save a backup so your log is not lost.",
+    importOk: "Imported: %s fix(es). Skipped as invalid: %s.", importBad: "This file could not be opened as a BedahReview log.", importBig: "The file is too large.", fixSaveFail: "Could not save in this browser. Open More in Tasks, then Save to a file, so your log is not lost.",
     limitBudget: "Reading from a link is not available for the rest of today. Copy and paste the reviews instead.", limitBudgetRival: "Competitor search is not available for the rest of today. Try again tomorrow.", limitHour: "Too many link look-ups this hour. Try again later, or paste the reviews.",
     fbTitle: "Another way: paste the reviews", fbSteps: ["Open the product on the marketplace, then open Reviews.", "Copy the review text.", "Paste it below, one review per line."], fbRetry: "Try the link again",
     errFetchTitle: "The reviews from this link could not be read", backResults: "← Back to results", pastedName: "Pasted reviews",
     change: "Change", shown: "Showing", themeDark: "Dark mode", themeLight: "Light mode",
     boardFix: "reviews you can fix yourself", boardFight: "reviews to answer", boardIgnore: "reviews with no content, skip", boardKeep: "reviews praising your product",
-    legendSummary: "What do these 4 groups mean?", legendFix: "Complaints that come from your shop, such as sizing or photos. You can change these yourself.", legendFight: "Not your fault (courier, likely fake), but still worth answering.",
+    legendSummary: "What do these 4 groups mean?", legendFix: "Complaints that come from your shop, such as sizing or photos. You can change these yourself.", legendFight: "Probably not from your shop (courier, likely fake). Check the proof first, then reply politely.",
     legendIgnore: "Stars only, no content. Nothing to do.", legendKeep: "What buyers praise. Show it off on the product page.",
-    leadFix: "Complaints from your own shop. Each card has a suggestion and the buyers' exact quotes.", leadFight: "Not your fault, but worth answering. Pick a draft, then copy it.",
+    leadFix: "Complaints from your own shop. Each card has a suggestion and the buyers' exact quotes.", leadFight: "Maybe not your fault, but check first before you reply. Ask the buyer for a photo, then pick a draft and copy it.",
     leadIgnore: "Stars or comments with no content. Counted, not analysed.", leadKeep: "What buyers praise. Show it off on the product page.",
     noRemove: "BedahReview cannot remove reviews.", noRemoveBody: "A report only asks %s to review it; the decision stays with %s. A polite reply stays visible to future buyers.", platformWord: "the marketplace",
     whyLbl: "Why here: ", moreQuotes: "Show %s more quotes",
@@ -1244,7 +1250,7 @@ const TEXT = {
     rivalSignIn: "Sign in to find and compare competitors. It is free, no password.", rivalSignInNote: "Finding competitors needs a free sign-in. You can see an example without one.", rivalSignInBtn: "Sign in to find competitors", rivalNeedLink: "Paste your product link first.", rivalNeedName: "Enter your product name so we can search for similar ones.",
     stepFind: "Find", stepPick: "Pick", stepCompare: "Compare", stepCompareShort: "Compare",
     rivalFound: "We found %s similar products. The %s closest are already ticked; untick any that do not fit.", rivalMost: "Closest", rivalMoreN: "Other products found · %s", rivalShopLbl: "Shop: %s",
-    rivalSeen: "What the numbers show", rivalByTheme: "Reviews per theme", rivalThemeCol: "Theme", nReviewsCol: "%s reviews", rivalNote: "Data notes",
+    rivalSeen: "What the numbers show", rivalByTheme: "Reviews per type of complaint", rivalThemeCol: "Type of complaint", nReviewsCol: "%s reviews", rivalNote: "Data notes",
     tagSmall: "too few", tagFail: "failed", tagSkip: "not counted",
     rivalSmallLine: "%s has only %s credible reviews (at least 5 needed), so it is not used for conclusions.", rivalFailLine: "One competitor link could not be opened (the product may be deleted).",
     rivalFakeLine: "%s competitor review(s) look fake and are not counted (%s).", rivalFakeEach: "%s: %s read, %s counted", rivalSmallNote: "%s is not used for the lines above because it has too few reviews.",
@@ -1252,10 +1258,10 @@ const TEXT = {
     rivalAlone: "Without Review checker we cannot compare against your product. Run Review checker to see the gap.", rivalLinkLbl: "See the reviews",
     rivalLineWorseEx: "%s: %s for %s, %s for the best competitor.", rivalLineOtherEx: "%s: %s for %s, %s at %s.",
     gTitle: "Sign in to analyse your reviews", gSub: "Free, no password. Use Google or email.", gGoogle: "Continue with Google", gOr: "or use email",
-    gEmail: "Email", gEmailPh: "name@email.com", gSend: "Send code to my email", gConsent: "We record which features you use, per account (for example which tab you open), never review text, product names or an IP address.", gOpts: "Sign-in settings",
-    gKeep: "Keep me signed in on this phone", gIosNote: "Add to the Home Screen first (Safari > Share > Add to Home Screen), then sign in from the icon. The installed app keeps its own session, apart from Safari.",
+    gEmail: "Email", gEmailPh: "name@email.com", gSend: "Send code to my email", gConsent: "We record which features you use, per account (for example which part you open), never review text, product names or an IP address.", gOpts: "Sign-in settings",
+    gKeep: "Keep me signed in on this phone", gIosNote: "Add to the Home Screen first (Safari > Share > Add to Home Screen), then sign in from the icon. In the installed app, you need to sign in one more time.",
     gExample: "Try an example first", gCode: "Have an access code? Sign in here", gClose: "Not now", signInShort: "Sign in",
-    gCodeTitle: "Enter the 6-digit code", gCodeSub: "We sent a code to %s. If it has not arrived, check your spam folder.", gVerify: "Sign in", gResend: "Send the code again", gResendIn: "Send the code again (%s)",
+    gCodeTitle: "Enter the 6-digit code", gCodeSub: "We sent a 6-digit code to %s. Open your email, copy the code, then paste it in the first box. Not there? Check your spam folder.", gVerify: "Sign in", gResend: "Send the code again", gResendIn: "Send the code again (%s)",
     gSentAgain: "A new code was sent.", gChange: "Change email", gDigit: "Digit %s of 6",
     gIntroTitle: "A little about your shop", gIntroSub: "You can skip this. It helps us understand who uses BedahReview.", gPlatform: "Where do you sell?", gPick: "Choose…", gOther: "Other",
     gShop: "Shop link (optional)", gShopPh: "https://…", gCategory: "Product category", gSave: "Save & start", gSkip: "Skip",
@@ -1289,8 +1295,8 @@ const TEXT = {
     backRes: "Results", st1: "Log", st2: "Reply", st3: "Listing", st3Short: "Listing", stepsLbl: "Steps",
     t1h: "Log a fix for %s", t1p: "%s of %s reviews complain about this. You do not have to finish today, just decide the step.", seeQ: "See %s quotes",
     q1: "What will you do?", oAi: "The AI's suggestion for this complaint. Read it, change it if needed.", oOwn: "Write my own step", oOwnS: "A slower step is fine, such as a new supplier.", oOwnPh: "e.g. switch to a thicker fabric",
-    q2: "Check the result", whenS: "We compare it with new reviews.", plusDays: "+%s days", q3: "Remind me by", rWa: "WhatsApp", rCal: "Calendar", rNone: "No reminder",
-    save1: "Save & continue", skip: "Skip for now", next: "Continue", toSum: "See the summary", needChoice: "Pick a step first, or tap Skip for now.", needOwn: "Write your step first.",
+    q2: "Check again on", checkLine: "We check again on %s.",
+    save1: "Save", skip: "Skip for now", next: "Continue", toSum: "See the summary", needChoice: "Pick a step first, or tap Skip for now.", needOwn: "Write your step first.",
     savedToast: "Saved in Tasks. Check again %s.", already1: "This fix is already logged.", alreadyCheck: "Check again %s.",
     t2h: "Reply to %s bad review(s)", t2p: "New buyers read your replies. Copy, send it in %s, then come back here.", aiShort: "Written by AI, read before sending.",
     copyOpen: "Copy & open %s", copyOnly: "Copy the reply", copyAgain: "Copy again & open %s", asked: "Did you send it?", yes: "Sent", notYet: "Not yet", sentOk: "Sent", undo: "Undo", notCopied: "Not copied yet", reviewOf: "Review %s of %s",
@@ -1299,8 +1305,7 @@ const TEXT = {
     doneH: "Done for today", partH: "Today's summary", doneP: "Everything you can do today is done.", partP: "Pick up the rest from Tasks any time.",
     did: "Done", todo: "Not yet", tracked: "Being tracked", dR: "%s of %s replies sent", dL: "Praise line added to the description", dF: "Fix for %s logged", nothingYet: "Nothing done yet.",
     uR: "%s replies not sent yet", uL: "Description line not added yet", uF: "Fix for %s not logged yet", doIt: "Do it", progress: "%s of %s things done today", left: "~%s min left",
-    trCheck: "Check again %s", trRem: "Reminder by %s", waCap: "The text that opens in WhatsApp, to send to yourself:", waMsg: "BedahReview · %s\nCheck again %s: are there fewer “%s” complaints?", backRes2: "Back to results", another: "Analyse another product",
-    calTitle: "Check reviews: %s", calBody: "Analyse the latest reviews of %s in BedahReview and see if the “%s” complaints went down.",
+    trCheck: "Check again %s", more: "More", doneBtn: "Done", fixAct: "Fix %s", waBtn: "Send to WhatsApp", waNote: "WhatsApp opens with a message ready to send. We do not send anything ourselves.", waHead: "BedahReview fixes", waCheck: "check again %s", backRes2: "Back to results", another: "Analyse another product",
     tasksSub: "Open steps and the fixes being tracked.", tasksSubAll: "Open steps and the fixes being tracked, for all your products.",
     today: "Today · %s", watched: "Tracked · %s", sched: "Check schedule", schedToday: "Today", schedNext: "Next", schedNextP: "Check dates show here once you log a fix.",
     dueChip: "Time to check", loggedOn: "%s · logged %s", reanalyse: "Analyse the latest reviews", skippedNote: "Skipped steps stay here until you do them.", noneToday: "No steps left.",
@@ -1309,7 +1314,7 @@ const TEXT = {
   },
 };
 const THEME_ID = {
-  "Not as described / claim vs reality": "Tidak sesuai deskripsi", "Colour vs photo": "Warna beda dari foto", "Sizing & fit": "Ukuran & ukuran pas",
+  "Not as described / claim vs reality": "Tidak sesuai deskripsi", "Colour vs photo": "Warna beda dari foto", "Sizing & fit": "Ukuran tidak pas",
   "Fabric & material quality": "Bahan & kualitas", "Defect / not working": "Cacat / tidak berfungsi", "Wrong variant / item sent": "Varian / barang salah",
   "Quantity shortage / missing item": "Jumlah kurang / barang hilang", "Packaging / damaged on arrival": "Kemasan / rusak saat tiba",
   "Spoilage / freshness": "Basi / kesegaran", "Portion / low meat or filler": "Porsi / isi kurang", "Taste / subjective": "Rasa / selera",
@@ -1601,7 +1606,7 @@ function renderFeedback() {
    Kept in this browser first (localStorage, with an in-memory fallback). A record holds the theme, variant, product link or name, the seller's own
    note, the date and complaint counts with the sample size. Never review text, never a reviewer name. When signed in with Supabase the list is also
    saved in the seller's account (the fixes table, only they can read it) so it opens on another phone; the browser copy always works without it. */
-const FIX_KEY = "bedahreview-fixes-v1", MAX_FIXES = 200, NOTE_MAX = 200, SMALL_SAMPLE = 10, MAX_IMPORT_BYTES = 500000, REMINDERS = ["whatsapp", "calendar", "none"];
+const FIX_KEY = "bedahreview-fixes-v1", MAX_FIXES = 200, NOTE_MAX = 200, SMALL_SAMPLE = 10, MAX_IMPORT_BYTES = 500000, CHECK_DAYS = 7;
 let memFixes = [], fixStorageOk = true, memOnly = false;  // memOnly: the last save failed, so the in-memory list is newer than storage
 const fxStr = (s, max) => (typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, max) : "");
 const fxInt = (n) => (Number.isInteger(n) && n >= 0 && n <= 100000 ? n : null);
@@ -1619,7 +1624,7 @@ function cleanFix(f) {  // anything read back from storage or an imported file p
   if (!theme || !id || !before || !date) return null;
   const updated = Number.isFinite(f.updated) && f.updated > 0 && f.updated < 4e12 ? Math.floor(f.updated) : 0;  // when it last changed: the newer copy wins when two phones disagree
   return { id, theme, variant: fxStr(f.variant, 60), product: fxStr(f.product, 300), productLabel: fxStr(f.productLabel, 150), note: fxStr(f.note, NOTE_MAX), date, before, after: cleanCounts(f.after, true), updated,
-    checkOn: fxDate(f.checkOn), remind: REMINDERS.includes(f.remind) ? f.remind : "none" };  // when to look again, and how the seller wanted to be reminded
+    checkOn: fxDate(f.checkOn), done: f.done === true };  // when to look again; "done" is the seller's tick and stays in this browser. An old "remind" value is dropped here: reminders are gone
 }
 const cleanFixes = (list) => (Array.isArray(list) ? list : []).map(cleanFix).filter(Boolean).slice(0, MAX_FIXES);
 function loadFixes() {
@@ -1647,12 +1652,12 @@ function countTheme(items, theme, variant) {  // complaints on this theme (and v
   const count = real.filter((it) => it.theme === theme && ["fix", "fight", "check"].includes(it.bucket) && (!variant || baseVariant(it.variant) === variant)).length;
   return { count, total: real.length };
 }
-function makeFix(group, note, src, items, checkOn, remind) {
+function makeFix(group, note, src, items, checkOn) {
   const now = countTheme(items, group.theme, group.variant || "");
   return {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), theme: group.theme, variant: group.variant || "", note: fxStr(note, NOTE_MAX), date: today(), updated: Date.now(),
     product: productKey(src), productLabel: fxStr((src || {}).title || (src || {}).url, 150), before: { count: now.count, total: now.total, sig: reviewSig(items), date: "" }, after: null,
-    checkOn: fxDate(checkOn), remind: REMINDERS.includes(remind) ? remind : "none",
+    checkOn: fxDate(checkOn), done: false,
   };
 }
 function applyAnalysis(fixes, key, items) {  // set the "after" counts on every saved fix for this product, unless these are the very reviews it was marked on
@@ -1687,7 +1692,7 @@ function renderFixBadge() {  // the Tugas count: open steps of recent plans, plu
   $("nav-tasks").setAttribute("aria-label", tr("navTasks") + (n ? " (" + n + ")" : ""));
   $("acct-fixes").textContent = tr("fixesBtn") + (n ? " (" + n + ")" : "");
 }
-/* ---------- dates for check-ups and reminders ---------- */
+/* ---------- dates for check-ups ---------- */
 function isoDay(d) { const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
 function addDays(n, from) { const d = from ? new Date(from + "T12:00:00") : new Date(); d.setDate(d.getDate() + n); return isoDay(d); }
 function fmtDay(iso) { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(lang === "id" ? "id-ID" : "en-GB", { weekday: "long", day: "numeric", month: "short" }); }
@@ -1746,14 +1751,14 @@ function fixToRow(f, uid) {  // the exact columns of the fixes table, in a fixed
   const row = { user_id: uid, id: f.id, updated_at: new Date(f.updated || 1).toISOString(), theme: f.theme, variant: f.variant, product: f.product, product_label: f.productLabel, note: f.note, fixed_on: f.date,
     before_count: f.before.count, before_total: f.before.total, before_sig: f.before.sig, after_count: f.after ? f.after.count : null, after_total: f.after ? f.after.total : null,
     after_sig: f.after ? f.after.sig : null, after_on: f.after && f.after.date ? f.after.date : null };
-  if (!fixColsOld) Object.assign(row, { check_on: f.checkOn || null, remind: f.remind || "none" });
+  if (!fixColsOld) Object.assign(row, { check_on: f.checkOn || null, remind: "none" });  // the remind column stays for old rows; nothing sets it any more
   return row;
 }
 function fixFromRow(r) {
   if (!r || typeof r !== "object") return null;
   return cleanFix({ id: r.id, theme: r.theme, variant: r.variant, product: r.product, productLabel: r.product_label, note: r.note, date: r.fixed_on, updated: Date.parse(r.updated_at),
     before: { count: r.before_count, total: r.before_total, sig: r.before_sig, date: "" }, after: r.after_count == null ? null : { count: r.after_count, total: r.after_total, sig: r.after_sig, date: r.after_on || "" },
-    checkOn: r.check_on || "", remind: r.remind || "none" });
+    checkOn: r.check_on || "" });
 }
 const missingColumn = (err) => !!err && (err.code === "PGRST204" || err.code === "42703");  // PostgREST / Postgres: "no such column"
 function mergeFixes(local, remote) {
@@ -1761,7 +1766,7 @@ function mergeFixes(local, remote) {
   local.forEach((f) => {
     const other = byId.get(f.id);
     if (!other || f.updated > other.updated) byId.set(f.id, f);
-    else if (!other.checkOn && f.checkOn) byId.set(f.id, Object.assign({}, other, { checkOn: f.checkOn, remind: f.remind }));  // an account table without the check date columns: keep this browser's
+    else byId.set(f.id, Object.assign({}, other, { done: f.done }, !other.checkOn && f.checkOn ? { checkOn: f.checkOn } : {}));  // "done" is not in the account: keep this browser's; likewise the check date when the account table has no such column
   });
   return [...byId.values()].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)).slice(-MAX_FIXES);
 }
@@ -1844,12 +1849,12 @@ function openFixes() {
   renderFixes(); show("fixes"); toTop(); $("fixes-h").focus({ preventScroll: true });
 }
 const ICON_CHECK = ["M9 12l2 2 4-4", "M12 2a10 10 0 100 20 10 10 0 000-20z"], ICON_NEXT = ["M9 6l6 6-6 6"], ICON_LOCK = ["M7 11h10a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6a2 2 0 012-2z", "M8 11V7a4 4 0 018 0v4"];
-function fixItem(f) {  // a fix being tracked: what was decided, when to look again, before and after
+const fixAction = (f) => f.note || tr("fixAct", lowerTheme(f.theme) + (f.variant ? " " + f.variant : ""));  // the seller's own words, or the AI step they chose, or just the complaint
+function setFixDone(id, done) { saveFixes(loadFixes().map((x) => (x.id === id ? Object.assign({}, x, { done }) : x))); renderFixes(); }  // not in the account, so nothing is pushed
+function fixItem(f) {  // a fix being tracked: one sentence of what to do, one big button, one small line. Ubah and Hapus sit behind "Lainnya"
   const body = h("article", { class: "trk" + (isDue(f) ? " due" : "") });
-  const draw = (editing, sure) => {
-    const chip = isDue(f) ? h("span", { class: "chip due", text: tr("dueChip") }) : h("span", { class: "chip", text: f.checkOn ? tr("trCheck", fmtDay(f.checkOn)) : fmtDate(f.date) });
-    const head = h("div", { class: "hd" }, h("h3", { text: themeName(f.theme) + (f.variant ? " · " + f.variant : "") }), chip);
-    const meta = h("p", { class: "small muted", text: isDue(f) ? tr("loggedOn", f.productLabel || tr("fixNoProduct"), fmtDate(f.date)) : [f.productLabel || tr("fixNoProduct"), f.note].filter(Boolean).join(" · ") });
+  const draw = (editing, sure, more) => {
+    const due = isDue(f);
     if (editing) {
       const note = h("input", { type: "text", maxlength: String(NOTE_MAX), value: f.note, "aria-label": tr("fixNoteLbl") });
       const date = h("input", { type: "date", value: f.date, "aria-label": tr("fixDate") });
@@ -1862,25 +1867,30 @@ function fixItem(f) {  // a fix being tracked: what was decided, when to look ag
         renderFixes();
       });
       const cancel = h("button", { class: "btn ghost", type: "button", text: tr("fixCancel") });
-      cancel.addEventListener("click", () => draw(false, false));
-      body.replaceChildren(head, meta, h("label", { class: "field" }, h("span", { text: tr("fixNoteLbl") }), note), h("label", { class: "field" }, h("span", { text: tr("fixDate") }), date),
+      cancel.addEventListener("click", () => draw(false, false, true));
+      body.replaceChildren(h("div", { class: "hd" }, h("h3", { text: themeName(f.theme) + (f.variant ? " · " + f.variant : "") })), h("p", { class: "small muted", text: f.productLabel || tr("fixNoProduct") }),
+        h("label", { class: "field" }, h("span", { text: tr("fixNoteLbl") }), note), h("label", { class: "field" }, h("span", { text: tr("fixDate") }), date),
         h("label", { class: "field" }, h("span", { text: tr("q2") }), check), h("div", { class: "row" }, save, cancel));
       return;
     }
-    const edit = h("button", { class: "btn ghost", type: "button", text: tr("fixEdit") });
-    edit.addEventListener("click", () => draw(true, false));
+    const main = due ? h("button", { class: "btn primary big", type: "button", text: tr("reanalyse"), onclick: () => reanalyse(f.product, f.productLabel) })  // the check date has come: the one thing to do is look again
+      : f.done ? h("div", { class: "sentrow" }, h("span", { class: "ok" }, svgIcon(ICON_CHECK), tr("doneBtn")), h("button", { class: "undo", type: "button", text: tr("undo"), onclick: () => setFixDone(f.id, false) }))
+      : h("button", { class: "btn primary big", type: "button", text: tr("doneBtn"), onclick: () => setFixDone(f.id, true) });
+    const when = due ? tr("dueChip") : f.checkOn ? tr("trCheck", fmtDayShort(f.checkOn)) : fmtDate(f.date);
+    const moreLink = h("button", { class: "plain more-link", type: "button", "aria-expanded": more ? "true" : "false", text: tr("more"), onclick: () => draw(false, false, !more) });
+    const edit = h("button", { class: "btn ghost", type: "button", text: tr("fixEdit"), onclick: () => draw(true, false, true) });
     const del = h("button", { class: "btn ghost" + (sure ? " danger" : ""), type: "button", text: sure ? tr("fixDeleteSure") : tr("fixDelete") });
     del.addEventListener("click", () => {
-      if (!sure) { draw(false, true); return; }
+      if (!sure) { draw(false, true, true); return; }
       saveFixes(loadFixes().filter((x) => x.id !== f.id));
       renderFixes();
     });
-    body.replaceChildren(...[head, meta, isDue(f) && f.note ? h("p", { class: "note", text: f.note }) : null, trackLines(f),
-      f.remind && f.remind !== "none" ? h("p", { class: "small muted", text: tr("trRem", tr(f.remind === "whatsapp" ? "rWa" : "rCal")) }) : null,
-      isDue(f) ? h("button", { class: "btn primary", type: "button", text: tr("reanalyse"), onclick: () => reanalyse(f.product, f.productLabel) }) : null,
-      h("div", { class: "row" }, edit, del)].filter(Boolean));
+    body.replaceChildren(...[h("p", { class: "act", lang: "id", text: fixAction(f) }), main,
+      h("p", { class: "small muted", text: [when, f.productLabel].filter(Boolean).join(" · ") }),
+      f.after ? trackLines(f) : null,  // the numbers only once there is something to compare; the "indicative, not proof" warning comes with them
+      moreLink, more ? h("div", { class: "row" }, edit, del) : null].filter(Boolean));
   };
-  draw(false, false);
+  draw(false, false, false);
   return body;
 }
 const fixesListEl = h("div", { class: "stack", id: "fixes-list" });  // one node, so the list keeps its place when the Tugas screen is drawn again
@@ -1920,6 +1930,7 @@ function renderFixes(message) {  // the Tugas screen
       onclick: () => { taskFilter = k; renderFixes(); } })) : []));
   $("fixes-nostore").hidden = fixStorageOk;
   $("tasks-fixes").hidden = visitorNow;
+  $("fixes-more").hidden = !!(sb && signedIn && userId);  // the file backup is for people without an account
   fixesListEl.replaceChildren(...(fixes.length ? fixes.map(fixItem) : [h("p", { class: "small muted", text: tr("fixesEmpty") })]));
   const msg = $("fixes-msg"); msg.textContent = message || ""; msg.hidden = !message;
   if (visitorNow) { $("tasks-body").replaceChildren(signBox("tasksSignT", "tasksSignP", false)); return; }
@@ -1932,7 +1943,7 @@ function renderFixes(message) {  // the Tugas screen
   fixesListEl.hidden = false;
   const mins = todo.reduce((a, t) => a + t.mins, 0);
   const sched = all.filter((f) => f.checkOn && keep(f.product)).sort((a, b) => a.checkOn.localeCompare(b.checkOn)).slice(0, 8);
-  $("tasks-body").replaceChildren(h("div", { class: "tasksgrid" },
+  $("tasks-body").replaceChildren(...[h("div", { class: "tasksgrid" },
     h("section", { class: "stack", style: "align-content:start" },
       h("div", { class: "row", style: "justify-content:space-between;align-items:center" }, h("p", { class: "eb", text: tr("today", todo.length) }), todo.length ? h("span", { class: "small muted", text: tr("mins", mins) }) : null),
       todo.length ? todo.map(taskRow) : h("p", { class: "small muted", text: tr("noneToday") }),
@@ -1940,8 +1951,33 @@ function renderFixes(message) {  // the Tugas screen
     h("section", { class: "stack", style: "align-content:start" }, h("p", { class: "eb", text: tr("watched", fixes.length) }), fixesListEl),
     h("section", { class: "stack col3 dsk", style: "align-content:start" }, h("p", { class: "eb", text: tr("sched") }),
       h("ul", { class: "sched" }, sched.map((f) => h("li", {}, h("b", { text: isDue(f) ? tr("schedToday") : fmtDay(f.checkOn) }),
-        h("span", { text: [themeName(f.theme), f.productLabel, f.remind !== "none" ? tr(f.remind === "whatsapp" ? "rWa" : "rCal") : ""].filter(Boolean).join(" · ") }))),
-        h("li", {}, h("b", { text: tr("schedNext") }), h("span", { text: tr("schedNextP") }))))));
+        h("span", { text: [themeName(f.theme), f.productLabel].filter(Boolean).join(" · ") }))),
+        h("li", {}, h("b", { text: tr("schedNext") }), h("span", { text: tr("schedNextP") }))))), waBlock(fixes)].filter(Boolean));
+}
+/* ---------- "Kirim ke WhatsApp": a plain-text list of fixes to do, which the seller sends themselves ----------
+   Only the seller's own words and the product name go in, never a review quote. Newest first, at most 5, and cut shorter if the link would get long. */
+const WA_MAX_ITEMS = 5, WA_MAX_URL = 1800;
+function waText(list) {
+  const lines = [tr("waHead")];
+  let last = "";
+  list.forEach((f) => {
+    const label = /^https?:/.test(f.productLabel) ? "" : fxStr(f.productLabel, 60);
+    if (label && label !== last) lines.push(label);
+    last = label;
+    lines.push("- " + fxStr(fixAction(f), 100) + (f.checkOn ? " (" + tr("waCheck", fmtDayShort(f.checkOn)) + ")" : ""));
+  });
+  return lines.join("\n");
+}
+function waLink(fixes) {  // the wa.me address, or "" when there is nothing to send
+  const open = fixes.filter((f) => !f.done).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : (b.updated || 0) - (a.updated || 0))).slice(0, WA_MAX_ITEMS);
+  let url = "";
+  for (let n = open.length; n >= 1; n--) { url = "https://wa.me/?text=" + encodeURIComponent(waText(open.slice(0, n))); if (url.length <= WA_MAX_URL) break; }
+  return url;
+}
+function waBlock(fixes) {
+  const url = waLink(fixes);
+  if (!url) return null;
+  return h("div", { class: "wablock" }, h("a", { class: "btn ghost wabtn", href: url, target: "_blank", rel: "noopener noreferrer", text: tr("waBtn") }), h("p", { class: "small muted", text: tr("waNote") }));
 }
 function exportFixes() {
   const blob = new Blob([JSON.stringify({ app: "bedahreview", version: 1, exported: today(), fixes: loadFixes() }, null, 2)], { type: "application/json" });
@@ -1959,7 +1995,7 @@ async function importFixes(file) {
 }
 
 /* ---------- today's plan: up to three steps from one analysis, then a summary ----------
-   Step ticks stay in this browser only (the owner's choice); the check date and reminder of a logged fix travel with the fix to the account.
+   Step ticks stay in this browser only (the owner's choice); the check date of a logged fix travels with the fix to the account.
    A plan holds the product key and label, the theme of the biggest complaint, review ids and counts, and what the seller has done:
    never review text, never a reviewer name. Plans older than a week are dropped. */
 const PLAN_KEY = "bedahreview-plans-v1", MAX_PLANS = 20, PLAN_DAYS = 7;
@@ -2068,7 +2104,7 @@ function openStep(key, back) {
   if (!p) return;
   const order = stepsOf(p).map((s) => s.key).concat("sum"), was = currentView === "plan";
   const anim = !was ? "rise" : back || order.indexOf(key) < order.indexOf(planStep) ? "bwd" : "fwd";
-  if (!was || planUi.sig !== p.sig) planUi = { sig: p.sig, choice: null, own: "", days: 7, remind: "whatsapp", line: null, cur: null };
+  if (!was || planUi.sig !== p.sig) planUi = { sig: p.sig, choice: null, own: "", line: null, cur: null };
   planStep = key; closeSheet();
   show("plan"); renderPlanView(anim); toTop();
   const hd = $("plan-h"); if (hd) hd.focus({ preventScroll: true });
@@ -2102,16 +2138,7 @@ function stepIntro(kind, title, lead, quotes, bucket) {
   return h("div", { class: "stask" }, h("span", { class: "tag " + kind, text: tr(bucket) }), h("h1", { class: "h2s", id: "plan-h", tabindex: "-1", text: title }), h("p", { class: "small muted", text: lead }),
     quotes ? h("button", { class: "linkbtn", type: "button", onclick: () => openSheet(bucket) }, tr("seeQ", quotes), svgIcon(ICON_NEXT)) : null);
 }
-function segChoice(label, options, current, onPick) {  // a row of pressable choices; the pressed one is what will be saved
-  const seg = h("div", { class: "seg", role: "group", "aria-label": label });
-  options.forEach(([value, text]) => {
-    const b = h("button", { type: "button", "aria-pressed": value === current ? "true" : "false", text });
-    b.addEventListener("click", () => { seg.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false")); onPick(value); });
-    seg.append(b);
-  });
-  return seg;
-}
-function step1(p) {  // Catat: decide the fix for the biggest complaint, when to look again, and how to be reminded
+function step1(p) {  // Catat: decide the fix for the biggest complaint. The check date is always a week away, so there is nothing else to choose
   const g = lastData.groups[0], f = loggedFix(p), ui = planUi;
   const byId = {}; lastData.items.forEach((it) => { byId[it.id] = it; });
   const sugg = [...new Set(g.ids.map((id) => (byId[id] || {}).fix_suggestion_id).filter(Boolean))][0] || "";
@@ -2120,7 +2147,7 @@ function step1(p) {  // Catat: decide the fix for the biggest complaint, when to
     return [stepHead(p), intro, h("div", { class: "callout" }, tr("already1") + (f.checkOn ? " " + tr("alreadyCheck", fmtDay(f.checkOn)) : "")),
       f.note ? h("p", { class: "note", lang: "id", text: f.note }) : null, stepFoot(p, tr("next"), nextStep)];
   }
-  if (ui.choice == null && sugg) ui.choice = "ai";
+  if (ui.choice == null && sugg) ui.choice = "ai";  // the AI's step is already selected: one tap on Simpan is enough
   const err = h("div", { class: "callout warn", role: "alert", hidden: true });
   const fail = (key) => { err.textContent = tr(key); err.hidden = false; };
   const own = h("input", { type: "text", maxlength: String(NOTE_MAX), autocomplete: "off", placeholder: tr("oOwnPh"), "aria-label": tr("oOwn") });
@@ -2132,25 +2159,21 @@ function step1(p) {  // Catat: decide the fix for the biggest complaint, when to
     input.addEventListener("change", () => { ui.choice = value; err.hidden = true; ownWrap.hidden = value !== "own"; if (value === "own") own.focus(); });
     return h("label", { class: "opt" }, input, h("span", {}, h("b", { lang: value === "ai" ? "id" : null, text: title }), h("span", { class: "s", text: sub }), extra));
   };
-  const dateText = h("b", { text: fmtDay(addDays(ui.days)) });
   const save = () => {
     if (!ui.choice) { fail("needChoice"); return; }
     const note = ui.choice === "ai" ? sugg : ui.own.trim();
     if (ui.choice === "own" && !note) { fail("needOwn"); own.focus(); return; }
     if (ui.choice === "own" && noteCopiesReview(note)) { fail("fixNoteReview"); own.focus(); return; }
-    const checkOn = addDays(ui.days), fix = makeFix(g, note, lastData.source, lastData.items, checkOn, ui.remind);
+    const checkOn = addDays(CHECK_DAYS), fix = makeFix(g, note, lastData.source, lastData.items, checkOn);
     if (!saveFixes(loadFixes().concat(fix))) { fail("fixSaveFail"); return; }
     track("fix_marked");
-    remindNow(fix);
     showToast(tr("savedToast", fmtDay(checkOn)));
     nextStep();
   };
   return [stepHead(p), intro,
     h("div", { class: "stask", role: "radiogroup", "aria-labelledby": "q1-h" }, h("p", { class: "q", id: "q1-h", text: tr("q1") }),
       sugg ? radio("ai", sugg, tr("oAi")) : null, radio("own", tr("oOwn"), tr("oOwnS"), ownWrap)),
-    h("div", { class: "stask" }, h("p", { class: "q", text: tr("q2") }), h("div", { class: "when" }, h("span", { class: "d" }, dateText, h("span", { class: "small muted", text: tr("whenS") })),
-      segChoice(tr("q2"), [7, 14, 30].map((n) => [n, tr("plusDays", n)]), ui.days, (n) => { ui.days = n; dateText.textContent = fmtDay(addDays(n)); }))),
-    h("div", { class: "stask" }, h("p", { class: "q", text: tr("q3") }), segChoice(tr("q3"), [["whatsapp", tr("rWa")], ["calendar", tr("rCal")], ["none", tr("rNone")]], ui.remind, (v) => { ui.remind = v; })),
+    h("p", { class: "checkline", text: tr("checkLine", fmtDayShort(addDays(CHECK_DAYS))) }),
     err, stepFoot(p, tr("save1"), save, nextStep)];
 }
 function reasonText(it) { return (it.stars ? "★".repeat(it.stars) + " · " : "") + (it.check_first ? tr("chipCourier") : themeName(it.theme)); }
@@ -2227,11 +2250,8 @@ function step3(p) {  // Deskripsi: one line for the listing, in the buyers' own 
     h("label", { class: "field", for: "plan-line" }, h("span", { text: tr("lineLbl") }), area), state, stepFoot(p, tr("toSum"), () => openStep("sum"))];
 }
 function trackedCard(f) {
-  const label = f.productLabel || tr("fixNoProduct");
-  return h("article", { class: "trk" }, h("div", { class: "hd" }, h("h3", { text: themeName(f.theme) }), f.checkOn ? h("span", { class: "chip", text: tr("trCheck", fmtDay(f.checkOn)) }) : null),
-    f.note ? h("p", { lang: "id", style: "font-size:15px", text: f.note }) : null, h("p", { class: "small muted", text: tr("fixBefore", f.before.count, f.before.total) }),
-    f.remind !== "none" ? h("p", { class: "small muted", text: tr("trRem", tr(f.remind === "whatsapp" ? "rWa" : "rCal")) }) : null,
-    f.remind === "whatsapp" && f.checkOn ? [h("p", { class: "small muted", text: tr("waCap") }), h("div", { class: "wa", text: tr("waMsg", label, fmtDay(f.checkOn), lowerTheme(f.theme)) })] : null);
+  return h("article", { class: "trk" }, h("div", { class: "hd" }, h("h3", { text: themeName(f.theme) }), f.checkOn ? h("span", { class: "chip", text: tr("trCheck", fmtDayShort(f.checkOn)) }) : null),
+    f.note ? h("p", { lang: "id", style: "font-size:15px", text: f.note }) : null, h("p", { class: "small muted", text: tr("fixBefore", f.before.count, f.before.total) }));
 }
 function summaryView(p) {  // an honest ending: what got done, what is left, and the slow fix that stays tracked
   const steps = stepsOf(p), all = steps.every((s) => s.done), f = loggedFix(p), sent = sentCount(p);
@@ -2255,23 +2275,10 @@ function summaryView(p) {  // an honest ending: what got done, what is left, and
       todo.length ? h("div", { class: "stack", style: "align-content:start;gap:10px" }, h("p", { class: "eb", style: "color:var(--muted)", text: tr("todo") }),
         h("ul", { class: "dlist todo" }, todo.map(([t, k]) => h("li", {}, h("span", { text: t }), h("button", { class: "plain strong", type: "button", style: "padding:0 10px;min-height:44px", text: tr("doIt"), onclick: () => openStep(k, true) }))))) : null,
       f ? h("div", { class: "stack col3", style: "align-content:start;gap:10px" }, h("p", { class: "eb", text: tr("tracked") }), trackedCard(f)) : null),
+    waBlock(loadFixes().filter((x) => x.product === p.product)),
     h("div", { class: "row", style: "align-items:center;gap:12px" }, h("button", { class: "btn ghost", type: "button", text: tr("backRes2"), onclick: () => { show("results"); toTop(); } }),
       h("button", { class: "plain strong", type: "button", text: tr("another"), onclick: () => { show("input"); toTop(); } })),
   ];
-}
-function remindNow(f) {  // the seller asked to be reminded: open WhatsApp with the text to send to themselves, or hand over a calendar file
-  const label = f.productLabel || tr("fixNoProduct"), theme = lowerTheme(f.theme);
-  if (f.remind === "whatsapp") { try { window.open("https://wa.me/?text=" + encodeURIComponent(tr("waMsg", label, fmtDay(f.checkOn), theme)), "_blank", "noopener"); } catch (e) { /* the summary still shows the text */ } }
-  else if (f.remind === "calendar") downloadIcs(f.checkOn, tr("calTitle", label), tr("calBody", label, theme));
-}
-function downloadIcs(day, title, body) {  // one all-day event on the check date
-  const esc = (s) => String(s).replace(/[\\;,]/g, (m) => "\\" + m).replace(/\n/g, "\\n");
-  const stamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//BedahReview//ID", "BEGIN:VEVENT", "UID:" + Date.now().toString(36) + "@bedahreview", "DTSTAMP:" + stamp,
-    "DTSTART;VALUE=DATE:" + day.replace(/-/g, ""), "DTEND;VALUE=DATE:" + addDays(1, day).replace(/-/g, ""), "SUMMARY:" + esc(title), "DESCRIPTION:" + esc(body), "END:VEVENT", "END:VCALENDAR"].join("\r\n");
-  const a = h("a", { href: URL.createObjectURL(new Blob([ics], { type: "text/calendar" })), download: "bedahreview-cek-" + day + ".ics" });
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
 /* ---------- the sheet: a group's quotes and drafts (bottom sheet / side panel), or a small dialog ---------- */

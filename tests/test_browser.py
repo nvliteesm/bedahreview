@@ -19,7 +19,7 @@ import time
 import unittest
 import urllib.request
 from pathlib import Path
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, unquote, urlparse
 
 from bedahreview import web
 
@@ -165,7 +165,10 @@ window.__probe = (async () => {
     document.getElementById("fixes-btn").click();
     const list = document.getElementById("fixes-list").textContent;
     out.fl.listShows = [list.indexOf("Sebelum: 2 dari 5") >= 0, list.indexOf("1 dari 2") >= 0, list.indexOf("foto varian diganti") >= 0, list.indexOf("kurang dari 10") >= 0];
-    const del = () => [...document.querySelectorAll("#fixes-list button")].find((b) => b.textContent === "Hapus" || b.textContent === "Yakin hapus?");
+    const listBtn = (t) => [...document.querySelectorAll("#fixes-list button")].find((b) => b.textContent === t);
+    out.fl.hiddenAtFirst = !listBtn("Ubah") && !listBtn("Hapus");  // Ubah and Hapus wait behind one small Lainnya link
+    listBtn("Lainnya").click();
+    const del = () => listBtn("Hapus") || listBtn("Yakin hapus?");
     del().click(); del().click();
     out.fl.afterDelete = [JSON.parse(localStorage.getItem("bedahreview-fixes-v1")).length, document.getElementById("fixes-count").hidden];
   }
@@ -186,10 +189,10 @@ window.__probe = (async () => {
     out.pl.step1 = [!document.getElementById("view-plan").hidden, document.getElementById("plan-h").textContent];
     document.querySelector("input[name=fixopt][value=own]").click();
     const own = document.querySelector("#view-plan .own input"); own.value = "ganti foto katalog"; own.dispatchEvent(new Event("input"));
-    btn("#view-plan .seg button", "+14 hari").click(); btn("#view-plan .seg button", "Tidak usah").click();
-    btn("#view-plan .stickyfoot button", "Simpan & lanjut").click();
+    out.pl.step1Ui = [document.querySelectorAll("#view-plan .seg").length, document.querySelector("#view-plan .checkline").textContent === "Cek lagi tanggal " + fmtDayShort(addDays(7)) + ".", document.body.innerText.indexOf("Ingatkan") < 0];
+    btn("#view-plan .stickyfoot button", "Simpan").click();
     const fix = JSON.parse(localStorage.getItem("bedahreview-fixes-v1"))[0];
-    out.pl.fix = [fix.note, fix.checkOn === addDays(14), fix.remind, fix.theme];
+    out.pl.fix = [fix.note, fix.checkOn === addDays(7), "remind" in fix, fix.theme];
     out.pl.toast = document.getElementById("toast2").textContent.indexOf("Tersimpan di Tugas") === 0;
     out.pl.step2 = document.getElementById("plan-h").textContent;
     [...document.querySelectorAll("#view-plan .reply button")].find((b) => b.textContent.indexOf("Salin") === 0).click();
@@ -202,9 +205,45 @@ window.__probe = (async () => {
     btn("#view-plan .stickyfoot button", "Lihat ringkasan").click();
     out.pl.sum = [document.getElementById("plan-h").textContent, [...document.querySelectorAll("#view-plan .dlist li")].map((li) => li.textContent)];
     out.pl.planText = localStorage.getItem("bedahreview-plans-v1");
+    const waA = document.querySelector("#view-plan .wabtn");
+    out.pl.waSummary = waA ? [waA.href, waA.target, waA.rel] : null;
     document.getElementById("nav-tasks").click();
     out.pl.tasks = [!document.getElementById("view-fixes").hidden, [...document.querySelectorAll("#tasks-body .task b")].map((b) => b.textContent), document.getElementById("tasks-count").textContent];
     out.pl.watched = document.getElementById("fixes-list").textContent.indexOf("ganti foto katalog") >= 0;
+    const card = document.querySelector("#fixes-list .trk");
+    out.pl.card = { act: card.querySelector(".act").textContent, buttons: [...card.querySelectorAll("button")].map((b) => b.textContent), small: card.querySelector(".small").textContent, big: card.querySelectorAll(".btn.big").length };
+    out.pl.waTasks = !!document.querySelector("#tasks-body .wabtn");
+    out.pl.waNote = (document.querySelector("#tasks-body .wablock .small") || {}).textContent;
+    out.pl.more = [!document.getElementById("fixes-more").hidden, document.getElementById("fixes-export").textContent, document.getElementById("fixes-import").textContent, document.querySelector("#fixes-more summary").textContent];
+    [...card.querySelectorAll("button")].find((b) => b.textContent === "Sudah dikerjakan").click();
+    const done = document.querySelector("#fixes-list .trk");
+    out.pl.afterDone = { ticked: !!done.querySelector(".sentrow .ok"), stored: JSON.parse(localStorage.getItem("bedahreview-fixes-v1"))[0].done, nothingToSend: !document.querySelector("#tasks-body .wabtn") };
+  }
+
+  if (location.hash === "#wa") {
+    const KEY = "bedahreview-fixes-v1", PRE = "https://wa.me/?text=";
+    const mk = (i, note, label, extra) => Object.assign({ id: "f" + i, theme: "Sizing & fit", variant: "", product: "p-" + label, productLabel: label, note, date: "2026-11-0" + i, updated: i, before: { count: 1, total: 4, sig: "a.4", date: "" }, after: null, checkOn: "2026-11-15", done: false }, extra || {});
+    const seven = [1, 2, 3, 4, 5, 6, 7].map((i) => mk(i, "langkah nomor " + i, "Kaos Boxy"));
+    const text = (url) => decodeURIComponent(url.slice(PRE.length));
+    out.wa = { prefix: waLink(seven).indexOf(PRE) === 0, lines: text(waLink(seven)).split(String.fromCharCode(10)) };
+    out.wa.empty = [waLink([]), waLink([mk(1, "x", "K", { done: true })]), waBlock([]) === null];
+    const noNote = text(waLink([mk(1, "", "Kaos Boxy", { variant: "Putih" })]));
+    out.wa.noNote = noNote.split(String.fromCharCode(10))[2];
+    out.wa.linkLabel = text(waLink([mk(1, "ganti foto", "https://www.tokopedia.com/toko/produk-panjang")])).split(String.fromCharCode(10));
+    const heavy = [1, 2, 3, 4, 5].map((i) => mk(i, "ä".repeat(200), "L".repeat(200)));
+    out.wa.heavy = [waLink(heavy).length <= 1800, text(waLink(heavy)).split(String.fromCharCode(10)).filter((l) => l.indexOf("- ") === 0).length];
+    lang = "en";
+    out.wa.en = text(waLink([mk(1, "change the photo", "Boxy Tee")])).split(String.fromCharCode(10));
+    lang = "id";
+    const old = Object.assign(mk(1, "ganti foto", "Kaos Boxy"), { remind: "whatsapp" });
+    delete old.done;
+    localStorage.setItem(KEY, JSON.stringify([old, Object.assign(mk(2, "ganti bahan", "Kaos Boxy"), { remind: "calendar" })]));
+    const loaded = loadFixes();
+    out.wa.old = [loaded.length, loaded.every((f) => !("remind" in f)), loaded.every((f) => f.done === false)];
+    renderFixes();
+    out.wa.oldCards = document.getElementById("fixes-list").textContent;
+    out.wa.oldBlock = !!document.querySelector("#tasks-body .wabtn");
+    saveFixes([]);
   }
 
   if (location.hash === "#events") {
@@ -466,6 +505,7 @@ class BrowserTests(unittest.TestCase):
         self.assertTrue(fl["comparedNote"])
         self.assertEqual(fl["after"], [1, 2])
         self.assertEqual(fl["listShows"], [True, True, True, True])
+        self.assertTrue(fl["hiddenAtFirst"])
         self.assertEqual(fl["afterDelete"], [0, False])  # the fix is gone; the open steps keep the Tugas count
 
     def test_results_become_a_plan_with_three_steps_and_a_summary(self):
@@ -476,7 +516,8 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(pl["sheet"], [True, "Tanggapi · 1 ulasan", True])  # a tile opens the sheet with that group's quotes and drafts
         self.assertTrue(pl["sheetClosed"])
         self.assertEqual(pl["step1"], [True, "Catat perbaikan untuk warna beda dari foto"])
-        self.assertEqual(pl["fix"], ["ganti foto katalog", True, "none", "Colour vs photo"])  # the seller's own step, a check date 14 days out, no reminder
+        self.assertEqual(pl["step1Ui"], [0, True, True])  # no +7/14/30 choice and no reminder question: one line says when we check again
+        self.assertEqual(pl["fix"], ["ganti foto katalog", True, False, "Colour vs photo"])  # the seller's own step, a check date 7 days out, no reminder field at all
         self.assertTrue(pl["toast"])
         self.assertEqual(pl["step2"], "Balas 1 ulasan buruk")
         self.assertEqual(pl["asked"], "Sudah kamu kirim?")  # a reply only counts once the seller says it went out
@@ -489,6 +530,41 @@ class BrowserTests(unittest.TestCase):
             self.assertNotIn(word, pl["planText"])
         self.assertEqual(pl["tasks"], [True, ["Tambah 1 kalimat di deskripsi"], "1"])
         self.assertTrue(pl["watched"])  # the logged fix is tracked on the Tugas screen
+        self.assertEqual(pl["card"]["act"], "ganti foto katalog")  # one sentence of action, one big button, one small line
+        self.assertEqual(pl["card"]["buttons"], ["Sudah dikerjakan", "Lainnya"])
+        self.assertTrue(pl["card"]["small"].startswith("Cek lagi "))
+        self.assertEqual(pl["card"]["big"], 1)
+        self.assertEqual(pl["more"], [True, "Simpan ke file", "Buka dari file", "Lainnya"])  # the file backup sits under one Lainnya link for people without an account
+        self.assertEqual(pl["afterDone"], {"ticked": True, "stored": True, "nothingToSend": True})
+        for where in ("waSummary", ):
+            href, target, rel = pl[where]
+            self.assertEqual((target, rel), ("_blank", "noopener noreferrer"))
+            message = unquote(href[len("https://wa.me/?text="):])
+            self.assertEqual(message.split("\n")[0], "Perbaikan BedahReview")
+            self.assertRegex(message.split("\n")[-1], r"^- ganti foto katalog \(cek lagi \d")
+            for word in ("koyak", "ijo", "bagus", "tulisannya", "\u201c"):  # no review quote can get into the message
+                self.assertNotIn(word, message)
+        self.assertTrue(pl["waTasks"])
+        self.assertEqual(pl["waNote"], "WhatsApp terbuka dengan pesan siap kirim. Kami tidak mengirim apa pun sendiri.")
+
+    def test_whatsapp_message_is_short_plain_and_hidden_when_there_is_nothing_to_send(self):
+        wa = self.probe("/#wa")["wa"]
+        self.assertTrue(wa["prefix"])
+        self.assertEqual(wa["lines"][:2], ["Perbaikan BedahReview", "Kaos Boxy"])  # the product name once, then the steps
+        items = [l for l in wa["lines"] if l.startswith("- ")]
+        self.assertEqual(len(items), 5)  # seven fixes, five are sent, newest first
+        self.assertEqual(items[0], "- langkah nomor 7 (cek lagi 15 Nov)")
+        self.assertEqual(items[-1], "- langkah nomor 3 (cek lagi 15 Nov)")
+        self.assertEqual(wa["empty"], ["", "", True])  # zero open fixes: no link, no button
+        self.assertEqual(wa["noNote"], "- Perbaiki ukuran tidak pas Putih (cek lagi 15 Nov)")
+        self.assertEqual(wa["linkLabel"], ["Perbaikan BedahReview", "- ganti foto (cek lagi 15 Nov)"])  # a web address is not a product name
+        self.assertEqual(wa["heavy"][0], True)  # the link is cut to fewer steps rather than grow past a safe length
+        self.assertLess(wa["heavy"][1], 5)
+        self.assertEqual(wa["en"], ["BedahReview fixes", "Boxy Tee", "- change the photo (check again 15 Nov)"])
+        self.assertEqual(wa["old"], [2, True, True])  # fixes saved before this change, with a WhatsApp or calendar reminder, still load and just have no reminder
+        self.assertNotIn("WhatsApp", wa["oldCards"])
+        self.assertNotIn("Kalender", wa["oldCards"])
+        self.assertTrue(wa["oldBlock"])
 
     def test_usage_events_and_the_feedback_question(self):
         buf = io.StringIO()

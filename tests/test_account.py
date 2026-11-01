@@ -279,7 +279,7 @@ class PrivacyPageTests(PageServerMixin, unittest.TestCase):
     def test_the_app_links_to_it_from_the_sign_in_and_the_footer(self):
         html = (web.STATIC / "index.html").read_text(encoding="utf-8")
         self.assertGreaterEqual(html.count('href="/privacy"'), 2)
-        self.assertIn("Kami mencatat fitur yang kamu pakai per akun (misalnya tab yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.", html)
+        self.assertIn("Kami mencatat fitur yang kamu pakai per akun (misalnya bagian yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.", html)
 
 
 class TermsPageTests(PageServerMixin, unittest.TestCase):
