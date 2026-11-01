@@ -237,7 +237,7 @@ class ServerTests(unittest.TestCase):
         self.assertNotIn(SECRET, json.dumps(cfg))
 
 
-class PrivacyPageTests(unittest.TestCase):
+class PageServerMixin:
     def get(self, server, path):
         conn = http.client.HTTPConnection("127.0.0.1", server.server_address[1], timeout=10)
         conn.request("GET", path)
@@ -253,6 +253,8 @@ class PrivacyPageTests(unittest.TestCase):
         self.addCleanup(server.shutdown)
         return server
 
+
+class PrivacyPageTests(PageServerMixin, unittest.TestCase):
     def test_the_page_is_public_with_sign_in_by_accounts_and_by_codes(self):
         key, jwk = new_key("k1")
         accounts = self.start(supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key="sb_publishable_x")
@@ -278,6 +280,35 @@ class PrivacyPageTests(unittest.TestCase):
         html = (web.STATIC / "index.html").read_text(encoding="utf-8")
         self.assertGreaterEqual(html.count('href="/privacy"'), 2)
         self.assertIn("Kami mencatat fitur yang kamu pakai per akun (misalnya tab yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.", html)
+
+
+class TermsPageTests(PageServerMixin, unittest.TestCase):
+    def test_the_page_is_public_with_sign_in_by_accounts_and_by_codes(self):
+        key, jwk = new_key("k1")
+        accounts = self.start(supabase_auth=SupabaseAuth(URL, fetch=FakeSupabase(jwk)), supabase_anon_key="sb_publishable_x")
+        codes = self.start(access_codes={"ani": "ani-secret-1"})
+        for server in (accounts, codes):
+            status, page = self.get(server, "/terms")
+            self.assertEqual(status, 200)
+            self.assertIn("Syarat penggunaan", page)
+
+    def test_it_says_the_things_a_person_needs_to_know_in_both_languages(self):
+        _, page = self.get(self.start(access_codes={"ani": "ani-secret-1"}), "/terms")
+        for phrase in ("Baca dan ubah dulu", "tidak menjanjikan", "indikatif, bukan bukti", "tidak mengaku berafiliasi", "satu analisis gratis", "apa adanya", "Hukum Indonesia", "Hapus akun dan data saya",
+                       "Read and edit them before", "do not promise", "indicative, not proof", "do not claim to be affiliated", "one free analysis", "as is", "Indonesian law applies", "Delete my account and data"):
+            self.assertIn(phrase, page, phrase)
+
+    def test_it_loads_nothing_from_anywhere_else(self):
+        _, page = self.get(self.start(access_codes={"ani": "ani-secret-1"}), "/terms")
+        self.assertNotRegex(page, r"<script[^>]+src=")
+        self.assertNotRegex(page, r"https?://")
+        self.assertNotIn("<link rel=\"stylesheet\"", page)
+
+    def test_the_app_links_to_it_from_the_menu_the_sign_in_boxes_and_the_footer(self):
+        html = (web.STATIC / "index.html").read_text(encoding="utf-8")
+        self.assertGreaterEqual(html.count('href="/terms"'), 4)
+        self.assertIn("Dengan masuk, kamu setuju dengan", html)
+        self.assertIn("By signing in you agree to the", html)
 
 
 if __name__ == "__main__":

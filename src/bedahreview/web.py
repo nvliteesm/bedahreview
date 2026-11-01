@@ -88,9 +88,9 @@ DEFAULT_FREE_DAILY = 30  # analyses without an account, for everyone together, p
 DEFAULT_FREE_PER_VISITOR = 3  # analyses without an account per visitor address per day (the page itself allows one per browser)
 JAKARTA = timezone(timedelta(hours=7))  # the day ends at midnight in Jakarta (no daylight saving there)
 DEFAULT_PAID_PER_HOUR = 6 # paid actions (link fetch, find or compare competitors) per visitor per hour in public mode: lower than plain pasting
-PUBLIC_ASSETS = {"/privacy", "/manifest.webmanifest", "/sw.js", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png", "/fonts/plus-jakarta-sans.woff2", "/fonts/jetbrains-mono.woff2"}
+PUBLIC_ASSETS = {"/privacy", "/terms", "/manifest.webmanifest", "/sw.js", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png", "/fonts/plus-jakarta-sans.woff2", "/fonts/jetbrains-mono.woff2"}
 # Files served from static/ (exact paths only; the query string is ignored, so /?text=... is the page).
-PAGES = {"/": "index.html", "/index.html": "index.html", "/privacy": "privacy.html"}
+PAGES = {"/": "index.html", "/index.html": "index.html", "/privacy": "privacy.html", "/terms": "terms.html"}
 OPEN_API = {"/api/config", "/api/example"}  # answered without sign-in when Supabase is on: the sign-in screens and the free example need them
 EXAMPLE_PATH = Path(__file__).resolve().parent / "data" / "example_result.json"  # a real model reply to invented reviews, recorded once
 ASSETS = {
