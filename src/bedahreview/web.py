@@ -591,6 +591,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Strict-Transport-Security", "max-age=31536000")  # browsers ignore it over plain http (a local run); on Cloud Run it keeps visitors on https
         connect = " ".join(["'self'"] + ([type(self).supabase_public["url"]] if type(self).supabase_public else []))  # the page may talk to Supabase sign-in and nobody else
         self.send_header("Content-Security-Policy", "default-src 'self'; connect-src %s; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'" % connect)
         self.end_headers()

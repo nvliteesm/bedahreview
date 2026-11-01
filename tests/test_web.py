@@ -64,6 +64,7 @@ class WebTests(unittest.TestCase):
         self.assertIn(b"BedahReview", data)
         self.assertIn(b"manifest.webmanifest", data)
         self.assertEqual(resp.getheader("X-Content-Type-Options"), "nosniff")
+        self.assertEqual(resp.getheader("Strict-Transport-Security"), "max-age=31536000")
 
     def test_share_url_serves_the_page_and_the_log_has_no_review_text(self):
         err = io.StringIO()
