@@ -89,6 +89,14 @@ class WebTests(unittest.TestCase):
         resp, js = self.request("GET", "/sw.js")
         self.assertEqual((resp.status, resp.getheader("Content-Type").split(";")[0]), (200, "text/javascript"))
 
+    def test_brand_favicons_are_served(self):
+        for path, kind, start in (("/icons/favicon.svg", "image/svg+xml", b"<svg"), ("/favicon.ico", "image/x-icon", b"\x00\x00\x01\x00"), ("/icons/apple-touch-icon-180.png", "image/png", b"\x89PNG")):
+            resp, data = self.request("GET", path)
+            self.assertEqual((resp.status, resp.getheader("Content-Type"), data[:len(start)]), (200, kind, start), path)
+        _, page = self.request("GET", "/")
+        for tag in (b'href="icons/favicon.svg"', b'href="icons/apple-touch-icon-180.png"'):
+            self.assertIn(tag, page)
+
     def test_service_worker_never_touches_the_api(self):
         js = self.request("GET", "/sw.js")[1].decode()
         self.assertIn("/api/", js)  # explicitly skipped
@@ -363,7 +371,7 @@ class PublicModeTests(unittest.TestCase):
         self.assertEqual(self.calls, [])
 
     def test_install_files_stay_public(self):
-        for path in ("/manifest.webmanifest", "/sw.js", "/icons/icon-192.png"):
+        for path in ("/manifest.webmanifest", "/sw.js", "/icons/icon-192.png", "/icons/apple-touch-icon-180.png", "/icons/favicon.svg", "/icons/favicon.ico", "/favicon.ico"):
             self.assertEqual(self.request("GET", path)[0].status, 200, path)
 
     def test_wrong_code_is_refused_and_locks_after_five_tries(self):

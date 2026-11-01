@@ -77,7 +77,7 @@ window.__probe = (async () => {
     out.legendShown = getComputedStyle(document.querySelector(".legend")).display !== "none";  // the 4 groups are explained on a phone too
     out.aiNotes = [...document.querySelectorAll(".ai-note")].map((n) => n.closest("[role=tabpanel]").id);  // one note above the drafts of each tab
     out.footHidden = document.getElementById("foot").hidden; out.noDev = !/analytics\.md|Model:|Demo:/.test(document.body.innerText);
-    const cache = await caches.open("bedahreview-shell-v1");
+    const cache = await caches.open("bedahreview-shell-v2");
     out.cachedPaths = (await cache.keys()).map((r) => new URL(r.url).pathname);
     out.copyButtons = document.querySelectorAll(".copy").length;
     out.fixQuote = (document.querySelector("#panel-fix blockquote") || {}).textContent;
