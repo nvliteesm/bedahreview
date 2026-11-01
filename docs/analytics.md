@@ -6,7 +6,7 @@ Nothing else is ever logged. The list lives in one place, `src/bedahreview/event
 ## What is never logged
 
 - Review text and reviewer names, anywhere.
-- Product names, product links, shop names and notes in the events or the log. (A seller's own fixes list does hold a product name, link and note: see "The fixes list" below. It is a separate table, never an event.)
+- Product names, product links, shop names and notes in the events or the log. (A seller's own fixes list does hold a product name, link and note, and the 14-day history holds the product name: see the two sections below. They are separate tables, never events.)
 - IP addresses and user agents. (The request log prints the path only.)
 
 ## Accounts and the device id
@@ -24,8 +24,18 @@ Marking a complaint as fixed keeps a small record: the theme, the variant, the d
 - The note is the seller's own words, up to 200 characters. The page refuses a note that repeats 20 or more characters of a review in the current analysis (a guard, not a guarantee), and the fixes screen asks people not to write names.
 - Nothing from this table is ever sent in an event or printed in the log.
 - Signing out saves what is pending, then clears the copy kept in that browser. The account's copy stays.
-- "Hapus akun dan data saya" deletes the account's events, fixes and profile, then the account, and clears this browser's copy (see the README).
+- "Hapus akun dan data saya" deletes the account's events, fixes, history and profile, then the account, and clears this browser's copy (see the README).
 - Honest limit: a fix deleted on one phone can come back from another phone that was offline with an old copy.
+
+## History (Riwayat, a separate table, 14 days)
+
+After each analysis by a signed-in seller, the page saves one row in the account's `history` table, with the seller's own sign-in: the date, the product name the seller typed (optional), the number of reviews, the four group counts (fix, fight, ignore, keep) and the theme name of the top complaint (one of the fixed theme names, or none). **No review text, quotes, drafts or AI suggestions**, and no product link. Example results and the free analysis before sign-in are not saved.
+
+- Retention: 14 days. The page deletes that seller's older rows whenever they open Riwayat or a new row is saved, and never shows older rows. Rows of a seller who never comes back stay until the optional `pg_cron` job in `db/schema.sql` is switched on (not verified on this project).
+- A failed save is never shown and never stops the analysis.
+- Riwayat cannot reopen an old result: only the summary exists. "Bedah lagi" starts a new analysis with the product name filled in.
+- Only that account can read it from the app; whoever runs the Supabase project can read it in the dashboard. "Hapus akun dan data saya" deletes it with the account (and `on delete cascade` would too).
+- Opening Riwayat sends the `history_opened` event, with no fields: nothing from the table goes into an event or the log.
 
 ## The events
 
@@ -40,6 +50,7 @@ Every event carries `event` and a server timestamp `ts`, plus the fields below (
 | `fix_marked` | "Mark as fixed" is saved | none. The fix itself goes to the fixes table, not into the event. |
 | `rivals_started` | a competitor search starts | none |
 | `feedback` | the tester sends "Was this useful?" | `answer` (`yes`, `partly` or `no`), and `comment` only if they typed one (300 characters at most) |
+| `history_opened` | a signed-in seller opens Riwayat (from the account menu or the top of Tugas) | none. What is in the history is never sent. |
 | `free_unlocked` | someone signs in to see the details of the free analysis they made before having an account | none. Sent once, right after the sign-in, together with an `analysed` event for that analysis. |
 | `analysis_failed` | **written by the server**: an analysis, competitor search or compare failed (5xx) | `step` (`analyse`, `suggest` or `compare`), `code` (the server's own error code, such as `model_quota`; never the message) |
 | `limit_hit` | **written by the server**: one of those was refused by a limit | `step`, `limit` (`daily`, `hour`, `budget` or `busy`) |

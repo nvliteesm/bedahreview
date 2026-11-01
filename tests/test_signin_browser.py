@@ -35,11 +35,11 @@ class LinkFetch(Fetcher):
 
 FAKE_SUPABASE = """
 <script>
-window.__sb = { calls: [], session: null, profile: null, listeners: [], fixes: [], fixesError: false };
+window.__sb = { calls: [], session: null, profile: null, listeners: [], fixes: [], fixesError: false, history: [] };
 (function () {
   const hash = location.hash, user = { id: "user-1111-2222", email: "ani@example.com" };
   window.__stage = sessionStorage.getItem("bedahreview-deleted") ? 2 : 1;  // the delete test reloads the page once: stage 2 is the page after the deletion
-  const syncing = ["#sync-first", "#sync-other", "#sync-down", "#sync-edit", "#sync-leave", "#delete"];
+  const syncing = ["#sync-first", "#sync-other", "#sync-down", "#sync-edit", "#sync-leave", "#delete", "#history"];
   if (["#intro", "#returning", "#expired", "#events", "#account"].concat(syncing).includes(hash)) window.__sb.session = { access_token: hash === "#expired" ? "junk" : "__TOKEN__", user };
   if (["#returning", "#expired", "#events", "#account"].concat(syncing).includes(hash)) window.__sb.profile = { user_id: user.id };
   const fixA = { id: "aaa1", theme: "Sizing & fit", variant: "Hitam", product: "kaos boxy retro", productLabel: "Kaos Boxy Retro", note: "size chart diganti", date: "2026-10-20", before: { count: 2, total: 5, sig: "s1", date: "" }, after: null, updated: 1000 };
@@ -72,7 +72,15 @@ window.__sb = { calls: [], session: null, profile: null, listeners: [], fixes: [
       signInWithOAuth: async (a) => { window.__sb.calls.push(["oauth", a.provider, a.options.redirectTo]); return { error: null }; },
       signOut: async () => { window.__sb.session = null; return { error: null }; },
     },
-    from: (table) => table === "fixes" ? ({
+    from: (table) => table === "history" ? ({
+      insert: async (row) => { window.__sb.calls.push(["insert-history", row]); window.__sb.history.unshift(Object.assign({ created_at: new Date().toISOString() }, row)); return { error: null }; },
+      delete: () => ({ lt: async (col, value) => { window.__sb.calls.push(["prune-history", col, value]); window.__sb.history = window.__sb.history.filter((r) => r.created_at >= value); return { error: null }; } }),
+      select: (cols) => {
+        window.__sb.calls.push(["select-history", cols]);
+        const q = { gte: () => q, order: () => q, limit: () => q, then: (a, b) => Promise.resolve({ data: window.__sb.history.slice(), error: null }).then(a, b) };
+        return q;
+      },
+    }) : table === "fixes" ? ({
       select: () => {
         window.__sb.calls.push(["select-fixes"]);
         const res = window.__sb.fixesError ? { data: null, error: { message: "paused" } } : { data: window.__sb.fixes.slice(), error: null };
@@ -107,6 +115,7 @@ window.__probe = (async () => {
     await until(() => vis("gate"));
     out.gate = vis("gate"); out.workspaceHidden = byId("workspace").hidden;
     out.title = byId("gate-h").textContent; out.google = byId("g-google").textContent.trim();
+    out.histHidden = byId("acct-history").hidden && byId("tasks-history").hidden;
     out.consent = byId("g-choose").textContent.includes("Kami mencatat fitur yang kamu pakai per akun (misalnya bagian yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.");
     out.codeLink = vis("g-codelink"); out.signinBtn = vis("signin-btn");
     out.noContactAsk = /hubungi|wawancara|contacted|interview/i.test(byId("gate").textContent);
@@ -163,6 +172,33 @@ window.__probe = (async () => {
     byId("sample").click(); byId("run").click();
     await until(() => vis("gate"), 80);
     out.gate = vis("gate"); out.workspaceHidden = byId("workspace").hidden; out.runEnabled = !byId("run").disabled; out.signedOutSession = window.__sb.session === null;
+  }
+
+  if (hash === "#history") {
+    await until(() => !byId("workspace").hidden);
+    const daysAgo = (n) => new Date(Date.now() - n * 864e5).toISOString();
+    window.__sb.history = [{ user_id: "user-1111-2222", created_at: daysAgo(20), product: "Kaos Lama", reviews: 4, fix_n: 1, fight_n: 0, ignore_n: 0, keep_n: 3, top_theme: "Sizing & fit" }];
+    out.menuShown = !byId("acct-history").hidden;
+    byId("sample").click(); byId("run").click();
+    await until(() => !byId("view-results").hidden, 80);
+    await until(() => calls("insert-history").length > 0, 40);
+    const row = (calls("insert-history")[0] || [])[1] || {};
+    out.row = row; out.rowText = JSON.stringify(row);
+    await saveHistory(lastData, lastCounts);  // the same result drawn again is not saved twice
+    out.inserts = calls("insert-history").length;
+    byId("acct-btn").click(); byId("acct-history").click();
+    out.opened = eventQueue.some((e) => e.event === "history_opened");
+    await until(() => byId("history-body").querySelector(".hist, .empty2, .callout"), 40);
+    out.view = vis("view-history");
+    out.sub = byId("view-history").textContent.includes("Riwayat hanya menyimpan ringkasan, bukan isi ulasan. Dihapus otomatis setelah 14 hari.");
+    out.cards = [...byId("history-body").querySelectorAll(".hist")].map((c) => [...c.querySelectorAll("p")].map((p) => p.textContent));
+    out.expectFirst = fmtDayShort(today()) + " · Kaos Boxy Retro";
+    const prunes = calls("prune-history"); out.prunes = prunes.length;
+    out.cutoffDays = prunes.map((c) => Math.round((Date.now() - Date.parse(c[2])) / 864e5));
+    out.oldGone = !window.__sb.history.some((r) => r.product === "Kaos Lama");
+    byId("product").value = "";
+    [...byId("history-body").querySelectorAll("button")].find((b) => b.textContent === "Bedah lagi").click();
+    out.again = [vis("view-input"), byId("product").value];
   }
 
   if (hash === "#events") {
@@ -393,6 +429,7 @@ class SignInBrowserTests(unittest.TestCase):
 
     def test_a_visitor_lands_in_the_app_and_the_sign_in_opens_from_the_header(self):
         out = self.probe("#out")
+        self.assertTrue(out["histHidden"])  # signed out: no Riwayat in the menu or on Tugas
         self.assertEqual(out["start"], {"gate": False, "app": True, "signinBtn": True, "acct": False})  # the first analysis is free, so the app comes first
         self.assertEqual((out["gate"], out["workspaceHidden"]), (True, True))
         self.assertEqual(out["title"], "Masuk untuk membedah ulasanmu")
@@ -443,6 +480,25 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertTrue(out["gate"] and out["workspaceHidden"])
         self.assertTrue(out["runEnabled"])
         self.assertTrue(out["signedOutSession"])
+
+    def test_history_saves_a_summary_after_an_analysis_and_shows_the_last_14_days(self):
+        out = self.probe("#history")
+        self.assertTrue(out["menuShown"])
+        self.assertEqual(sorted(out["row"]), sorted(["user_id", "product", "reviews", "fix_n", "fight_n", "ignore_n", "keep_n", "top_theme"]))  # exactly the columns, nothing else leaves the page
+        self.assertEqual((out["row"]["user_id"], out["row"]["product"]), ("user-1111-2222", "Kaos Boxy Retro"))
+        for word in ("koyak", "ijo", "hitem", "bagus", "tulisannya", "Halo Kak"):  # no review text, quote or draft in the saved row
+            self.assertNotIn(word, out["rowText"])
+        self.assertEqual(out["inserts"], 1)
+        self.assertTrue(out["opened"])  # opening Riwayat is counted, with no fields
+        self.assertTrue(out["view"])
+        self.assertTrue(out["sub"])
+        self.assertEqual(len(out["cards"]), 1)  # the 20-day-old row was cleaned up and is not shown
+        self.assertEqual(out["cards"][0][0], out["expectFirst"])
+        self.assertRegex(out["cards"][0][1], r"^\d+ ulasan")
+        self.assertTrue(out["oldGone"])
+        self.assertGreaterEqual(out["prunes"], 2)  # once after saving, once on opening Riwayat
+        self.assertEqual(set(out["cutoffDays"]), {14})
+        self.assertEqual(out["again"], [True, "Kaos Boxy Retro"])  # Bedah lagi: the paste screen with the product name filled in
 
     def test_events_wait_in_a_queue_and_go_out_together(self):
         out = self.probe("#events")
@@ -568,7 +624,7 @@ class SignInBrowserTests(unittest.TestCase):
         out = self.probe("#account")
         self.assertFalse(out["closed"])
         self.assertEqual(out["open"], [True, "true", "mitem"])  # opens with the first item focused
-        self.assertEqual(out["items"][0], "Keluar")
+        self.assertEqual(out["items"][:2], ["Riwayat", "Keluar"])  # Riwayat sits at the top of the menu for a signed-in account
         self.assertIn("Kebijakan privasi", out["items"])
         self.assertEqual(out["items"][-1], "Hapus akun dan data saya")  # last, apart from the rest
         self.assertTrue(out["deleteRed"])

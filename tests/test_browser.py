@@ -220,6 +220,20 @@ window.__probe = (async () => {
     out.pl.afterDone = { ticked: !!done.querySelector(".sentrow .ok"), stored: JSON.parse(localStorage.getItem("bedahreview-fixes-v1"))[0].done, nothingToSend: !document.querySelector("#tasks-body .wabtn") };
   }
 
+  if (location.hash === "#history") {
+    const items = [
+      { id: "1", bucket: "fix", theme: "Colour vs photo", text: "rahasia satu ijo", proof_quote: "rahasia satu ijo", fix_suggestion_id: "saran khusus", likely_fake: { flag: false } },
+      { id: "2", bucket: "fight", theme: "Packaging / damaged on arrival", text: "rahasia dua koyak", proof_quote: "rahasia dua koyak", fight: { public_reply: "balasan khusus" }, likely_fake: { flag: false } },
+      { id: "3", bucket: "keep", theme: "Praise: quality / material", text: "rahasia tiga", proof_quote: "rahasia tiga", likely_fake: { flag: false } }];
+    const data = { items, reviews: 3, groups: [{ theme: "Colour vs photo", variant: "Putih", ids: ["1"], n: 1 }], source: { kind: "paste", title: "Kaos  Boxy " + "x".repeat(200) } };
+    const row = historyRow(data, { fix: 1, fight: 1, ignore: 0, keep: 1 }, "u-1");
+    out.hist = { keys: Object.keys(row), cols: HISTORY_COLS, text: JSON.stringify(row), theme: row.top_theme, product: row.product.length, counts: [row.reviews, row.fix_n, row.fight_n, row.ignore_n, row.keep_n],
+      oddTheme: historyRow(Object.assign({}, data, { groups: [{ theme: "made up" }] }), {}, "u").top_theme, noGroup: historyRow(Object.assign({}, data, { groups: [] }), {}, "u").top_theme,
+      hidden: [document.getElementById("acct-history").hidden, document.getElementById("tasks-history").hidden], days: HISTORY_DAYS };
+    openFixes(); out.hist.tasksLink = document.getElementById("tasks-history").hidden;
+    await openHistory(); out.hist.noScreen = document.getElementById("view-history").hidden;
+  }
+
   if (location.hash === "#wa") {
     const KEY = "bedahreview-fixes-v1", PRE = "https://wa.me/?text=";
     const mk = (i, note, label, extra) => Object.assign({ id: "f" + i, theme: "Sizing & fit", variant: "", product: "p-" + label, productLabel: label, note, date: "2026-11-0" + i, updated: i, before: { count: 1, total: 4, sig: "a.4", date: "" }, after: null, checkOn: "2026-11-15", done: false }, extra || {});
@@ -546,6 +560,21 @@ class BrowserTests(unittest.TestCase):
                 self.assertNotIn(word, message)
         self.assertTrue(pl["waTasks"])
         self.assertEqual(pl["waNote"], "WhatsApp terbuka dengan pesan siap kirim. Kami tidak mengirim apa pun sendiri.")
+
+    def test_a_history_row_holds_counts_and_names_only(self):
+        hist = self.probe("/#history")["hist"]
+        self.assertEqual(hist["keys"], hist["cols"])
+        for word in ("rahasia", "ijo", "koyak", "saran khusus", "balasan khusus"):  # a result full of quotes, a suggestion and a draft: none of it is in the row
+            self.assertNotIn(word, hist["text"])
+        self.assertEqual(hist["theme"], "Colour vs photo")
+        self.assertEqual(hist["product"], 150)
+        self.assertEqual(hist["counts"], [3, 1, 1, 0, 1])
+        self.assertIsNone(hist["oddTheme"])  # only the fixed theme names
+        self.assertIsNone(hist["noGroup"])
+        self.assertEqual(hist["days"], 14)
+        self.assertEqual(hist["hidden"], [True, True])  # no account here: no Riwayat anywhere
+        self.assertTrue(hist["tasksLink"])
+        self.assertTrue(hist["noScreen"])
 
     def test_whatsapp_message_is_short_plain_and_hidden_when_there_is_nothing_to_send(self):
         wa = self.probe("/#wa")["wa"]

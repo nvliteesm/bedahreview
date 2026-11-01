@@ -213,7 +213,7 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 .gate-links { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
 .gate-links a { color: var(--accent); font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
 @media (min-width: 900px) { .gate { padding-top: 56px; } .gate-card { padding: 32px; box-shadow: var(--shadow); } }
-main, #view-results, #view-fixes, .panel, .stack { grid-template-columns: minmax(0, 1fr); }  /* one column that never grows past its box, even for a long product name */
+main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-columns: minmax(0, 1fr); }  /* one column that never grows past its box, even for a long product name */
 .start { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--accent-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
 .start > div { flex: 1 1 220px; min-width: 0; display: grid; gap: 2px; }
 .start .eb { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
@@ -562,7 +562,8 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 .sumgrid, .tasksgrid { display: grid; gap: 14px; }
 
 /* Tugas: open steps first, then the fixes being watched */
-#view-fixes { gap: 14px !important; }
+#view-fixes, #view-history { gap: 14px !important; }
+#view-history .back { justify-self: start; }
 .tasks-h { display: grid; gap: 2px; } .tasks-h h2 { font-size: 23px; line-height: 1.25; }
 .task { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 60px; padding: 8px 12px; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .task .k { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--accent); }
@@ -670,7 +671,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
   :root { --bg: #fff; --surface: #fff; --ink: #000; --muted: #333; --line: #bbb; }
   .topbar, .bottombar, #view-input, .board, .copy, #print, #plan, .stickyfoot, .res-tools, #sheet .scrim, .sheet-hd .xbtn { display: none !important; }
   #sheet, #sheet .sheet-box { position: static !important; transform: none !important; max-height: none !important; width: auto !important; box-shadow: none !important; }
-  #sheet[hidden] { display: block !important; } #sheet .sheet-hd, #sheet-extra, #view-plan, #view-fixes, .toast2 { display: none !important; }
+  #sheet[hidden] { display: block !important; } #sheet .sheet-hd, #sheet-extra, #view-plan, #view-fixes, #view-history, .toast2 { display: none !important; }
   .panel[hidden] { display: grid !important; }
   .card, .draft { break-inside: avoid; }
   main { max-width: none; padding-bottom: 0; }
@@ -695,6 +696,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
         <div class="acct-menu" id="acct-menu" hidden>
           <div class="acct-who"><span class="small muted" data-i18n="acctAs"></span><b id="acct-email"></b></div>
           <button class="mitem m-only" id="acct-fixes" type="button"></button>
+          <button class="mitem" id="acct-history" type="button" data-i18n="histTitle" hidden></button>
           <div id="logout-row" hidden><button class="mitem" id="logout" type="button" data-i18n="logout"></button></div>
           <button class="mitem" id="acct-theme" type="button"></button>
           <a class="mitem" href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a>
@@ -887,7 +889,8 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
   <section id="view-fixes" hidden aria-labelledby="fixes-h" style="display:grid;gap:14px">
     <button class="back dsk i" id="fixes-back" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span data-i18n="back"></span></button>
     <div class="res-head" style="align-items:flex-end;flex-wrap:wrap">
-      <div class="tasks-h"><h2 id="fixes-h" tabindex="-1" data-i18n="fixesTitle"></h2><p class="small muted" id="tasks-sub"></p></div>
+      <div class="tasks-h"><h2 id="fixes-h" tabindex="-1" data-i18n="fixesTitle"></h2><p class="small muted" id="tasks-sub"></p>
+        <button class="linkbtn" id="tasks-history" type="button" hidden><span data-i18n="histTitle"></span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div>
       <div class="row dsk f" id="tasks-filter" role="group"></div>
     </div>
     <div id="tasks-body" style="display:grid;gap:14px"></div>
@@ -906,6 +909,13 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
       </details>
       <p class="fnote"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="fixesWarn"></span></p>
     </div>
+  </section>
+
+  <!-- Riwayat: a summary of each analysis in the last 14 days, read from the account (signed-in sellers only) -->
+  <section id="view-history" hidden aria-labelledby="history-h" style="display:grid;gap:14px">
+    <button class="back i" id="history-back" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span data-i18n="back"></span></button>
+    <div class="tasks-h"><h2 id="history-h" tabindex="-1" data-i18n="histTitle"></h2><p class="small muted" data-i18n="histSub"></p></div>
+    <div id="history-body" class="stack"></div>
   </section>
 
   <!-- the three steps of today's plan, then the summary -->
@@ -1098,7 +1108,7 @@ const TEXT = {
     gErrShop: "Tautan toko harus diawali https://", gErrOauth: "Masuk dengan Google dibatalkan atau gagal. Coba lagi.",
     exampleNote: "Ini contoh dengan ulasan rekaan, bukan data nyata. Masuk untuk membedah ulasanmu sendiri.",
     privLink: "Kebijakan privasi", termsLink: "Syarat penggunaan", agreePre: "Dengan masuk, kamu setuju dengan", agreeAnd: "dan", delBtn: "Hapus akun dan data saya", delTitle: "Hapus akun dan semua datamu?",
-    delBody: "Ini menghapus akunmu, profilmu, catatan pemakaianmu, dan daftar perbaikanmu (termasuk nama produk dan catatan) di server kami, serta salinannya di perangkat ini. Tidak bisa dibatalkan.",
+    delBody: "Ini menghapus akunmu, profilmu, catatan pemakaianmu, daftar perbaikanmu (termasuk nama produk dan catatan), dan riwayat analisismu di server kami, serta salinannya di perangkat ini. Tidak bisa dibatalkan.",
     delConfirm: "Ya, hapus semuanya", delCancel: "Batal", delDeleting: "Menghapus…", delErr: "Tidak bisa menghapus akun sekarang. Coba lagi sebentar lagi.",
     delUnavailable: "Penghapusan akun belum tersedia di server ini.", gDeleted: "Akunmu dan semua datanya sudah dihapus.",
     acctMenu: "Akun", acctAs: "Masuk sebagai", acctCode: "Kode akses penguji",
@@ -1137,6 +1147,8 @@ const TEXT = {
     tasksSub: "Langkah yang belum selesai dan perbaikan yang sedang dipantau.", tasksSubAll: "Langkah yang belum selesai dan perbaikan yang sedang dipantau, untuk semua produkmu.",
     today: "Hari ini · %s", watched: "Dipantau · %s", sched: "Jadwal cek", schedToday: "Hari ini", schedNext: "Berikutnya", schedNextP: "Tanggal cek muncul di sini setelah kamu mencatat perbaikan.",
     dueChip: "Waktunya cek", loggedOn: "%s · dicatat %s", reanalyse: "Bedah ulasan terbaru", skippedNote: "Langkah yang dilewati tetap di sini sampai kamu kerjakan.", noneToday: "Tidak ada langkah yang tersisa.",
+    histTitle: "Riwayat", histSub: "Riwayat hanya menyimpan ringkasan, bukan isi ulasan. Dihapus otomatis setelah 14 hari.", histEmpty: "Belum ada riwayat. Bedah ulasan pertamamu akan muncul di sini.",
+    histCounts: "%s ulasan", histTop: "Keluhan terbanyak: %s", histAgain: "Bedah lagi", histLoading: "Memuat…", histDown: "Riwayat tidak bisa dibuka sekarang. Coba lagi nanti.",
     tasksEmpty: "Belum ada tugas. Bedah ulasan produk untuk mulai.", tasksStart: "Bedah ulasan", tasksSignT: "Masuk untuk menyimpan tugasmu", tasksSignP: "Perbaikan dan tanggal cekmu tersimpan di akunmu, jadi tidak hilang saat browser ditutup.",
     later: "Nanti saja", allProducts: "Semua produk", open: "Buka", goneNote: "Hasil analisis ini sudah tidak ada di perangkat ini. Bedah ulasan lagi untuk melanjutkan.", dismiss: "Hapus dari Tugas", noProductName: "Ulasan yang ditempel",
     // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
@@ -1271,7 +1283,7 @@ const TEXT = {
     gErrShop: "The shop link must start with https://", gErrOauth: "Google sign-in was cancelled or failed. Try again.",
     exampleNote: "This is an example with made-up reviews, not real data. Sign in to analyse your own reviews.",
     privLink: "Privacy policy", termsLink: "Terms of use", agreePre: "By signing in you agree to the", agreeAnd: "and the", delBtn: "Delete my account and data", delTitle: "Delete your account and all your data?",
-    delBody: "This deletes your account, your profile, your usage records and your fixes list (including product names and notes) on our server, and the copy on this device. It cannot be undone.",
+    delBody: "This deletes your account, your profile, your usage records, your fixes list (including product names and notes) and your analysis history on our server, and the copy on this device. It cannot be undone.",
     delConfirm: "Yes, delete everything", delCancel: "Cancel", delDeleting: "Deleting…", delErr: "The account could not be deleted right now. Try again in a moment.",
     delUnavailable: "Deleting an account is not available on this server.", gDeleted: "Your account and all your data have been deleted.",
     acctMenu: "Account", acctAs: "Signed in as", acctCode: "Tester access code",
@@ -1309,6 +1321,8 @@ const TEXT = {
     tasksSub: "Open steps and the fixes being tracked.", tasksSubAll: "Open steps and the fixes being tracked, for all your products.",
     today: "Today · %s", watched: "Tracked · %s", sched: "Check schedule", schedToday: "Today", schedNext: "Next", schedNextP: "Check dates show here once you log a fix.",
     dueChip: "Time to check", loggedOn: "%s · logged %s", reanalyse: "Analyse the latest reviews", skippedNote: "Skipped steps stay here until you do them.", noneToday: "No steps left.",
+    histTitle: "History", histSub: "History keeps only a summary, never the review text. It is deleted automatically after 14 days.", histEmpty: "No history yet. Your first analysis will show up here.",
+    histCounts: "%s reviews", histTop: "Top complaint: %s", histAgain: "Analyse again", histLoading: "Loading…", histDown: "History cannot be opened right now. Try again later.",
     tasksEmpty: "No tasks yet. Analyse a product's reviews to start.", tasksStart: "Check reviews", tasksSignT: "Sign in to keep your tasks", tasksSignP: "Your fixes and check dates are saved in your account, so they are not lost when the browser closes.",
     later: "Not now", allProducts: "All products", open: "Open", goneNote: "This analysis is no longer on this device. Analyse the reviews again to carry on.", dismiss: "Remove from Tasks", noProductName: "Pasted reviews",
   },
@@ -1415,6 +1429,7 @@ function applyLang() {
   $("legend").replaceChildren(...["fix", "fight", "ignore", "keep"].map((k) => h("p", {}, h("b", { class: "lg-" + k, text: tr(k) }), tr("legend" + k[0].toUpperCase() + k.slice(1)))));
   themeLabel(); renderFixBadge(); renderGate(); renderAccount(); setQuota(lastQuota);
   if (currentView === "fixes") renderFixes();
+  if (currentView === "history") renderHistory();
   if (!$("run").disabled) $("run").textContent = tr("run");
   syncCount(); syncShopee();
   if (lastData) render(lastData, false); else renderRival();
@@ -1835,6 +1850,60 @@ async function leaveWithFixes() {  // on "Keluar": save what is pending, then cl
   if (fixSync.state === "ok" && !pending) { memFixes = []; memOnly = false; try { localStorage.removeItem(FIX_KEY); } catch (e) { /* ignore */ } setFixOwner(""); }
   memPlans = []; try { localStorage.removeItem(PLAN_KEY); } catch (e) { /* ignore */ }  // today's steps live in this browser only: not for the next person on a shared phone
 }
+/* ---------- Riwayat: a summary of each analysis, kept 14 days in the account ----------
+   One row per analysis by a signed-in seller: the date, the product name, the number of reviews, the four group counts and the top complaint's
+   theme name. Never review text, quotes, drafts or AI suggestions. Saved from this page with the seller's own sign-in, like the fixes list; a
+   failure is never shown and never stops the analysis. The seller's rows older than 14 days are deleted whenever Riwayat is opened or a row is saved. */
+const HISTORY_DAYS = 14, HISTORY_COLS = ["user_id", "product", "reviews", "fix_n", "fight_n", "ignore_n", "keep_n", "top_theme"];  // the columns of the history table, besides id and created_at
+const historySaved = new Set();  // reviews already saved from this page, so drawing the result again never saves twice
+let historyRows, viewBeforeHistory = "input";  // rows: undefined while loading, null when they could not be read
+const hasAccount = () => !!(sb && signedIn && userId);
+const histInt = (n) => (Number.isInteger(n) && n >= 0 && n <= 1000 ? n : 0);
+function historyRow(data, counts, uid) {  // exactly HISTORY_COLS, built only from counts, the product name and a fixed theme name
+  const src = data.source || {}, top = (data.groups || [])[0];
+  return { user_id: uid, product: fxStr(src.title, 150), reviews: histInt(data.reviews), fix_n: histInt(counts.fix), fight_n: histInt(counts.fight), ignore_n: histInt(counts.ignore), keep_n: histInt(counts.keep),
+    top_theme: top && Object.prototype.hasOwnProperty.call(THEME_ID, top.theme) ? top.theme : null };
+}
+const historyCutoff = () => new Date(Date.now() - HISTORY_DAYS * 864e5).toISOString();
+async function pruneHistory() { try { await withTimeout(sb.from("history").delete().lt("created_at", historyCutoff()), 8000); } catch (e) { /* tried again next time */ } }
+async function saveHistory(data, counts) {
+  if (!hasAccount() || !data || data.example || !data.items) return;
+  const sig = reviewSig(data.items);
+  if (historySaved.has(sig)) return;
+  historySaved.add(sig);
+  try { await withTimeout(sb.from("history").insert(historyRow(data, counts, userId)), 8000); } catch (e) { /* a summary is an extra: say nothing */ }
+  await pruneHistory();
+}
+async function openHistory() {
+  if (!hasAccount()) return;
+  if (currentView !== "history") viewBeforeHistory = currentView;
+  track("history_opened");
+  closeSheet(); historyRows = undefined; renderHistory(); show("history"); toTop(); $("history-h").focus({ preventScroll: true });
+  await pruneHistory();
+  let rows = null;
+  try {
+    const { data, error } = await withTimeout(sb.from("history").select(HISTORY_COLS.slice(1).concat("created_at").join(",")).gte("created_at", historyCutoff()).order("created_at", { ascending: false }).limit(200), 8000);
+    if (!error) rows = Array.isArray(data) ? data : [];
+  } catch (e) { /* says so below */ }
+  historyRows = rows;
+  if (currentView === "history") renderHistory();
+}
+function historyCard(r) {  // "1 Nov · Kaos Boxy Retro" / "10 ulasan: 3 Perbaiki, 2 Tanggapi" / "Keluhan terbanyak: …" / Bedah lagi
+  const day = new Date(r.created_at);
+  const parts = [["fix", r.fix_n], ["fight", r.fight_n], ["keep", r.keep_n], ["ignore", r.ignore_n]].filter(([, n]) => n > 0).map(([k, n]) => n + " " + tr(k));
+  return h("article", { class: "trk hist" },
+    h("p", { class: "act", text: (isNaN(day) ? "" : fmtDayShort(isoDay(day)) + " · ") + (r.product || tr("fixNoProduct")) }),
+    h("p", { text: tr("histCounts", r.reviews) + (parts.length ? ": " + parts.join(", ") : "") }),
+    r.top_theme ? h("p", { class: "small muted", text: tr("histTop", themeName(r.top_theme)) }) : null,
+    h("button", { class: "btn ghost", type: "button", text: tr("histAgain"), onclick: () => reanalyse("", r.product) }));  // only the summary is kept, so this starts a new analysis
+}
+function renderHistory() {
+  const body = $("history-body");
+  if (historyRows === undefined) body.replaceChildren(h("p", { class: "small muted", text: tr("histLoading") }));
+  else if (historyRows === null) body.replaceChildren(h("div", { class: "callout warn", role: "status", text: tr("histDown") }));
+  else if (!historyRows.length) body.replaceChildren(h("div", { class: "empty2" }, h("p", { text: tr("histEmpty") }), h("button", { class: "btn primary", type: "button", text: tr("tasksStart"), onclick: () => { show("input"); toTop(); } })));
+  else body.replaceChildren(...historyRows.map(historyCard));
+}
 let currentView = "input", viewBeforeFixes = "input", checkerView = "input", lastChanged = [];
 function openRivals(fromResults) {  // from the results button (product already filled in) or the bottom bar; a wide screen already shows the section
   if (fromResults && lastData) { const src = lastData.source || {}; if (src.kind !== "url" && src.title && !rivalForm.name) rivalForm.name = src.title; }
@@ -1931,6 +2000,7 @@ function renderFixes(message) {  // the Tugas screen
   $("fixes-nostore").hidden = fixStorageOk;
   $("tasks-fixes").hidden = visitorNow;
   $("fixes-more").hidden = !!(sb && signedIn && userId);  // the file backup is for people without an account
+  $("tasks-history").hidden = !hasAccount();
   fixesListEl.replaceChildren(...(fixes.length ? fixes.map(fixItem) : [h("p", { class: "small muted", text: tr("fixesEmpty") })]));
   const msg = $("fixes-msg"); msg.textContent = message || ""; msg.hidden = !message;
   if (visitorNow) { $("tasks-body").replaceChildren(signBox("tasksSignT", "tasksSignP", false)); return; }
@@ -2402,6 +2472,7 @@ function render(data, fresh) {
     if (out.changed.length) saveFixes(out.fixes);
     feedbackState = { answer: null, sent: false, comment: "", error: "" };
     track("analysed", { reviews: Math.min(data.reviews, 50), source: src.kind === "url" ? "link" : "paste", lang });
+    saveHistory(data, counts);
   }
   const notes = [];
   if (lastChanged.length) {
@@ -2730,27 +2801,28 @@ desktopQuery.addEventListener("change", () => {  // crossing 900px: the plan, th
 });
 
 /* ---------- views ---------- */
-const VIEWS = { input: "view-input", loading: "view-loading", results: "view-results", fixes: "view-fixes", plan: "view-plan" };
+const VIEWS = { input: "view-input", loading: "view-loading", results: "view-results", fixes: "view-fixes", plan: "view-plan", history: "view-history" };
 function show(view) {
   const before = currentView;
   currentView = view;
-  if (view !== "rivals" && view !== "fixes") checkerView = view;  // where the Bedah ulasan tab goes back to
+  const tasks = view === "fixes" || view === "history";  // Riwayat belongs with Tugas
+  if (view !== "rivals" && !tasks) checkerView = view;  // where the Bedah ulasan tab goes back to
   $("workspace").dataset.section = view === "rivals" ? "rivals" : "checker";  // on a phone the two sections take turns; a wide screen shows both
-  $("workspace").classList.toggle("tasks-full", view === "fixes");  // a wide screen: Tugas takes the whole width
+  $("workspace").classList.toggle("tasks-full", tasks);  // a wide screen: Tugas takes the whole width
   for (const [v, id] of Object.entries(VIEWS)) $(id).hidden = view !== v;
   $("hero").hidden = view !== "input";
   $("view-steps").hidden = view !== "input";
   $("pchip").hidden = !(lastData && (view === "results" || view === "plan")); $("print-d").hidden = view !== "results";
   $("back-results").hidden = !(lastData && view === "input");
-  $("nav-check").setAttribute("aria-current", view === "rivals" || view === "fixes" ? "false" : "page");
-  $("nav-tasks").setAttribute("aria-current", view === "fixes" ? "page" : "false");
+  $("nav-check").setAttribute("aria-current", view === "rivals" || tasks ? "false" : "page");
+  $("nav-tasks").setAttribute("aria-current", tasks ? "page" : "false");
   $("nav-rivals").setAttribute("aria-current", view === "rivals" ? "page" : "false");
   $("ptab-mine").setAttribute("aria-current", view === "rivals" ? "false" : "page"); $("ptab-rivals").setAttribute("aria-current", view === "rivals" ? "page" : "false");
-  $("ptabs").hidden = view === "fixes";
-  $("fixes-btn").classList.toggle("on", view === "fixes");
+  $("ptabs").hidden = tasks;
+  $("fixes-btn").classList.toggle("on", tasks);
   if (before !== view && view !== "plan") animateIn(view === "rivals" ? $("feature2") : $(VIEWS[view]));  // a new screen rises in; the steps slide sideways instead
 }
-$("nav-check").addEventListener("click", () => { show(currentView === "rivals" || currentView === "fixes" ? (checkerView === "loading" ? "input" : checkerView) : currentView); toTop(); });
+$("nav-check").addEventListener("click", () => { show(currentView === "rivals" || currentView === "fixes" || currentView === "history" ? (checkerView === "loading" ? "input" : checkerView) : currentView); toTop(); });
 $("nav-rivals").addEventListener("click", () => openRivals(false));
 $("nav-tasks").addEventListener("click", () => openFixes());
 $("ptab-mine").addEventListener("click", () => $("nav-check").click());
@@ -3015,7 +3087,7 @@ function unlockFree() {  // just signed in: show the free analysis in full, and 
   try { pending = JSON.parse(sessionStorage.getItem(PENDING_KEY) || "null"); } catch (e) { /* nothing waiting */ }
   dropPending();
   if (pending && pending.free && Array.isArray(pending.items)) render(pending, true);  // back from Google: the page was reloaded
-  else if (freeLocked && lastData) { setLocked(false); track("analysed", { reviews: Math.min(lastData.reviews, 50), source: (lastData.source || {}).kind === "url" ? "link" : "paste", lang }); show("results"); $("results-h").focus({ preventScroll: true }); }
+  else if (freeLocked && lastData) { setLocked(false); track("analysed", { reviews: Math.min(lastData.reviews, 50), source: (lastData.source || {}).kind === "url" ? "link" : "paste", lang }); saveHistory(lastData, lastCounts); show("results"); $("results-h").focus({ preventScroll: true }); }
   else return;
   track("free_unlocked");
 }
@@ -3071,6 +3143,7 @@ function renderAccount() {  // the header shows "Masuk" to a visitor and the acc
   $("acct-email").textContent = userEmail || (userId ? "" : tr("acctCode"));  // an access-code tester has no email to show
   $("acct-initial").textContent = (userEmail || (userId ? "?" : "#")).charAt(0);
   $("delete-area").hidden = !(sb && signedIn && userId && cfgCanDelete);
+  $("acct-history").hidden = !hasAccount();  // Riwayat lives in the account: nothing to show without one
   if (!on) setMenu(false);
   renderRival();  // the competitor buttons say "sign in" to a visitor
 }
@@ -3086,6 +3159,9 @@ document.addEventListener("click", (e) => { if (!$("acct-menu").hidden && !$("ac
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("acct-menu").hidden) { setMenu(false); $("acct-btn").focus(); } });
 $("acct-theme").addEventListener("click", () => $("theme").click());
 $("acct-fixes").addEventListener("click", () => { setMenu(false); $("fixes-btn").click(); });
+$("acct-history").addEventListener("click", () => { setMenu(false); openHistory(); });
+$("tasks-history").addEventListener("click", () => openHistory());
+$("history-back").addEventListener("click", () => { const v = viewBeforeHistory; show(v === "loading" || v === "history" || ((v === "results" || v === "plan") && !lastData) ? "input" : v); toTop(); });
 function gateInfo(msg) { $("g-info").textContent = msg || ""; $("g-info").hidden = !msg; }
 function fillSelect(sel, values, label) {
   const keep = sel.value;

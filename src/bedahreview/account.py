@@ -1,6 +1,6 @@
 """Delete a person's account and everything saved under it. Server side only: it needs the secret key.
 
-The order matters. First the rows saved under the account (events, fixes, profile) are deleted one table at a time, so they are gone even if a
+The order matters. First the rows saved under the account (events, fixes, history, profile) are deleted one table at a time, so they are gone even if a
 foreign key were ever missing; then the sign-in account itself is deleted through Supabase's admin side. If the first step fails nothing else
 happens and the person can try again; if the last step fails the rows are already gone and a retry finishes the job. The secret key is only
 ever sent to Supabase: never logged, never in a reply.
@@ -14,7 +14,7 @@ import urllib.request
 from typing import Callable, Dict, Optional
 
 UUID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")  # used with fullmatch: "$" would let a trailing newline through
-TABLES = ("events", "fixes", "profiles")  # every table that holds rows under a user_id
+TABLES = ("events", "fixes", "history", "profiles")  # every table that holds rows under a user_id
 TIMEOUT_SECS = 10
 
 
