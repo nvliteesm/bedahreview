@@ -376,6 +376,21 @@ class SchemaTests(unittest.TestCase):
         self.assertIn("< 250", self.SQL)  # a ceiling a little above the page's 200
         self.assertNotRegex(self.SQL, r"fixes[^;]*to\s+anon")
 
+    def test_no_policy_reads_its_own_table(self):
+        # Postgres refuses such a policy at run time ("infinite recursion detected in policy"): every insert failed live on 2026-11-02
+        policies = re.findall(r"create policy \w+ on public\.(\w+) (.*?);", self.SQL, re.S)
+        self.assertEqual(len(policies), 11)
+        for table, body in policies:
+            self.assertNotRegex(body, r"\bfrom\s+public\.%s\b" % table, table)
+        # the ceilings count through owner-run functions that see only the caller's rows, outside the exposed schema
+        for fn, table in (("my_fix_count", "fixes"), ("my_history_count", "history")):
+            body = re.search(r"create or replace function private\.%s\(\) returns bigint language sql stable security definer set search_path = '' as \$\$(.*?)\$\$;" % fn, self.SQL, re.S)
+            self.assertIsNotNone(body, fn)
+            self.assertIn("from public.%s where user_id = (select auth.uid())" % table, body.group(1))
+            self.assertIn("revoke all on function private.%s() from public, anon;" % fn, self.SQL)
+            self.assertIn("(select private.%s())" % fn, self.SQL)
+        self.assertLess(self.SQL.index("create or replace function private.my_fix_count"), self.SQL.index("create policy fixes_insert_own"))  # made before a policy names it
+
     def test_the_secret_key_is_only_ever_named_in_server_files(self):
         static = ROOT / "src" / "bedahreview" / "static"
         ours = [p for p in static.rglob("*") if p.is_file() and p.suffix in (".html", ".js", ".webmanifest") and "vendor" not in p.parts]  # the pinned library only mentions the prefix, it holds no key

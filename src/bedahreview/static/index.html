@@ -1116,7 +1116,7 @@ const TEXT = {
     unlockEmail: "Pakai email saja", unlockNote: "Tanpa kata sandi. Hasil ini tetap ada setelah kamu masuk.",
     gFreeUsed: "Analisis gratismu sudah terpakai. Masuk untuk lanjut, tetap gratis.",
     fixesSubAccount: "Perbaikan disimpan di akunmu (nama produk, tautan, catatanmu, dan tanggal cek) supaya bisa dibuka dari HP lain. Jangan menulis nama orang.",
-    syncOk: "Tersimpan di akunmu.", syncDown: "Riwayat sedang tidak tersedia. Catatanmu tetap tersimpan di perangkat ini dan akan disimpan ke akunmu nanti.",
+    syncOk: "Tersimpan di akunmu.", syncDown: "Akunmu sedang tidak bisa dihubungi. Catatanmu tetap tersimpan di perangkat ini dan akan disimpan ke akunmu nanti.",
     syncOff: "Masuk agar catatanmu tersimpan di akunmu dan bisa dibuka dari HP lain.", fixNoteReview: "Catatanmu tampak memuat teks ulasan. Tulis dengan kata-katamu sendiri.",
     limitDaily: "Batas harian tercapai: %s analisis per hari. Coba lagi besok (reset tengah malam WIB).", quotaLeft: "Sisa analisis hari ini: %s dari %s.",
     e_model_quota: "Kuota atau kredit layanan AI sedang habis, jadi ulasan belum bisa dibedah. Coba lagi nanti.",
@@ -1291,7 +1291,7 @@ const TEXT = {
     unlockEmail: "Use email instead", unlockNote: "No password. These results stay here after you sign in.",
     gFreeUsed: "You have used your free analysis. Sign in to keep going; it is still free.",
     fixesSubAccount: "Fixes are saved in your account (the product name, link, your note and the check date) so it opens on another phone. Please do not write people's names.",
-    syncOk: "Saved in your account.", syncDown: "History is not available right now. Your notes stay saved on this device and will be saved to your account later.",
+    syncOk: "Saved in your account.", syncDown: "Your account can't be reached right now. Your notes stay saved on this device and will be saved to your account later.",
     syncOff: "Sign in so your notes are saved in your account and open on another phone.", fixNoteReview: "Your note looks like it contains review text. Write it in your own words.",
     limitDaily: "Daily limit reached: %s analyses a day. Try again tomorrow (resets at midnight Jakarta time).", quotaLeft: "Analyses left today: %s of %s.",
     e_model_quota: "The AI service has no quota or credit left right now, so the reviews cannot be analysed. Try again later.",
@@ -1681,7 +1681,7 @@ function applyAnalysis(fixes, key, items) {  // set the "after" counts on every 
     if (f.product !== key || f.before.sig === sig || (f.after && f.after.sig === sig)) return f;
     const now = countTheme(items, f.theme, f.variant);
     if (!now.total) return f;
-    const upd = Object.assign({}, f, { after: { count: now.count, total: now.total, sig, date: today() }, updated: Date.now() });
+    const upd = Object.assign({}, f, { after: { count: now.count, total: now.total, sig, date: today() }, updated: Date.now() }, isDue(f) ? { checkOn: addDays(CHECK_DAYS) } : {});  // the check-up is done: the next one is a week away
     changed.push(upd);
     return upd;
   });
@@ -1745,7 +1745,7 @@ function fixTracker(group) {  // under a Fix card: the "mark as fixed" action, o
   cancel.addEventListener("click", () => { form.hidden = true; open.hidden = false; });
   save.addEventListener("click", () => {
     if (noteCopiesReview(note.value)) { err.textContent = tr("fixNoteReview"); err.hidden = false; return; }
-    const ok = saveFixes(loadFixes().concat(makeFix(group, note.value, src, lastData.items)));
+    const ok = saveFixes(loadFixes().concat(makeFix(group, note.value, src, lastData.items, addDays(CHECK_DAYS))));  // the same week-away check date as step 1 of the plan
     if (!ok) { err.textContent = tr("fixSaveFail"); err.hidden = false; return; }
     track("fix_marked");
     render(lastData, false);
@@ -1895,7 +1895,10 @@ function historyCard(r) {  // "1 Nov · Kaos Boxy Retro" / "10 ulasan: 3 Perbaik
     h("p", { class: "act", text: (isNaN(day) ? "" : fmtDayShort(isoDay(day)) + " · ") + (r.product || tr("fixNoProduct")) }),
     h("p", { text: tr("histCounts", r.reviews) + (parts.length ? ": " + parts.join(", ") : "") }),
     r.top_theme ? h("p", { class: "small muted", text: tr("histTop", themeName(r.top_theme)) }) : null,
-    h("button", { class: "btn ghost", type: "button", text: tr("histAgain"), onclick: () => reanalyse("", r.product) }));  // only the summary is kept, so this starts a new analysis
+    h("button", { class: "btn ghost", type: "button", text: tr("histAgain"), onclick: () => {  // only the summary is kept, so this starts a new analysis; a fix on the same product may still know its link
+      const linked = r.product && loadFixes().find((f) => f.productLabel === r.product && /^https:\/\//.test(f.product));
+      reanalyse(linked ? linked.product : "", r.product);
+    } }));
 }
 function renderHistory() {
   const body = $("history-body");
@@ -1982,7 +1985,9 @@ function taskRow(t) {
 function reanalyse(product, label) {  // back to the start with the product filled in, so a check-up is one tap
   closeSheet(); show("input"); toTop();
   if (/^https:\/\//.test(product || "") && !$("intab-link").hidden) { selectInput("link", false); $("url").value = product; syncShopee(); $("url").focus(); }
-  else { selectInput("paste", false); if (label && !/^https?:/.test(label)) $("product").value = label; $("paste").focus(); }
+  else {  // fresh reviews only: the box never keeps the last product's reviews under this product's name
+    selectInput("paste", false); $("paste").value = ""; $("product").value = label && !/^https?:/.test(label) ? label : ""; $("shared-note").hidden = true; syncClear(); $("paste").focus();
+  }
 }
 function renderFixes(message) {  // the Tugas screen
   renderSyncStatus();
@@ -3087,7 +3092,7 @@ function unlockFree() {  // just signed in: show the free analysis in full, and 
   try { pending = JSON.parse(sessionStorage.getItem(PENDING_KEY) || "null"); } catch (e) { /* nothing waiting */ }
   dropPending();
   if (pending && pending.free && Array.isArray(pending.items)) render(pending, true);  // back from Google: the page was reloaded
-  else if (freeLocked && lastData) { setLocked(false); track("analysed", { reviews: Math.min(lastData.reviews, 50), source: (lastData.source || {}).kind === "url" ? "link" : "paste", lang }); saveHistory(lastData, lastCounts); show("results"); $("results-h").focus({ preventScroll: true }); }
+  else if (freeLocked && lastData) render(lastData, true);  // the email code: same tab, so draw it again in full, with today's plan
   else return;
   track("free_unlocked");
 }

@@ -281,7 +281,8 @@ window.__probe = (async () => {
     await until(() => vis("g-verify")); paste("123456");
     await until(() => vis("g-intro")); byId("g-skip").click();
     await until(() => !byId("workspace").hidden && !byId("view-results").hidden, 80);
-    out.after = { unlock: vis("unlock"), panels: shown("panels"), acct: vis("acct"), signinBtn: vis("signin-btn"), email: byId("acct-email").textContent, queued: eventQueue.map((e) => e.event) };
+    out.after = { unlock: vis("unlock"), panels: shown("panels"), acct: vis("acct"), signinBtn: vis("signin-btn"), email: byId("acct-email").textContent, queued: eventQueue.map((e) => e.event),
+      plan: !!byId("start").querySelector(".plan") };  // the email code keeps the tab: the result is drawn again with today's plan
   }
 
   if (hash === "#free-link") {
@@ -527,7 +528,7 @@ class SignInBrowserTests(unittest.TestCase):
     def test_when_supabase_is_unavailable_the_page_says_so_and_keeps_working(self):
         out = self.probe("#sync-down")
         self.assertEqual(out["state"], "down")
-        self.assertIn("Riwayat sedang tidak tersedia", out["status"])
+        self.assertIn("Akunmu sedang tidak bisa dihubungi", out["status"])
         self.assertIn("warn", out["statusWarn"])
         self.assertTrue(out["moreHidden"])  # signed in: the file backup is not offered
         self.assertTrue(out["saved"])
@@ -596,6 +597,8 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual(after["email"], "ani@example.com")  # shown in this browser's menu only
         self.assertIn("free_unlocked", after["queued"])
         self.assertIn("analysed", after["queued"])  # the free analysis now counts for the account
+        self.assertEqual(after["queued"].count("analysed"), 1)  # drawn again in full, but counted once
+        self.assertTrue(after["plan"])  # today's plan, not the locked one-line "Mulai dari sini"
 
     def test_a_visitor_can_use_a_product_link_for_the_free_analysis(self):
         out = self.probe("#free-link")

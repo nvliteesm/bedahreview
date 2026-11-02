@@ -90,6 +90,24 @@ create index if not exists history_user_created_idx on public.history (user_id, 
 -- create extension if not exists pg_cron;
 -- select cron.schedule('bedahreview-history-14d', '0 3 * * *', $$delete from public.history where created_at < now() - interval '14 days'$$);
 
+-- ---------- per-account ceilings, counted outside the policies ----------
+-- A policy may not read its own table: Postgres stops every insert with "infinite recursion detected in policy" (seen live on 2026-11-02).
+-- So the ceilings below count through these functions. They run as the table owner, count only the caller's own rows, return a number and
+-- nothing else, and sit in a schema the API does not expose.
+create schema if not exists private;
+revoke all on schema private from public, anon;
+grant usage on schema private to authenticated;
+create or replace function private.my_fix_count() returns bigint language sql stable security definer set search_path = '' as $$
+  select count(*) from public.fixes where user_id = (select auth.uid())
+$$;
+create or replace function private.my_history_count() returns bigint language sql stable security definer set search_path = '' as $$
+  select count(*) from public.history where user_id = (select auth.uid())
+$$;
+revoke all on function private.my_fix_count() from public, anon;
+revoke all on function private.my_history_count() from public, anon;
+grant execute on function private.my_fix_count() to authenticated;
+grant execute on function private.my_history_count() to authenticated;
+
 -- ---------- row level security: on, and each person sees only their own rows ----------
 alter table public.profiles enable row level security;
 alter table public.events   enable row level security;
@@ -113,7 +131,7 @@ drop policy if exists fixes_delete_own on public.fixes;
 create policy fixes_select_own on public.fixes for select to authenticated using (user_id = (select auth.uid()));
 -- a ceiling per account, a little above the page's 200 so that updating a full list still works (an upsert is checked as an insert first)
 create policy fixes_insert_own on public.fixes for insert to authenticated
-  with check (user_id = (select auth.uid()) and (select count(*) from public.fixes f where f.user_id = (select auth.uid())) < 250);
+  with check (user_id = (select auth.uid()) and (select private.my_fix_count()) < 250);
 create policy fixes_update_own on public.fixes for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 create policy fixes_delete_own on public.fixes for delete to authenticated using (user_id = (select auth.uid()));
 
@@ -123,7 +141,7 @@ drop policy if exists history_delete_own on public.history;
 create policy history_select_own on public.history for select to authenticated using (user_id = (select auth.uid()));
 -- a ceiling per account: far above 14 days of daily limits, so a broken page cannot fill the table
 create policy history_insert_own on public.history for insert to authenticated
-  with check (user_id = (select auth.uid()) and (select count(*) from public.history h where h.user_id = (select auth.uid())) < 500);
+  with check (user_id = (select auth.uid()) and (select private.my_history_count()) < 500);
 create policy history_delete_own on public.history for delete to authenticated using (user_id = (select auth.uid()));
 
 -- ---------- grants: start from nothing, then give only what is needed ----------

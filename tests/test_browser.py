@@ -220,6 +220,29 @@ window.__probe = (async () => {
     out.pl.afterDone = { ticked: !!done.querySelector(".sentrow .ok"), stored: JSON.parse(localStorage.getItem("bedahreview-fixes-v1"))[0].done, nothingToSend: !document.querySelector("#tasks-body .wabtn") };
   }
 
+  if (location.hash === "#checkup") {  // found by a click-path audit on 2026-11-02
+    const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
+    const runSample = async () => { document.getElementById("sample").click(); document.getElementById("run").click(); await until(() => !document.getElementById("view-results").hidden); };
+    // a check-up that has come: analysing new reviews of the product moves the next one a week on, so the card and the count do not stay "due" forever
+    saveFixes([{ id: "old1", theme: "Colour vs photo", variant: "", product: "kaos boxy retro", productLabel: "Kaos Boxy Retro", note: "ganti foto", date: addDays(-8), updated: 1,
+      before: { count: 3, total: 6, sig: "zz.6", date: "" }, after: null, checkOn: addDays(-1), done: false }]);
+    await runSample();
+    const f = loadFixes()[0];
+    out.cu = { after: !!f.after, checkOn: f.checkOn === addDays(7), due: isDue(f) };
+    // a fix marked in the Fix sheet gets the same week-away check date as step 1 of the plan
+    saveFixes([]); render(lastData, false);
+    document.getElementById("tab-fix").click();
+    [...document.querySelectorAll("#panel-fix .fixform > .btn")].find((b) => b.textContent === tr("fixMark")).click();
+    document.querySelector("#panel-fix .fixform .btn.primary").click();
+    out.cu.sheetCheckOn = loadFixes()[0].checkOn === addDays(7);
+    closeSheet();
+    // "Bedah lagi" for another product starts from an empty box, never the last product's reviews
+    reanalyse("", "Sepatu Lari");
+    out.cu.again = [document.getElementById("paste").value, document.getElementById("product").value, currentView];
+    reanalyse("", "");
+    out.cu.noName = document.getElementById("product").value;
+  }
+
   if (location.hash === "#history") {
     const items = [
       { id: "1", bucket: "fix", theme: "Colour vs photo", text: "rahasia satu ijo", proof_quote: "rahasia satu ijo", fix_suggestion_id: "saran khusus", likely_fake: { flag: false } },
@@ -560,6 +583,15 @@ class BrowserTests(unittest.TestCase):
                 self.assertNotIn(word, message)
         self.assertTrue(pl["waTasks"])
         self.assertEqual(pl["waNote"], "WhatsApp terbuka dengan pesan siap kirim. Kami tidak mengirim apa pun sendiri.")
+
+    def test_a_check_up_moves_on_and_every_new_fix_gets_a_check_date(self):
+        cu = self.probe("/#checkup")["cu"]
+        self.assertEqual(cu["after"], True)
+        self.assertEqual(cu["checkOn"], True)  # the next check-up is a week after this one
+        self.assertEqual(cu["due"], False)
+        self.assertEqual(cu["sheetCheckOn"], True)
+        self.assertEqual(cu["again"], ["", "Sepatu Lari", "input"])  # the old reviews are gone, the new name is in
+        self.assertEqual(cu["noName"], "")
 
     def test_a_history_row_holds_counts_and_names_only(self):
         hist = self.probe("/#history")["hist"]
