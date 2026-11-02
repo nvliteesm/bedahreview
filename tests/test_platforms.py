@@ -210,6 +210,13 @@ class FetchTests(unittest.TestCase):
         with self.assertRaises(FetchError) as ctx:
             r.fetch_reviews(TOKO, 5, "latest")
         self.assertIn("could not read", str(ctx.exception))
+        # an actor whose free runs are used up "succeeds" with nothing and a note: say the service is paused, not that the product has no reviews
+        r, client = router([])
+        call = client.actor
+        client.actor = lambda actor_id: type("A", (), {"call": lambda self, **kw: dict(call(actor_id).call(**kw), statusMessage="You have used all 10 free runs. Upgrade to a paid plan to continue.")})()
+        with self.assertRaises(FetchError) as ctx:
+            r.fetch_reviews(LAZADA, 5, "latest")
+        self.assertEqual(ctx.exception.code, "service_paused")
         r, _ = router([])
         with self.assertRaises(FetchError):
             r.fetch_reviews(LAZADA, 5, "latest")

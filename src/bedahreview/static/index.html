@@ -259,6 +259,12 @@ main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-
 .ownbox { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; min-width: 0; }
 .ownbox small { display: block; color: var(--muted); font-size: 0.78rem; }
 .ownbox span { min-width: 0; overflow-wrap: anywhere; }
+.ownbox b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }  /* a 150-character title reads as two lines, the rest in the tooltip */
+.ownbox > button { flex: none; white-space: nowrap; min-height: 44px; }
+.taskbox { display: grid; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.taskbox > .task { border: 0; }
+.taskpanel { display: grid; gap: 10px; padding: 4px 14px 14px; }
+.taskpanel .row { flex-wrap: wrap; align-items: center; }
 .btn.pill { border-radius: 999px; background: var(--surface); color: var(--accent); border-color: var(--line); min-height: 40px; padding: 0 16px; font-size: 0.88rem; }
 .cand.on { border: 2px solid var(--accent); padding: 11px; }
 .cand .chips { margin-top: 4px; }
@@ -809,9 +815,9 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
           <button class="btn ghost" id="shopee-paste" type="button" data-i18n="toPaste"></button>
         </div>
         <p class="hint" id="shopee-hint"><span data-i18n="shopeeHintA"></span> <b data-i18n="tabPaste"></b>.</p>
-        <p class="small muted dsk" data-i18n="linkHint"></p>
+        <p class="small muted dsk" id="link-hint"></p>
         <details class="opts xp">
-          <summary data-i18n="linkOpts"></summary>
+          <summary id="link-opts"></summary>
           <div class="row xp-body" style="display:flex">
             <label class="fld" for="mode" style="flex:1 1 150px"><span data-i18n="modeLabel"></span>
               <select id="mode"><option value="complaints" data-i18n="modeComplaints"></option><option value="latest" data-i18n="modeLatest"></option></select>
@@ -1047,7 +1053,7 @@ const TEXT = {
     step1T: "Salin & tempel ulasan", step1D: "dari Shopee, Tokopedia, atau aplikasi toko lain",
     step1TLink: "Tempel tautan atau ulasan", step1DLink: "tautan Tokopedia, TikTok Shop, Lazada, atau teks ulasannya", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
     step3T: "Kamu dapat rencana singkat", step3D: "plus draf balasan siap kirim",
-    linkHint: "Kami membaca hingga 10 ulasan terbaru yang berisi teks. Nama pembeli tidak disimpan.", linkOpts: "Atur jumlah ulasan", trySample: "Belum punya tautan? Coba dengan contoh",
+    linkHint: "Kami membaca hingga %s ulasan terbaru yang berisi teks (maksimal %s). Nama pembeli tidak disimpan.", linkOpts: "Atur jumlah ulasan (%s)", trySample: "Belum punya tautan? Coba dengan contoh",
     navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Bandingkan dengan pesaing",
     rivalWantLbl: "Berapa pesaing?", rivalExampleBtn: "Lihat contoh (gratis)", rivalExampleHead: "Contoh, bukan data nyata.",
     rivalExampleBody: "Angka dan kutipan di bawah dibuat untuk contoh. “Contoh Kaos Boxy” bukan produkmu: tidak ada toko atau pembeli sungguhan, dan tidak ada biaya.",
@@ -1150,7 +1156,9 @@ const TEXT = {
     histTitle: "Riwayat", histSub: "Riwayat hanya menyimpan ringkasan, bukan isi ulasan. Dihapus otomatis setelah 14 hari.", histEmpty: "Belum ada riwayat. Bedah ulasan pertamamu akan muncul di sini.",
     histCounts: "%s ulasan", histTop: "Keluhan terbanyak: %s", histAgain: "Bedah lagi", histLoading: "Memuat…", histDown: "Riwayat tidak bisa dibuka sekarang. Coba lagi nanti.",
     tasksEmpty: "Belum ada tugas. Bedah ulasan produk untuk mulai.", tasksStart: "Bedah ulasan", tasksSignT: "Masuk untuk menyimpan tugasmu", tasksSignP: "Perbaikan dan tanggal cekmu tersimpan di akunmu, jadi tidak hilang saat browser ditutup.",
-    later: "Nanti saja", allProducts: "Semua produk", open: "Buka", goneNote: "Hasil analisis ini sudah tidak ada di perangkat ini. Bedah ulasan lagi untuk melanjutkan.", dismiss: "Hapus dari Tugas", noProductName: "Ulasan yang ditempel",
+    later: "Nanti saja", allProducts: "Semua produk", open: "Buka", taskFixLbl: "Langkah perbaikanmu", taskFixP: "%s dari %s ulasan mengeluhkan ini. Tulis apa yang akan kamu ubah. Kami ingatkan untuk cek lagi seminggu lagi.", taskFixSave: "Simpan & pantau",
+    taskSent: "Sudah dibalas", taskAllSent: "Sudah kubalas semua", taskNoDrafts: "Draf balasan hanya ada selama hasil analisisnya masih terbuka. Sudah kamu balas di marketplace?",
+    taskLineDone: "Sudah ditambahkan", taskCopyLine: "Salin kalimat", taskNoLine: "Kalimat dari pujian pembeli hanya ada selama hasil analisisnya masih terbuka. Sudah kamu tambahkan ke deskripsi?", taskDone: "Tugas selesai.",dismiss: "Hapus dari Tugas", noProductName: "Ulasan yang ditempel",
     // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
     e_not_link: "Itu tidak terlihat seperti tautan.", e_link_https: "Tempel tautan https lengkap dari produk Tokopedia, Lazada, atau TikTok Shop.", e_not_product: "Itu tidak terlihat seperti tautan produk.",
     e_short_bad: "Tautan pendek itu tidak mengarah ke produk Tokopedia, Lazada, atau TikTok Shop.", e_short_open: "Tautan pendek itu tidak bisa dibuka. Buka produknya, lalu salin tautan lengkapnya.",
@@ -1158,7 +1166,7 @@ const TEXT = {
     e_lazada_link: "Buka halaman produk Lazada, lalu salin tautannya. Awalnya harus lazada.co.id/products/", e_tiktok_link: "Itu bukan tautan produk TikTok Shop.",
     e_tokopedia_link: "Buka halaman produk Tokopedia, lalu salin tautannya (berisi nama toko, lalu nama produk).", e_link_unsupported: "Tautan ini belum didukung. Tempel tautan produk Tokopedia, Lazada, atau TikTok Shop, atau tempel ulasannya.",
     e_fetch_slow: "Layanan pengambil ulasan terlalu lama.", e_fetch_failed: "Layanan pengambil ulasan tidak bisa membaca ulasan dari tautan itu.",
-    e_no_low: "Tidak ada ulasan bintang rendah yang berisi komentar untuk produk ini. Coba Ulasan terbaru.", e_no_reviews: "Tidak ada ulasan berisi komentar untuk produk ini.",
+    e_no_low: "Tidak ada ulasan bintang rendah yang berisi komentar untuk produk ini. Coba Ulasan terbaru.", e_no_reviews: "Tidak ada ulasan berisi komentar untuk produk ini.", e_service_paused: "Pengambil ulasan untuk platform ini sedang berhenti.",
     e_box_off: "Kotak tautan sedang tidak aktif.", e_no_title: "Nama produk belum ada, jadi pesaing tidak bisa dicari. Isi nama produknya.",
     e_search_platform: "Pencarian pesaing belum tersedia untuk platform ini.", e_pick_count: "Pilih 1 sampai 3 pesaing untuk dibandingkan.", e_pick_other: "Pilih pesaing selain produkmu sendiri.",
     e_suggest_failed: "Pencarian pesaing gagal.", e_compare_failed: "Perbandingan gagal. Coba lagi sebentar lagi.", e_too_many: "Terlalu banyak analisis dalam satu jam. Coba lagi nanti.",
@@ -1222,7 +1230,7 @@ const TEXT = {
     step1T: "Copy & paste your reviews", step1D: "from Shopee, Tokopedia or any shop app",
     step1TLink: "Paste a link or the reviews", step1DLink: "a Tokopedia, TikTok Shop or Lazada link, or the review text", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
     step3T: "You get a short plan", step3D: "plus reply drafts ready to send",
-    linkHint: "We read up to 10 of the newest reviews that have text. Buyer names are not saved.", linkOpts: "Set number of reviews", trySample: "No link yet? Try an example",
+    linkHint: "We read up to %s of the newest reviews that have text (at most %s). Buyer names are not saved.", linkOpts: "Set number of reviews (%s)", trySample: "No link yet? Try an example",
     navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Compare with competitors",
     rivalWantLbl: "How many competitors?", rivalExampleBtn: "See an example (free)", rivalExampleHead: "Example, not live data.",
     rivalExampleBody: "The numbers and quotes below were made up for this example. “Contoh Kaos Boxy” is not your product: no real shops or buyers, and no cost.",
@@ -1324,7 +1332,9 @@ const TEXT = {
     histTitle: "History", histSub: "History keeps only a summary, never the review text. It is deleted automatically after 14 days.", histEmpty: "No history yet. Your first analysis will show up here.",
     histCounts: "%s reviews", histTop: "Top complaint: %s", histAgain: "Analyse again", histLoading: "Loading…", histDown: "History cannot be opened right now. Try again later.",
     tasksEmpty: "No tasks yet. Analyse a product's reviews to start.", tasksStart: "Check reviews", tasksSignT: "Sign in to keep your tasks", tasksSignP: "Your fixes and check dates are saved in your account, so they are not lost when the browser closes.",
-    later: "Not now", allProducts: "All products", open: "Open", goneNote: "This analysis is no longer on this device. Analyse the reviews again to carry on.", dismiss: "Remove from Tasks", noProductName: "Pasted reviews",
+    later: "Not now", allProducts: "All products", open: "Open", taskFixLbl: "Your fix", taskFixP: "%s of %s reviews complain about this. Write what you will change. We remind you to check again in a week.", taskFixSave: "Save & track",
+    taskSent: "Replied", taskAllSent: "I replied to all", taskNoDrafts: "The reply drafts only exist while the analysis is still open. Did you reply on the marketplace?",
+    taskLineDone: "Added", taskCopyLine: "Copy the line", taskNoLine: "The line from buyer praise only exists while the analysis is still open. Did you add it to the description?", taskDone: "Task done.",dismiss: "Remove from Tasks", noProductName: "Pasted reviews",
   },
 };
 const THEME_ID = {
@@ -1431,11 +1441,18 @@ function applyLang() {
   if (currentView === "fixes") renderFixes();
   if (currentView === "history") renderHistory();
   if (!$("run").disabled) $("run").textContent = tr("run");
-  syncCount(); syncShopee();
+  syncCount(); syncShopee(); syncLimit();
   if (lastData) render(lastData, false); else renderRival();
   if (currentView === "plan") renderPlanView();
   if (!$("sheet").hidden && sheetBucket) sheetTitle();
 }
+function syncLimit() {  // the link box says how many reviews it will read: the seller's number (10 unless changed), never more than the server allows
+  const max = parseInt($("limit").max, 10) || 20, n = Math.max(1, Math.min(max, parseInt($("limit").value, 10) || 10));
+  $("link-hint").textContent = tr("linkHint", n, max); $("link-opts").textContent = tr("linkOpts", n);
+  return n;
+}
+$("limit").addEventListener("input", syncLimit);
+$("limit").addEventListener("change", () => { $("limit").value = syncLimit(); });
 $("lang").addEventListener("click", () => {
   lang = lang === "id" ? "en" : "id";
   try { localStorage.setItem("bedahreview-lang", lang); } catch (e) { /* ignore */ }
@@ -1624,6 +1641,12 @@ function renderFeedback() {
 const FIX_KEY = "bedahreview-fixes-v1", MAX_FIXES = 200, NOTE_MAX = 200, SMALL_SAMPLE = 10, MAX_IMPORT_BYTES = 500000, CHECK_DAYS = 7;
 let memFixes = [], fixStorageOk = true, memOnly = false;  // memOnly: the last save failed, so the in-memory list is newer than storage
 const fxStr = (s, max) => (typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, max) : "");
+function shortLabel(s, max) {  // marketplace titles run to 150 characters: lists show the start, cut at a word, and keep the full name in a tooltip
+  s = String(s || "").trim(); max = max || 44;
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max), sp = cut.lastIndexOf(" ");
+  return (sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s,.\-–·]+$/, "") + "…";
+}
 const fxInt = (n) => (Number.isInteger(n) && n >= 0 && n <= 100000 ? n : null);
 const fxDate = (s) => (typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "");
 function today() { const d = new Date(), p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
@@ -1892,7 +1915,7 @@ function historyCard(r) {  // "1 Nov · Kaos Boxy Retro" / "10 ulasan: 3 Perbaik
   const day = new Date(r.created_at);
   const parts = [["fix", r.fix_n], ["fight", r.fight_n], ["keep", r.keep_n], ["ignore", r.ignore_n]].filter(([, n]) => n > 0).map(([k, n]) => n + " " + tr(k));
   return h("article", { class: "trk hist" },
-    h("p", { class: "act", text: (isNaN(day) ? "" : fmtDayShort(isoDay(day)) + " · ") + (r.product || tr("fixNoProduct")) }),
+    h("p", { class: "act", title: r.product || null, text: (isNaN(day) ? "" : fmtDayShort(isoDay(day)) + " · ") + (shortLabel(r.product, 60) || tr("fixNoProduct")) }),
     h("p", { text: tr("histCounts", r.reviews) + (parts.length ? ": " + parts.join(", ") : "") }),
     r.top_theme ? h("p", { class: "small muted", text: tr("histTop", themeName(r.top_theme)) }) : null,
     h("button", { class: "btn ghost", type: "button", text: tr("histAgain"), onclick: () => {  // only the summary is kept, so this starts a new analysis; a fix on the same product may still know its link
@@ -1958,7 +1981,7 @@ function fixItem(f) {  // a fix being tracked: one sentence of what to do, one b
       renderFixes();
     });
     body.replaceChildren(...[h("p", { class: "act", lang: "id", text: fixAction(f) }), main,
-      h("p", { class: "small muted", text: [when, f.productLabel].filter(Boolean).join(" · ") }),
+      h("p", { class: "small muted", title: f.productLabel || null, text: [when, shortLabel(f.productLabel)].filter(Boolean).join(" · ") }),
       f.after ? trackLines(f) : null,  // the numbers only once there is something to compare; the "indicative, not proof" warning comes with them
       moreLink, more ? h("div", { class: "row" }, edit, del) : null].filter(Boolean));
   };
@@ -1976,11 +1999,20 @@ function signBox(titleKey, bodyKey, withLater) {  // the account is what keeps t
     withLater ? h("button", { class: "plain strong", type: "button", text: tr("later"), style: "justify-self:center;min-height:44px", onclick: () => closeSheet() }) : null);
 }
 function openSignDialog() { openDialog([signBox("tasksSignT", "tasksSignP", true)], "tasksSignT"); }
-function taskRow(t) {
-  const row = h("button", { class: "task", type: "button" }, h("span", { class: "k", "aria-hidden": "true" }),
-    h("span", { class: "t" }, h("b", { text: t.title }), h("span", { text: t.sub })), svgIcon(ICON_NEXT));
-  row.addEventListener("click", () => openTask(t));
-  return row;
+function taskRow(t) {  // one open step; a tap opens it right here
+  const open = taskOpen === taskKey(t);
+  const row = h("button", { class: "task", type: "button", "aria-expanded": open ? "true" : "false" }, h("span", { class: "k", "aria-hidden": "true" }),
+    h("span", { class: "t" }, h("b", { text: t.title }), h("span", { text: t.sub })), svgIcon([open ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"]));
+  row.addEventListener("click", () => { taskOpen = open ? "" : taskKey(t); renderFixes(); });
+  return open ? h("div", { class: "taskbox" }, row, taskPanel(t)) : row;
+}
+function clearInputs() { ["url", "paste", "product"].forEach((id) => { $(id).value = ""; }); $("shared-note").hidden = true; showError(""); setFallback(false); syncClear(); syncShopee(); }
+function startFresh() {  // "Bedah produk lain" at the end of a plan: an empty start, nothing of the last product left in the fields or the competitor panel
+  lastData = null; lastChanged = []; lastCounts = null;
+  rival = { step: "idle" }; rivalRun += 1; rivalForm = { url: "", name: "" };
+  clearInputs(); closeSheet(); renderRival(); renderFixBadge();
+  show("input"); toTop();
+  if (!$("in-link").hidden) $("url").focus(); else $("paste").focus();
 }
 function reanalyse(product, label) {  // back to the start with the product filled in, so a check-up is one tap
   closeSheet(); show("input"); toTop();
@@ -2000,7 +2032,7 @@ function renderFixes(message) {  // the Tugas screen
   const todo = steps.filter((t) => keep(t.plan.product));
   $("tasks-sub").textContent = tr(desktop() ? "tasksSubAll" : "tasksSub");
   $("tasks-filter").replaceChildren(...(products.length > 1 && !visitorNow ? [["", tr("allProducts")]].concat(products.slice(0, 4)).map(([k, label]) =>
-    h("button", { class: "btn pill", type: "button", "aria-pressed": taskFilter === k ? "true" : "false", style: taskFilter === k ? "background:var(--ink);color:var(--surface);border-color:var(--ink)" : "", text: label,
+    h("button", { class: "btn pill", type: "button", "aria-pressed": taskFilter === k ? "true" : "false", style: taskFilter === k ? "background:var(--ink);color:var(--surface);border-color:var(--ink)" : "", text: shortLabel(label, 32), title: label,
       onclick: () => { taskFilter = k; renderFixes(); } })) : []));
   $("fixes-nostore").hidden = fixStorageOk;
   $("tasks-fixes").hidden = visitorNow;
@@ -2026,7 +2058,7 @@ function renderFixes(message) {  // the Tugas screen
     h("section", { class: "stack", style: "align-content:start" }, h("p", { class: "eb", text: tr("watched", fixes.length) }), fixesListEl),
     h("section", { class: "stack col3 dsk", style: "align-content:start" }, h("p", { class: "eb", text: tr("sched") }),
       h("ul", { class: "sched" }, sched.map((f) => h("li", {}, h("b", { text: isDue(f) ? tr("schedToday") : fmtDay(f.checkOn) }),
-        h("span", { text: [themeName(f.theme), f.productLabel].filter(Boolean).join(" · ") }))),
+        h("span", { title: f.productLabel || null, text: [themeName(f.theme), shortLabel(f.productLabel, 36)].filter(Boolean).join(" · ") }))),
         h("li", {}, h("b", { text: tr("schedNext") }), h("span", { text: tr("schedNextP") }))))), waBlock(fixes)].filter(Boolean));
 }
 /* ---------- "Kirim ke WhatsApp": a plain-text list of fixes to do, which the seller sends themselves ----------
@@ -2084,7 +2116,8 @@ function cleanPlan(p) {
   const replies = {};
   if (p.replies && typeof p.replies === "object") for (const [k, v] of Object.entries(p.replies)) if (k.length <= 20 && (v === "sent" || v === "copied")) replies[k] = v;
   return { sig: p.sig, created, product: fxStr(p.product, 300), label: fxStr(p.label, 150), url: /^https:\/\//.test(p.url || "") ? fxStr(p.url, 300) : "", platform: fxStr(p.platform, 20),
-    fix, fight: ids(p.fight), keep: fxInt(p.keep) || 0, replies, line: ["copied", "done"].includes(p.line) ? p.line : "", dismissed: !!p.dismissed };
+    fix, fight: ids(p.fight), keep: fxInt(p.keep) || 0, replies, line: ["copied", "done"].includes(p.line) ? p.line : "", dismissed: !!p.dismissed,
+    skipped: (Array.isArray(p.skipped) ? p.skipped : []).filter((k) => ["fix", "fight", "keep"].includes(k)) };  // steps taken off the Tugas list
 }
 function loadPlans() {
   try { const raw = localStorage.getItem(PLAN_KEY); if (raw != null) { const list = JSON.parse(raw); memPlans = (Array.isArray(list) ? list : []).map(cleanPlan).filter(Boolean); } } catch (e) { /* the memory copy stands */ }
@@ -2132,20 +2165,72 @@ function openSteps() {  // the open steps of recent plans: the Tugas screen and 
   for (const p of loadPlans()) {
     if (p.dismissed) continue;
     for (const s of stepsOf(p)) {
-      if (s.done) continue;
+      if (s.done || p.skipped.includes(s.key)) continue;
       const left = s.key === "fight" ? p.fight.length - sentCount(p) : 1;
       const title = s.key === "fix" ? tr("s1", lowerTheme(p.fix.theme)) : s.key === "fight" ? tr("s2", left) : tr("s3");
-      const sub = [p.label || tr("noProductName"), s.key === "fight" ? tr("s2s", sentCount(p), p.fight.length) : null, tr("mins", left)].filter(Boolean).join(" · ");
+      const sub = [shortLabel(p.label) || tr("noProductName"), s.key === "fight" ? tr("s2s", sentCount(p), p.fight.length) : null, tr("mins", left)].filter(Boolean).join(" · ");
       out.push({ plan: p, step: s.key, title, sub, mins: left });
     }
   }
   return out.reverse();  // the newest plan first
 }
-function openTask(t) {  // the analysis is still on this page: go straight to the step; otherwise say so and offer a fresh analysis
-  if (lastData && !lastData.example && reviewSig(lastData.items) === t.plan.sig) { openStep(t.step); return; }
-  openDialog([h("p", { text: tr("goneNote") }),
-    h("button", { class: "btn primary", type: "button", text: tr("reanalyse"), onclick: () => reanalyse(t.plan.url || t.plan.product, t.plan.label) }),
-    h("button", { class: "btn ghost", type: "button", text: tr("dismiss"), onclick: () => { updatePlan(t.plan, { dismissed: true }); closeSheet(); renderFixes(); } })], "planH");
+/* A task on the Tugas screen opens in place and is finished there: it never sends the seller back into an analysis. When that analysis is still
+   on this page its drafts and the praise line are shown; otherwise the seller just says it is done (or takes it off the list). */
+let taskOpen = "";  // the open task: plan sig and step
+const taskKey = (t) => t.plan.sig + ":" + t.step;
+const planData = (p) => (lastData && !lastData.example && !freeLocked && reviewSig(lastData.items) === p.sig ? lastData : null);
+function fixFromPlan(p, note) {  // the same record as makeFix, from the counts the plan kept
+  return { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), theme: p.fix.theme, variant: p.fix.variant, note: fxStr(note, NOTE_MAX), date: today(), updated: Date.now(),
+    product: p.product, productLabel: fxStr(p.label || p.url, 150), before: { count: p.fix.n, total: p.fix.total, sig: p.sig, date: "" }, after: null, checkOn: addDays(CHECK_DAYS), done: false };
+}
+function taskPanel(t) {
+  const p = t.plan, data = planData(p);
+  const finish = (msg) => { taskOpen = ""; renderFixes(); showToast(msg || tr("taskDone")); };
+  const remove = h("button", { class: "plain", type: "button", text: tr("dismiss"), onclick: () => { updatePlan(p, { skipped: p.skipped.concat(t.step) }); taskOpen = ""; renderFixes(); } });
+  const err = h("div", { class: "callout warn", role: "alert", hidden: true });
+  const fail = (key) => { err.textContent = tr(key); err.hidden = false; };
+  if (t.step === "fix") {
+    const g = data && data.groups[0], byId = {};
+    if (data) data.items.forEach((it) => { byId[it.id] = it; });
+    const note = h("input", { type: "text", maxlength: String(NOTE_MAX), autocomplete: "off", placeholder: tr("oOwnPh"), "aria-label": tr("taskFixLbl") });
+    note.value = (g && g.ids.map((id) => (byId[id] || {}).fix_suggestion_id).find(Boolean)) || "";  // the AI's step when the analysis is still here; the seller can change it
+    const save = h("button", { class: "btn primary", type: "button", text: tr("taskFixSave") });
+    save.addEventListener("click", () => {
+      const text = note.value.trim();
+      if (!text) { fail("needOwn"); note.focus(); return; }
+      if (noteCopiesReview(text)) { fail("fixNoteReview"); note.focus(); return; }
+      if (!saveFixes(loadFixes().concat(fixFromPlan(p, text)))) { fail("fixSaveFail"); return; }
+      track("fix_marked");
+      finish(tr("savedToast", fmtDay(addDays(CHECK_DAYS))));
+    });
+    return h("div", { class: "taskpanel" }, h("p", { class: "small muted", text: tr("taskFixP", p.fix.n, p.fix.total) }), h("label", { class: "field" }, h("span", { text: tr("taskFixLbl") }), note),
+      h("p", { class: "checkline", text: tr("checkLine", fmtDayShort(addDays(CHECK_DAYS))) }), err, h("div", { class: "row" }, save, remove));
+  }
+  if (t.step === "fight") {
+    const left = p.fight.filter((id) => p.replies[id] !== "sent"), byId = {};
+    if (data) data.items.forEach((it) => { byId[String(it.id)] = it; });
+    const sent = (ids) => { const r = Object.assign({}, p.replies); ids.forEach((id) => { r[id] = "sent"; }); updatePlan(p, { replies: r }); };
+    const items = left.map((id) => byId[id]).filter((it) => it && replyText(it));
+    if (!items.length) {
+      return h("div", { class: "taskpanel" }, h("p", { class: "small muted", text: tr("taskNoDrafts") }),
+        h("div", { class: "row" }, h("button", { class: "btn primary", type: "button", text: tr("taskAllSent"), onclick: () => { sent(left); finish(); } }), remove));
+    }
+    return h("div", { class: "taskpanel" }, h("p", { class: "small muted", text: tr("aiShort") }), items.map((it) => {
+      const draftEl = h("p", { class: "pdraft", lang: "id", text: replyText(it) });
+      const copy = h("button", { class: "btn ghost", type: "button" }, copyIcon(), tr("copyOnly"));
+      copy.addEventListener("click", async () => { const ok = await copyPlain(replyText(it), draftEl); announce(ok ? tr("copiedAnn", tr("dPublic")) : tr("selectIt")); track("draft_copied", { kind: it.fight.public_reply ? "public" : "chat" }); });
+      const done = h("button", { class: "btn primary", type: "button", text: tr("taskSent"), onclick: () => { sent([String(it.id)]); if (left.length === 1) finish(); else renderFixes(); } });
+      return h("article", { class: "reply" }, h("span", { class: "chip star", style: "justify-self:start", text: reasonText(it) }), h("p", { class: "pquote fight", lang: "id", text: "“" + (it.proof_quote || "") + "”" }), draftEl, h("div", { class: "row" }, copy, done));
+    }), h("div", { class: "row" }, remove));
+  }
+  const line = data ? bestPraise(planParts(data).keep) : "";
+  const added = h("button", { class: "btn primary", type: "button", text: tr("taskLineDone"), onclick: () => { updatePlan(p, { line: "done" }); finish(); } });
+  if (!line) return h("div", { class: "taskpanel" }, h("p", { class: "small muted", text: tr("taskNoLine") }), h("div", { class: "row" }, added, remove));
+  const area = h("textarea", { class: "lineq", maxlength: "300", lang: "id", spellcheck: "false", "aria-label": tr("lineLbl") });
+  area.value = line;
+  const copy = h("button", { class: "btn ghost", type: "button" }, copyIcon(), tr("taskCopyLine"));
+  copy.addEventListener("click", async () => { const ok = await copyPlain(area.value, area); announce(ok ? tr("copiedAnn", tr("s3")) : tr("selectIt")); });
+  return h("div", { class: "taskpanel" }, h("p", { class: "small muted", text: tr("t3p", p.keep) }), area, h("div", { class: "row" }, copy, added, remove));
 }
 const fmtDayShort = (iso) => { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(lang === "id" ? "id-ID" : "en-GB", { day: "numeric", month: "short" }); };
 const ICON_OPEN = ["M14 4h6v6", "M20 4l-9 9", "M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"], ICON_TICK = ["M5 12l5 5 9-10"];
@@ -2352,7 +2437,7 @@ function summaryView(p) {  // an honest ending: what got done, what is left, and
       f ? h("div", { class: "stack col3", style: "align-content:start;gap:10px" }, h("p", { class: "eb", text: tr("tracked") }), trackedCard(f)) : null),
     waBlock(loadFixes().filter((x) => x.product === p.product)),
     h("div", { class: "row", style: "align-items:center;gap:12px" }, h("button", { class: "btn ghost", type: "button", text: tr("backRes2"), onclick: () => { show("results"); toTop(); } }),
-      h("button", { class: "plain strong", type: "button", text: tr("another"), onclick: () => { show("input"); toTop(); } })),
+      h("button", { class: "plain strong", type: "button", text: tr("another"), onclick: startFresh })),
   ];
 }
 
@@ -2619,10 +2704,10 @@ function rivalIdle() {
   if (own && !rival.other) {
     const find = h("button", { class: "btn primary", type: "button" }, tr(visitor() ? "rivalSignInBtn" : "rivalAskBtn"));
     find.addEventListener("click", () => rivalFind());
-    const other = h("button", { class: "btn pill", type: "button" }, tr("rivalOther"));
-    other.addEventListener("click", () => { rival = { step: "idle", other: true }; renderRival(); });
+    const other = h("button", { class: "plain strong", type: "button" }, tr("rivalOther"));
+    other.addEventListener("click", () => { rival = { step: "idle", other: true }; renderRival(); $("rival-url") && $("rival-url").focus(); });
     return h("div", { class: "rcard" }, noBoxNote(), h("h2", { text: tr("rivalAsk") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
-      h("div", { class: "ownbox" }, h("span", {}, h("small", { text: tr("rivalOwnLbl") }), h("b", { lang: "id", text: own.title || own.url }), " · " + platformName(own.url)), other),
+      h("div", { class: "ownbox" }, h("span", {}, h("small", { text: tr("rivalOwnLbl") + " · " + platformName(own.url) }), h("b", { lang: "id", title: own.title || own.url, text: own.title || own.url })), other),
       wantSelector(), find, h("p", { class: "small muted", text: tr("rivalFreeNote") }), exampleLink());
   }
   const url = h("input", { id: "rival-url", type: "url", inputmode: "url", autocomplete: "off", spellcheck: "false", placeholder: tr("linkPh") });
@@ -2832,8 +2917,8 @@ $("nav-rivals").addEventListener("click", () => openRivals(false));
 $("nav-tasks").addEventListener("click", () => openFixes());
 $("ptab-mine").addEventListener("click", () => $("nav-check").click());
 $("ptab-rivals").addEventListener("click", () => openRivals(false));
-$("new-mob").addEventListener("click", () => { show("input"); toTop(); });
-$("pchip-change").addEventListener("click", () => { show("input"); toTop(); });
+$("new-mob").addEventListener("click", () => { $("paste").value = ""; syncClear(); show("input"); toTop(); });  // new reviews of the same product: the old ones go, the name and link stay so a tracked fix still matches
+$("pchip-change").addEventListener("click", () => { clearInputs(); show("input"); toTop(); });
 $("back-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
 $("print-d").addEventListener("click", () => window.print());
 $("logout").addEventListener("click", async () => { await leaveWithFixes(); if (sb) { try { await sb.auth.signOut(); } catch (e) { /* reload anyway */ } } try { await fetch("/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); } catch (e) { /* reload anyway */ } location.reload(); });
@@ -3021,7 +3106,7 @@ function runFetch() {
   if (!url) { showUrlError(tr("errLink")); return; }
   if (isShopee(url)) { syncShopee(); $("shopee-paste").focus(); return; }  // nothing to spend: Shopee is not read from a link
   showUrlError("");
-  send({ url, limit: parseInt($("limit").value, 10) || 10, mode: $("mode").value }, tr("loadingFetch"));
+  send({ url, limit: syncLimit(), mode: $("mode").value }, tr("loadingFetch"));
 }
 $("run").addEventListener("click", runPaste);
 $("fetch").addEventListener("click", runFetch);
@@ -3369,7 +3454,7 @@ function applyBox(cfg, first) {  // the link box: shown only when the server say
   linkBoxOn = !!cfg.url_box; rivalsOn = cfg.rivals === undefined ? linkBoxOn : !!cfg.rivals; renderRival(); stepOneText();
   $("intab-link").hidden = !cfg.url_box; $("intabs").hidden = !cfg.url_box;  // paste alone needs no tabs
   if (cfg.url_box) {
-    $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit;
+    $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit; syncLimit();
     if (first && !$("paste").value && !location.search) selectInput("link", false);  // a link is the quickest way in, on a phone too
   } else if ($("intab-link").getAttribute("aria-selected") === "true") selectInput("paste", false);
 }

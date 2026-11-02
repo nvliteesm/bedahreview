@@ -167,6 +167,9 @@ def _iso_date(value: Any) -> str:
     return value[:10] if isinstance(value, str) else ""
 
 
+_PAUSED = re.compile(r"free runs|upgrade to a paid plan|rent(al)? (has )?expired|subscription", re.I)  # an actor's own note that it will not work for this account
+
+
 class _Actors:
     """Runs an Apify actor with a hard spending cap and returns its rows. Errors name a type, never details or the token."""
 
@@ -196,6 +199,8 @@ class _Actors:
             if run.get("status") not in (None, "SUCCEEDED"):
                 raise FetchError("The fetch service could not read reviews for that link.", code="fetch_failed")
             items = list(self._client.dataset(run["defaultDatasetId"]).iterate_items())
+            if not items and _PAUSED.search(str(run.get("statusMessage") or "")):  # the actor "succeeds" empty when its free runs are used up (Lazada, 2026-11-02)
+                raise FetchError("The review service for this platform is paused.", code="service_paused")
         except FetchError:
             raise
         except Exception as exc:

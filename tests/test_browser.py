@@ -243,6 +243,40 @@ window.__probe = (async () => {
     out.cu.noName = document.getElementById("product").value;
   }
 
+  if (location.hash === "#tasksinplace") {  // a task is finished on the Tugas screen, never back in the analysis
+    const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
+    const tbtn = (t) => [...document.querySelectorAll("#tasks-body button")].find((b) => b.textContent.trim() === t);
+    const titles = () => [...document.querySelectorAll("#tasks-body .task b")].map((b) => b.textContent);
+    const task = (word) => [...document.querySelectorAll("#tasks-body .task")].find((b) => b.textContent.indexOf(word) >= 0);
+    document.getElementById("product").value = "Baju Oblong Wanita POLOS Lengan Panjang Bahan Spandek Distro Printing Premiun Atasan Baju Kasual";
+    const gap = String.fromCharCode(10, 10);
+    document.getElementById("paste").value = ["warna tulisannya ijo, pas dateng warna tulisannya hitem", "Pas sampe koyak bajunya", "bahannya tebel, bagus"].join(gap);
+    document.getElementById("run").click();
+    await until(() => !document.getElementById("view-results").hidden);
+    openFixes();
+    out.tp = { titles: titles(), sub: document.querySelector("#tasks-body .task .t span").textContent };
+    task("Balas").click();
+    out.tp.fight = { view: currentView, draft: !!document.querySelector(".taskpanel .pdraft"), buttons: [...document.querySelectorAll(".taskpanel button")].map((b) => b.textContent.trim()) };
+    tbtn("Sudah dibalas").click();
+    task("Catat").click();
+    out.tp.prefilled = document.querySelector(".taskpanel input").value;  // the AI's step, while the analysis is still here
+    document.querySelector(".taskpanel input").value = "ganti foto varian";
+    tbtn("Simpan & pantau").click();
+    const fx = loadFixes()[0];
+    out.tp.fix = [fx.note, fx.checkOn === addDays(7), fx.before.total > 0, currentView];
+    lastData = null;  // the analysis is gone: the line step is just confirmed, or taken off the list
+    renderFixes();
+    task("Tambah").click();
+    out.tp.noData = !!document.querySelector(".taskpanel textarea");
+    tbtn("Hapus dari Tugas").click();
+    out.tp.left = [titles(), currentView, document.getElementById("tasks-count").hidden];
+    // "Bedah produk lain" at the end: empty fields and an empty competitor panel
+    document.getElementById("url").value = "https://www.tokopedia.com/toko/x";
+    startFresh();
+    out.tp.fresh = [currentView, document.getElementById("url").value, document.getElementById("paste").value, document.getElementById("back-results").hidden, lastData];
+    out.tp.short = [shortLabel("Kaos"), shortLabel("Baju Oblong Wanita POLOS Lengan Panjang Bahan Spandek Distro Printing")];
+  }
+
   if (location.hash === "#history") {
     const items = [
       { id: "1", bucket: "fix", theme: "Colour vs photo", text: "rahasia satu ijo", proof_quote: "rahasia satu ijo", fix_suggestion_id: "saran khusus", likely_fake: { flag: false } },
@@ -592,6 +626,18 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(cu["sheetCheckOn"], True)
         self.assertEqual(cu["again"], ["", "Sepatu Lari", "input"])  # the old reviews are gone, the new name is in
         self.assertEqual(cu["noName"], "")
+
+    def test_tasks_are_finished_in_place_and_the_end_starts_fresh(self):
+        tp = self.probe("/#tasksinplace", width=1200)["tp"]
+        self.assertEqual(sorted(tp["titles"]), sorted(["Catat perbaikan warna beda dari foto", "Balas 1 ulasan buruk", "Tambah 1 kalimat di deskripsi"]))
+        self.assertTrue(tp["sub"].startswith("Baju Oblong Wanita POLOS Lengan Panjang…"))  # a long marketplace title is shortened
+        self.assertEqual(tp["fight"], {"view": "fixes", "draft": True, "buttons": ["Salin balasan", "Sudah dibalas", "Hapus dari Tugas"]})
+        self.assertEqual(tp["prefilled"], "Ganti foto varian.")
+        self.assertEqual(tp["fix"], ["ganti foto varian", True, True, "fixes"])
+        self.assertFalse(tp["noData"])
+        self.assertEqual(tp["left"], [[], "fixes", True])
+        self.assertEqual(tp["fresh"], ["input", "", "", True, None])
+        self.assertEqual(tp["short"], ["Kaos", "Baju Oblong Wanita POLOS Lengan Panjang…"])
 
     def test_a_history_row_holds_counts_and_names_only(self):
         hist = self.probe("/#history")["hist"]
