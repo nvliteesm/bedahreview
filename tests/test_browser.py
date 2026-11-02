@@ -200,10 +200,10 @@ window.__probe = (async () => {
     out.pl.asked = document.querySelector("#view-plan .ask p").textContent;
     btn("#view-plan .ask button", "Sudah").click();
     out.pl.sent = [document.querySelectorAll("#view-plan .reply.sent").length, JSON.parse(localStorage.getItem("bedahreview-plans-v1"))[0].replies];
+    out.pl.foot2 = document.querySelector("#view-plan .stickyfoot .of").textContent;
     btn("#view-plan .stickyfoot button", "Lanjut").click();
-    out.pl.step3 = [document.getElementById("plan-h").textContent, document.getElementById("plan-line").value.length > 0];
-    btn("#view-plan .stickyfoot button", "Lihat ringkasan").click();
-    out.pl.sum = [document.getElementById("plan-h").textContent, [...document.querySelectorAll("#view-plan .dlist li")].map((li) => li.textContent)];
+    out.pl.sum = [document.getElementById("plan-h").textContent, [...document.querySelectorAll("#view-plan .nextlist li")].map((li) => li.className + ":" + li.textContent),
+      [...document.querySelectorAll("#view-plan .stepper li .full")].map((s) => s.textContent), [...document.querySelectorAll("#view-plan .sumfoot button")].map((b) => b.textContent)];
     out.pl.planText = localStorage.getItem("bedahreview-plans-v1");
     const waA = document.querySelector("#view-plan .wabtn");
     out.pl.waSummary = waA ? [waA.href, waA.target, waA.rel] : null;
@@ -264,10 +264,11 @@ window.__probe = (async () => {
     tbtn("Simpan & pantau").click();
     const fx = loadFixes()[0];
     out.tp.fix = [fx.note, fx.checkOn === addDays(7), fx.before.total > 0, currentView];
-    lastData = null;  // the analysis is gone: the line step is just confirmed, or taken off the list
+    // a reply step from an analysis no longer on the page: no drafts, just "done" or take it off the list
+    savePlans(loadPlans().concat(cleanPlan({ sig: "zz9.3", created: Date.now(), product: "produk x", label: "Produk X", fight: ["1"], replies: {} })));
     renderFixes();
-    task("Tambah").click();
-    out.tp.noData = !!document.querySelector(".taskpanel textarea");
+    task("Balas").click();
+    out.tp.noData = [!!document.querySelector(".taskpanel .pdraft"), !!tbtn("Sudah kubalas semua")];
     tbtn("Hapus dari Tugas").click();
     out.tp.left = [titles(), currentView, document.getElementById("tasks-count").hidden];
     // "Bedah produk lain" at the end: empty fields and an empty competitor panel
@@ -577,18 +578,18 @@ class BrowserTests(unittest.TestCase):
         self.assertTrue(fl["noNull"])
         self.assertTrue(fl["noText"])  # only counts and the seller's own note are stored, no review text
         self.assertTrue(fl["cardAfterSave"])
-        self.assertEqual(fl["badge"], "2")  # Tugas counts open steps: the fix is logged, a reply and the listing line are left
+        self.assertEqual(fl["badge"], "1")  # Tugas counts open steps: the fix is logged, a reply is left
         self.assertTrue(fl["comparedNote"])
         self.assertEqual(fl["after"], [1, 2])
         self.assertEqual(fl["listShows"], [True, True, True, True])
         self.assertTrue(fl["hiddenAtFirst"])
         self.assertEqual(fl["afterDelete"], [0, False])  # the fix is gone; the open steps keep the Tugas count
 
-    def test_results_become_a_plan_with_three_steps_and_a_summary(self):
+    def test_results_become_a_plan_of_two_steps_and_a_summary(self):
         pl = self.probe("/#planflow")["pl"]
-        self.assertEqual(pl["rows"], ["Catat perbaikan warna beda dari foto", "Balas 1 ulasan buruk", "Tambah 1 kalimat di deskripsi"])
+        self.assertEqual(pl["rows"], ["Catat perbaikan warna beda dari foto", "Balas 1 ulasan buruk"])  # the praise is in the summary, not a step
         self.assertEqual(pl["headline"], "Keluhan terbanyak cuma satu: warna beda dari foto.")
-        self.assertEqual(pl["badge"], "3")  # three open steps on the Tugas tab
+        self.assertEqual(pl["badge"], "2")  # two open steps on the Tugas tab
         self.assertEqual(pl["sheet"], [True, "Tanggapi · 1 ulasan", True])  # a tile opens the sheet with that group's quotes and drafts
         self.assertTrue(pl["sheetClosed"])
         self.assertEqual(pl["step1"], [True, "Catat perbaikan untuk warna beda dari foto"])
@@ -598,13 +599,17 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(pl["step2"], "Balas 1 ulasan buruk")
         self.assertEqual(pl["asked"], "Sudah kamu kirim?")  # a reply only counts once the seller says it went out
         self.assertEqual(pl["sent"], [1, {"4": "sent"}])
-        self.assertEqual(pl["step3"], ["Tambah 1 kalimat di deskripsi", True])  # the line starts from the buyers' own praise
-        self.assertEqual(pl["sum"][0], "Ringkasan hari ini")  # the listing line is not done yet, so this is the partly-done summary
-        self.assertIn("1 dari 1 balasan terkirim", pl["sum"][1])
-        self.assertTrue(any(t.startswith("Kalimat deskripsi belum ditambahkan") for t in pl["sum"][1]), pl["sum"][1])
+        self.assertEqual(pl["foot2"], "Langkah 2 dari 3")  # Catat, Balas, then the summary as step 3
+        self.assertEqual(pl["sum"][0], pl["headline"])  # step 3 is a short summary of this analysis, in the results' own words
+        self.assertEqual(pl["sum"][1][1], "done:Semua balasan terkirim")
+        self.assertTrue(pl["sum"][1][0].startswith("done:Perbaikan warna beda dari foto dicatat. Cek lagi "), pl["sum"][1])
+        self.assertTrue(pl["sum"][1][2].startswith("keep:Pertahankan yang dipuji pembeli: "), pl["sum"][1])
+        self.assertEqual(len(pl["sum"][1]), 3)  # short: no more than the things to do and the one thing to keep
+        self.assertEqual(pl["sum"][2], ["Catat", "Balas", "Ringkasan"])
+        self.assertEqual(pl["sum"][3], ["Kembali ke hasil", "Bedah produk lain"])
         for word in ("koyak", "ijo", "bagus", "tulisannya"):  # the stored plan holds ids and counts, never review text
             self.assertNotIn(word, pl["planText"])
-        self.assertEqual(pl["tasks"], [True, ["Tambah 1 kalimat di deskripsi"], "1"])
+        self.assertEqual(pl["tasks"][:2], [True, []])  # both steps done: nothing left for today
         self.assertTrue(pl["watched"])  # the logged fix is tracked on the Tugas screen
         self.assertEqual(pl["card"]["act"], "ganti foto katalog")  # one sentence of action, one big button, one small line
         self.assertEqual(pl["card"]["buttons"], ["Sudah dikerjakan", "Lainnya"])
@@ -634,12 +639,12 @@ class BrowserTests(unittest.TestCase):
 
     def test_tasks_are_finished_in_place_and_the_end_starts_fresh(self):
         tp = self.probe("/#tasksinplace", width=1200)["tp"]
-        self.assertEqual(sorted(tp["titles"]), sorted(["Catat perbaikan warna beda dari foto", "Balas 1 ulasan buruk", "Tambah 1 kalimat di deskripsi"]))
+        self.assertEqual(sorted(tp["titles"]), sorted(["Catat perbaikan warna beda dari foto", "Balas 1 ulasan buruk"]))
         self.assertTrue(tp["sub"].startswith("Baju Oblong Wanita POLOS Lengan Panjang…"))  # a long marketplace title is shortened
         self.assertEqual(tp["fight"], {"view": "fixes", "draft": True, "buttons": ["Salin balasan", "Sudah dibalas", "Hapus dari Tugas"]})
         self.assertEqual(tp["prefilled"], "Ganti foto varian.")
         self.assertEqual(tp["fix"], ["ganti foto varian", True, True, "fixes"])
-        self.assertFalse(tp["noData"])
+        self.assertEqual(tp["noData"], [False, True])
         self.assertEqual(tp["left"], [[], "fixes", True])
         self.assertEqual(tp["fresh"], ["input", "", "", True, None])
         self.assertEqual(tp["short"], ["Kaos", "Baju Oblong Wanita POLOS Lengan Panjang…"])

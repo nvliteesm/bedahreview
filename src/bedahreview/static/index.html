@@ -261,6 +261,13 @@ main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-
 .ownbox span { min-width: 0; overflow-wrap: anywhere; }
 .ownbox b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }  /* a 150-character title reads as two lines, the rest in the tooltip */
 .ownbox > button { flex: none; white-space: nowrap; min-height: 44px; }
+.nextlist { display: grid; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.nextlist li { display: grid; grid-template-columns: 20px 1fr auto; gap: 10px; align-items: center; min-height: 48px; padding: 6px 6px 6px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: 15px; }
+.nextlist li > svg { color: var(--accent); }
+.nextlist li .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent); justify-self: center; }
+.nextlist li.keep .dot { border-color: var(--line); background: var(--accent-soft); }
+.nextlist li.done > span:not(.dot) { color: var(--muted); }
+.nextlist button { min-height: 44px; padding: 0 10px; }
 .sumfoot { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }  /* the plan's end: back to the results, or a new product, side by side */
 #view-plan .sumfoot .btn { width: 100%; justify-self: stretch; padding: 0 12px; }
 .taskbox { display: grid; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
@@ -1137,20 +1144,18 @@ const TEXT = {
     hOne: "Keluhan terbanyak cuma satu: %s.", hTop: "Keluhan terbanyak: %s.", hFight: "Tidak ada yang perlu diperbaiki, tapi %s ulasan perlu dibalas.", hNone: "Tidak ada keluhan yang perlu ditindak.",
     lFix: "%s dari %s ulasan menyebutnya, dan itu bisa diperbaiki.", lFight: "%s ulasan perlu dibalas.", lKeep: "%s pembeli memuji %s.", lKeepAny: "%s pembeli memuji produkmu.", and: "dan",
     planMeta: "%s langkah · ±%s menit", planH: "Rencana hari ini", planGo: "Mulai kerjakan", planGoOn: "Lanjutkan", planAllDone: "Lihat ringkasan",
-    s1: "Catat perbaikan %s", s1s: "Keluhan terbanyak", s1Done: "Dipantau, cek %s", s1Logged: "Dicatat", s2: "Balas %s ulasan buruk", s2s: "%s dari %s terkirim", s3: "Tambah 1 kalimat di deskripsi", s3s: "Dari pujian pembeli", s3Done: "Sudah ditambahkan", mins: "±%s mnt",
-    backRes: "Hasil", st1: "Catat", st2: "Balas", st3: "Deskripsi", st3Short: "Deskripsi", stepsLbl: "Langkah",
+    s1: "Catat perbaikan %s", s1s: "Keluhan terbanyak", s1Done: "Dipantau, cek %s", s1Logged: "Dicatat", s2: "Balas %s ulasan buruk", s2s: "%s dari %s terkirim", mins: "±%s mnt",
+    backRes: "Hasil", st1: "Catat", st2: "Balas", st3: "Ringkasan", st3Short: "Ringkasan", nextEb: "Langkah berikutnya", nFix: "Catat perbaikan %s", nFixDone: "Perbaikan %s dicatat. Cek lagi %s dengan ulasan terbaru.", nFight: "Balas %s ulasan lagi", nFightDone: "Semua balasan terkirim", nKeep: "Pertahankan yang dipuji pembeli: %s.", stepsLbl: "Langkah",
     t1h: "Catat perbaikan untuk %s", t1p: "%s dari %s ulasan mengeluhkan ini. Kamu tidak perlu selesai hari ini, cukup putuskan langkahnya.", seeQ: "Lihat %s kutipan",
     q1: "Apa yang akan kamu lakukan?", oAi: "Saran AI untuk keluhan ini. Baca dulu, ubah kalau perlu.", oOwn: "Tulis langkahku sendiri", oOwnS: "Boleh langkah yang butuh waktu, misalnya ganti pemasok.", oOwnPh: "mis. ganti ke bahan yang lebih tebal",
     q2: "Cek lagi tanggal", checkLine: "Cek lagi tanggal %s.",
-    save1: "Simpan", skip: "Lewati dulu", next: "Lanjut", toSum: "Lihat ringkasan", needChoice: "Pilih langkahnya dulu, atau ketuk Lewati dulu.", needOwn: "Tulis langkahmu dulu.",
+    save1: "Simpan", skip: "Lewati dulu", next: "Lanjut", needChoice: "Pilih langkahnya dulu, atau ketuk Lewati dulu.", needOwn: "Tulis langkahmu dulu.",
     savedToast: "Tersimpan di Tugas. Cek lagi %s.", already1: "Perbaikan ini sudah dicatat.", alreadyCheck: "Cek lagi %s.",
     t2h: "Balas %s ulasan buruk", t2p: "Pembeli baru membaca balasanmu. Salin, kirim di %s, lalu kembali ke sini.", aiShort: "Ditulis AI, baca dulu sebelum dikirim.",
     copyOpen: "Salin & buka %s", copyOnly: "Salin balasan", copyAgain: "Salin lagi & buka %s", asked: "Sudah kamu kirim?", yes: "Sudah", notYet: "Belum", sentOk: "Terkirim", undo: "Batal", notCopied: "Belum disalin", reviewOf: "Ulasan %s dari %s",
-    t3h: "Tambah 1 kalimat di deskripsi", t3p: "%s pembeli memuji produkmu. Pakai kata-kata mereka untuk meyakinkan pembeli baru.", lineLbl: "Kalimat dari pujian pembeli (boleh diubah)", copyLine: "Salin & buka halaman produk", copyLineOnly: "Salin kalimat", askLine: "Sudah kamu tambahkan?", lineDone: "Sudah ada di deskripsi",
     stepOf: "Langkah %s dari %s",
-    doneH: "Hari ini beres", partH: "Ringkasan hari ini", doneP: "Semua yang bisa dikerjakan hari ini sudah selesai.", partP: "Sisanya bisa kamu lanjutkan dari Tugas kapan saja.",
-    did: "Sudah dikerjakan", todo: "Belum", tracked: "Sedang dipantau", dR: "%s dari %s balasan terkirim", dL: "Kalimat pujian ditambahkan ke deskripsi", dF: "Perbaikan %s dicatat", nothingYet: "Belum ada yang dikerjakan.",
-    uR: "%s balasan belum terkirim", uL: "Kalimat deskripsi belum ditambahkan", uF: "Perbaikan %s belum dicatat", doIt: "Kerjakan", progress: "%s dari %s hal hari ini selesai", left: "Sisa ±%s mnt",
+    dF: "Perbaikan %s dicatat", 
+    doIt: "Kerjakan", 
     trCheck: "Cek lagi %s", more: "Lainnya", doneBtn: "Sudah dikerjakan", fixAct: "Perbaiki %s", waBtn: "Kirim ke WhatsApp", waNote: "WhatsApp terbuka dengan pesan siap kirim. Kami tidak mengirim apa pun sendiri.", waHead: "Perbaikan BedahReview", waCheck: "cek lagi %s", backRes2: "Kembali ke hasil", another: "Bedah produk lain",
     tasksSub: "Langkah yang belum selesai dan perbaikan yang sedang dipantau.", tasksSubAll: "Langkah yang belum selesai dan perbaikan yang sedang dipantau, untuk semua produkmu.",
     today: "Hari ini · %s", watched: "Dipantau · %s", sched: "Jadwal cek", schedToday: "Hari ini", schedNext: "Berikutnya", schedNextP: "Tanggal cek muncul di sini setelah kamu mencatat perbaikan.",
@@ -1160,7 +1165,7 @@ const TEXT = {
     tasksEmpty: "Belum ada tugas. Bedah ulasan produk untuk mulai.", tasksStart: "Bedah ulasan", tasksSignT: "Masuk untuk menyimpan tugasmu", tasksSignP: "Perbaikan dan tanggal cekmu tersimpan di akunmu, jadi tidak hilang saat browser ditutup.",
     later: "Nanti saja", allProducts: "Semua produk", open: "Buka", taskFixLbl: "Langkah perbaikanmu", taskFixP: "%s dari %s ulasan mengeluhkan ini. Tulis apa yang akan kamu ubah. Kami ingatkan untuk cek lagi seminggu lagi.", taskFixSave: "Simpan & pantau",
     taskSent: "Sudah dibalas", taskAllSent: "Sudah kubalas semua", taskNoDrafts: "Draf balasan hanya ada selama hasil analisisnya masih terbuka. Sudah kamu balas di marketplace?",
-    taskLineDone: "Sudah ditambahkan", taskCopyLine: "Salin kalimat", taskNoLine: "Kalimat dari pujian pembeli hanya ada selama hasil analisisnya masih terbuka. Sudah kamu tambahkan ke deskripsi?", taskDone: "Tugas selesai.",dismiss: "Hapus dari Tugas", noProductName: "Ulasan yang ditempel",
+    taskDone: "Tugas selesai.",dismiss: "Hapus dari Tugas", noProductName: "Ulasan yang ditempel",
     // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
     e_not_link: "Itu tidak terlihat seperti tautan.", e_link_https: "Tempel tautan https lengkap dari produk Tokopedia, Lazada, atau TikTok Shop.", e_not_product: "Itu tidak terlihat seperti tautan produk.",
     e_short_bad: "Tautan pendek itu tidak mengarah ke produk Tokopedia, Lazada, atau TikTok Shop.", e_short_open: "Tautan pendek itu tidak bisa dibuka. Buka produknya, lalu salin tautan lengkapnya.",
@@ -1313,20 +1318,18 @@ const TEXT = {
     hOne: "There is only one big complaint: %s.", hTop: "The biggest complaint: %s.", hFight: "Nothing to fix, but %s review(s) need a reply.", hNone: "No complaints to act on.",
     lFix: "%s of %s reviews mention it, and it can be fixed.", lFight: "%s review(s) need a reply.", lKeep: "%s buyer(s) praise %s.", lKeepAny: "%s buyer(s) praise your product.", and: "and",
     planMeta: "%s steps · ~%s min", planH: "Today's plan", planGo: "Start", planGoOn: "Continue", planAllDone: "See the summary",
-    s1: "Log a fix for %s", s1s: "Biggest complaint", s1Done: "Tracked, check %s", s1Logged: "Logged", s2: "Reply to %s bad review(s)", s2s: "%s of %s sent", s3: "Add 1 line to the description", s3s: "From buyer praise", s3Done: "Added", mins: "~%s min",
-    backRes: "Results", st1: "Log", st2: "Reply", st3: "Listing", st3Short: "Listing", stepsLbl: "Steps",
+    s1: "Log a fix for %s", s1s: "Biggest complaint", s1Done: "Tracked, check %s", s1Logged: "Logged", s2: "Reply to %s bad review(s)", s2s: "%s of %s sent", mins: "~%s min",
+    backRes: "Results", st1: "Log", st2: "Reply", st3: "Summary", st3Short: "Summary", nextEb: "What to do next", nFix: "Log a fix for %s", nFixDone: "Fix for %s logged. Check again on %s with the newest reviews.", nFight: "Reply to %s more review(s)", nFightDone: "All replies sent", nKeep: "Keep what buyers praise: %s.", stepsLbl: "Steps",
     t1h: "Log a fix for %s", t1p: "%s of %s reviews complain about this. You do not have to finish today, just decide the step.", seeQ: "See %s quotes",
     q1: "What will you do?", oAi: "The AI's suggestion for this complaint. Read it, change it if needed.", oOwn: "Write my own step", oOwnS: "A slower step is fine, such as a new supplier.", oOwnPh: "e.g. switch to a thicker fabric",
     q2: "Check again on", checkLine: "We check again on %s.",
-    save1: "Save", skip: "Skip for now", next: "Continue", toSum: "See the summary", needChoice: "Pick a step first, or tap Skip for now.", needOwn: "Write your step first.",
+    save1: "Save", skip: "Skip for now", next: "Continue", needChoice: "Pick a step first, or tap Skip for now.", needOwn: "Write your step first.",
     savedToast: "Saved in Tasks. Check again %s.", already1: "This fix is already logged.", alreadyCheck: "Check again %s.",
     t2h: "Reply to %s bad review(s)", t2p: "New buyers read your replies. Copy, send it in %s, then come back here.", aiShort: "Written by AI, read before sending.",
     copyOpen: "Copy & open %s", copyOnly: "Copy the reply", copyAgain: "Copy again & open %s", asked: "Did you send it?", yes: "Sent", notYet: "Not yet", sentOk: "Sent", undo: "Undo", notCopied: "Not copied yet", reviewOf: "Review %s of %s",
-    t3h: "Add 1 line to the description", t3p: "%s buyer(s) praise your product. Use their words to convince new buyers.", lineLbl: "A line from buyer praise (you can edit it)", copyLine: "Copy & open the product page", copyLineOnly: "Copy the line", askLine: "Did you add it?", lineDone: "It is in the description",
     stepOf: "Step %s of %s",
-    doneH: "Done for today", partH: "Today's summary", doneP: "Everything you can do today is done.", partP: "Pick up the rest from Tasks any time.",
-    did: "Done", todo: "Not yet", tracked: "Being tracked", dR: "%s of %s replies sent", dL: "Praise line added to the description", dF: "Fix for %s logged", nothingYet: "Nothing done yet.",
-    uR: "%s replies not sent yet", uL: "Description line not added yet", uF: "Fix for %s not logged yet", doIt: "Do it", progress: "%s of %s things done today", left: "~%s min left",
+    dF: "Fix for %s logged", 
+    doIt: "Do it", 
     trCheck: "Check again %s", more: "More", doneBtn: "Done", fixAct: "Fix %s", waBtn: "Send to WhatsApp", waNote: "WhatsApp opens with a message ready to send. We do not send anything ourselves.", waHead: "BedahReview fixes", waCheck: "check again %s", backRes2: "Back to results", another: "Analyse another product",
     tasksSub: "Open steps and the fixes being tracked.", tasksSubAll: "Open steps and the fixes being tracked, for all your products.",
     today: "Today · %s", watched: "Tracked · %s", sched: "Check schedule", schedToday: "Today", schedNext: "Next", schedNextP: "Check dates show here once you log a fix.",
@@ -1336,7 +1339,7 @@ const TEXT = {
     tasksEmpty: "No tasks yet. Analyse a product's reviews to start.", tasksStart: "Check reviews", tasksSignT: "Sign in to keep your tasks", tasksSignP: "Your fixes and check dates are saved in your account, so they are not lost when the browser closes.",
     later: "Not now", allProducts: "All products", open: "Open", taskFixLbl: "Your fix", taskFixP: "%s of %s reviews complain about this. Write what you will change. We remind you to check again in a week.", taskFixSave: "Save & track",
     taskSent: "Replied", taskAllSent: "I replied to all", taskNoDrafts: "The reply drafts only exist while the analysis is still open. Did you reply on the marketplace?",
-    taskLineDone: "Added", taskCopyLine: "Copy the line", taskNoLine: "The line from buyer praise only exists while the analysis is still open. Did you add it to the description?", taskDone: "Task done.",dismiss: "Remove from Tasks", noProductName: "Pasted reviews",
+    taskDone: "Task done.",dismiss: "Remove from Tasks", noProductName: "Pasted reviews",
   },
 };
 const THEME_ID = {
@@ -2126,12 +2129,6 @@ function loadPlans() {
   return memPlans;
 }
 function savePlans(list) { memPlans = list.slice(-MAX_PLANS); try { localStorage.setItem(PLAN_KEY, JSON.stringify(memPlans)); } catch (e) { /* the memory copy stands */ } renderFixBadge(); }
-function bestPraise(keep) {  // the buyer's own words for the listing line: the longest praise quote that still reads as one line
-  const qs = keep.map((k) => String(k.proof_quote || "").trim()).filter((q) => q.length >= 8);
-  if (!qs.length) return "";
-  const fit = qs.filter((q) => q.length <= 140);
-  return (fit.length ? fit : qs).sort((a, b) => b.length - a.length)[0].slice(0, 200);
-}
 const replyText = (it) => (it.fight ? it.fight.public_reply || it.fight.chat_to_buyer || "" : "");
 function planParts(data) {  // what a plan is made of, read from one analysis
   const g = (data.groups || [])[0] || null;
@@ -2145,7 +2142,7 @@ function planFor(data) {  // the stored plan for these exact reviews, made the f
   const found = plans.find((x) => x.sig === sig);
   if (found) return found;
   const { g, fight, keep } = planParts(data);
-  if (!g && !fight.length && !keep.length) return null;
+  if (!g && !fight.length) return null;  // praise only: nothing to do, the old one-line start says so
   const src = data.source || {}, c = g ? countTheme(data.items, g.theme, g.variant || "") : null;
   const p = cleanPlan({ sig, created: Date.now(), product: productKey(src), label: src.title || "", url: src.kind === "url" ? src.url : "", platform: src.kind === "url" ? platformName(src.url) : "",
     fix: g ? { theme: g.theme, variant: g.variant || "", n: c.count, total: c.total } : null, fight: fight.map((it) => String(it.id)), keep: keep.length });
@@ -2159,8 +2156,7 @@ function stepsOf(p) {  // the steps this plan has, in order, each with whether i
   const out = [];
   if (p.fix) out.push({ key: "fix", done: !!loggedFix(p), mins: 1 });
   if (p.fight.length) out.push({ key: "fight", done: sentCount(p) === p.fight.length, mins: Math.max(1, p.fight.length) });
-  if (p.keep) out.push({ key: "keep", done: p.line === "done", mins: 1 });
-  return out;
+  return out;  // the praise is no longer a step of its own: the summary (step 3) says what to keep
 }
 function openSteps() {  // the open steps of recent plans: the Tugas screen and its count
   const out = [];
@@ -2169,7 +2165,7 @@ function openSteps() {  // the open steps of recent plans: the Tugas screen and 
     for (const s of stepsOf(p)) {
       if (s.done || p.skipped.includes(s.key)) continue;
       const left = s.key === "fight" ? p.fight.length - sentCount(p) : 1;
-      const title = s.key === "fix" ? tr("s1", lowerTheme(p.fix.theme)) : s.key === "fight" ? tr("s2", left) : tr("s3");
+      const title = s.key === "fix" ? tr("s1", lowerTheme(p.fix.theme)) : tr("s2", left);
       const sub = [shortLabel(p.label) || tr("noProductName"), s.key === "fight" ? tr("s2s", sentCount(p), p.fight.length) : null, tr("mins", left)].filter(Boolean).join(" · ");
       out.push({ plan: p, step: s.key, title, sub, mins: left });
     }
@@ -2225,27 +2221,19 @@ function taskPanel(t) {
       return h("article", { class: "reply" }, h("span", { class: "chip star", style: "justify-self:start", text: reasonText(it) }), h("p", { class: "pquote fight", lang: "id", text: "“" + (it.proof_quote || "") + "”" }), draftEl, h("div", { class: "row" }, copy, done));
     }), h("div", { class: "row" }, remove));
   }
-  const line = data ? bestPraise(planParts(data).keep) : "";
-  const added = h("button", { class: "btn primary", type: "button", text: tr("taskLineDone"), onclick: () => { updatePlan(p, { line: "done" }); finish(); } });
-  if (!line) return h("div", { class: "taskpanel" }, h("p", { class: "small muted", text: tr("taskNoLine") }), h("div", { class: "row" }, added, remove));
-  const area = h("textarea", { class: "lineq", maxlength: "300", lang: "id", spellcheck: "false", "aria-label": tr("lineLbl") });
-  area.value = line;
-  const copy = h("button", { class: "btn ghost", type: "button" }, copyIcon(), tr("taskCopyLine"));
-  copy.addEventListener("click", async () => { const ok = await copyPlain(area.value, area); announce(ok ? tr("copiedAnn", tr("s3")) : tr("selectIt")); });
-  return h("div", { class: "taskpanel" }, h("p", { class: "small muted", text: tr("t3p", p.keep) }), area, h("div", { class: "row" }, copy, added, remove));
+  return null;
 }
 const fmtDayShort = (iso) => { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(lang === "id" ? "id-ID" : "en-GB", { day: "numeric", month: "short" }); };
 const ICON_OPEN = ["M14 4h6v6", "M20 4l-9 9", "M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"], ICON_TICK = ["M5 12l5 5 9-10"];
 function planCard(p, data) {  // "Mulai dari sini": today's plan on the results screen
   const steps = stepsOf(p), done = steps.filter((s) => s.done).length, mins = steps.reduce((a, s) => a + s.mins, 0);
-  const { g, fight, keep } = planParts(data);
+  const { g, fight } = planParts(data);
   const byId = {}; data.items.forEach((it) => { byId[it.id] = it; });
   const fixQuote = g ? (g.ids.map((id) => byId[id]).find((m) => m && m.proof_quote) || {}).proof_quote : "";
   const row = (s, i) => {
     let title, sub, ev;
     if (s.key === "fix") { const f = loggedFix(p); title = tr("s1", lowerTheme(p.fix.theme)); sub = f ? (f.checkOn ? tr("s1Done", fmtDayShort(f.checkOn)) : tr("s1Logged")) : tr("s1s"); ev = fixQuote; }
-    else if (s.key === "fight") { title = tr("s2", p.fight.length); sub = tr("s2s", sentCount(p), p.fight.length); ev = (fight[0] || {}).proof_quote; }
-    else { title = tr("s3"); sub = s.done ? tr("s3Done") : tr("s3s"); ev = bestPraise(keep); }
+    else { title = tr("s2", p.fight.length); sub = tr("s2s", sentCount(p), p.fight.length); ev = (fight[0] || {}).proof_quote; }
     return h("button", { class: "prow" + (s.done ? " done" : ""), type: "button", onclick: () => openStep(s.key) },
       h("span", { class: "k", "aria-hidden": "true" }, s.done ? svgIcon(ICON_TICK) : String(i + 1)), h("span", { class: "t" }, h("b", { text: title }), h("span", { text: sub })),
       h("span", { class: "ev", lang: "id", text: ev ? "“" + ev + "”" : "" }), h("span", { class: "tm", text: tr("mins", s.mins) }));
@@ -2276,13 +2264,14 @@ function renderPlanView(anim) {
   if (!p) { show(lastData ? "results" : "input"); return; }
   const keys = stepsOf(p).map((s) => s.key);
   if (planStep !== "sum" && !keys.includes(planStep)) planStep = keys[0] || "sum";
-  const body = planStep === "sum" ? summaryView(p) : planStep === "fix" ? step1(p) : planStep === "fight" ? step2(p) : step3(p);
+  const body = planStep === "sum" ? summaryView(p) : planStep === "fix" ? step1(p) : step2(p);
   view.replaceChildren(...[body].flat(Infinity).filter(Boolean));
   if (anim) animateIn(view, anim === "fwd" ? "enter-fwd" : anim === "bwd" ? "enter-bwd" : "enter");
 }
+const planKeysAll = (p) => stepsOf(p).concat({ key: "sum", done: false });  // the action steps, then the summary as the last step
 function stepHead(p) {  // "‹ Hasil", the pill stepper, and on a wide screen the reply counter on the same line
-  const steps = stepsOf(p), at = steps.findIndex((s) => s.key === planStep);
-  const names = { fix: ["st1", "st1"], fight: ["st2", "st2"], keep: ["st3", "st3Short"] };
+  const steps = planKeysAll(p), at = steps.findIndex((s) => s.key === planStep);
+  const names = { fix: ["st1", "st1"], fight: ["st2", "st2"], sum: ["st3", "st3Short"] };
   return h("div", { class: "stephd" },
     h("button", { class: "back", type: "button", onclick: () => { show("results"); toTop(); } }, svgIcon(["M15 6l-6 6 6 6"]), tr("backRes")),
     h("ol", { class: "stepper", "aria-label": tr("stepsLbl") }, steps.map((s, i) => h("li", { class: i === at ? "on" : s.done ? "done" : "", "aria-current": i === at ? "step" : null },
@@ -2290,7 +2279,7 @@ function stepHead(p) {  // "‹ Hasil", the pill stepper, and on a wide screen t
     planStep === "fight" && desktop() ? h("span", { class: "chip", text: tr("s2s", sentCount(p), p.fight.length) }) : null);
 }
 function stepFoot(p, label, onGo, onSkip) {
-  const steps = stepsOf(p), at = steps.findIndex((s) => s.key === planStep);
+  const steps = planKeysAll(p), at = steps.findIndex((s) => s.key === planStep);
   return h("div", { class: "stickyfoot" }, h("button", { class: "btn primary", type: "button", text: label, onclick: onGo }),
     onSkip ? h("button", { class: "plain strong", type: "button", text: tr("skip"), onclick: onSkip }) : null,
     at >= 0 ? h("span", { class: "of", text: tr("stepOf", at + 1, steps.length) }) : null);
@@ -2391,52 +2380,21 @@ function step2(p) {  // Balas: copy a draft, send it on the marketplace, then sa
   });
   return [stepHead(p), intro, h("div", { class: "rgrid" }, h("div", { class: "rlist" }, items), card(cur, list.indexOf(cur), true)), foot];
 }
-function step3(p) {  // Deskripsi: one line for the listing, in the buyers' own words, which the seller can edit
-  const { keep } = planParts(lastData);
-  if (planUi.line == null) planUi.line = bestPraise(keep);
-  const area = h("textarea", { class: "lineq", id: "plan-line", maxlength: "300", lang: "id", spellcheck: "false" });
-  area.value = planUi.line; area.addEventListener("input", () => { planUi.line = area.value; });
-  const set = (v) => { updatePlan(p, { line: v }); renderPlanView(); };
-  const copy = h("button", { class: "btn ghost", type: "button" }, p.url ? svgIcon(ICON_OPEN) : copyIcon(), tr(p.url ? "copyLine" : "copyLineOnly"));
-  copy.addEventListener("click", async () => {
-    const ok = await copyPlain(area.value, area);
-    announce(ok ? tr("copiedAnn", tr("s3")) : tr("selectIt"));
-    if (p.url) window.open(p.url, "_blank", "noopener");
-    set("copied");
-  });
-  const state = p.line === "done"
-    ? h("div", { class: "sentrow", style: "padding:4px 2px" }, h("span", { class: "ok" }, svgIcon(ICON_CHECK), tr("lineDone")), h("button", { class: "undo", type: "button", text: tr("undo"), onclick: () => set("") }))
-    : [copy, p.line === "copied" ? h("div", { class: "ask" }, h("p", { text: tr("askLine") }), h("div", { class: "row2" },
-        h("button", { class: "btn ghost", type: "button", text: tr("yes"), onclick: () => set("done") }), h("button", { class: "btn ghost", type: "button", text: tr("notYet"), onclick: () => set("") }))) : null];
-  return [stepHead(p), stepIntro("keep", tr("t3h"), tr("t3p", p.keep), p.keep, "keep"),
-    h("label", { class: "field", for: "plan-line" }, h("span", { text: tr("lineLbl") }), area), state, stepFoot(p, tr("toSum"), () => openStep("sum"))];
-}
-function trackedCard(f) {
-  return h("article", { class: "trk" }, h("div", { class: "hd" }, h("h3", { text: themeName(f.theme) }), f.checkOn ? h("span", { class: "chip", text: tr("trCheck", fmtDayShort(f.checkOn)) }) : null),
-    f.note ? h("p", { lang: "id", style: "font-size:15px", text: f.note }) : null, h("p", { class: "small muted", text: tr("fixBefore", f.before.count, f.before.total) }));
-}
-function summaryView(p) {  // an honest ending: what got done, what is left, and the slow fix that stays tracked
-  const steps = stepsOf(p), all = steps.every((s) => s.done), f = loggedFix(p), sent = sentCount(p);
-  const did = [], todo = [];
-  if (p.fight.length) { if (sent) did.push(tr("dR", sent, p.fight.length)); if (sent < p.fight.length) todo.push([tr("uR", p.fight.length - sent), "fight"]); }
-  if (p.keep) { if (p.line === "done") did.push(tr("dL")); else todo.push([tr("uL"), "keep"]); }
-  if (p.fix) { if (f) did.push(tr("dF", lowerTheme(p.fix.theme))); else todo.push([tr("uF", lowerTheme(p.fix.theme)), "fix"]); }
-  const things = (p.fix ? 1 : 0) + (p.keep ? 1 : 0) + p.fight.length, doneN = (f ? 1 : 0) + (p.line === "done" ? 1 : 0) + sent;
-  const left = todo.reduce((a, [, k]) => a + (k === "fight" ? p.fight.length - sent : 1), 0);
-  const pct = Math.round((100 * doneN) / Math.max(1, things));
-  const bar = h("i", { style: "width:0%" });
-  requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct + "%"; }));  // the bar fills in, so the progress reads as progress
-  return [
-    h("div", { class: "sumhd" }, h("div", { class: "okbadge" + (all ? "" : " part"), "aria-hidden": "true" }, svgIcon(["M5 12l5 5L20 7"])),
-      h("div", { style: "display:grid;gap:2px" }, h("h1", { id: "plan-h", tabindex: "-1", text: tr(all ? "doneH" : "partH") }), h("p", { class: "muted", text: tr(all ? "doneP" : "partP") }))),
-    h("div", { style: "display:grid;gap:8px" }, h("div", { class: "small muted", style: "display:flex;justify-content:space-between;gap:8px" }, h("span", { text: tr("progress", doneN, things) }), left ? h("span", { text: tr("left", left) }) : null),
-      h("div", { class: "pbar", role: "progressbar", "aria-label": tr("progress", doneN, things), "aria-valuemin": "0", "aria-valuemax": String(things), "aria-valuenow": String(doneN) }, bar)),
-    h("div", { class: "sumgrid" },
-      h("div", { class: "stack", style: "align-content:start;gap:10px" }, h("p", { class: "eb", text: tr("did") }),
-        did.length ? h("ul", { class: "dlist" }, did.map((t) => h("li", {}, svgIcon(ICON_CHECK), h("span", { text: t })))) : h("p", { class: "small muted", text: tr("nothingYet") })),
-      todo.length ? h("div", { class: "stack", style: "align-content:start;gap:10px" }, h("p", { class: "eb", style: "color:var(--muted)", text: tr("todo") }),
-        h("ul", { class: "dlist todo" }, todo.map(([t, k]) => h("li", {}, h("span", { text: t }), h("button", { class: "plain strong", type: "button", style: "padding:0 10px;min-height:44px", text: tr("doIt"), onclick: () => openStep(k, true) }))))) : null,
-      f ? h("div", { class: "stack col3", style: "align-content:start;gap:10px" }, h("p", { class: "eb", text: tr("tracked") }), trackedCard(f)) : null),
+function summaryView(p) {  // step 3, Ringkasan: what this analysis found in two lines, then what to do next; short on purpose
+  const data = lastData, f = loggedFix(p), left = p.fight.length - sentCount(p);
+  const fight = data.items.filter((it) => it.bucket === "fight" || it.bucket === "check"), keep = data.items.filter((it) => !isFake(it) && it.bucket === "keep");
+  const head = headline(data.groups, fight, keep, data.items);
+  const row = (state, text, key) => h("li", { class: state },  // state: done (a tick), todo (a "Kerjakan" link) or keep (a note, nothing to do)
+    state === "done" ? svgIcon(ICON_CHECK) : h("span", { class: "dot", "aria-hidden": "true" }), h("span", { text }),
+    state === "todo" ? h("button", { class: "plain strong", type: "button", text: tr("doIt"), onclick: () => openStep(key, true) }) : null);
+  const next = [];
+  if (p.fix) next.push(f ? row("done", f.checkOn ? tr("nFixDone", lowerTheme(p.fix.theme), fmtDayShort(f.checkOn)) : tr("dF", lowerTheme(p.fix.theme))) : row("todo", tr("nFix", lowerTheme(p.fix.theme)), "fix"));
+  if (p.fight.length) next.push(left ? row("todo", tr("nFight", left), "fight") : row("done", tr("nFightDone")));
+  const praise = [...new Set(keep.map((k) => plainTheme(k.theme).toLowerCase()))].slice(0, 2);
+  if (praise.length) next.push(row("keep", tr("nKeep", praise.join(" " + tr("and") + " "))));
+  return [stepHead(p),
+    h("div", { class: "stask" }, h("span", { class: "tag keep", text: tr("st3") }), h("h1", { class: "h2s", id: "plan-h", tabindex: "-1", text: head.h }), head.lead ? h("p", { class: "small muted", text: head.lead }) : null),
+    h("div", { class: "stack", style: "gap:10px" }, h("p", { class: "eb", text: tr("nextEb") }), h("ul", { class: "nextlist" }, next)),
     waBlock(loadFixes().filter((x) => x.product === p.product)),
     h("div", { class: "sumfoot" }, h("button", { class: "btn ghost", type: "button", text: tr("backRes2"), onclick: () => { show("results"); toTop(); } }),
       h("button", { class: "btn primary", type: "button", text: tr("another"), onclick: startFresh })),
@@ -2727,7 +2685,7 @@ function rivalIdle() {
     rivalFind({ url: u, title, mine: !!(own && own.url === u) });
   });
   [url, name].forEach((f) => f.addEventListener("keydown", (e) => { if (e.key === "Enter") go.click(); }));
-  const back = own ? h("button", { class: "plain", type: "button", text: tr("rivalBackOwn") }) : null;
+  const back = own && !rival.fresh ? h("button", { class: "plain", type: "button", text: tr("rivalBackOwn") }) : null;  // after "Mulai ulang" nothing of the last product is offered
   if (back) back.addEventListener("click", () => { rival = { step: "idle" }; renderRival(); });
   return h("div", { class: "rcard" }, noBoxNote(), h("h2", { text: tr("rivalTitleAlone") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
     h("label", { class: "field", for: "rival-url" }, h("span", { text: tr("rivalYourLink") }), url),
@@ -2811,7 +2769,7 @@ function rivalResult(d) {
   if (fake) notes.push(["skip", tr("rivalFakeLine", fake, d.competitors.filter((c) => c.fake).map((c) => tr("rivalFakeEach", names[d.competitors.indexOf(c)], c.reviews, c.credible)).join("; ")), null]);
   const again = h("button", { class: "btn ghost", type: "button" }, tr("rivalAgain"));
   again.addEventListener("click", () => {  // a clean, empty form for the next comparison; the product from Bedah ulasan is one tap away
-    rival = { step: "idle", other: true }; rivalRun += 1; rivalForm = { url: "", name: "" }; renderRival();
+    rival = { step: "idle", other: true, fresh: true }; rivalRun += 1; rivalForm = { url: "", name: "" }; renderRival();
     $("feature2").scrollTo({ top: 0, behavior: reduceMotion() ? "auto" : "smooth" }); toTop(); if ($("rival-url")) $("rival-url").focus({ preventScroll: true });
   });
   return [
