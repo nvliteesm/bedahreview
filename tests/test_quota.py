@@ -134,6 +134,16 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(self.analyse(me)[1]["quota"]["used"], 1)  # the failed one was given back
         self.assertEqual(self.analyse(me)[0], 200)
 
+    def test_an_unexpected_crash_on_the_plain_request_gives_the_turn_back(self):
+        me = self.bearer()
+        real = web.build_response
+        web.build_response = lambda *a, **k: (_ for _ in ()).throw(KeyError("boom"))
+        try:
+            self.assertEqual(self.analyse(me)[0], 500)
+        finally:
+            web.build_response = real
+        self.assertEqual(self.analyse(me)[1]["quota"]["used"], 1)  # the crashed one was not counted
+
     def test_a_paste_that_is_refused_before_the_model_is_not_counted(self):
         me = self.bearer()
         self.assertEqual(self.analyse(me, text="   ")[0], 400)

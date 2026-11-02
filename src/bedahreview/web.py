@@ -1023,7 +1023,12 @@ class Handler(BaseHTTPRequestHandler):
         if free and not trial.take(self._client()):
             return self._json(401, {"error": "Sign in to keep analysing. It is free.", "login": True, "code": "free_used"})
 
-        def give_back() -> None:  # the analysis did not happen, so it does not cost anyone their turn
+        returned = []
+
+        def give_back() -> None:  # the analysis did not happen, so it does not cost anyone their turn; only once, however many paths end here
+            if returned:
+                return
+            returned.append(True)
             if quota:
                 quota.refund(self._uid)
             if free:
@@ -1037,6 +1042,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._start_job(slots, body, text, url, product, give_back, quota, used, free, trial)
         try:
             self._run_analysis(body, text, url, product, give_back, quota, used, free, trial)
+        except OSError:  # the phone went away after the work was done: nothing to give back
+            raise
+        except Exception:  # an unexpected crash is not the seller's analysis: give the turn back, then let the 500 handler answer
+            give_back()
+            raise
         finally:
             slots.release()
 
