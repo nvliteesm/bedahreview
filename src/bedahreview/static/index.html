@@ -261,6 +261,8 @@ main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-
 .ownbox span { min-width: 0; overflow-wrap: anywhere; }
 .ownbox b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }  /* a 150-character title reads as two lines, the rest in the tooltip */
 .ownbox > button { flex: none; white-space: nowrap; min-height: 44px; }
+.sumfoot { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }  /* the plan's end: back to the results, or a new product, side by side */
+#view-plan .sumfoot .btn { width: 100%; justify-self: stretch; padding: 0 12px; }
 .taskbox { display: grid; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
 .taskbox > .task { border: 0; }
 .taskpanel { display: grid; gap: 10px; padding: 4px 14px 14px; }
@@ -509,7 +511,7 @@ input[aria-invalid="true"] { border: 2px solid var(--fight); }
 #view-plan { display: grid; gap: 14px; }
 .stephd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .back { min-height: 44px; display: inline-flex; align-items: center; gap: 2px; font: inherit; font-weight: 700; font-size: 0.9rem; color: var(--accent); background: none; border: 0; margin-left: -6px; padding: 0 6px; cursor: pointer; }
-.stephd .stepper { flex: 1; max-width: 270px; }
+.stephd .stepper { flex: 0 1 auto; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: max-content; }  /* the plan has 1 to 3 steps: the pill is as wide as they are */
 .stepper { gap: 2px; padding: 4px; }
 .stepper li { justify-content: center; gap: 5px; padding: 4px 6px; min-height: 36px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; border-radius: 999px; transition: color 0.2s; }
 .stepper .dot { width: 24px; height: 24px; font-size: 0.72rem; transition: background-color 0.25s, border-color 0.25s, color 0.25s; }
@@ -2436,8 +2438,8 @@ function summaryView(p) {  // an honest ending: what got done, what is left, and
         h("ul", { class: "dlist todo" }, todo.map(([t, k]) => h("li", {}, h("span", { text: t }), h("button", { class: "plain strong", type: "button", style: "padding:0 10px;min-height:44px", text: tr("doIt"), onclick: () => openStep(k, true) }))))) : null,
       f ? h("div", { class: "stack col3", style: "align-content:start;gap:10px" }, h("p", { class: "eb", text: tr("tracked") }), trackedCard(f)) : null),
     waBlock(loadFixes().filter((x) => x.product === p.product)),
-    h("div", { class: "row", style: "align-items:center;gap:12px" }, h("button", { class: "btn ghost", type: "button", text: tr("backRes2"), onclick: () => { show("results"); toTop(); } }),
-      h("button", { class: "plain strong", type: "button", text: tr("another"), onclick: startFresh })),
+    h("div", { class: "sumfoot" }, h("button", { class: "btn ghost", type: "button", text: tr("backRes2"), onclick: () => { show("results"); toTop(); } }),
+      h("button", { class: "btn primary", type: "button", text: tr("another"), onclick: startFresh })),
   ];
 }
 
@@ -2808,7 +2810,10 @@ function rivalResult(d) {
   d.failed.forEach((f) => notes.push(["fail", tr("rivalFailLine"), f.title || f.url]));
   if (fake) notes.push(["skip", tr("rivalFakeLine", fake, d.competitors.filter((c) => c.fake).map((c) => tr("rivalFakeEach", names[d.competitors.indexOf(c)], c.reviews, c.credible)).join("; ")), null]);
   const again = h("button", { class: "btn ghost", type: "button" }, tr("rivalAgain"));
-  again.addEventListener("click", () => { rival = { step: "idle" }; rivalRun += 1; renderRival(); });
+  again.addEventListener("click", () => {  // a clean, empty form for the next comparison; the product from Bedah ulasan is one tap away
+    rival = { step: "idle", other: true }; rivalRun += 1; rivalForm = { url: "", name: "" }; renderRival();
+    $("feature2").scrollTo({ top: 0, behavior: reduceMotion() ? "auto" : "smooth" }); toTop(); if ($("rival-url")) $("rival-url").focus({ preventScroll: true });
+  });
   return [
     stepper(4),
     d.example ? h("div", { class: "callout warn", role: "note" }, h("b", { text: tr("rivalExampleHead") + " " }), tr("rivalExampleBody")) : null,

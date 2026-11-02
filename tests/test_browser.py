@@ -275,6 +275,11 @@ window.__probe = (async () => {
     startFresh();
     out.tp.fresh = [currentView, document.getElementById("url").value, document.getElementById("paste").value, document.getElementById("back-results").hidden, lastData];
     out.tp.short = [shortLabel("Kaos"), shortLabel("Baju Oblong Wanita POLOS Lengan Panjang Bahan Spandek Distro Printing")];
+    // after a comparison, "Mulai ulang" gives an empty form, not the last product again
+    rivalForm = { url: "https://www.tokopedia.com/toko/lama", name: "lama" };
+    [...document.querySelectorAll("#rival-body button")].find((b) => b.textContent.indexOf("contoh") >= 0).click();
+    [...document.querySelectorAll("#rival-body button")].find((b) => b.textContent.trim() === "Mulai ulang").click();
+    out.tp.again = [document.getElementById("rival-url").value, document.getElementById("rival-name").value];
   }
 
   if (location.hash === "#history") {
@@ -638,6 +643,7 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(tp["left"], [[], "fixes", True])
         self.assertEqual(tp["fresh"], ["input", "", "", True, None])
         self.assertEqual(tp["short"], ["Kaos", "Baju Oblong Wanita POLOS Lengan Panjang…"])
+        self.assertEqual(tp["again"], ["", ""])
 
     def test_a_history_row_holds_counts_and_names_only(self):
         hist = self.probe("/#history")["hist"]
