@@ -170,3 +170,7 @@ With `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `.env`, the page opens for everyo
 - The secret key (`SUPABASE_SERVICE_KEY`) never goes in a page. Only the publishable key is sent to the browser.
 - `src/bedahreview/static/vendor/supabase.js` is one pinned copy of `@supabase/supabase-js` 2.117.3 (umd build, sha256 `d6a5c441...54a3`, checked by a test). To update it, download the new file, change the hash in `tests/test_auth.py`, run the tests.
 - The email code needs the "Confirm signup" and "Magic Link" email templates in Supabase (Authentication > Emails) to contain `{{ .Token }}`. Until a custom email sender is set up, Supabase sends at most 2 emails an hour.
+
+## Copyright
+
+Copyright © 2026 BedahReview. Contact: [bedahreview@gmail.com](mailto:bedahreview@gmail.com)
