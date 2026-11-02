@@ -186,6 +186,14 @@ class WebTests(unittest.TestCase):
         self.assertIn("default-src 'self'", csp)
         self.assertNotIn("cdn", csp)
 
+    def test_the_page_sends_the_extra_safety_headers(self):
+        resp = self.call("/")[0]
+        csp = resp.getheader("Content-Security-Policy")
+        for rule in ("object-src 'none'", "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'"):
+            self.assertIn(rule, csp)
+        self.assertEqual(resp.getheader("Referrer-Policy"), "strict-origin-when-cross-origin")
+        self.assertIn("camera=()", resp.getheader("Permissions-Policy"))
+
     def test_the_access_code_page_is_still_reachable_for_interviewers(self):
         resp, page = self.call("/code")
         self.assertEqual(resp.status, 200)
