@@ -221,7 +221,6 @@ main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-
 .workspace[data-section="rivals"] > main { display: none; }
 .workspace[data-section="rivals"] > .col-2 { display: grid; gap: 14px; align-content: start; max-width: 480px; margin: 0 auto;
   padding: 16px max(var(--gutter), env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left)); }
-@media (max-width: 899px) { .col-2 .ftile, .col-2 .eyebrow { display: none; } .col-2 .fhead h1 { font-size: 1.3rem; margin: 0; } }
 .want { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.85rem; font-weight: 700; color: var(--muted); }
 .want .seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 52px; }
 .group { display: grid; gap: 10px; }
@@ -262,7 +261,6 @@ main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-
 .nextlist li.done > span:not(.dot) { color: var(--muted); }
 .nextlist button { min-height: 44px; padding: 0 10px; }
 .sumfoot { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }  /* the plan's end: back to the results, or a new product, side by side */
-#view-plan .sumfoot .btn { width: 100%; justify-self: stretch; padding: 0 12px; }
 .taskbox { display: grid; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
 .taskbox > .task { border: 0; }
 .taskpanel { display: grid; gap: 10px; padding: 4px 14px 14px; }
@@ -404,18 +402,13 @@ body { -webkit-font-smoothing: antialiased; transition: background-color 0.2s, c
 @media (min-width: 900px) { .visitor #fixes-btn, .has-acct #fixes-btn { display: inline-flex; } #fixes-btn .lbl { display: inline; } .theme.fixes-pill { width: auto; padding: 0 16px; } }
 #fixes-btn .badge { position: static; min-width: 22px; height: 22px; border-radius: 999px; font-size: 12px; }
 @media (min-width: 900px) { #signin-btn { order: 5; } }  /* a wide header: Tugas, language, theme, then Masuk last */
-body.gated .ptabs, body:not(.ready) .ptabs { display: none !important; }
 body.sheet-open { overflow: hidden; }
 body.free-locked #panels, body.free-locked #board-cap { display: none !important; }  /* a free result before sign-in: the counts show, the quotes and drafts wait */
 
 /* phone, and a tablet held upright: one column, a little wider from 600px */
 @media (min-width: 600px) and (max-width: 899px) {
   main, .workspace[data-section="rivals"] > .col-2, .topbar-in, .bottombar-in { max-width: 600px; }
-  .ptabs:not([hidden]) { display: grid; }
 }
-.ptabs { display: none; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin: 12px auto 0; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); width: calc(100% - 32px); max-width: 568px; }
-.ptabs button { min-height: 44px; border: 0; border-radius: 999px; background: none; color: var(--muted); font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
-.ptabs button[aria-current="page"] { background: var(--ink); color: var(--surface); }
 .bottombar-in { grid-template-columns: repeat(3, 1fr); }
 .nav .ic { position: relative; display: inline-flex; }
 .nav .badge { top: -7px; right: auto; left: 13px; border: 2px solid var(--surface); }
@@ -456,7 +449,6 @@ details.xp.closing > summary::after { transform: rotate(45deg); }
 #stabs button { padding: 0 6px; border-radius: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sheet-box { grid-template-columns: minmax(0, 1fr); }
 [tabindex="-1"]:focus { outline: none; }  /* headings take focus so screen readers start there; the ring is for keyboard targets */
-@media (max-width: 899px) { #fixes-back { display: none; } }
 .stephd .stepper { flex: 0 1 auto; min-width: 0; } .stephd .stepper li { padding: 4px 6px; gap: 4px; font-size: 0.78rem; } .stephd .stepper .dot { width: 22px; height: 22px; }
 @media (max-width: 459px) { .stephd .stepper li:not(.on) .full, .stephd .stepper li:not(.on) .short { display: none; } }  /* a phone: only the current step keeps its name */
 details.xp > .xp-body { padding: 2px 2px 12px; display: grid; gap: 8px; }
@@ -500,7 +492,6 @@ input[aria-invalid="true"] { border: 2px solid var(--fight); }
 .stickyfoot .of { display: none; }
 
 /* the three steps */
-#view-plan { display: grid; gap: 14px; }
 .stephd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .back { min-height: 44px; display: inline-flex; align-items: center; gap: 2px; font: inherit; font-weight: 700; font-size: 0.9rem; color: var(--accent); background: none; border: 0; margin-left: -6px; padding: 0 6px; cursor: pointer; }
 .stephd .stepper { flex: 0 1 auto; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: max-content; }  /* the plan has 1 to 3 steps: the pill is as wide as they are */
@@ -599,7 +590,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 #sheet.dlg .sheet-box { top: 50%; bottom: auto; left: 50%; right: auto; width: min(480px, calc(100% - 32px)); border-radius: 22px; padding: 24px; transform: translate(-50%, -46%); opacity: 0; transition: transform 0.24s var(--ease), opacity 0.24s; background: var(--surface); }
 #sheet.dlg.open .sheet-box { transform: translate(-50%, -50%); opacity: 1; }
 #sheet.dlg .grab { display: none; }
-.toast2 { position: fixed; left: 16px; right: 16px; bottom: calc(150px + env(safe-area-inset-bottom)); z-index: 45; max-width: 440px; margin: 0 auto; background: var(--ink); color: var(--bg); font-size: 0.85rem; font-weight: 600; padding: 10px 14px; border-radius: 12px; text-align: center; animation: rise 0.24s var(--ease); }
+.toast2 { position: fixed; left: 16px; right: 16px; top: calc(68px + env(safe-area-inset-top)); z-index: 45; max-width: 440px; margin: 0 auto; background: var(--ink); color: var(--bg); font-size: 0.85rem; font-weight: 600; padding: 10px 14px; border-radius: 12px; text-align: center; animation: rise 0.24s var(--ease); }
 
 /* motion: short, and only where something moves or appears; off when the system asks for less motion */
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -611,7 +602,6 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 .enter-bwd { animation: bwd 0.26s var(--ease); }
 
 @media (min-width: 900px) {
-  .hero { display: none !important; }
   #results-h { font-size: 30px; line-height: 1.2; letter-spacing: -0.02em; }
   .res-meta { display: none; }  /* the product chip in the column header already names it */
   .plan { border-radius: 22px; padding: 16px 20px 8px; }
@@ -643,7 +633,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
   #sheet.open:not(.dlg) .sheet-box { transform: none; }
   #sheet:not(.dlg) .scrim { top: 72px; }
   #sheet .grab { display: none; }
-  .toast2 { bottom: 32px; }
+  .toast2 { top: 84px; }
 }
 @media (min-width: 1200px) {
   .prow { grid-template-columns: 30px minmax(0, 1.1fr) minmax(0, 1fr) 64px; }
@@ -693,6 +683,74 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 #view-results.locked .res-end { display: none !important; }
 @media (min-width: 900px) { .res-end .btn { width: 260px; justify-self: start; } .gtabs { margin: 0; padding: 2px 0; flex-wrap: wrap; overflow: visible; } }
 @media print { .panel[hidden] { display: grid !important; } }
+
+/* ---------- Tugas boxes, Riwayat, Pesaing, Selesai (R11) ---------- */
+.tgrid { display: grid; gap: 12px; align-content: start; }
+.tbox { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px 14px 8px; display: grid; gap: 4px; }
+.tbox .bh { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.tbox .bh b { font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere; }
+.tbox .tchip { font-size: 12px; font-weight: 800; border-radius: 999px; padding: 4px 10px; white-space: nowrap; background: var(--ignore-soft); color: var(--ignore); }
+.tbox .tmeta { font-size: 0.88rem; color: var(--muted); }
+.tbox .bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin: 6px 0 4px; }
+.tbox .bar span { display: block; height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.25s; }
+.tbox .sechd { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; color: var(--rival); margin: 8px 0 0; }
+.tbox .it { display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--line); }
+.tbox .itl { flex: 1; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 4px 0; cursor: pointer; line-height: 1.35; position: relative; }
+.tbox .itl input { position: absolute; opacity: 0; width: 24px; height: 24px; margin: 0; left: 0; }
+.tbox .cb { width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--field); flex: none; background: var(--surface); display: grid; place-items: center; color: var(--on-accent); }
+.tbox .cb svg { width: 14px; height: 14px; stroke-width: 3.4; opacity: 0; }
+.tbox .itl input:checked + .cb { background: var(--accent); border-color: var(--accent); }
+.tbox .itl input:checked + .cb svg { opacity: 1; }
+.tbox .itl input:focus-visible + .cb { outline: 3px solid var(--accent); outline-offset: 2px; }
+.tbox .it.dn .t { color: var(--muted); text-decoration: line-through; }
+.tbox .it .x { width: 44px; height: 44px; border: 0; background: none; color: var(--fight); cursor: pointer; display: grid; place-items: center; }
+.tbox .tlinks { display: flex; gap: 20px; flex-wrap: wrap; }
+.tbox .tlinks .plain { min-height: 44px; font-weight: 700; font-size: 0.9rem; color: var(--accent); }
+.tbox.alldone { background: var(--accent-soft); border-color: var(--accent); padding: 16px; gap: 10px; }
+.tbox.alldone .okh { display: flex; align-items: center; gap: 10px; color: var(--accent-ink); font-weight: 800; font-size: 1.05rem; }
+.tbox.alldone .okh svg { width: 26px; height: 26px; }
+.tbox.alldone details { margin-top: 2px; }
+.trow { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 60px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.trow .tt { display: grid; gap: 2px; min-width: 0; } .trow .tt b { overflow-wrap: anywhere; } .trow .tt span { font-size: 0.88rem; color: var(--muted); }
+.tsec { font-size: 13px; font-weight: 800; letter-spacing: 0.1em; color: var(--muted); margin: 6px 0 0; }
+.hrow { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: grid; gap: 6px; }
+.hrow .hh { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; } .hrow .hh b { overflow-wrap: anywhere; line-height: 1.35; }
+.hrow .hm { font-size: 0.88rem; color: var(--muted); }
+.hrow .hl { display: flex; gap: 18px; flex-wrap: wrap; } .hrow .hl .plain { min-height: 44px; font-weight: 700; font-size: 0.9rem; color: var(--accent); }
+.st { font-size: 12px; font-weight: 800; border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+.st.done { background: var(--keep-soft); color: var(--keep); } .st.open { background: var(--fix-soft); color: var(--fix); } .st.expired { background: var(--ignore-soft); color: var(--ignore); }
+.pick { display: flex; gap: 14px; align-items: flex-start; min-height: 56px; padding: 14px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius); cursor: pointer; }
+.pick input { width: 24px; height: 24px; margin: 1px 0 0; accent-color: var(--rival); flex: none; }
+.pick.on { border-color: var(--rival); background: var(--rival-soft); }
+.pick .t { font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; display: block; } .pick .m { display: block; font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+.buyer.rival .lab { color: var(--rival); }
+.todo.keep { background: var(--keep-soft); } .todo.keep .lab { color: var(--keep); }
+.pickfoot { display: grid; gap: 6px; } .pickfoot .small { text-align: center; font-size: 12px; }
+#done-anim { position: fixed; inset: 0; z-index: 80; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center; padding: 0 32px; }
+#done-anim[hidden] { display: none; }
+#done-anim h2 { font-size: 1.9rem; font-weight: 800; } #done-anim p { color: var(--muted); font-size: 1rem; margin-top: 6px; }
+#done-anim .ring { stroke-dasharray: 189; stroke-dashoffset: 189; } #done-anim .tick { stroke-dasharray: 50; stroke-dashoffset: 50; } #done-anim .pop { opacity: 0; }
+#done-anim.play .ring { animation: dring 0.55s ease-out forwards; } #done-anim.play .tick { animation: dtick 0.4s 0.45s ease-out forwards; } #done-anim.play .pop { animation: dpop 0.4s 0.8s ease-out forwards; }
+@keyframes dring { to { stroke-dashoffset: 0; } } @keyframes dtick { to { stroke-dashoffset: 0; } } @keyframes dpop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #done-anim .ring, #done-anim .tick { stroke-dashoffset: 0; animation: none !important; } #done-anim .pop { opacity: 1; animation: none !important; } }
+.res-top { position: relative; }
+/* a wide screen: one scroll area, a centred column; Hasil Bedah gets two columns with the summary kept in view; Tugas two boxes per row */
+@media (min-width: 900px) {
+  .workspace { display: block; overflow-y: auto; }
+  .workspace > main.col { max-width: 720px; margin: 0 auto; overflow: visible; padding: 32px 36px 72px; }
+  .workspace.wide > main.col { max-width: 1240px; }
+  .hero:not([hidden]) { display: grid; } .hero h1 { font-size: 38px; }
+  .res-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  #view-results { grid-template-columns: minmax(0, 1fr) 380px !important; column-gap: 32px; align-items: start; }
+  #view-results > * { grid-column: 1; }
+  #view-results > .res-top { grid-column: 1 / -1; }
+  #view-results > #sumbox { grid-column: 2; grid-row: 2 / span 12; position: sticky; top: 16px; }
+  .tgrid { grid-template-columns: 1fr 1fr; align-items: start; }
+  .tgrid > .tsec, .tgrid > .full-row { grid-column: 1 / -1; }
+  .rival-wrap { max-width: 720px; }
+}
+@media (min-width: 900px) and (max-width: 1199px) { #view-results { grid-template-columns: minmax(0, 1fr) 300px !important; } }
+@media (min-width: 900px) { .gtabs { flex-wrap: wrap; } }
 </style>
 </head>
 <body>
@@ -778,24 +836,8 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
   </div>
 </section>
 
-<nav class="ptabs" id="ptabs" aria-label="Bagian" data-i18n-label="sections"><button type="button" id="ptab-mine" aria-current="page" data-i18n="ptabMine"></button><button type="button" id="ptab-rivals" aria-current="false" data-i18n="ptabRivals"></button></nav>
 <div class="workspace" id="workspace" data-section="checker">
 <main id="main" class="col col-1">
-
-  <div class="fhead dsk f">
-    <span class="ftile" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 13l2 2 4-4"/></svg></span>
-    <div class="ftext"><h1 id="f1-h" data-i18n="f1Title"></h1><p class="muted" data-i18n="f1Sub"></p></div>
-    <div class="fside">
-      <div class="pchip" id="pchip" hidden><b id="pchip-name"></b><span id="pchip-meta"></span><button class="plain" id="pchip-change" type="button"></button></div>
-      <button class="btn ghost" id="print-d" type="button" hidden></button>
-    </div>
-  </div>
-
-  <ol class="steps dsk g" id="view-steps">
-    <li><span class="num">1</span><div><b id="step1-t" data-i18n="step1T"></b><span id="step1-d" data-i18n="step1D"></span></div></li>
-    <li><span class="num">2</span><div><b data-i18n="step2T"></b><span data-i18n="step2D"></span></div></li>
-    <li><span class="num">3</span><div><b data-i18n="step3T"></b><span data-i18n="step3D"></span></div></li>
-  </ol>
 
   <!-- first screen on a phone: what the app does, and how, folded -->
   <div class="hero" id="hero">
@@ -888,6 +930,9 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
     <button class="linkbtn quiet" id="in-history" type="button" data-i18n="histTitle" hidden></button>
   </section>
 
+  <!-- Pesaing: searching, pick 1 or 2 shops, then a Hasil Bedah of its own (R11) -->
+  <section id="view-rival" hidden aria-label="Pesaing" data-i18n-label="navRivals" style="display:grid;gap:14px"></section>
+
   <!-- loading -->
   <section id="view-loading" class="loading" hidden aria-live="polite">
     <div class="spinner" aria-hidden="true"></div>
@@ -896,48 +941,27 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
     <p class="small muted" id="elapsed" aria-hidden="true"></p>
   </section>
 
-  <!-- fixes the seller logged (saved in this browser only) -->
-  <!-- Tugas: open steps from today's plans, and the fixes being watched (kept in this browser, and in the account when signed in) -->
+  <!-- Tugas: one box per analysed product, kept in this browser (R11) -->
   <section id="view-fixes" hidden aria-labelledby="fixes-h" style="display:grid;gap:14px">
-    <button class="back dsk i" id="fixes-back" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span data-i18n="back"></span></button>
-    <div class="res-head" style="align-items:flex-end;flex-wrap:wrap">
-      <div class="tasks-h"><h2 id="fixes-h" tabindex="-1" data-i18n="fixesTitle"></h2><p class="small muted" id="tasks-sub"></p>
-        <button class="linkbtn" id="tasks-history" type="button" hidden><span data-i18n="histTitle"></span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div>
-      <div class="row dsk f" id="tasks-filter" role="group"></div>
-    </div>
-    <div id="tasks-body" style="display:grid;gap:14px"></div>
-    <div id="tasks-fixes" style="display:grid;gap:12px">
-      <p class="small muted" id="fixes-sub"></p>
-      <div class="callout hot" id="fixes-nostore" hidden data-i18n="fixesNoStore"></div>
-      <div class="callout" id="fixes-sync" role="status" hidden></div>
-      <div class="callout" id="fixes-msg" role="status" hidden></div>
-      <details class="morebox" id="fixes-more">
-        <summary data-i18n="more"></summary>
-        <div class="fixtools">
-          <button class="btn ghost" id="fixes-export" type="button" data-i18n="fixesExport"></button>
-          <button class="btn ghost" id="fixes-import" type="button" data-i18n="fixesImport"></button>
-          <input type="file" id="fixes-file" accept="application/json,.json" hidden aria-label="JSON">
-        </div>
-      </details>
-      <p class="fnote"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="fixesWarn"></span></p>
-    </div>
+    <div class="tasks-h"><h2 id="fixes-h" tabindex="-1" data-i18n="fixesTitle"></h2>
+      <button class="linkbtn" id="tasks-history" type="button" hidden><span data-i18n="histTitle"></span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div>
+    <div id="tasks-body" class="tgrid"></div>
   </section>
 
-  <!-- Riwayat: a summary of each analysis in the last 14 days, read from the account (signed-in sellers only) -->
+  <!-- Riwayat: a summary of each analysis in the last 60 days, read from the account (signed-in sellers only) -->
   <section id="view-history" hidden aria-labelledby="history-h" style="display:grid;gap:14px">
     <button class="back i" id="history-back" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span data-i18n="back"></span></button>
-    <div class="tasks-h"><h2 id="history-h" tabindex="-1" data-i18n="histTitle"></h2><p class="small muted" data-i18n="histSub"></p></div>
+    <div class="tasks-h"><h2 id="history-h" tabindex="-1" data-i18n="histTitle"></h2></div>
     <div id="history-body" class="stack"></div>
+    <p class="small muted" data-i18n="histFoot"></p>
   </section>
-
-  <!-- the three steps of today's plan, then the summary -->
-  <section id="view-plan" hidden aria-labelledby="plan-h"></section>
 
   <!-- results -->
   <section id="view-results" hidden aria-labelledby="results-h" style="display:grid;gap:12px">
     <div class="res-top">
       <p class="res-meta" id="summary"></p>
       <h2 id="results-h" tabindex="-1" data-i18n="resultsTitle"></h2>
+      <button class="btn ghost dsk" id="print-d" type="button" hidden></button>
     </div>
     <div id="start"></div>
     <div class="sumbox" id="sumbox"></div>
@@ -967,13 +991,6 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
   <span class="vh" id="toast" role="status" aria-live="polite"></span>
 </main>
 
-<aside id="feature2" class="col col-2" aria-labelledby="f2-h">
-  <div class="fhead">
-    <span class="ftile rival" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg></span>
-    <div class="ftext"><h1 id="f2-h" data-i18n="f2Title"></h1><p class="muted" data-i18n="f2Sub"></p></div>
-  </div>
-  <div id="rival-home" class="stack"></div>
-</aside>
 </div>
 
 <!-- a group's quotes and drafts: a bottom sheet on a phone, a side panel on a wide screen; also the sign-in dialog for Tugas on a wide screen -->
@@ -986,12 +1003,15 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
   </div>
 </div>
 <div class="toast2" id="toast2" role="status" hidden></div>
+<div id="done-anim" hidden role="status" aria-live="polite">
+  <svg width="132" height="132" viewBox="0 0 72 72" fill="none" aria-hidden="true"><circle cx="36" cy="36" r="30" stroke="var(--accent-soft)" stroke-width="5"/><circle class="ring" cx="36" cy="36" r="30" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" transform="rotate(-90 36 36)"/><path class="tick" d="M23 37l9 9 17-20" stroke="var(--accent)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="pop"><h2 data-i18n="doneAnimT"></h2><p id="done-sub"></p></div>
+</div>
 
 <nav class="bottombar" aria-label="Menu">
   <div class="bottombar-in">
     <button class="nav" id="nav-check" type="button" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg><span data-i18n="navChecker"></span></button>
     <button class="nav" id="nav-tasks" type="button" aria-current="false"><span class="ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="badge" id="tasks-count" hidden></span></span><span data-i18n="navTasks"></span></button>
-    <button class="nav" id="nav-rivals" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg><span data-i18n="navRivals"></span></button>
   </div>
 </nav>
 
@@ -1057,7 +1077,15 @@ const TEXT = {
     step3T: "Kamu dapat rencana singkat", step3D: "plus draf balasan siap kirim",
     linkOpts: "Pengaturan lanjutan",
     navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Analisis pesaing · 1 jatah",
-    resultsTitle: "Hasil Bedah", sumLabelFix: "RINGKASAN · %s HAL PERLU DIPERBAIKI", sumLabel: "RINGKASAN", sumItem: "%s (%s ulasan)", sumMore: "+%s lainnya: %s", sumNothing: "Tidak ada keluhan yang perlu diperbaiki.", sumAlso: "Juga: %s", sumFight: "%s ulasan perlu ditanggapi", sumKeep: "%s pembeli memuji %s", cardN: "%s ulasan", buyerLbl: "KATA PEMBELI", todoLbl: "YANG PERLU KAMU LAKUKAN", endTitle: "Sudah selesai membaca?", selesaiBtn: "Selesai", endNote: "Salin balasan yang kamu perlukan dulu.", doneToast: "%s tugas masuk",
+    resultsTitle: "Hasil Bedah",
+    doneAnimT: "Selesai!", doneAnimSub: "%s tugas masuk ke tab Tugas.", doneAnimNone: "Tidak ada tugas baru dari hasil ini.", taskReply: "Balas %s ulasan soal %s", taskRemove: "Hapus tugas ini", taskEdit: "Ubah", taskEditDone: "Selesai mengubah",
+    taskProgress: "%s dari %s selesai", taskAllDoneP: "Semua tugas sudah dicentang. Bedah ulang produk ini untuk melihat apakah keluhannya berkurang.", taskSee: "Lihat tugas", taskAgain: "Bedah ulang produk ini", taskRowOpen: "%s tugas · sisa %s hari", taskRowDone: "%s dari %s · selesai",
+    daysLeft: "Sisa %s hari", fromRival: "DARI PESAING", calBtn: "Tambah ke Kalender", calEvent: "Cek lagi: %s", rivalsBtnShort: "Analisis pesaing", tasksNone: "Belum ada tugas", tasksNoneP: "Tugas muncul di sini setelah kamu menekan Selesai di Hasil Bedah.", tasksFinished: "SELESAI",
+    st_done: "Selesai", st_open: "Belum selesai", st_expired: "Kedaluwarsa", histTasks: "%s tugas dibuat", histExpired: "%s dari %s tugas belum dicentang", histResume: "Lanjutkan", histGone: "Hasil ini sudah tidak tersimpan di HP ini. Bedah lagi untuk melihatnya.",
+    histFoot: "Riwayat hanya menyimpan ringkasan, bukan isi ulasan. Dihapus otomatis setelah 60 hari. Status dan Lanjutkan hanya ada di HP tempat kamu membedah.",
+    rivalFor: "Untuk", rivalWait: "Sekitar 10 sampai 40 detik.", cancelBtn: "Batal", rivalSearching: "Mencari produk serupa…", rivalPickT: "Pilih 1 atau 2 pesaing", rivalFoundN: "Ketemu %s produk serupa. Yang paling mirip sudah dipilih.", rivalGoN: "Bandingkan (%s dipilih)",
+    rivalQuota: "Memakai 1 jatah analisis hari ini", rivalPasteSum: "Punya tautan pesaing sendiri?", rivalResultT: "Hasil Bedah pesaing", rivalVs: "Kamu vs %s", rivalCatchUp: "Perlu dikejar", rivalEdge: "Keunggulanmu", buyerRivalLbl: "KATA PEMBELI PESAING",
+    rivalDoWorse: "Cari tahu kenapa keluhan %s lebih sering muncul di produkmu daripada di pesaing, lalu perbaiki.", rivalDoGap: "Pelajari kenapa pembeli memuji %s di %s, lalu tonjolkan hal serupa di produkmu.", rivalDoEdge: "Pertahankan dan tonjolkan: pembeli pesaing mengeluhkan %s, produkmu tidak.", sumLabelFix: "RINGKASAN · %s HAL PERLU DIPERBAIKI", sumLabel: "RINGKASAN", sumItem: "%s (%s ulasan)", sumMore: "+%s lainnya: %s", sumNothing: "Tidak ada keluhan yang perlu diperbaiki.", sumAlso: "Juga: %s", sumFight: "%s ulasan perlu ditanggapi", sumKeep: "%s pembeli memuji %s", cardN: "%s ulasan", buyerLbl: "KATA PEMBELI", todoLbl: "YANG PERLU KAMU LAKUKAN", endTitle: "Sudah selesai membaca?", selesaiBtn: "Selesai", endNote: "Salin balasan yang kamu perlukan dulu.", doneToast: "%s tugas masuk",
     rivalWantLbl: "Berapa pesaing?", rivalExampleBtn: "Lihat contoh (gratis)", rivalExampleHead: "Contoh, bukan data nyata.",
     rivalExampleBody: "Angka dan kutipan di bawah dibuat untuk contoh. “Contoh Kaos Boxy” bukan produkmu: tidak ada toko atau pembeli sungguhan, dan tidak ada biaya.",
     rivalNoBox: "Pencarian pesaing butuh kotak tautan, yang belum menyala di sini. Kamu masih bisa melihat contoh.",
@@ -1154,7 +1182,7 @@ const TEXT = {
     tasksSub: "Langkah yang belum selesai dan perbaikan yang sedang dipantau.", tasksSubAll: "Langkah yang belum selesai dan perbaikan yang sedang dipantau, untuk semua produkmu.",
     today: "Hari ini · %s", watched: "Dipantau · %s", sched: "Jadwal cek", schedToday: "Hari ini", schedNext: "Berikutnya", schedNextP: "Tanggal cek muncul di sini setelah kamu mencatat perbaikan.",
     langBtn: "Bahasa: Indonesia. Ganti ke English.", readyToast: "Analisis selesai. Buka lewat Bedah ulasan.", dueChip: "Waktunya cek", loggedOn: "%s · dicatat %s", reanalyse: "Bedah ulasan terbaru", skippedNote: "Langkah yang dilewati tetap di sini sampai kamu kerjakan.", noneToday: "Tidak ada langkah yang tersisa.",
-    histTitle: "Riwayat", histSub: "Riwayat hanya menyimpan ringkasan, bukan isi ulasan. Dihapus otomatis setelah 14 hari.", histEmpty: "Belum ada riwayat. Bedah ulasan pertamamu akan muncul di sini.",
+    histTitle: "Riwayat", histSub: "Riwayat hanya menyimpan ringkasan, bukan isi ulasan. Dihapus otomatis setelah 60 hari.", histEmpty: "Belum ada riwayat. Bedah ulasan pertamamu akan muncul di sini.",
     histCounts: "%s ulasan", histTop: "Keluhan terbanyak: %s", histAgain: "Bedah lagi", histLoading: "Memuat…", histDown: "Riwayat tidak bisa dibuka sekarang. Coba lagi nanti.",
     tasksEmpty: "Belum ada tugas. Bedah ulasan produk untuk mulai.", tasksStart: "Bedah ulasan", tasksSignT: "Masuk untuk menyimpan tugasmu", tasksSignP: "Perbaikan dan tanggal cekmu tersimpan di akunmu, jadi tidak hilang saat browser ditutup.",
     later: "Nanti saja", allProducts: "Semua produk", open: "Buka", taskFixLbl: "Langkah perbaikanmu", taskFixP: "%s dari %s ulasan mengeluhkan ini. Tulis apa yang akan kamu ubah. Kami ingatkan untuk cek lagi seminggu lagi.", taskFixSave: "Simpan & pantau",
@@ -1233,7 +1261,15 @@ const TEXT = {
     step3T: "You get a short plan", step3D: "plus reply drafts ready to send",
     linkOpts: "Advanced settings",
     navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Competitor analysis · 1 use",
-    resultsTitle: "Review results", sumLabelFix: "SUMMARY · %s THINGS TO FIX", sumLabel: "SUMMARY", sumItem: "%s (%s reviews)", sumMore: "+%s more: %s", sumNothing: "Nothing to fix in these reviews.", sumAlso: "Also: %s", sumFight: "%s reviews to respond to", sumKeep: "%s buyers praise %s", cardN: "%s reviews", buyerLbl: "WHAT BUYERS SAY", todoLbl: "WHAT TO DO", endTitle: "Done reading?", selesaiBtn: "Done", endNote: "Copy the replies you need first.", doneToast: "%s tasks added",
+    resultsTitle: "Review results",
+    doneAnimT: "Done!", doneAnimSub: "%s tasks added to the Tasks tab.", doneAnimNone: "No new tasks from this result.", taskReply: "Reply to %s reviews about %s", taskRemove: "Remove this task", taskEdit: "Edit", taskEditDone: "Done editing",
+    taskProgress: "%s of %s done", taskAllDoneP: "Every task is ticked. Check this product again to see whether the complaints went down.", taskSee: "See tasks", taskAgain: "Check this product again", taskRowOpen: "%s tasks · %s days left", taskRowDone: "%s of %s · done",
+    daysLeft: "%s days left", fromRival: "FROM COMPETITORS", calBtn: "Add to Calendar", calEvent: "Check again: %s", rivalsBtnShort: "Competitor analysis", tasksNone: "No tasks yet", tasksNoneP: "Tasks show up here after you press Done on a review result.", tasksFinished: "DONE",
+    st_done: "Done", st_open: "Not finished", st_expired: "Expired", histTasks: "%s tasks created", histExpired: "%s of %s tasks not ticked", histResume: "Continue", histGone: "This result is no longer kept on this phone. Check again to see it.",
+    histFoot: "History keeps only a summary, never the review text. It is deleted automatically after 60 days. Status and Continue exist only on the phone where you ran the check.",
+    rivalFor: "For", rivalWait: "About 10 to 40 seconds.", cancelBtn: "Cancel", rivalSearching: "Looking for similar products…", rivalPickT: "Pick 1 or 2 competitors", rivalFoundN: "Found %s similar products. The closest match is already picked.", rivalGoN: "Compare (%s picked)",
+    rivalQuota: "Uses 1 analysis of your daily limit", rivalPasteSum: "Have a competitor link of your own?", rivalResultT: "Competitor results", rivalVs: "You vs %s", rivalCatchUp: "Catch up", rivalEdge: "Your edge", buyerRivalLbl: "WHAT COMPETITOR BUYERS SAY",
+    rivalDoWorse: "Find out why %s complaints show up more on your product than on theirs, then fix it.", rivalDoGap: "Learn why buyers praise %s at %s, then bring out something similar on your product.", rivalDoEdge: "Keep it and show it off: competitor buyers complain about %s, yours do not.", sumLabelFix: "SUMMARY · %s THINGS TO FIX", sumLabel: "SUMMARY", sumItem: "%s (%s reviews)", sumMore: "+%s more: %s", sumNothing: "Nothing to fix in these reviews.", sumAlso: "Also: %s", sumFight: "%s reviews to respond to", sumKeep: "%s buyers praise %s", cardN: "%s reviews", buyerLbl: "WHAT BUYERS SAY", todoLbl: "WHAT TO DO", endTitle: "Done reading?", selesaiBtn: "Done", endNote: "Copy the replies you need first.", doneToast: "%s tasks added",
     rivalWantLbl: "How many competitors?", rivalExampleBtn: "See an example (free)", rivalExampleHead: "Example, not live data.",
     rivalExampleBody: "The numbers and quotes below were made up for this example. “Contoh Kaos Boxy” is not your product: no real shops or buyers, and no cost.",
     rivalNoBox: "Finding competitors needs the link box, which is not switched on here. You can still see an example.",
@@ -1329,7 +1365,7 @@ const TEXT = {
     tasksSub: "Open steps and the fixes being tracked.", tasksSubAll: "Open steps and the fixes being tracked, for all your products.",
     today: "Today · %s", watched: "Tracked · %s", sched: "Check schedule", schedToday: "Today", schedNext: "Next", schedNextP: "Check dates show here once you log a fix.",
     langBtn: "Language: English. Switch to Indonesian.", readyToast: "Analysis ready. Open it under Review checker.", dueChip: "Time to check", loggedOn: "%s · logged %s", reanalyse: "Analyse the latest reviews", skippedNote: "Skipped steps stay here until you do them.", noneToday: "No steps left.",
-    histTitle: "History", histSub: "History keeps only a summary, never the review text. It is deleted automatically after 14 days.", histEmpty: "No history yet. Your first analysis will show up here.",
+    histTitle: "History", histSub: "History keeps only a summary, never the review text. It is deleted automatically after 60 days.", histEmpty: "No history yet. Your first analysis will show up here.",
     histCounts: "%s reviews", histTop: "Top complaint: %s", histAgain: "Analyse again", histLoading: "Loading…", histDown: "History cannot be opened right now. Try again later.",
     tasksEmpty: "No tasks yet. Analyse a product's reviews to start.", tasksStart: "Check reviews", tasksSignT: "Sign in to keep your tasks", tasksSignP: "Your fixes and check dates are saved in your account, so they are not lost when the browser closes.",
     later: "Not now", allProducts: "All products", open: "Open", taskFixLbl: "Your fix", taskFixP: "%s of %s reviews complain about this. Write what you will change. We remind you to check again in a week.", taskFixSave: "Save & track",
@@ -1389,7 +1425,7 @@ function svgIcon(paths) {
 }
 const desktopQuery = window.matchMedia("(min-width: 900px)");  // two columns side by side: the competitor panel gets its own column
 const desktop = () => desktopQuery.matches;
-function toTop() { const opts = { top: 0, behavior: reduceMotion() ? "auto" : "smooth" }; if (desktop()) $("main").scrollTo(opts); else window.scrollTo(opts); }
+function toTop() { const opts = { top: 0, behavior: reduceMotion() ? "auto" : "smooth" }; if (desktop()) $("workspace").scrollTo(opts); else window.scrollTo(opts); }
 function platformName(url) {
   try {
     const host = new URL(url).hostname;
@@ -1429,14 +1465,14 @@ function applyLang() {
   $("fb-steps").replaceChildren(...TEXT[lang].fbSteps.map((t) => h("li", { text: t })));
   const other = lang === "id" ? "EN" : "ID";  // the current language first and darker; the other one goes on the smallest phones
   $("lang").replaceChildren(h("span", { class: "pill" }, h("em", { text: lang.toUpperCase() }), h("span", { class: "alt", "aria-hidden": "true", text: "/" }), h("span", { class: "alt", text: other })));
-  $("pchip-change").textContent = tr("change"); $("back-results").textContent = tr("backResults"); $("print-d").textContent = tr("print");
+  $("back-results").textContent = tr("backResults"); $("print-d").textContent = tr("print");
   themeLabel(); renderFixBadge(); renderGate(); renderAccount(); setQuota(lastQuota);
   if (currentView === "fixes") renderFixes();
   if (currentView === "history") renderHistory();
   if (!$("run").disabled) $("run").textContent = tr("run");
   syncCount(); detectInput(); syncShopee(); syncLimit();
-  if (lastData) render(lastData, false); else renderRival();
-  if (currentView === "plan") renderPlanView();
+  if (lastData) render(lastData, false);
+  renderRival();
 }
 function syncLimit() {  // the link box says how many reviews it will read: the seller's number (10 unless changed), never more than the server allows
   const max = parseInt($("limit").max, 10) || 20, n = Math.max(1, Math.min(max, parseInt($("limit").value, 10) || 10));
@@ -1705,13 +1741,6 @@ function mergeImport(current, text) {  // a file in, strictly checked; same id r
   return { fixes: [...byId.values()].slice(0, MAX_FIXES), added: good.length, skipped: raw.length - good.length };
 }
 function fmtDate(iso) { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(lang === "id" ? "id-ID" : "en-GB", { day: "numeric", month: "short", year: "numeric" }); }
-function renderFixBadge() {  // the Tugas count: open steps of recent plans, plus fixes whose check date has come (none for a visitor without an account)
-  const n = !!sb && !signedIn ? 0 : openSteps().length + loadFixes().filter(isDue).length;
-  for (const id of ["fixes-count", "tasks-count"]) { $(id).textContent = n; $(id).hidden = !n; }
-  $("fixes-btn").setAttribute("aria-label", tr("fixesBtn") + (n ? " (" + n + ")" : "")); $("fixes-btn").title = tr("fixesBtn");
-  $("nav-tasks").setAttribute("aria-label", tr("navTasks") + (n ? " (" + n + ")" : ""));
-  $("acct-fixes").textContent = tr("fixesBtn") + (n ? " (" + n + ")" : "");
-}
 /* ---------- dates for check-ups ---------- */
 function isoDay(d) { const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
 function addDays(n, from) { const d = from ? new Date(from + "T12:00:00") : new Date(); d.setDate(d.getDate() + n); return isoDay(d); }
@@ -1723,40 +1752,6 @@ function showFixNoteError(box, msg) {
   let el = box.querySelector(".fixnote-error");
   if (!el) { el = h("div", { class: "callout warn fixnote-error", role: "alert" }); box.prepend(el); }
   el.textContent = msg;
-}
-function trackLines(f) {  // before and after, counts with their sample size, and the plain warning about small samples
-  const small = f.after && Math.min(f.before.total, f.after.total) < SMALL_SAMPLE;
-  return h("div", { class: "nums" },
-    h("span", { text: tr("fixBefore", f.before.count, f.before.total) }),
-    f.after ? h("span", { text: tr("fixAfter", fmtDate(f.after.date), f.after.count, f.after.total) }) : h("span", { class: "muted", text: tr("fixWaiting") }),
-    f.after ? h("span", { class: "small-warn" + (small ? " strong" : ""), text: small ? tr("fixSmallStrong") : tr("fixSmall") }) : null);
-}
-function fixTracker(group) {  // under a Fix card: the "mark as fixed" action, or the saved fix with its before and after
-  if (!lastData || lastData.example) return null;
-  const src = lastData.source || {}, key = productKey(src);
-  const saved = loadFixes().find((f) => sameFix(f, key, group.theme, group.variant));
-  if (saved) {
-    return h("div", { class: "track" }, h("span", { class: "when", text: tr("fixMarked", fmtDate(saved.date)) }),
-      saved.note ? h("span", { class: "note", text: saved.note }) : null, trackLines(saved),
-      h("button", { class: "plain", type: "button", text: tr("fixesBtn") + " →", onclick: () => openFixes() }));
-  }
-  const open = h("button", { class: "btn ghost", type: "button", text: tr("fixMark") });
-  const form = h("div", { class: "fixform", hidden: true });
-  const note = h("input", { type: "text", maxlength: String(NOTE_MAX), autocomplete: "off", placeholder: tr("fixNotePh"), id: "fixnote-" + group.theme.length + "-" + (group.variant || "").length });
-  const err = h("div", { class: "callout hot", role: "alert", hidden: true, text: tr("fixSaveFail") });
-  const save = h("button", { class: "btn primary", type: "button", text: tr("fixSave") });
-  const cancel = h("button", { class: "btn ghost", type: "button", text: tr("fixCancel") });
-  open.addEventListener("click", () => { form.hidden = false; open.hidden = true; note.focus(); });
-  cancel.addEventListener("click", () => { form.hidden = true; open.hidden = false; });
-  save.addEventListener("click", () => {
-    if (noteCopiesReview(note.value)) { err.textContent = tr("fixNoteReview"); err.hidden = false; return; }
-    const ok = saveFixes(loadFixes().concat(makeFix(group, note.value, src, lastData.items, addDays(CHECK_DAYS))));  // the same week-away check date as step 1 of the plan
-    if (!ok) { err.textContent = tr("fixSaveFail"); err.hidden = false; return; }
-    track("fix_marked");
-    render(lastData, false);
-  });
-  form.append(...[h("label", { class: "field", for: note.id }, h("span", { text: tr("fixNoteLbl") }), note), key ? null : h("p", { class: "small muted", text: tr("fixNoName") }), err, h("div", { class: "row" }, save, cancel)].filter(Boolean));
-  return h("div", { class: "fixform" }, open, form);
 }
 /* ---------- fixes in the account ----------
    The browser copy is the working copy and always works. Signed in, the list is also kept in the account's fixes table: on sign-in the two are merged
@@ -1790,12 +1785,7 @@ function mergeFixes(local, remote) {
   });
   return [...byId.values()].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)).slice(-MAX_FIXES);
 }
-function renderSyncStatus() {
-  const account = !!(sb && signedIn && userId), el = $("fixes-sync");
-  $("fixes-sub").textContent = tr(account ? "fixesSubAccount" : "fixesSub");
-  const key = account ? (fixSync.state === "down" ? "syncDown" : fixSync.state === "ok" ? "syncOk" : "") : (sb ? "syncOff" : "");
-  el.hidden = !key; el.className = "callout" + (key === "syncDown" ? " warn" : ""); el.textContent = key ? tr(key) : "";
-}
+function renderSyncStatus() { /* the fixes list has no screen any more; the account copy is kept as it was */ }
 function resetFixSync() { clearTimeout(fixSync.timer); Object.assign(fixSync, { state: "off", userId: null, synced: new Map(), busy: false, dirty: false, timer: null }); }
 async function syncFixes() {  // once per sign-in: fetch the account's list, merge it with this browser's, and push what the account does not have yet
   if (!sb || !userId || fixSync.userId === userId) return;
@@ -1853,13 +1843,202 @@ async function leaveWithFixes() {  // on "Keluar": save what is pending, then cl
   try { clearTimeout(fixSync.timer); await withTimeout(pushFixes(), 5000); } catch (e) { /* keep the local copy */ }
   const pending = loadFixes().some((f) => fixSync.synced.get(f.id) !== JSON.stringify(fixToRow(f, userId))) || [...fixSync.synced.keys()].some((id) => !loadFixes().some((f) => f.id === id));
   if (fixSync.state === "ok" && !pending) { memFixes = []; memOnly = false; try { localStorage.removeItem(FIX_KEY); } catch (e) { /* ignore */ } setFixOwner(""); }
-  memPlans = []; try { localStorage.removeItem(PLAN_KEY); } catch (e) { /* ignore */ }  // today's steps live in this browser only: not for the next person on a shared phone
+  clearBoxes();  // the boxes, the log and the held results live in this browser only: not for the next person on a shared phone
 }
-/* ---------- Riwayat: a summary of each analysis, kept 14 days in the account ----------
+/* ---------- Tugas: one box per analysed product (R11) ----------
+   Pressing Selesai on a Hasil Bedah turns it into a box: one checklist item per fix and one per group of replies. Boxes live in this browser only
+   (never on a server), last 30 days, and are cleared on sign-out. They hold task sentences (the AI's step, a theme name and a count), never review text.
+   A small log of analyses (who, when, counts, status) and the last few results (7 days, so "Lanjutkan" works) are also kept in this browser only. */
+const BOX_KEY = "bedahreview-boxes-v1", HELD_KEY = "bedahreview-held-v1", LOG_KEY = "bedahreview-log-v1";
+const BOX_DAYS = 30, HELD_DAYS = 7, LOG_DAYS = 60, DONE_SHOWN_DAYS = 3, MAX_BOXES = 30, MAX_ITEMS = 30, DAY_MS = 864e5;
+const memLists = { [BOX_KEY]: [], [HELD_KEY]: [], [LOG_KEY]: [] };
+function readList(key) { try { const raw = localStorage.getItem(key); if (raw != null) { const v = JSON.parse(raw); memLists[key] = Array.isArray(v) ? v : []; } } catch (e) { /* the memory copy stands */ } return memLists[key]; }
+function writeList(key, list) { memLists[key] = list; try { localStorage.setItem(key, JSON.stringify(list)); return true; } catch (e) { return false; } }
+const rid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const cleanInt = (n, max) => Math.max(0, Math.min(max, parseInt(n, 10) || 0));
+const replyText = (it) => (it.fight ? it.fight.public_reply || it.fight.chat_to_buyer || "" : "");
+function cleanItem(it) {
+  if (!it || !["fix", "reply", "rival"].includes(it.kind)) return null;
+  return { id: fxStr(it.id, 20) || rid(), kind: it.kind, theme: fxStr(it.theme, 80), text: fxStr(it.text, 300), n: cleanInt(it.n, 99), k: fxStr(it.k, 20), who: fxStr(it.who, 80), done: !!it.done };
+}
+function cleanBox(b) {
+  if (!b || typeof b !== "object" || !fxStr(b.sig, 40)) return null;
+  const items = (Array.isArray(b.items) ? b.items : []).map(cleanItem).filter(Boolean).slice(0, MAX_ITEMS);
+  if (!items.length) return null;
+  return { sig: fxStr(b.sig, 40), product: fxStr(b.product, 300), label: fxStr(b.label, 150), url: /^https:\/\//.test(b.url || "") ? fxStr(b.url, 300) : "", created: Number(b.created) || Date.now(), doneAt: Number(b.doneAt) || 0, items };
+}
+function cleanLog(e) {
+  if (!e || typeof e !== "object" || !fxStr(e.sig, 40)) return null;
+  const c = e.counts || {}, x = e.expired;
+  return { sig: fxStr(e.sig, 40), ts: Number(e.ts) || 0, product: fxStr(e.product, 300), label: fxStr(e.label, 150), url: /^https:\/\//.test(e.url || "") ? fxStr(e.url, 300) : "", reviews: cleanInt(e.reviews, 1000),
+    counts: { fix: cleanInt(c.fix, 1000), fight: cleanInt(c.fight, 1000), keep: cleanInt(c.keep, 1000), ignore: cleanInt(c.ignore, 1000) }, hid: e.hid == null ? null : Number(e.hid) || null,
+    tasks: cleanInt(e.tasks, 99), done: !!e.done, expired: x && typeof x === "object" ? { open: cleanInt(x.open, 99), total: cleanInt(x.total, 99) } : null };
+}
+function loadLog() { const cut = Date.now() - LOG_DAYS * DAY_MS; return readList(LOG_KEY).map(cleanLog).filter((e) => e && e.ts > cut); }
+function updateLog(sig, patch) { const list = loadLog(), i = list.findIndex((e) => e.sig === sig); if (i < 0) return; list[i] = Object.assign({}, list[i], patch); writeList(LOG_KEY, list); }
+function loadBoxes() {  // a box older than 30 days leaves Tugas; Riwayat remembers how many items were still open
+  const now = Date.now(), all = readList(BOX_KEY).map(cleanBox).filter(Boolean), keep = [];
+  for (const b of all) {
+    if (now - b.created < BOX_DAYS * DAY_MS) { keep.push(b); continue; }
+    const open = b.items.filter((i) => !i.done).length;
+    updateLog(b.sig, { expired: open ? { open, total: b.items.length } : null });
+  }
+  if (keep.length !== all.length) writeList(BOX_KEY, keep);
+  return keep;
+}
+const saveBoxes = (list) => { writeList(BOX_KEY, list.slice(-MAX_BOXES)); renderFixBadge(); };
+function clearBoxes() { [BOX_KEY, HELD_KEY, LOG_KEY].forEach((k) => { memLists[k] = []; try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }); }
+function logAnalysis(data, counts) {  // one line per analysis: counts and names only; the whole result is held separately for a week
+  if (!data || data.example || data.free || !data.items) return;
+  const sig = reviewSig(data.items), list = loadLog();
+  if (list.some((e) => e.sig === sig)) return;
+  const src = data.source || {};
+  list.push({ sig, ts: Date.now(), product: productKey(src), label: src.title || "", url: src.kind === "url" ? src.url : "", reviews: data.reviews, counts, hid: null, tasks: 0, done: false, expired: null });
+  writeList(LOG_KEY, list.slice(-100));
+  holdResult(sig, data);
+}
+function holdResult(sig, data) {  // "Lanjutkan": the result stays in this browser for 7 days, never on a server
+  const list = readList(HELD_KEY).filter((x) => x && x.sig !== sig && Date.now() - x.ts < HELD_DAYS * DAY_MS);
+  list.push({ sig, ts: Date.now(), data });
+  const keep = list.slice(-3);
+  while (keep.length && !writeList(HELD_KEY, keep)) keep.shift();  // too big for this browser: keep fewer
+}
+const heldFor = (sig) => readList(HELD_KEY).find((x) => x && x.sig === sig && Date.now() - x.ts < HELD_DAYS * DAY_MS && x.data && x.data.items) || null;
+const dropHeld = (sig) => writeList(HELD_KEY, readList(HELD_KEY).filter((x) => x && x.sig !== sig));
+const entryState = (e) => (e.expired ? "expired" : e.done ? "done" : "open");
+function boxItemsFrom(data) {  // the biggest fix first, then the groups of replies
+  const byId = {}; data.items.forEach((it) => { byId[it.id] = it; });
+  const out = (data.groups || []).map((g) => ({ id: rid(), kind: "fix", theme: g.theme, text: g.ids.map((id) => (byId[id] || {}).fix_suggestion_id).find(Boolean) || "", n: g.n }));
+  const replies = new Map();
+  data.items.forEach((it) => { if ((it.bucket === "fight" || it.bucket === "check") && replyText(it) && !isFake(it)) replies.set(it.theme, (replies.get(it.theme) || 0) + 1); });
+  replies.forEach((n, theme) => out.push({ id: rid(), kind: "reply", theme, n }));
+  return out;
+}
+function rivalTodoText(it) { return it.k === "worse" ? tr("rivalDoWorse", lowerTheme(it.theme)) : tr("rivalDoGap", plainTheme(it.theme).toLowerCase(), it.who || tr("rivalShop", "A")); }
+function boxItemText(it) {
+  if (it.kind === "fix") return it.text || tr("fixAct", lowerTheme(it.theme));
+  if (it.kind === "reply") return tr("taskReply", it.n, lowerTheme(it.theme));
+  return rivalTodoText(it);
+}
+const daysLeft = (b) => Math.max(0, Math.ceil((b.created + BOX_DAYS * DAY_MS - Date.now()) / DAY_MS));
+const boxDone = (b) => b.items.every((i) => i.done);
+function openCount() { return loadBoxes().reduce((a, b) => a + b.items.filter((i) => !i.done).length, 0); }
+function renderFixBadge() {  // the red count on Tugas: unticked items in the boxes (none for a visitor without an account)
+  const n = !!sb && !signedIn ? 0 : openCount();
+  for (const id of ["fixes-count", "tasks-count"]) { $(id).textContent = n; $(id).hidden = !n; }
+  $("fixes-btn").setAttribute("aria-label", tr("fixesBtn") + (n ? " (" + n + ")" : "")); $("fixes-btn").title = tr("fixesBtn");
+  $("nav-tasks").setAttribute("aria-label", tr("navTasks") + (n ? " (" + n + ")" : ""));
+  $("acct-fixes").textContent = tr("fixesBtn") + (n ? " (" + n + ")" : "");
+}
+function playDone(n, then) {  // about a second and a half: the ring draws, the tick draws, the words fade in; then on to the next screen
+  const o = $("done-anim");
+  $("done-sub").textContent = n ? tr("doneAnimSub", n) : tr("doneAnimNone");
+  o.hidden = false; o.classList.remove("play"); void o.offsetWidth; o.classList.add("play");
+  setTimeout(() => { o.hidden = true; o.classList.remove("play"); then(); }, reduceMotion() ? 800 : 1700);
+}
+function finishResult() {  // Selesai on a Hasil Bedah: the tasks are made, the animation plays, Riwayat opens
+  if (!lastData || lastData.example || freeLocked) return;
+  const sig = reviewSig(lastData.items), src = lastData.source || {}, boxes = loadBoxes();
+  let box = boxes.find((b) => b.sig === sig);
+  if (!box) {
+    box = cleanBox({ sig, product: productKey(src), label: src.title || "", url: src.kind === "url" ? src.url : "", created: Date.now(), items: boxItemsFrom(lastData) });
+    if (box) saveBoxes(boxes.concat(box));
+  }
+  const n = box ? box.items.length : 0;
+  logAnalysis(lastData, lastCounts);
+  updateLog(sig, { done: true, tasks: n }); dropHeld(sig);
+  track("fix_marked"); renderFixBadge();
+  playDone(n, () => { if (n) showToast(tr("doneToast", n)); if (hasAccount()) openHistory(); else openFixes(); });
+}
+function toggleItem(sig, id) {
+  saveBoxes(loadBoxes().map((b) => {
+    if (b.sig !== sig) return b;
+    const items = b.items.map((i) => (i.id === id ? Object.assign({}, i, { done: !i.done }) : i));
+    return Object.assign({}, b, { items, doneAt: items.every((i) => i.done) ? Date.now() : 0 });
+  }));
+  renderFixes();
+}
+function removeItem(sig, id) {
+  saveBoxes(loadBoxes().map((b) => (b.sig === sig ? Object.assign({}, b, { items: b.items.filter((i) => i.id !== id) }) : b)).filter((b) => b.items.length));
+  renderFixes();
+}
+function icsFor(b) {  // a calendar file with two all-day reminders, a week and two weeks after the box was made; it never leaves the phone
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, ""), start = isoDay(new Date(b.created));
+  const esc = (t) => String(t).replace(/[\;,]/g, (c) => "\\" + c).replace(/\r?\n/g, " ");
+  const ev = (n) => ["BEGIN:VEVENT", "UID:" + b.sig + "-" + n + "@bedahreview", "DTSTAMP:" + stamp, "DTSTART;VALUE=DATE:" + addDays(n, start).replace(/-/g, ""), "DTEND;VALUE=DATE:" + addDays(n + 1, start).replace(/-/g, ""),
+    "SUMMARY:" + esc(tr("calEvent", b.label || tr("noProductName"))), "END:VEVENT"].join("\r\n");
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//BedahReview//ID", "CALSCALE:GREGORIAN", ev(7), ev(14), "END:VCALENDAR"].join("\r\n");
+}
+function addToCalendar(b) {
+  const url = URL.createObjectURL(new Blob([icsFor(b)], { type: "text/calendar" })), a = h("a", { href: url, download: "bedahreview.ics" });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+let boxOpen = "", boxEdit = "";
+function itemRow(b, it, edit) {
+  const input = h("input", { type: "checkbox", "aria-label": boxItemText(it) });
+  input.checked = it.done; input.addEventListener("change", () => toggleItem(b.sig, it.id));
+  return h("div", { class: "it" + (it.done ? " dn" : "") },
+    h("label", { class: "itl" }, input, h("span", { class: "cb", "aria-hidden": "true" }, svgIcon(["M5 12l5 5 9-10"])), h("span", { class: "t", lang: it.kind === "fix" && it.text ? "id" : lang, text: boxItemText(it) })),
+    edit ? h("button", { class: "x", type: "button", "aria-label": tr("taskRemove"), onclick: () => removeItem(b.sig, it.id) }, svgIcon(["M6 6l12 12M18 6L6 18"])) : null);
+}
+function checklist(b, edit) {
+  const mine = b.items.filter((i) => i.kind !== "rival"), rivals = b.items.filter((i) => i.kind === "rival");
+  return [mine.map((i) => itemRow(b, i, edit)), rivals.length ? h("p", { class: "sechd", text: tr("fromRival") }) : null, rivals.map((i) => itemRow(b, i, edit))];
+}
+function boxName(b) { return shortLabel(b.label, 70) || tr("noProductName"); }
+function taskBox(b) {
+  const total = b.items.length, n = b.items.filter((i) => i.done).length, edit = boxEdit === b.sig;
+  const again = () => reanalyse(b.url, b.label);
+  const compete = h("button", { class: "plain", type: "button", text: tr("rivalsBtnShort"), onclick: () => openRivals({ from: "fixes", url: b.url, title: b.label, sig: b.sig, mine: !!lastData && reviewSig(lastData.items) === b.sig }) });
+  if (boxDone(b)) {
+    return h("article", { class: "tbox alldone" }, h("div", { class: "okh" }, svgIcon(["M7.5 12.5l3 3 6-7", "M12 2.5a9.5 9.5 0 100 19 9.5 9.5 0 000-19z"]), tr("taskProgress", total, total)),
+      h("b", { title: b.label || null, text: boxName(b) }), h("p", { text: tr("taskAllDoneP") }),
+      h("button", { class: "btn primary", type: "button", text: tr("taskAgain"), onclick: again }),
+      h("details", { class: "xp" }, h("summary", { text: tr("taskSee") }), h("div", {}, checklist(b, false))), h("div", { class: "tlinks" }, compete));
+  }
+  return h("article", { class: "tbox" },
+    h("div", { class: "bh" }, h("b", { title: b.label || null, text: boxName(b) }), h("span", { class: "tchip", text: tr("daysLeft", daysLeft(b)) })),
+    h("span", { class: "tmeta", text: tr("taskProgress", n, total) }),
+    h("div", { class: "bar", role: "progressbar", "aria-valuenow": String(n), "aria-valuemin": "0", "aria-valuemax": String(total), "aria-label": tr("taskProgress", n, total) }, h("span", { style: "width:" + Math.round((n / total) * 100) + "%" })),
+    checklist(b, edit),
+    h("div", { class: "tlinks" }, h("button", { class: "plain", type: "button", text: tr("calBtn"), onclick: () => addToCalendar(b) }), compete,
+      h("button", { class: "plain", type: "button", text: tr(edit ? "taskEditDone" : "taskEdit"), onclick: () => { boxEdit = edit ? "" : b.sig; renderFixes(); } })));
+}
+function boxRow(b) {
+  const total = b.items.length, n = b.items.filter((i) => i.done).length;
+  return h("button", { class: "trow", type: "button", "aria-expanded": "false", onclick: () => { boxOpen = b.sig; renderFixes(); } },
+    h("span", { class: "tt" }, h("b", { text: boxName(b) }), h("span", { text: boxDone(b) ? tr("taskRowDone", n, total) : tr("taskRowOpen", total, daysLeft(b)) })), svgIcon(["M6 9l6 6 6-6"]));
+}
+function signBox(titleKey, bodyKey, withLater) {  // the account is what keeps tasks: Google first, email second
+  const g = h("button", { class: "gbtn", type: "button" }, $("g-google").querySelector("svg").cloneNode(true), h("span", { text: tr("gGoogle") }));
+  g.addEventListener("click", () => { closeSheet(); googleSignIn(); });
+  const mail = h("button", { class: "btn ghost", type: "button", text: tr("unlockEmail"), onclick: () => { closeSheet(); showGate("choose"); } });
+  const lock = svgIcon(ICON_LOCK); lock.classList.add("lock");
+  return h("section", { class: "signbox" }, lock, h("h2", { text: tr(titleKey) }), h("p", { class: "muted", text: tr(bodyKey) }), g, mail,
+    withLater ? h("button", { class: "plain strong", type: "button", text: tr("later"), style: "justify-self:center;min-height:44px", onclick: () => closeSheet() }) : null);
+}
+function openSignDialog() { openDialog([signBox("tasksSignT", "tasksSignP", true)], "tasksSignT"); }
+function renderFixes() {  // the Tugas screen: finished boxes in green on top for a few days, the open boxes (the newest unfolded), the rest in one line each
+  $("tasks-history").hidden = !hasAccount();
+  if (!!sb && !signedIn) { $("tasks-body").replaceChildren(signBox("tasksSignT", "tasksSignP", false)); return; }
+  const boxes = loadBoxes().slice().sort((a, b) => b.created - a.created);
+  if (!boxes.length) {
+    $("tasks-body").replaceChildren(h("div", { class: "empty2 full-row" }, h("span", { class: "ill" }, svgIcon(["M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"])), h("b", { text: tr("tasksNone") }), h("p", { text: tr("tasksNoneP") }),
+      h("button", { class: "btn primary", type: "button", text: tr("navChecker"), onclick: () => { show("input"); toTop(); } })));
+    return;
+  }
+  const fresh = boxes.filter((b) => boxDone(b) && Date.now() - b.doneAt < DONE_SHOWN_DAYS * DAY_MS), active = boxes.filter((b) => !boxDone(b)), rest = boxes.filter((b) => boxDone(b) && !fresh.includes(b));
+  if (!boxOpen || !boxes.some((b) => b.sig === boxOpen)) boxOpen = active.length ? active[0].sig : "";
+  const draw = (b) => (b.sig === boxOpen || fresh.includes(b) ? taskBox(b) : boxRow(b));
+  $("tasks-body").replaceChildren(...[fresh.map(draw), active.map(draw), rest.length ? [h("p", { class: "tsec", text: tr("tasksFinished") }), rest.map(draw)] : null].flat(Infinity).filter(Boolean));
+}
+
+/* ---------- Riwayat: a summary of each analysis, kept 60 days in the account ----------
    One row per analysis by a signed-in seller: the date, the product name, the number of reviews, the four group counts and the top complaint's
-   theme name. Never review text, quotes, drafts or AI suggestions. Saved from this page with the seller's own sign-in, like the fixes list; a
-   failure is never shown and never stops the analysis. The seller's rows older than 14 days are deleted whenever Riwayat is opened or a row is saved. */
-const HISTORY_DAYS = 14, HISTORY_COLS = ["user_id", "product", "reviews", "fix_n", "fight_n", "ignore_n", "keep_n", "top_theme"];  // the columns of the history table, besides id and created_at
+   theme name. Never review text, quotes, drafts or AI suggestions. Saved from this page with the seller's own sign-in; a failure is never shown and
+   never stops the analysis. The seller's rows older than 60 days are deleted whenever Riwayat is opened or a row is saved. The status of each row
+   (Selesai, Belum selesai, Kedaluwarsa) is known only on the device that made the analysis, from the small log in this browser. */
+const HISTORY_DAYS = 60, HISTORY_COLS = ["user_id", "product", "reviews", "fix_n", "fight_n", "ignore_n", "keep_n", "top_theme"];  // the columns of the history table, besides id and created_at
 const historySaved = new Set();  // reviews already saved from this page, so drawing the result again never saves twice
 let historyRows, viewBeforeHistory = "input";  // rows: undefined while loading, null when they could not be read
 const hasAccount = () => !!(sb && signedIn && userId);
@@ -1876,7 +2055,11 @@ async function saveHistory(data, counts) {
   const sig = reviewSig(data.items);
   if (historySaved.has(sig)) return;
   historySaved.add(sig);
-  try { await withTimeout(sb.from("history").insert(historyRow(data, counts, userId)), 8000); } catch (e) { /* a summary is an extra: say nothing */ }
+  try {
+    const res = await withTimeout(sb.from("history").insert(historyRow(data, counts, userId)).select("id"), 8000);
+    const id = res && res.data && res.data[0] && res.data[0].id;
+    if (id != null) updateLog(sig, { hid: id });  // so Riwayat can tell which row is which analysis on this device
+  } catch (e) { /* a summary is an extra: say nothing */ }
   await pruneHistory();
 }
 async function openHistory() {
@@ -1887,39 +2070,46 @@ async function openHistory() {
   await pruneHistory();
   let rows = null;
   try {
-    const { data, error } = await withTimeout(sb.from("history").select(HISTORY_COLS.slice(1).concat("created_at").join(",")).gte("created_at", historyCutoff()).order("created_at", { ascending: false }).limit(200), 8000);
+    const { data, error } = await withTimeout(sb.from("history").select(["id"].concat(HISTORY_COLS.slice(1), "created_at").join(",")).gte("created_at", historyCutoff()).order("created_at", { ascending: false }).limit(200), 8000);
     if (!error) rows = Array.isArray(data) ? data : [];
   } catch (e) { /* says so below */ }
   historyRows = rows;
   if (currentView === "history") renderHistory();
 }
-function historyCard(r) {  // "1 Nov · Kaos Boxy Retro" / "10 ulasan: 3 Perbaiki, 2 Tanggapi" / "Keluhan terbanyak: …" / Bedah lagi
-  const day = new Date(r.created_at);
-  const parts = [["fix", r.fix_n], ["fight", r.fight_n], ["keep", r.keep_n], ["ignore", r.ignore_n]].filter(([, n]) => n > 0).map(([k, n]) => n + " " + tr(k));
-  return h("article", { class: "trk hist" },
-    h("p", { class: "act", title: r.product || null, text: (isNaN(day) ? "" : fmtDayShort(isoDay(day)) + " · ") + (shortLabel(r.product, 60) || tr("fixNoProduct")) }),
-    h("p", { text: tr("histCounts", r.reviews) + (parts.length ? ": " + parts.join(", ") : "") }),
-    r.top_theme ? h("p", { class: "small muted", text: tr("histTop", themeName(r.top_theme)) }) : null,
-    h("button", { class: "btn ghost", type: "button", text: tr("histAgain"), onclick: () => {  // only the summary is kept, so this starts a new analysis; a fix on the same product may still know its link
-      const linked = r.product && loadFixes().find((f) => f.productLabel === r.product && /^https:\/\//.test(f.product));
-      reanalyse(linked ? linked.product : "", r.product);
-    } }));
+function historyItems(rows) {  // the account's rows, each joined with this device's log when it knows the analysis; analyses the account does not list yet still show
+  const log = loadLog(), used = new Set(), out = [];
+  (rows || []).forEach((r) => {
+    const ts = new Date(r.created_at).getTime();
+    const e = log.find((x) => !used.has(x.sig) && ((x.hid != null && x.hid === r.id) || (x.hid == null && Math.abs(x.ts - ts) < 120000 && x.reviews === r.reviews)));
+    if (e) used.add(e.sig);
+    out.push({ ts, label: r.product, reviews: r.reviews, e: e || null });
+  });
+  log.filter((e) => !used.has(e.sig)).forEach((e) => out.push({ ts: e.ts, label: e.label, reviews: e.reviews, e }));
+  return out.sort((a, b) => b.ts - a.ts);
+}
+function historyCard(it) {
+  const e = it.e, st = e ? entryState(e) : "", day = new Date(it.ts), held = e && st === "open" ? heldFor(e.sig) : null;
+  const meta = [isNaN(day) ? "" : fmtDayShort(isoDay(day)), tr("histCounts", it.reviews), st === "done" && e.tasks ? tr("histTasks", e.tasks) : "", st === "expired" ? tr("histExpired", e.expired.open, e.expired.total) : ""].filter(Boolean).join(" · ");
+  const links = [];
+  if (st === "done" && e) links.push(h("button", { class: "plain", type: "button", text: tr("rivalsBtnShort"), onclick: () => openRivals({ from: "history", url: e.url, title: e.label, sig: e.sig }) }));
+  if (held) links.push(h("button", { class: "plain", type: "button", text: tr("histResume"), onclick: () => resumeHeld(e.sig) }));
+  if (st !== "done" && !held) links.push(h("button", { class: "plain", type: "button", text: tr("histAgain"), onclick: () => reanalyse(e ? e.url : "", it.label) }));
+  return h("article", { class: "hrow" }, h("div", { class: "hh" }, h("b", { title: it.label || null, text: shortLabel(it.label, 70) || tr("fixNoProduct") }), st ? h("span", { class: "st " + st, text: tr("st_" + st) }) : null),
+    h("span", { class: "hm", text: meta }), links.length ? h("div", { class: "hl" }, links) : null);
+}
+function resumeHeld(sig) {  // "Lanjutkan": the result this browser kept, drawn again without counting as a new analysis
+  const held = heldFor(sig);
+  if (!held) { showToast(tr("histGone")); renderHistory(); return; }
+  closeSheet(); render(held.data, false); show("results"); toTop(); $("results-h").focus({ preventScroll: true });
 }
 function renderHistory() {
-  const body = $("history-body");
+  const body = $("history-body"), items = historyItems(historyRows);
   if (historyRows === undefined) body.replaceChildren(h("p", { class: "small muted", text: tr("histLoading") }));
-  else if (historyRows === null) body.replaceChildren(h("div", { class: "callout warn", role: "status", text: tr("histDown") }));
-  else if (!historyRows.length) body.replaceChildren(h("div", { class: "empty2" }, h("p", { text: tr("histEmpty") }), h("button", { class: "btn primary", type: "button", text: tr("tasksStart"), onclick: () => { show("input"); toTop(); } })));
-  else body.replaceChildren(...historyRows.map(historyCard));
+  else if (!items.length) body.replaceChildren(historyRows === null ? h("div", { class: "callout warn", role: "status", text: tr("histDown") }) : h("div", { class: "empty2" }, h("p", { text: tr("histEmpty") }), h("button", { class: "btn primary", type: "button", text: tr("tasksStart"), onclick: () => { show("input"); toTop(); } })));
+  else body.replaceChildren(...[historyRows === null ? h("div", { class: "callout warn", role: "status", text: tr("histDown") }) : null].concat(items.map(historyCard)).filter(Boolean));
 }
+
 let currentView = "input", viewBeforeFixes = "input", checkerView = "input", lastChanged = [];
-function openRivals(fromResults) {  // from the results button (product already filled in) or the bottom bar; a wide screen already shows the section
-  if (fromResults && lastData) { const src = lastData.source || {}; if (src.kind !== "url" && src.title && !rivalForm.name) rivalForm.name = src.title; }
-  track("tab_viewed", { tab: "rivals" });
-  closeSheet();
-  if (desktop()) { renderRival(); $("feature2").scrollTo({ top: 0, behavior: reduceMotion() ? "auto" : "smooth" }); return; }
-  renderRival(); show("rivals"); toTop();
-}
 function openFixes() {
   if (!!sb && !signedIn && desktop()) { openSignDialog(); return; }  // a wide screen: the sign-in asks over the work, as a dialog
   closeSheet();
@@ -1928,68 +2118,6 @@ function openFixes() {
   renderFixes(); show("fixes"); toTop(); $("fixes-h").focus({ preventScroll: true });
 }
 const ICON_CHECK = ["M9 12l2 2 4-4", "M12 2a10 10 0 100 20 10 10 0 000-20z"], ICON_NEXT = ["M9 6l6 6-6 6"], ICON_LOCK = ["M7 11h10a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6a2 2 0 012-2z", "M8 11V7a4 4 0 018 0v4"];
-const fixAction = (f) => f.note || tr("fixAct", lowerTheme(f.theme) + (f.variant ? " " + f.variant : ""));  // the seller's own words, or the AI step they chose, or just the complaint
-function setFixDone(id, done) { saveFixes(loadFixes().map((x) => (x.id === id ? Object.assign({}, x, { done }) : x))); renderFixes(); }  // not in the account, so nothing is pushed
-function fixItem(f) {  // a fix being tracked: one sentence of what to do, one big button, one small line. Ubah and Hapus sit behind "Lainnya"
-  const body = h("article", { class: "trk" + (isDue(f) ? " due" : "") });
-  const draw = (editing, sure, more) => {
-    const due = isDue(f);
-    if (editing) {
-      const note = h("input", { type: "text", maxlength: String(NOTE_MAX), value: f.note, "aria-label": tr("fixNoteLbl") });
-      const date = h("input", { type: "date", value: f.date, "aria-label": tr("fixDate") });
-      const check = h("input", { type: "date", value: f.checkOn || "", "aria-label": tr("q2") });
-      const save = h("button", { class: "btn primary", type: "button", text: tr("fixSave") });
-      save.addEventListener("click", () => {
-        const d = fxDate(date.value) || f.date;
-        if (noteCopiesReview(note.value)) { showFixNoteError(body, tr("fixNoteReview")); return; }
-        saveFixes(loadFixes().map((x) => (x.id === f.id ? Object.assign({}, x, { note: fxStr(note.value, NOTE_MAX), date: d, checkOn: fxDate(check.value), updated: Date.now() }) : x)));
-        renderFixes();
-      });
-      const cancel = h("button", { class: "btn ghost", type: "button", text: tr("fixCancel") });
-      cancel.addEventListener("click", () => draw(false, false, true));
-      body.replaceChildren(h("div", { class: "hd" }, h("h3", { text: themeName(f.theme) + (f.variant ? " · " + f.variant : "") })), h("p", { class: "small muted", text: f.productLabel || tr("fixNoProduct") }),
-        h("label", { class: "field" }, h("span", { text: tr("fixNoteLbl") }), note), h("label", { class: "field" }, h("span", { text: tr("fixDate") }), date),
-        h("label", { class: "field" }, h("span", { text: tr("q2") }), check), h("div", { class: "row" }, save, cancel));
-      return;
-    }
-    const main = due ? h("button", { class: "btn primary big", type: "button", text: tr("reanalyse"), onclick: () => reanalyse(f.product, f.productLabel) })  // the check date has come: the one thing to do is look again
-      : f.done ? h("div", { class: "sentrow" }, h("span", { class: "ok" }, svgIcon(ICON_CHECK), tr("doneBtn")), h("button", { class: "undo", type: "button", text: tr("undo"), onclick: () => setFixDone(f.id, false) }))
-      : h("button", { class: "btn primary big", type: "button", text: tr("doneBtn"), onclick: () => setFixDone(f.id, true) });
-    const when = due ? tr("dueChip") : f.checkOn ? tr("trCheck", fmtDayShort(f.checkOn)) : fmtDate(f.date);
-    const moreLink = h("button", { class: "plain more-link", type: "button", "aria-expanded": more ? "true" : "false", text: tr("more"), onclick: () => draw(false, false, !more) });
-    const edit = h("button", { class: "btn ghost", type: "button", text: tr("fixEdit"), onclick: () => draw(true, false, true) });
-    const del = h("button", { class: "btn ghost" + (sure ? " danger" : ""), type: "button", text: sure ? tr("fixDeleteSure") : tr("fixDelete") });
-    del.addEventListener("click", () => {
-      if (!sure) { draw(false, true, true); return; }
-      saveFixes(loadFixes().filter((x) => x.id !== f.id));
-      renderFixes();
-    });
-    body.replaceChildren(...[h("p", { class: "act", lang: "id", text: fixAction(f) }), main,
-      h("p", { class: "small muted", title: f.productLabel || null, text: [when, shortLabel(f.productLabel)].filter(Boolean).join(" · ") }),
-      f.after ? trackLines(f) : null,  // the numbers only once there is something to compare; the "indicative, not proof" warning comes with them
-      moreLink, more ? h("div", { class: "row" }, edit, del) : null].filter(Boolean));
-  };
-  draw(false, false, false);
-  return body;
-}
-const fixesListEl = h("div", { class: "stack", id: "fixes-list" });  // one node, so the list keeps its place when the Tugas screen is drawn again
-let taskFilter = "";  // a product key, or "" for every product (the filter shows on a wide screen)
-function signBox(titleKey, bodyKey, withLater) {  // the account is what keeps tasks: Google first, email second
-  const g = h("button", { class: "gbtn", type: "button" }, $("g-google").querySelector("svg").cloneNode(true), h("span", { text: tr("gGoogle") }));
-  g.addEventListener("click", () => { closeSheet(); googleSignIn(); });
-  const mail = h("button", { class: "btn ghost", type: "button", text: tr("unlockEmail"), onclick: () => { closeSheet(); showGate("choose"); } });
-  const lock = svgIcon(ICON_LOCK); lock.classList.add("lock");
-  return h("section", { class: "signbox" }, lock, h("h2", { text: tr(titleKey) }), h("p", { class: "muted", text: tr(bodyKey) }), g, mail,
-    withLater ? h("button", { class: "plain strong", type: "button", text: tr("later"), style: "justify-self:center;min-height:44px", onclick: () => closeSheet() }) : null);
-}
-function openSignDialog() { openDialog([signBox("tasksSignT", "tasksSignP", true)], "tasksSignT"); }
-function taskRow(t) {  // one open step; a tap opens it right here
-  const open = taskOpen === taskKey(t);
-  const row = h("button", { class: "task", type: "button", "aria-expanded": open ? "true" : "false" }, h("span", { class: "k", "aria-hidden": "true" }),
-    h("span", { class: "t" }, h("b", { text: t.title }), h("span", { text: t.sub })), svgIcon([open ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"]));
-  row.addEventListener("click", () => { taskOpen = open ? "" : taskKey(t); renderFixes(); });
-  return open ? h("div", { class: "taskbox" }, row, taskPanel(t)) : row;
-}
 function clearInputs() { ["url", "paste", "product"].forEach((id) => { $(id).value = ""; }); $("shared-note").hidden = true; showError(""); showUrlError(""); setFallback(false); syncClear(); syncShopee(); }
 function startFresh() {  // "Bedah produk lain" at the end of a plan: an empty start, nothing of the last product left in the fields or the competitor panel
   if ($("run").disabled) { show("loading"); toTop(); return; }  // an analysis is still running: show it, do not wipe the form under it
@@ -2006,384 +2134,11 @@ function reanalyse(product, label) {  // back to the start with the product fill
     $("paste").value = ""; $("product").value = label && !/^https?:/.test(label) ? label : ""; $("shared-note").hidden = true; syncClear(); $("paste").focus();
   }
 }
-function renderFixes(message) {  // the Tugas screen
-  renderSyncStatus();
-  const visitorNow = !!sb && !signedIn;
-  const all = loadFixes(), steps = openSteps();
-  const products = [...new Map(all.map((f) => [f.product, f.productLabel || tr("fixNoProduct")]).concat(steps.map((t) => [t.plan.product, t.plan.label || tr("noProductName")]))).entries()];
-  if (taskFilter && !products.some(([k]) => k === taskFilter)) taskFilter = "";
-  const keep = (key) => !taskFilter || key === taskFilter;
-  const fixes = all.filter((f) => keep(f.product)).sort((a, b) => (isDue(b) - isDue(a)) || String(a.checkOn || "9").localeCompare(String(b.checkOn || "9")) || (a.date < b.date ? 1 : -1));
-  const todo = steps.filter((t) => keep(t.plan.product));
-  $("tasks-sub").textContent = tr(desktop() ? "tasksSubAll" : "tasksSub");
-  $("tasks-filter").replaceChildren(...(products.length > 1 && !visitorNow ? [["", tr("allProducts")]].concat(products.slice(0, 4)).map(([k, label]) =>
-    h("button", { class: "btn pill", type: "button", "aria-pressed": taskFilter === k ? "true" : "false", style: taskFilter === k ? "background:var(--ink);color:var(--surface);border-color:var(--ink)" : "", text: shortLabel(label, 32), title: label,
-      onclick: () => { taskFilter = k; renderFixes(); } })) : []));
-  $("fixes-nostore").hidden = fixStorageOk;
-  $("tasks-fixes").hidden = visitorNow;
-  $("fixes-more").hidden = !!(sb && signedIn && userId);  // the file backup is for people without an account
-  $("tasks-history").hidden = !hasAccount();
-  fixesListEl.replaceChildren(...(fixes.length ? fixes.map(fixItem) : [h("p", { class: "small muted", text: tr("fixesEmpty") })]));
-  const msg = $("fixes-msg"); msg.textContent = message || ""; msg.hidden = !message;
-  if (visitorNow) { $("tasks-body").replaceChildren(signBox("tasksSignT", "tasksSignP", false)); return; }
-  if (!all.length && !steps.length) {
-    $("tasks-body").replaceChildren(h("div", { class: "empty2" }, h("span", { class: "ill" }, svgIcon(["M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"])), h("p", { text: tr("tasksEmpty") }),
-      h("button", { class: "btn primary", type: "button", text: tr("tasksStart"), onclick: () => { show("input"); toTop(); } })), fixesListEl);
-    fixesListEl.hidden = true;
-    return;
-  }
-  fixesListEl.hidden = false;
-  const mins = todo.reduce((a, t) => a + t.mins, 0);
-  const sched = all.filter((f) => f.checkOn && keep(f.product)).sort((a, b) => a.checkOn.localeCompare(b.checkOn)).slice(0, 8);
-  $("tasks-body").replaceChildren(...[h("div", { class: "tasksgrid" },
-    h("section", { class: "stack", style: "align-content:start" },
-      h("div", { class: "row", style: "justify-content:space-between;align-items:center" }, h("p", { class: "eb", text: tr("today", todo.length) }), todo.length ? h("span", { class: "small muted", text: tr("mins", mins) }) : null),
-      todo.length ? todo.map(taskRow) : h("p", { class: "small muted", text: tr("noneToday") }),
-      todo.length ? h("p", { class: "small muted dsk", text: tr("skippedNote") }) : null),
-    h("section", { class: "stack", style: "align-content:start" }, h("p", { class: "eb", text: tr("watched", fixes.length) }), fixesListEl),
-    h("section", { class: "stack col3 dsk", style: "align-content:start" }, h("p", { class: "eb", text: tr("sched") }),
-      h("ul", { class: "sched" }, sched.map((f) => h("li", {}, h("b", { text: isDue(f) ? tr("schedToday") : fmtDay(f.checkOn) }),
-        h("span", { title: f.productLabel || null, text: [themeName(f.theme), shortLabel(f.productLabel, 36)].filter(Boolean).join(" · ") }))),
-        h("li", {}, h("b", { text: tr("schedNext") }), h("span", { text: tr("schedNextP") }))))), waBlock(fixes)].filter(Boolean));
-}
-/* ---------- "Kirim ke WhatsApp": a plain-text list of fixes to do, which the seller sends themselves ----------
-   Only the seller's own words and the product name go in, never a review quote. Newest first, at most 5, and cut shorter if the link would get long. */
-const WA_MAX_ITEMS = 5, WA_MAX_URL = 1800;
-function waText(list) {
-  const lines = [tr("waHead")];
-  let last = "";
-  list.forEach((f) => {
-    const label = /^https?:/.test(f.productLabel) ? "" : fxStr(f.productLabel, 60);
-    if (label && label !== last) lines.push(label);
-    last = label;
-    lines.push("- " + fxStr(fixAction(f), 100) + (f.checkOn ? " (" + tr("waCheck", fmtDayShort(f.checkOn)) + ")" : ""));
-  });
-  return lines.join("\n");
-}
-function waLink(fixes) {  // the wa.me address, or "" when there is nothing to send
-  const open = fixes.filter((f) => !f.done).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : (b.updated || 0) - (a.updated || 0))).slice(0, WA_MAX_ITEMS);
-  let url = "";
-  for (let n = open.length; n >= 1; n--) { url = "https://wa.me/?text=" + encodeURIComponent(waText(open.slice(0, n))); if (url.length <= WA_MAX_URL) break; }
-  return url;
-}
-function waBlock(fixes) {
-  const url = waLink(fixes);
-  if (!url) return null;
-  return h("div", { class: "wablock" }, h("a", { class: "btn ghost wabtn", href: url, target: "_blank", rel: "noopener noreferrer", text: tr("waBtn") }), h("p", { class: "small muted", text: tr("waNote") }));
-}
-function exportFixes() {
-  const blob = new Blob([JSON.stringify({ app: "bedahreview", version: 1, exported: today(), fixes: loadFixes() }, null, 2)], { type: "application/json" });
-  const a = h("a", { href: URL.createObjectURL(blob), download: "bedahreview-fixes-" + today() + ".json" });
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-}
-async function importFixes(file) {
-  if (!file) return;
-  if (file.size > MAX_IMPORT_BYTES) { renderFixes(tr("importBig")); return; }
-  const out = mergeImport(loadFixes(), await file.text());
-  if (out.error) { renderFixes(tr(out.error === "big" ? "importBig" : "importBad")); return; }
-  saveFixes(out.fixes);
-  renderFixes(tr("importOk", out.added, out.skipped));
-}
-
-/* ---------- today's plan: up to three steps from one analysis, then a summary ----------
-   Step ticks stay in this browser only (the owner's choice); the check date of a logged fix travels with the fix to the account.
-   A plan holds the product key and label, the theme of the biggest complaint, review ids and counts, and what the seller has done:
-   never review text, never a reviewer name. Plans older than a week are dropped. */
-const PLAN_KEY = "bedahreview-plans-v1", MAX_PLANS = 20, PLAN_DAYS = 7;
-let memPlans = [], planStep = "fix", planUi = {};
-function cleanPlan(p) {
-  if (!p || typeof p !== "object" || typeof p.sig !== "string" || !/^[a-z0-9]{1,14}\.\d{1,4}$/.test(p.sig)) return null;
-  const created = Number.isFinite(p.created) ? p.created : 0;
-  if (Date.now() - created > PLAN_DAYS * 864e5) return null;
-  const ids = (a) => (Array.isArray(a) ? a.filter((x) => typeof x === "string" && x.length <= 20).slice(0, 50) : []);
-  const fix = p.fix && typeof p.fix.theme === "string" ? { theme: fxStr(p.fix.theme, 80), variant: fxStr(p.fix.variant, 60), n: fxInt(p.fix.n) || 0, total: fxInt(p.fix.total) || 0 } : null;
-  const replies = {};
-  if (p.replies && typeof p.replies === "object") for (const [k, v] of Object.entries(p.replies)) if (k.length <= 20 && (v === "sent" || v === "copied")) replies[k] = v;
-  return { sig: p.sig, created, product: fxStr(p.product, 300), label: fxStr(p.label, 150), url: /^https:\/\//.test(p.url || "") ? fxStr(p.url, 300) : "", platform: fxStr(p.platform, 20),
-    fix, fight: ids(p.fight), keep: fxInt(p.keep) || 0, replies, line: ["copied", "done"].includes(p.line) ? p.line : "", dismissed: !!p.dismissed,
-    skipped: (Array.isArray(p.skipped) ? p.skipped : []).filter((k) => ["fix", "fight", "keep"].includes(k)) };  // steps taken off the Tugas list
-}
-function loadPlans() {
-  try { const raw = localStorage.getItem(PLAN_KEY); if (raw != null) { const list = JSON.parse(raw); memPlans = (Array.isArray(list) ? list : []).map(cleanPlan).filter(Boolean); } } catch (e) { /* the memory copy stands */ }
-  return memPlans;
-}
-function savePlans(list) { memPlans = list.slice(-MAX_PLANS); try { localStorage.setItem(PLAN_KEY, JSON.stringify(memPlans)); } catch (e) { /* the memory copy stands */ } renderFixBadge(); }
-const replyText = (it) => (it.fight ? it.fight.public_reply || it.fight.chat_to_buyer || "" : "");
-function planParts(data) {  // what a plan is made of, read from one analysis
-  const g = (data.groups || [])[0] || null;
-  const fight = data.items.filter((it) => (it.bucket === "fight" || it.bucket === "check") && replyText(it));
-  const keep = data.items.filter((it) => !isFake(it) && it.bucket === "keep" && it.proof_quote);
-  return { g, fight, keep };
-}
-function planFor(data) {  // the stored plan for these exact reviews, made the first time they are shown
-  if (!data || data.example || freeLocked) return null;
-  const sig = reviewSig(data.items), plans = loadPlans();
-  const found = plans.find((x) => x.sig === sig);
-  if (found) return found;
-  const { g, fight, keep } = planParts(data);
-  if (!g && !fight.length) return null;  // praise only: nothing to do, the old one-line start says so
-  const src = data.source || {}, c = g ? countTheme(data.items, g.theme, g.variant || "") : null;
-  const p = cleanPlan({ sig, created: Date.now(), product: productKey(src), label: src.title || "", url: src.kind === "url" ? src.url : "", platform: src.kind === "url" ? platformName(src.url) : "",
-    fix: g ? { theme: g.theme, variant: g.variant || "", n: c.count, total: c.total } : null, fight: fight.map((it) => String(it.id)), keep: keep.length });
-  if (p) savePlans(plans.filter((x) => x.sig !== sig).concat(p));
-  return p;
-}
-function updatePlan(p, change) { const next = Object.assign({}, p, change); savePlans(loadPlans().map((x) => (x.sig === p.sig ? next : x))); return next; }
-const loggedFix = (p) => (p.fix ? loadFixes().find((f) => sameFix(f, p.product, p.fix.theme, p.fix.variant)) || null : null);
-const sentCount = (p) => p.fight.filter((id) => p.replies[id] === "sent").length;
-function stepsOf(p) {  // the steps this plan has, in order, each with whether it is done and roughly how long it takes
-  const out = [];
-  if (p.fix) out.push({ key: "fix", done: !!loggedFix(p), mins: 1 });
-  if (p.fight.length) out.push({ key: "fight", done: sentCount(p) === p.fight.length, mins: Math.max(1, p.fight.length) });
-  return out;  // the praise is no longer a step of its own: the summary (step 3) says what to keep
-}
-function openSteps() {  // the open steps of recent plans: the Tugas screen and its count
-  const out = [];
-  for (const p of loadPlans()) {
-    if (p.dismissed) continue;
-    for (const s of stepsOf(p)) {
-      if (s.done || p.skipped.includes(s.key)) continue;
-      const left = s.key === "fight" ? p.fight.length - sentCount(p) : 1;
-      const title = s.key === "fix" ? tr("s1", lowerTheme(p.fix.theme)) : tr("s2", left);
-      const sub = [shortLabel(p.label) || tr("noProductName"), s.key === "fight" ? tr("s2s", sentCount(p), p.fight.length) : null, tr("mins", left)].filter(Boolean).join(" · ");
-      out.push({ plan: p, step: s.key, title, sub, mins: left });
-    }
-  }
-  return out.reverse();  // the newest plan first
-}
-/* A task on the Tugas screen opens in place and is finished there: it never sends the seller back into an analysis. When that analysis is still
-   on this page its drafts and the praise line are shown; otherwise the seller just says it is done (or takes it off the list). */
-let taskOpen = "";  // the open task: plan sig and step
-const taskKey = (t) => t.plan.sig + ":" + t.step;
-const planData = (p) => (lastData && !lastData.example && !freeLocked && reviewSig(lastData.items) === p.sig ? lastData : null);
-function fixFromPlan(p, note) {  // the same record as makeFix, from the counts the plan kept
-  return { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), theme: p.fix.theme, variant: p.fix.variant, note: fxStr(note, NOTE_MAX), date: today(), updated: Date.now(),
-    product: p.product, productLabel: fxStr(p.label || p.url, 150), before: { count: p.fix.n, total: p.fix.total, sig: p.sig, date: "" }, after: null, checkOn: addDays(CHECK_DAYS), done: false };
-}
-function taskPanel(t) {
-  const p = t.plan, data = planData(p);
-  const finish = (msg) => { taskOpen = ""; renderFixes(); showToast(msg || tr("taskDone")); };
-  const remove = h("button", { class: "plain", type: "button", text: tr("dismiss"), onclick: () => { updatePlan(p, { skipped: p.skipped.concat(t.step) }); taskOpen = ""; renderFixes(); } });
-  const err = h("div", { class: "callout warn", role: "alert", hidden: true });
-  const fail = (key) => { err.textContent = tr(key); err.hidden = false; };
-  if (t.step === "fix") {
-    const g = data && data.groups[0], byId = {};
-    if (data) data.items.forEach((it) => { byId[it.id] = it; });
-    const note = h("input", { type: "text", maxlength: String(NOTE_MAX), autocomplete: "off", placeholder: tr("oOwnPh"), "aria-label": tr("taskFixLbl") });
-    note.value = (g && g.ids.map((id) => (byId[id] || {}).fix_suggestion_id).find(Boolean)) || "";  // the AI's step when the analysis is still here; the seller can change it
-    const save = h("button", { class: "btn primary", type: "button", text: tr("taskFixSave") });
-    save.addEventListener("click", () => {
-      const text = note.value.trim();
-      if (!text) { fail("needOwn"); note.focus(); return; }
-      if (noteCopiesReview(text)) { fail("fixNoteReview"); note.focus(); return; }
-      if (!saveFixes(loadFixes().concat(fixFromPlan(p, text)))) { fail("fixSaveFail"); return; }
-      track("fix_marked");
-      finish(tr("savedToast", fmtDay(addDays(CHECK_DAYS))));
-    });
-    return h("div", { class: "taskpanel" }, h("p", { class: "small muted", text: tr("taskFixP", p.fix.n, p.fix.total) }), h("label", { class: "field" }, h("span", { text: tr("taskFixLbl") }), note),
-      h("p", { class: "checkline", text: tr("checkLine", fmtDayShort(addDays(CHECK_DAYS))) }), err, h("div", { class: "row" }, save, remove));
-  }
-  if (t.step === "fight") {
-    const left = p.fight.filter((id) => p.replies[id] !== "sent"), byId = {};
-    if (data) data.items.forEach((it) => { byId[String(it.id)] = it; });
-    const sent = (ids) => { const r = Object.assign({}, p.replies); ids.forEach((id) => { r[id] = "sent"; }); updatePlan(p, { replies: r }); };
-    const items = left.map((id) => byId[id]).filter((it) => it && replyText(it));
-    if (!items.length) {
-      return h("div", { class: "taskpanel" }, h("p", { class: "small muted", text: tr("taskNoDrafts") }),
-        h("div", { class: "row" }, h("button", { class: "btn primary", type: "button", text: tr("taskAllSent"), onclick: () => { sent(left); finish(); } }), remove));
-    }
-    return h("div", { class: "taskpanel" }, h("p", { class: "small muted", text: tr("aiShort") }), items.map((it) => {
-      const draftEl = h("p", { class: "pdraft", lang: "id", text: replyText(it) });
-      const copy = h("button", { class: "btn ghost", type: "button" }, copyIcon(), tr("copyOnly"));
-      copy.addEventListener("click", async () => { const ok = await copyPlain(replyText(it), draftEl); announce(ok ? tr("copiedAnn", tr("dPublic")) : tr("selectIt")); track("draft_copied", { kind: it.fight.public_reply ? "public" : "chat" }); });
-      const done = h("button", { class: "btn primary", type: "button", text: tr("taskSent"), onclick: () => { sent([String(it.id)]); if (left.length === 1) finish(); else renderFixes(); } });
-      return h("article", { class: "reply" }, h("span", { class: "chip star", style: "justify-self:start", text: reasonText(it) }), h("p", { class: "pquote fight", lang: "id", text: "“" + (it.proof_quote || "") + "”" }), draftEl, h("div", { class: "row" }, copy, done));
-    }), h("div", { class: "row" }, remove));
-  }
-  return null;
-}
 const fmtDayShort = (iso) => { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(lang === "id" ? "id-ID" : "en-GB", { day: "numeric", month: "short" }); };
-const ICON_OPEN = ["M14 4h6v6", "M20 4l-9 9", "M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"], ICON_TICK = ["M5 12l5 5 9-10"];
-function planCard(p, data) {  // "Mulai dari sini": today's plan on the results screen
-  const steps = stepsOf(p), done = steps.filter((s) => s.done).length, mins = steps.reduce((a, s) => a + s.mins, 0);
-  const { g, fight } = planParts(data);
-  const byId = {}; data.items.forEach((it) => { byId[it.id] = it; });
-  const fixQuote = g ? (g.ids.map((id) => byId[id]).find((m) => m && m.proof_quote) || {}).proof_quote : "";
-  const row = (s, i) => {
-    let title, sub, ev;
-    if (s.key === "fix") { const f = loggedFix(p); title = tr("s1", lowerTheme(p.fix.theme)); sub = f ? (f.checkOn ? tr("s1Done", fmtDayShort(f.checkOn)) : tr("s1Logged")) : tr("s1s"); ev = fixQuote; }
-    else { title = tr("s2", p.fight.length); sub = tr("s2s", sentCount(p), p.fight.length); ev = (fight[0] || {}).proof_quote; }
-    return h("button", { class: "prow" + (s.done ? " done" : ""), type: "button", onclick: () => openStep(s.key) },
-      h("span", { class: "k", "aria-hidden": "true" }, s.done ? svgIcon(ICON_TICK) : String(i + 1)), h("span", { class: "t" }, h("b", { text: title }), h("span", { text: sub })),
-      h("span", { class: "ev", lang: "id", text: ev ? "“" + ev + "”" : "" }), h("span", { class: "tm", text: tr("mins", s.mins) }));
-  };
-  const label = done === steps.length ? tr("planAllDone") : done ? tr("planGoOn") : tr("planGo");
-  const go = () => { const next = steps.find((s) => !s.done); openStep(next ? next.key : "sum"); };
-  const wide = desktop();
-  return [h("section", { class: "plan", "aria-labelledby": "plan-title" },
-      h("div", { class: "hd" },
-        h("div", { style: "display:grid;gap:2px" }, h("span", { class: "eb", text: tr("startHere") + (wide ? " · " + tr("planMeta", steps.length, mins) : "") }), wide ? h("h3", { id: "plan-title", text: tr("planH") }) : null),
-        wide ? h("button", { class: "btn primary go-d", type: "button", text: label, onclick: go }) : h("span", { class: "meta", text: tr("planMeta", steps.length, mins) })),
-      wide ? null : h("h3", { id: "plan-title", text: tr("planH") }),
-      steps.map(row)),
-    h("div", { class: "stickyfoot" }, h("button", { class: "btn primary", type: "button", id: "plan-go", text: label, onclick: go }))];
-}
-function openStep(key, back) {
-  const p = lastData && planFor(lastData);
-  if (!p) return;
-  const order = stepsOf(p).map((s) => s.key).concat("sum"), was = currentView === "plan";
-  const anim = !was ? "rise" : back || order.indexOf(key) < order.indexOf(planStep) ? "bwd" : "fwd";
-  if (!was || planUi.sig !== p.sig) planUi = { sig: p.sig, choice: null, own: "", line: null, cur: null };
-  planStep = key; closeSheet();
-  show("plan"); renderPlanView(anim); toTop();
-  const hd = $("plan-h"); if (hd) hd.focus({ preventScroll: true });
-}
-function renderPlanView(anim) {
-  const view = $("view-plan"), p = lastData && planFor(lastData);
-  if (!p) { show(lastData ? "results" : "input"); return; }
-  const keys = stepsOf(p).map((s) => s.key);
-  if (planStep !== "sum" && !keys.includes(planStep)) planStep = keys[0] || "sum";
-  const body = planStep === "sum" ? summaryView(p) : planStep === "fix" ? step1(p) : step2(p);
-  view.replaceChildren(...[body].flat(Infinity).filter(Boolean));
-  if (anim) animateIn(view, anim === "fwd" ? "enter-fwd" : anim === "bwd" ? "enter-bwd" : "enter");
-}
-const planKeysAll = (p) => stepsOf(p).concat({ key: "sum", done: false });  // the action steps, then the summary as the last step
-function stepHead(p) {  // "‹ Hasil", the pill stepper, and on a wide screen the reply counter on the same line
-  const steps = planKeysAll(p), at = steps.findIndex((s) => s.key === planStep);
-  const names = { fix: ["st1", "st1"], fight: ["st2", "st2"], sum: ["st3", "st3Short"] };
-  return h("div", { class: "stephd" },
-    h("button", { class: "back", type: "button", onclick: () => { show("results"); toTop(); } }, svgIcon(["M15 6l-6 6 6 6"]), tr("backRes")),
-    h("ol", { class: "stepper", "aria-label": tr("stepsLbl") }, steps.map((s, i) => h("li", { class: i === at ? "on" : s.done ? "done" : "", "aria-current": i === at ? "step" : null },
-      h("span", { class: "dot" }, s.done && i !== at ? svgIcon(ICON_TICK) : String(i + 1)), h("span", { class: "full", text: tr(names[s.key][0]) }), h("span", { class: "short", text: tr(names[s.key][1]) })))),
-    planStep === "fight" && desktop() ? h("span", { class: "chip", text: tr("s2s", sentCount(p), p.fight.length) }) : null);
-}
-function stepFoot(p, label, onGo, onSkip) {
-  const steps = planKeysAll(p), at = steps.findIndex((s) => s.key === planStep);
-  return h("div", { class: "stickyfoot" }, h("button", { class: "btn primary", type: "button", text: label, onclick: onGo }),
-    onSkip ? h("button", { class: "plain strong", type: "button", text: tr("skip"), onclick: onSkip }) : null,
-    at >= 0 ? h("span", { class: "of", text: tr("stepOf", at + 1, steps.length) }) : null);
-}
-function nextStep() { const p = planFor(lastData), keys = stepsOf(p).map((s) => s.key), i = keys.indexOf(planStep); openStep(i >= 0 && i < keys.length - 1 ? keys[i + 1] : "sum"); }
-function stepIntro(kind, title, lead, quotes, bucket) {
-  return h("div", { class: "stask" }, h("span", { class: "tag " + kind, text: tr(bucket) }), h("h1", { class: "h2s", id: "plan-h", tabindex: "-1", text: title }), h("p", { class: "small muted", text: lead }),
-    quotes ? h("button", { class: "linkbtn", type: "button", onclick: () => openSheet(bucket) }, tr("seeQ", quotes), svgIcon(ICON_NEXT)) : null);
-}
-function step1(p) {  // Catat: decide the fix for the biggest complaint. The check date is always a week away, so there is nothing else to choose
-  const g = lastData.groups[0], f = loggedFix(p), ui = planUi;
-  const byId = {}; lastData.items.forEach((it) => { byId[it.id] = it; });
-  const sugg = [...new Set(g.ids.map((id) => (byId[id] || {}).fix_suggestion_id).filter(Boolean))][0] || "";
-  const intro = stepIntro("fix", tr("t1h", lowerTheme(g.theme)), tr("t1p", p.fix.n, p.fix.total), g.n, "fix");
-  if (f) {
-    return [stepHead(p), intro, h("div", { class: "callout" }, tr("already1") + (f.checkOn ? " " + tr("alreadyCheck", fmtDay(f.checkOn)) : "")),
-      f.note ? h("p", { class: "note", lang: "id", text: f.note }) : null, stepFoot(p, tr("next"), nextStep)];
-  }
-  if (ui.choice == null && sugg) ui.choice = "ai";  // the AI's step is already selected: one tap on Simpan is enough
-  const err = h("div", { class: "callout warn", role: "alert", hidden: true });
-  const fail = (key) => { err.textContent = tr(key); err.hidden = false; };
-  const own = h("input", { type: "text", maxlength: String(NOTE_MAX), autocomplete: "off", placeholder: tr("oOwnPh"), "aria-label": tr("oOwn") });
-  own.value = ui.own; own.addEventListener("input", () => { ui.own = own.value; err.hidden = true; });
-  const ownWrap = h("div", { class: "own", hidden: ui.choice !== "own" }, own);
-  const radio = (value, title, sub, extra) => {
-    const input = h("input", { type: "radio", name: "fixopt", value });
-    input.checked = ui.choice === value;
-    input.addEventListener("change", () => { ui.choice = value; err.hidden = true; ownWrap.hidden = value !== "own"; if (value === "own") own.focus(); });
-    return h("label", { class: "opt" }, input, h("span", {}, h("b", { lang: value === "ai" ? "id" : null, text: title }), h("span", { class: "s", text: sub }), extra));
-  };
-  const save = () => {
-    if (!ui.choice) { fail("needChoice"); return; }
-    const note = ui.choice === "ai" ? sugg : ui.own.trim();
-    if (ui.choice === "own" && !note) { fail("needOwn"); own.focus(); return; }
-    if (ui.choice === "own" && noteCopiesReview(note)) { fail("fixNoteReview"); own.focus(); return; }
-    const checkOn = addDays(CHECK_DAYS), fix = makeFix(g, note, lastData.source, lastData.items, checkOn);
-    if (!saveFixes(loadFixes().concat(fix))) { fail("fixSaveFail"); return; }
-    track("fix_marked");
-    showToast(tr("savedToast", fmtDay(checkOn)));
-    nextStep();
-  };
-  return [stepHead(p), intro,
-    h("div", { class: "stask", role: "radiogroup", "aria-labelledby": "q1-h" }, h("p", { class: "q", id: "q1-h", text: tr("q1") }),
-      sugg ? radio("ai", sugg, tr("oAi")) : null, radio("own", tr("oOwn"), tr("oOwnS"), ownWrap)),
-    h("p", { class: "checkline", text: tr("checkLine", fmtDayShort(addDays(CHECK_DAYS))) }),
-    err, stepFoot(p, tr("save1"), save, nextStep)];
-}
-function reasonText(it) { return (it.stars ? "★".repeat(it.stars) + " · " : "") + (it.check_first ? tr("chipCourier") : themeName(it.theme)); }
-async function copyPlain(text, node) {  // the clipboard, or the text left selected so a long-press can copy it
-  try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall through */ }
-  if (node) { if (node.select) node.select(); else selectNode(node); }
-  try { return document.execCommand("copy"); } catch (e) { return false; }
-}
-function step2(p) {  // Balas: copy a draft, send it on the marketplace, then say whether it went out
-  const byId = {}; lastData.items.forEach((it) => { byId[String(it.id)] = it; });
-  const list = p.fight.map((id) => byId[id]).filter(Boolean), plat = p.platform || tr("platformWord");
-  const setState = (id, st) => { const r = Object.assign({}, p.replies); if (st) r[id] = st; else delete r[id]; updatePlan(p, { replies: r }); planUi.cur = id; renderPlanView(); };
-  const copyOpen = async (it, box) => {
-    const ok = await copyPlain(replyText(it), box.querySelector(".pdraft"));
-    announce(ok ? tr("copiedAnn", tr("dPublic")) : tr("selectIt"));
-    track("draft_copied", { kind: it.fight.public_reply ? "public" : "chat" });
-    if (p.url) window.open(p.url, "_blank", "noopener");
-    setState(String(it.id), "copied");
-  };
-  const card = (it, i, detail) => {
-    const id = String(it.id), st = p.replies[id];
-    if (st === "sent") {
-      return h("article", { class: "reply sent" + (detail ? " detail" : "") + (planUi.cur === id ? "" : " was") },
-        h("div", { class: "sentrow" }, h("span", { class: "ok" }, svgIcon(ICON_CHECK), tr("sentOk")), h("button", { class: "undo", type: "button", text: tr("undo"), onclick: () => setState(id, null) })),
-        h("p", { class: "sentrow" }, h("span", { class: "q2", lang: "id", text: "“" + (it.proof_quote || "") + "”" })));
-    }
-    const box = h("article", { class: "reply" + (detail ? " detail" : "") });
-    const go = h("button", { class: "btn ghost", type: "button" }, p.url ? svgIcon(ICON_OPEN) : copyIcon(), p.url ? tr(st === "copied" ? "copyAgain" : "copyOpen", plat) : tr("copyOnly"));
-    go.addEventListener("click", () => copyOpen(it, box));
-    box.append(...[
-      detail ? h("div", { class: "row", style: "justify-content:space-between;align-items:center" }, h("span", { class: "chip star", text: reasonText(it) }), h("span", { class: "small muted", text: tr("reviewOf", i + 1, list.length) }))
-        : h("span", { class: "chip star", style: "justify-self:start", text: reasonText(it) }),
-      h("p", { class: "pquote fight", lang: "id", text: "“" + (it.proof_quote || "") + "”" }),
-      detail ? h("p", { class: "small muted", text: tr("aiShort") }) : null,
-      h("p", { class: "pdraft", lang: "id", text: replyText(it) }),
-      st === "copied" ? h("div", { class: "ask" }, h("p", { text: tr("asked") }), h("div", { class: "row2" },
-        h("button", { class: "btn ghost", type: "button", text: tr("yes"), onclick: () => setState(id, "sent") }), h("button", { class: "btn ghost", type: "button", text: tr("notYet"), onclick: () => setState(id, null) }))) : null,
-      st === "copied" && !detail ? null : go].filter(Boolean));
-    return box;
-  };
-  const intro = stepIntro("fight", tr("t2h", list.length), tr("t2p", plat), 0, "fight");
-  const foot = stepFoot(p, tr("next"), nextStep, nextStep);
-  if (!desktop()) {
-    return [stepHead(p), intro, h("div", { class: "row", style: "justify-content:space-between;align-items:center;flex-wrap:nowrap" }, h("p", { class: "small muted", text: tr("aiShort") }), h("span", { class: "chip", style: "flex:none", text: tr("s2s", sentCount(p), list.length) })),
-      list.map((it, i) => card(it, i, false)), foot];
-  }
-  const cur = list.find((it) => String(it.id) === planUi.cur) || list.find((it) => p.replies[String(it.id)] !== "sent") || list[0];
-  const items = list.map((it) => {
-    const st = p.replies[String(it.id)];
-    return h("button", { class: "ritem", type: "button", "aria-current": it === cur ? "true" : "false", onclick: () => { planUi.cur = String(it.id); renderPlanView(); } },
-      h("span", { class: "st" }, st === "sent" ? h("span", { class: "ok" }, svgIcon(ICON_CHECK), tr("sentOk")) : h("span", { class: st ? "" : "muted", text: st === "copied" ? tr("asked") : tr("notCopied") }), h("span", { class: "muted", text: reasonText(it) })),
-      h("span", { class: "sentrow" }, h("span", { class: "q2", lang: "id", text: "“" + (it.proof_quote || "") + "”" })));
-  });
-  return [stepHead(p), intro, h("div", { class: "rgrid" }, h("div", { class: "rlist" }, items), card(cur, list.indexOf(cur), true)), foot];
-}
-function summaryView(p) {  // step 3, Ringkasan: what this analysis found in two lines, then what to do next; short on purpose
-  const data = lastData, f = loggedFix(p), left = p.fight.length - sentCount(p);
-  const fight = data.items.filter((it) => it.bucket === "fight" || it.bucket === "check"), keep = data.items.filter((it) => !isFake(it) && it.bucket === "keep");
-  const head = headline(data.groups, fight, keep, data.items);
-  const row = (state, text, key) => h("li", { class: state },  // state: done (a tick), todo (a "Kerjakan" link) or keep (a note, nothing to do)
-    state === "done" ? svgIcon(ICON_CHECK) : h("span", { class: "dot", "aria-hidden": "true" }), h("span", { text }),
-    state === "todo" ? h("button", { class: "plain strong", type: "button", text: tr("doIt"), onclick: () => openStep(key, true) }) : null);
-  const next = [];
-  if (p.fix) next.push(f ? row("done", f.checkOn ? tr("nFixDone", lowerTheme(p.fix.theme), fmtDayShort(f.checkOn)) : tr("dF", lowerTheme(p.fix.theme))) : row("todo", tr("nFix", lowerTheme(p.fix.theme)), "fix"));
-  if (p.fight.length) next.push(left ? row("todo", tr("nFight", left), "fight") : row("done", tr("nFightDone")));
-  const praise = [...new Set(keep.map((k) => plainTheme(k.theme).toLowerCase()))].slice(0, 2);
-  if (praise.length) next.push(row("keep", tr("nKeep", praise.join(" " + tr("and") + " "))));
-  return [stepHead(p),
-    h("div", { class: "stask" }, h("span", { class: "tag keep", text: tr("st3") }), h("h1", { class: "h2s", id: "plan-h", tabindex: "-1", text: head.h }), head.lead ? h("p", { class: "small muted", text: head.lead }) : null),
-    h("div", { class: "stack", style: "gap:10px" }, h("p", { class: "eb", text: tr("nextEb") }), h("ul", { class: "nextlist" }, next)),
-    waBlock(loadFixes().filter((x) => x.product === p.product)),
-    h("div", { class: "sumfoot" }, h("button", { class: "btn ghost", type: "button", text: tr("backRes2"), onclick: () => { show("results"); toTop(); } }),
-      h("button", { class: "btn primary", type: "button", text: tr("another"), onclick: startFresh })),
-  ];
-}
 
 /* ---------- the sheet: a group's quotes and drafts (bottom sheet / side panel), or a small dialog ---------- */
 let sheetPushed = false, sheetReturn = null, lastCounts = null, toastTimer = null;
-const BEHIND = () => [$("ptabs"), $("workspace"), document.querySelector(".bottombar"), desktop() ? null : document.querySelector(".topbar")].filter(Boolean);  // a wide screen keeps the header usable beside the side panel
+const BEHIND = () => [$("workspace"), document.querySelector(".bottombar"), desktop() ? null : document.querySelector(".topbar")].filter(Boolean);  // a wide screen keeps the header usable beside the side panel
 function setBehind(on) { document.querySelectorAll("[data-behind]").forEach((el) => { el.inert = false; el.removeAttribute("data-behind"); }); if (on) BEHIND().forEach((el) => { el.inert = true; el.setAttribute("data-behind", "1"); }); }
 function openSheetBox(dialog) {
   const s = $("sheet"), box = s.querySelector(".sheet-box");
@@ -2506,7 +2261,7 @@ function render(data, fresh) {
     if (out.changed.length) saveFixes(out.fixes);
     feedbackState = { answer: null, sent: false, comment: "", error: "" };
     track("analysed", { reviews: Math.min(data.reviews, 50), source: src.kind === "url" ? "link" : "paste", lang });
-    saveHistory(data, counts);
+    logAnalysis(data, counts); saveHistory(data, counts);
   }
   const notes = [];
   if (lastChanged.length) {
@@ -2521,8 +2276,6 @@ function render(data, fresh) {
   renderFixBadge();
 
   const cap = (k) => k[0].toUpperCase() + k.slice(1);
-  $("pchip-name").textContent = src.title || tr("pastedName");
-  $("pchip-meta").textContent = " · " + data.reviews + " " + tr("reviewsWord") + (data.star_avg ? " · " + data.star_avg + "★" : "");
   const topKeep = Object.entries(keep.reduce((a, k) => { const t = plainTheme(k.theme); a[t] = (a[t] || 0) + 1; return a; }, {})).sort((a, b) => b[1] - a[1])[0];
   $("tabs").replaceChildren(...TABS.map((k) => {
     const tab = h("button", { type: "button", role: "tab", id: "tab-" + k, class: "gtab", "aria-controls": "panel-" + k, "data-b": k },
@@ -2559,7 +2312,7 @@ function render(data, fresh) {
 
 /* ---------- competitor analysis ---------- */
 const MAX_RIVALS = 3;
-let rivalWant = 3, linkBoxOn = null, rivalsOn = null;  // how many competitors the seller wants (1 to 3); linkBoxOn (read reviews from a link) and rivalsOn (competitor search) are null until the server says
+let rivalWant = 2, linkBoxOn = null, rivalsOn = null;  // how many competitors the seller wants (1 to 3); linkBoxOn (read reviews from a link) and rivalsOn (competitor search) are null until the server says
 const MIN_CREDIBLE = 5;  // same rule as the server: fewer credible reviews than this and a shop is shown but not used for a statement
 // The free example comparison. Everything here is made up: no real shop, product, buyer or review. Same shape as /api/competitors/compare.
 const EXAMPLE_COMPARE = {
@@ -2586,7 +2339,7 @@ const fmtNum = (n) => Number(n).toLocaleString("id-ID");
 const rivalBodyEl = h("div", { class: "stack", id: "rival-body" });  // one node: it sits in the right-hand column on a wide screen, in the Rivals tab on a phone
 let rivalForm = { url: "", name: "" };
 const ownSource = () => (lastData && lastData.source && lastData.source.kind === "url" ? lastData.source : null);
-$("rival-home").append(rivalBodyEl);
+$("view-rival").append(rivalBodyEl);
 async function postJson(path, payload) {
   const res = await api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   let data = null;
@@ -2608,9 +2361,6 @@ function errText(data, fallback, rival) {  // the server sends a limit code; the
 }
 function pastedLinks(text) { return (text.match(/https?:\/\/[^\s<>"']+/g) || []).map((u) => ({ url: u })); }
 function rivalChosen(st) { return st.checked.map((i) => ({ url: st.candidates[i].url, title: st.candidates[i].title })).concat(pastedLinks(st.extra)).slice(0, st.want || MAX_RIVALS); }
-function rivalSpinner(title, sub) {
-  return h("div", { class: "loading", role: "status" }, h("div", { class: "spinner", "aria-hidden": "true" }), h("h2", { text: title }), h("p", { class: "muted", text: sub }));
-}
 function slugTitle(url) {  // a rough product name from the link's last path part, only to start the search
   try {
     const parts = new URL(url).pathname.split("/").filter(Boolean);
@@ -2619,32 +2369,25 @@ function slugTitle(url) {  // a rough product name from the link's last path par
     return last.replace(/[-_+]+/g, " ").replace(/\s+/g, " ").trim();
   } catch (e) { return ""; }
 }
-function stepper(active) {  // 1 Find, 2 Pick, 3 Compare, 4 all done
-  const names = [[tr("stepFind")], [tr("stepPick")], [tr("stepCompare"), tr("stepCompareShort")]];  // the third one gets a short form below 360px so it never clips
-  return h("ol", { class: "stepper" }, names.map(([n, short], i) => h("li", { class: i + 1 < active ? "done" : i + 1 === active ? "on" : "", "aria-current": i + 1 === active ? "step" : null },
-    h("span", { class: "dot" }, i + 1 < active ? svgIcon(["M5 12l5 5 9-10"]) : String(i + 1)), short ? [h("span", { class: "full", text: n }), h("span", { class: "short", text: short })] : n)));
-}
-function wantSelector() {
-  return h("div", { class: "want" }, h("span", { text: tr("rivalWantLbl") }), h("div", { class: "seg", role: "group", "aria-label": tr("rivalWantLbl") },
-    [1, 2, 3].map((n) => h("button", { type: "button", "aria-pressed": rivalWant === n ? "true" : "false", text: String(n), onclick: () => { rivalWant = n; renderRival(); } }))));
-}
 const visitor = () => !!sb && !signedIn;  // no account yet: competitor search needs a (free) sign-in
 const noBoxNote = () => (rivalsOn === false ? h("div", { class: "callout warn", text: tr("rivalNoBox") }) : visitor() ? h("div", { class: "callout", text: tr("rivalSignInNote") }) : null);
 function rivalSignedIn() { if (!visitor()) return true; showGate("choose"); gateInfo(tr("rivalSignIn")); return false; }
-function exampleLink() {  // a built-in comparison, free for every visitor, clearly labelled as made up
-  return h("button", { class: "plain strong", type: "button", text: tr("rivalExampleBtn"), onclick: () => { rival = { step: "result", data: Object.assign({ example: true }, EXAMPLE_COMPARE) }; rivalRun += 1; renderRival(); } });
+const RIVAL_BACK = { results: "resultsTitle", fixes: "fixesTitle", history: "histTitle" };  // the back link names the screen it returns to
+function leaveRival() {
+  const from = rival.from || "results";
+  rivalRun += 1; rival = { step: "idle" };
+  if (from === "fixes") openFixes(); else if (from === "history" && hasAccount()) openHistory(); else if (lastData) { show("results"); toTop(); } else { show("input"); toTop(); }
 }
-function rivalIdle() {
-  const own = ownSource();
-  if (own && !rival.other) {
-    const find = h("button", { class: "btn primary", type: "button" }, tr(visitor() ? "rivalSignInBtn" : "rivalAskBtn"));
-    find.addEventListener("click", () => rivalFind());
-    const other = h("button", { class: "plain strong", type: "button" }, tr("rivalOther"));
-    other.addEventListener("click", () => { rival = { step: "idle", other: true }; renderRival(); $("rival-url") && $("rival-url").focus(); });
-    return h("div", { class: "rcard" }, noBoxNote(), h("h2", { text: tr("rivalAsk") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
-      h("div", { class: "ownbox" }, h("span", {}, h("small", { text: tr("rivalOwnLbl") + " · " + platformName(own.url) }), h("b", { lang: "id", title: own.title || own.url, text: own.title || own.url })), other),
-      wantSelector(), find, h("p", { class: "small muted", text: tr("rivalFreeNote") }), exampleLink());
-  }
+const rivalBack = () => h("button", { class: "back", type: "button", onclick: leaveRival }, svgIcon(["M15 6l-6 6 6 6"]), tr(RIVAL_BACK[rival.from || "results"] || "resultsTitle"));
+function exampleLink() {  // a built-in comparison, free for every visitor, clearly labelled as made up
+  return h("button", { class: "plain strong", type: "button", text: tr("rivalExampleBtn"), onclick: () => { rival = { step: "result", from: rival.from || "results", data: Object.assign({ example: true }, EXAMPLE_COMPARE), shops: [] }; rivalRun += 1; renderRival(); toTop(); } });
+}
+function rivalSpinner(t) {  // a wait looks like a wait: the product named, how long, and a way out
+  return h("div", { class: "loading", role: "status" }, h("div", { class: "spinner", "aria-hidden": "true" }), h("h2", { text: tr("rivalSearching") }),
+    h("p", {}, tr("rivalFor") + " ", h("b", { lang: "id", text: shortLabel((t && (t.title || t.url)) || "", 80) })), h("p", { class: "small muted", text: tr("rivalWait") }),
+    h("button", { class: "btn ghost", type: "button", text: tr("cancelBtn"), onclick: leaveRival }));
+}
+function rivalIdle() {  // no link to start from (pasted reviews, or a box without one): ask for the product's link and name
   const url = h("input", { id: "rival-url", type: "url", inputmode: "url", autocomplete: "off", spellcheck: "false", placeholder: tr("linkPh") });
   const name = h("input", { id: "rival-name", type: "text", maxlength: "150", autocomplete: "off", placeholder: tr("rivalYourNamePh") });
   url.value = rivalForm.url; name.value = rivalForm.name;
@@ -2657,220 +2400,202 @@ function rivalIdle() {
     if (!rivalSignedIn()) return;  // the link and name stay filled in for after the sign-in
     if (!u) return fail(tr("rivalNeedLink"), url);
     if (!title) return fail(tr("rivalNeedName"), name);
-    rivalFind({ url: u, title, mine: !!(own && own.url === u) });
+    rivalFind({ url: u, title, mine: false, sig: "" }, rival.from);
   });
   [url, name].forEach((f) => f.addEventListener("keydown", (e) => { if (e.key === "Enter") go.click(); }));
-  const back = own && !rival.fresh ? h("button", { class: "plain", type: "button", text: tr("rivalBackOwn") }) : null;  // after "Mulai ulang" nothing of the last product is offered
-  if (back) back.addEventListener("click", () => { rival = { step: "idle" }; renderRival(); });
-  return h("div", { class: "rcard" }, noBoxNote(), h("h2", { text: tr("rivalTitleAlone") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
+  return h("div", { class: "stack rival-wrap" }, rivalBack(), noBoxNote(), h("h2", { text: tr("rivalTitleAlone") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
     h("label", { class: "field", for: "rival-url" }, h("span", { text: tr("rivalYourLink") }), url),
-    h("label", { class: "field", for: "rival-name" }, h("span", { text: tr("rivalYourName") }), name),
-    wantSelector(), err, go, h("p", { class: "small muted", text: tr("rivalFreeNote") }), exampleLink(), back);
+    h("label", { class: "field", for: "rival-name" }, h("span", { text: tr("rivalYourName") }), name), err, go, exampleLink());
 }
-function candidateCard(st, i) {
-  const c = st.candidates[i];
-  const box = h("input", { type: "checkbox", "aria-label": c.title });
+function pickRow(st, i) {
+  const c = st.candidates[i], box = h("input", { type: "checkbox", "aria-label": c.title });
   box.checked = st.checked.includes(i);
   box.addEventListener("change", () => {
     if (box.checked && st.checked.length >= (st.want || MAX_RIVALS)) { box.checked = false; announce(tr("rivalMax", st.want || MAX_RIVALS)); return; }
     st.checked = box.checked ? st.checked.concat(i) : st.checked.filter((x) => x !== i);
     renderRival();
   });
-  const facts = [c.price ? "Rp" + fmtNum(c.price) : null, c.rating ? c.rating + "★" : null, c.sold ? tr("rivalSold", fmtNum(c.sold)) : null].filter(Boolean);
-  return h("label", { class: "cand" + (box.checked ? " on" : "") }, box, h("span", {},
-    h("span", { class: "t", lang: "id", text: c.title }),
-    facts.length ? h("span", { class: "chips" }, facts.map((t) => h("span", { class: "chip", text: t }))) : null,
-    c.shop ? h("span", { class: "meta", text: tr("rivalShopLbl", c.shop) }) : null));
+  const facts = [c.shop, c.price ? "Rp" + fmtNum(c.price) : null, c.rating ? String(c.rating).replace(".", ",") : null, c.sold ? tr("rivalSold", fmtNum(c.sold)) : null].filter(Boolean).join(" · ");
+  return h("label", { class: "pick" + (box.checked ? " on" : "") }, box, h("span", {}, h("span", { class: "t", lang: "id", text: c.title }), facts ? h("span", { class: "m", text: facts }) : null));
 }
 function rivalPick(st) {
-  const go = h("button", { class: "btn primary", type: "button", id: "rival-go" }, tr("rivalGo"));
+  const chosen = rivalChosen(st).length;
+  const go = h("button", { class: "btn primary" + (chosen ? "" : " off"), type: "button", id: "rival-go", "aria-disabled": chosen ? "false" : "true" }, tr("rivalGoN", chosen));
   go.addEventListener("click", rivalCompare);
   const area = h("textarea", { id: "rival-paste", spellcheck: "false", rows: "3", placeholder: "https://tokopedia.link/…", style: "min-height:80px" });
   area.value = st.extra;
   area.addEventListener("input", () => { st.extra = area.value; });
-  const best = [], other = [];
-  st.candidates.forEach((c, i) => (c.picked ? best : other).push(candidateCard(st, i)));
-  const more = other.length ? h("details", { class: "pcard-more", open: st.moreOpen || !best.length }, h("summary", { text: tr("rivalMoreN", other.length) }), h("div", { class: "stack" }, other)) : null;
-  if (more) more.addEventListener("toggle", () => { st.moreOpen = more.open; });
-  return [
-    stepper(2),
+  return h("div", { class: "stack rival-wrap" }, rivalBack(), h("div", {}, h("h2", { text: tr("rivalPickT") }),
+      h("p", { class: "small muted", text: st.candidates.length ? tr("rivalFoundN", st.candidates.length) : "" })),
     st.error ? h("div", { class: "callout warn", role: "alert", text: st.error }) : null,
-    !st.candidates.length ? h("div", { class: "callout", text: tr("rivalNone") })
-      : h("p", { class: "rule", text: best.length ? tr("rivalFound", st.candidates.length, best.length) : tr("rivalPick", st.want || MAX_RIVALS) }),
-    best.length ? h("p", { class: "group-lbl", text: tr("rivalMost") }) : null, best, more,
-    h("label", { class: "field", for: "rival-paste" }, h("span", { text: tr("rivalPaste") }), area),
-    go,
-  ];
+    !st.candidates.length ? h("div", { class: "callout", text: tr("rivalNone") }) : null,
+    st.candidates.map((c, i) => pickRow(st, i)),
+    h("details", { class: "xp", open: !st.candidates.length || !!st.extra }, h("summary", { text: tr("rivalPasteSum") }), h("div", { class: "xp-body" }, h("label", { class: "field", for: "rival-paste" }, h("span", { text: tr("rivalPaste") }), area))),
+    h("div", { class: "pickfoot" }, go, h("p", { class: "small muted", text: tr("rivalQuota") })));
 }
 function groupInsights(insights, rows) {  // learn from: rivals do better or are praised more. Avoid: rivals get complaints you do not. Ignore: no real gap.
   const named = new Set(insights.map((x) => x.theme));
   return { learn: insights.filter((x) => x.kind === "worse" || x.kind === "praise_gap"), avoid: insights.filter((x) => x.kind === "opportunity"), ignore: rows.filter((r) => !named.has(r.theme)).map((r) => r.theme) };
 }
-function rivalResult(d) {
-  const absent = !!d.you.absent;
-  const names = d.competitors.map((c, i) => tr("rivalShop", String.fromCharCode(65 + i)));
-  const nameOf = (who) => names[d.competitors.findIndex((c) => c.title === who)] || who;
-  const exName = d.example ? d.you.title : "";  // the free example's "own" numbers are made up: name the example product, never "you"
-  const heads = (absent ? [] : [[exName || tr("rivalYou"), d.you.credible]]).concat(d.competitors.map((c, i) => [names[i], c.credible]));
-  const body = [];
-  for (const kind of ["complaint", "praise"]) {
-    const rows = d.rows.filter((r) => r.kind === kind);
-    if (!rows.length) continue;
-    const cls = kind === "complaint" ? "bad" : "good";
-    body.push(h("tr", { class: "sec" }, h("th", { colspan: heads.length + 1, text: tr(kind === "complaint" ? "rivalComplaints" : "rivalPraise") })));
-    rows.forEach((r) => {
-      const all = absent ? r.others : [r.you].concat(r.others), top = Math.max(...all);
-      body.push(h("tr", {}, h("th", { scope: "row", text: plainTheme(r.theme) }), all.map((n) => {
-        const hot = n > 0 && n === top && all.some((x) => x !== n);
-        return h("td", { class: hot ? "top " + cls : "" }, h("div", { class: "dots " + (hot ? cls : "") }, Array.from({ length: Math.min(n, 6) }, () => h("i"))), h("span", { text: n + (hot ? " ↑" : "") }));
-      })));
-    });
-  }
-  const card = (x) => {
-    const theme = plainTheme(x.theme), complaint = x.kind !== "praise_gap";
-    const text = exName ? (x.kind === "worse" ? tr("rivalLineWorseEx", theme, x.you, exName, x.best) : tr("rivalLineOtherEx", theme, x.you, exName, x.them, nameOf(x.who)))
-      : x.kind === "worse" ? tr("rivalLineWorse", theme, x.you, x.best) : tr("rivalLineOther", theme, x.you, x.them, nameOf(x.who));
-    return h("div", { class: "ins " + (complaint ? "bad" : "good") }, h("div", { class: "big" }, h("b", { text: x.you }), h("i", { text: "vs" }), h("b", { text: x.kind === "worse" ? x.best : x.them })),
-      h("p", {}, h("span", { class: complaint ? "bad" : "good", text: tr(complaint ? "rivalComplaints" : "rivalPraise") }), " · " + text));
-  };
-  const groups = groupInsights(d.insights, d.rows);
-  const section = (key, Key, body) => h("div", { class: "group " + key }, h("h3", {}, tr("group" + Key), h("small", { text: tr("group" + Key + "Sub") })), body);
-  const none = () => h("p", { class: "small muted", text: tr("groupNone") });
-  const small = names.filter((n, i) => d.competitors[i].small);
-  const fake = d.competitors.reduce((a, c) => a + c.fake, 0);
+function rivalShops(d, st) {
+  const shops = (st && st.shops) || [];
+  return d.competitors.map((c, i) => shops[i] || tr("rivalShop", String.fromCharCode(65 + i)));
+}
+function rivalLine(d, x, names) {  // one plain sentence with the numbers, the same wording the old comparison used
+  const theme = plainTheme(x.theme), nameOf = (who) => names[d.competitors.findIndex((c) => c.title === who)] || who, ex = d.example ? d.you.title : "";
+  return ex ? (x.kind === "worse" ? tr("rivalLineWorseEx", theme, x.you, ex, x.best) : tr("rivalLineOtherEx", theme, x.you, ex, x.them, nameOf(x.who)))
+    : x.kind === "worse" ? tr("rivalLineWorse", theme, x.you, x.best) : tr("rivalLineOther", theme, x.you, x.them, nameOf(x.who));
+}
+function rivalItemsFrom(d, shops) {  // what Selesai adds to Tugas: one item for each thing to catch up on
+  const names = rivalShops(d, { shops }), nameOf = (who) => names[d.competitors.findIndex((c) => c.title === who)] || who || "";
+  return groupInsights(d.insights, d.rows).learn.slice(0, 6).map((x) => ({ id: rid(), kind: "rival", theme: x.theme, k: x.kind, who: x.kind === "praise_gap" ? nameOf(x.who) : "" }));
+}
+function rivalCard(d, x, names, edge) {
+  const theme = x.kind === "praise_gap" ? plainTheme(x.theme) : themeName(x.theme), quoteOf = () => { for (const c of d.competitors) { const q = c.quotes && c.quotes[x.theme]; if (q) return q; } return null; }, q = quoteOf();
+  const nameOf = (who) => names[d.competitors.findIndex((c) => c.title === who)] || who || "";
+  const todo = edge ? tr("rivalDoEdge", lowerTheme(x.theme)) : rivalTodoText({ k: x.kind, theme: x.theme, who: x.kind === "praise_gap" ? nameOf(x.who) : "" });
+  return h("article", { class: "card rcard" }, h("div", { class: "card-head" }, h("h3", { text: theme })),
+    h("div", { class: "buyer rival" }, h("span", { class: "lab", text: tr("buyerRivalLbl") }),
+      q ? h("blockquote", {}, h("span", { lang: "id" }, q.stars ? h("span", { class: "stars", text: starsText(q.stars) + " " }) : null, "“" + q.quote + "”")) : h("p", { text: rivalLine(d, x, names) })),
+    h("div", { class: "todo" + (edge ? " keep" : "") }, h("span", { class: "lab" }, svgIcon(WRENCH), tr("todoLbl")), h("ul", {}, h("li", { text: todo }))));
+}
+function rivalResult(st) {
+  const d = st.data, names = rivalShops(d, st), absent = !!d.you.absent, groups = groupInsights(d.insights, d.rows), all = groups.learn.concat(groups.avoid);
+  const bullets = all.slice(0, 3).map((x) => rivalLine(d, x, names));
+  const small = d.competitors.filter((c) => c.small).length, fake = d.competitors.reduce((a, c) => a + c.fake, 0);
   const notes = [];
-  d.competitors.forEach((c, i) => { if (c.small) notes.push(["small", tr("rivalSmallLine", names[i], c.credible), null]); });
-  d.failed.forEach((f) => notes.push(["fail", tr("rivalFailLine"), f.title || f.url]));
-  if (fake) notes.push(["skip", tr("rivalFakeLine", fake, d.competitors.filter((c) => c.fake).map((c) => tr("rivalFakeEach", names[d.competitors.indexOf(c)], c.reviews, c.credible)).join("; ")), null]);
-  const again = h("button", { class: "btn ghost", type: "button" }, tr("rivalAgain"));
-  again.addEventListener("click", () => {  // a clean, empty form for the next comparison; the product from Bedah ulasan is one tap away
-    rival = { step: "idle", other: true, fresh: true }; rivalRun += 1; rivalForm = { url: "", name: "" }; renderRival();
-    $("feature2").scrollTo({ top: 0, behavior: reduceMotion() ? "auto" : "smooth" }); toTop(); if ($("rival-url")) $("rival-url").focus({ preventScroll: true });
-  });
-  return [
-    stepper(4),
+  d.competitors.forEach((c, i) => { if (c.small) notes.push(tr("rivalSmallLine", names[i], c.credible)); });
+  d.failed.forEach((f) => notes.push(tr("rivalFailLine") + " " + (f.title || f.url)));
+  if (fake) notes.push(tr("rivalFakeLine", fake, d.competitors.filter((c) => c.fake).map((c) => tr("rivalFakeEach", names[d.competitors.indexOf(c)], c.reviews, c.credible)).join("; ")));
+  let tab = st.tab || "learn";
+  const panels = { learn: groups.learn.length ? groups.learn.map((x) => rivalCard(d, x, names, false)) : h("div", { class: "empty", text: tr("groupNone") }),
+    avoid: groups.avoid.length ? groups.avoid.map((x) => rivalCard(d, x, names, true)) : h("div", { class: "empty", text: tr("groupNone") }) };
+  const tabsEl = h("div", { class: "gtabs", role: "tablist" }), body = h("div", { class: "stack" });
+  const draw = () => {
+    tabsEl.replaceChildren(...["learn", "avoid"].map((k) => h("button", { type: "button", role: "tab", class: "gtab", "aria-selected": tab === k ? "true" : "false", onclick: () => { tab = k; st.tab = k; draw(); } },
+      h("span", { text: tr(k === "learn" ? "rivalCatchUp" : "rivalEdge") }), h("span", { class: "n", text: groups[k].length }))));
+    body.replaceChildren(...[panels[tab]].flat());
+  };
+  draw();
+  const done = h("button", { class: "btn primary", type: "button", text: tr("selesaiBtn"), onclick: finishRival }); done.hidden = !!d.example;
+  const again = h("button", { class: "btn ghost", type: "button", text: tr("rivalAgain"), onclick: () => { rivalRun += 1; rivalForm = { url: "", name: "" }; rival = { step: "idle", from: st.from, form: true }; renderRival(); toTop(); } });
+  return h("div", { class: "stack" }, rivalBack(), h("div", {}, h("h2", { text: tr("rivalResultT") }), h("p", { class: "muted", text: d.example ? tr("rivalExampleHead") : tr("rivalVs", names.join(", ")) })),
     d.example ? h("div", { class: "callout warn", role: "note" }, h("b", { text: tr("rivalExampleHead") + " " }), tr("rivalExampleBody")) : null,
-    h("div", { class: "callout" }, h("b", { text: tr("rivalSampleHead") + " " }), tr("rivalSampleBody")),
-    h("h3", { text: tr("rivalSeen") }),
-    absent ? h("div", { class: "callout", text: tr("rivalAlone") }) : [
-      !groups.learn.length && !groups.avoid.length ? h("div", { class: "callout", text: tr("rivalNoInsight") }) : null,
-      section("learn", "Learn", groups.learn.length ? groups.learn.map(card) : none()),
-      section("avoid", "Avoid", groups.avoid.length ? groups.avoid.map(card) : none()),
-      section("ignore", "Ignore", groups.ignore.length ? h("div", { class: "chips" }, groups.ignore.map((t) => h("span", { class: "chip soft", text: plainTheme(t) }))) : none()),
-    ],
-    small.length && !absent ? h("p", { class: "small muted", text: tr("rivalSmallNote", small.join(", ")) }) : null,
-    h("div", { class: "cmp-wrap" }, h("h3", { class: "cmp-title", text: tr("rivalByTheme") }), h("table", { class: "cmp" },
-      h("thead", {}, h("tr", {}, h("th", { scope: "col", text: tr("rivalThemeCol") }), heads.map(([n, c]) => h("th", { scope: "col" }, n, h("small", { text: tr("nReviewsCol", c) })))), ), h("tbody", {}, body))),
-    notes.length ? h("div", { class: "dnote" }, h("h3", { text: tr("rivalNote") }),
-      notes.map(([k, text, code]) => h("p", {}, h("span", { class: "tag " + k, text: tr(k === "small" ? "tagSmall" : k === "fail" ? "tagFail" : "tagSkip") }), text, code ? h("code", { text: code }) : null))) : null,
-    d.competitors.map((c, i) => h("details", { class: "full" },
-      h("summary", { text: tr("rivalLinkLbl") + " · " + names[i] }),
-      h("p", { lang: "id", text: c.title }),
-      Object.entries(c.quotes).map(([theme, q]) => h("blockquote", {}, h("span", { lang: "id" }, q.stars ? h("span", { class: "stars", text: starsText(q.stars) + " " }) : null, "“" + q.quote + "”"), h("span", { class: "src", text: themeName(theme) }))),
-      c.url.startsWith("https://") ? h("a", { href: c.url, target: "_blank", rel: "noopener noreferrer", class: "small", text: c.url }) : null)),
-    again,
-  ];
+    absent ? h("div", { class: "callout", text: tr("rivalAlone") }) : null,
+    h("div", { class: "sumbox" }, h("span", { class: "eb", text: tr("sumLabel") }), h("ul", {}, (bullets.length ? bullets : [tr("rivalNoInsight")]).map((t) => h("li", { text: t })))),
+    tabsEl, body,
+    notes.length ? h("div", { class: "stack" }, notes.map((t) => h("p", { class: "small muted", text: t }))) : null,
+    h("div", { class: "res-end" }, h("h3", { text: tr("endTitle") }), done, again));
 }
 function rivalBody() {
-  if (rival.step === "searching") return [stepper(1), rivalSpinner(tr("rivalSearching"), tr("rivalSearchSub"))];
-  if (rival.step === "comparing") return [stepper(3), rivalSpinner(tr("rivalComparing"), tr("rivalCompareSub"))];
+  if (rival.step === "searching") return [rivalSpinner(rival.target)];
+  if (rival.step === "comparing") return h("div", { class: "loading", role: "status" }, h("div", { class: "spinner", "aria-hidden": "true" }), h("h2", { text: tr("rivalComparing") }), h("p", { class: "small muted", text: tr("rivalCompareSub") }));
   if (rival.step === "pick") return rivalPick(rival);
-  if (rival.step === "result") return rivalResult(rival.data);
-  return rivalIdle();
+  if (rival.step === "result") return rivalResult(rival);
+  return rival.form ? rivalIdle() : null;
 }
-function renderRival() {
-  rivalBodyEl.replaceChildren(...[rivalBody()].flat(Infinity).filter(Boolean));
+function renderRival() { rivalBodyEl.replaceChildren(...[rivalBody()].flat(Infinity).filter(Boolean)); }
+function openRivals(opts) {  // from the end of a result, a Riwayat entry or a Tugas box: with a link the search starts at once, without one a short form asks for it
+  opts = opts || {};
+  closeSheet(); track("tab_viewed", { tab: "rivals" });
+  const from = opts.from || "results", own = !opts.url && from === "results" ? ownSource() : null, url = opts.url || (own && own.url) || "";
+  rivalRun += 1;
+  if (url) {
+    const mine = opts.mine !== undefined ? opts.mine : !!own, sig = opts.sig || (mine && lastData ? reviewSig(lastData.items) : "");
+    show("rival"); toTop();
+    rivalFind({ url, title: opts.title || (own && own.title) || "", mine, sig }, from);
+    return;
+  }
+  const src = lastData && lastData.source;
+  rivalForm = { url: "", name: opts.title || (from === "results" && src && src.title) || "" };
+  rival = { step: "idle", from, form: true }; renderRival(); show("rival"); toTop();
 }
-async function rivalFind(target) {
+async function rivalFind(target, from) {
   if (!rivalSignedIn()) return;
-  const own = ownSource();
-  const t = target || (own ? { url: own.url, title: own.title || "", mine: true } : null);
-  if (!t) return;
+  const t = target; if (!t) return;
   const run = ++rivalRun;
   track("rivals_started");
-  rival = { step: "searching", target: t, want: rivalWant }; renderRival();
+  from = from || (rival && rival.from) || "results";
+  rival = { step: "searching", target: t, want: rivalWant, from }; renderRival();
   let next;
   try {
     const out = await postJson("/api/competitors/suggest", { url: t.url, title: t.title });
     if (!out) { rival = { step: "idle" }; renderRival(); return; }  // not signed in: the sign-in screen is up
     if (run !== rivalRun) return;
     const cands = out.ok ? out.data.candidates : [];
-    next = { step: "pick", target: t, want: rivalWant, candidates: cands, checked: cands.map((c, i) => (c.picked ? i : -1)).filter((i) => i >= 0).slice(0, rivalWant), extra: "", error: out.ok ? "" : errText(out.data, tr("errGeneric", ""), true) };
+    next = { step: "pick", target: t, want: rivalWant, from, candidates: cands, checked: cands.map((c, i) => (c.picked ? i : -1)).filter((i) => i >= 0).slice(0, rivalWant), extra: "", error: out.ok ? "" : errText(out.data, tr("errGeneric", ""), true) };
   } catch (e) {
     if (run !== rivalRun) return;
-    next = { step: "pick", target: t, want: rivalWant, candidates: [], checked: [], extra: "", error: tr("errNetwork") };
+    next = { step: "pick", target: t, want: rivalWant, from, candidates: [], checked: [], extra: "", error: tr("errNetwork") };
   }
-  rival = next; renderRival();
+  rival = next; renderRival(); toTop();
 }
 async function rivalCompare() {
   if (!rivalSignedIn()) return;
   const pick = rival, t = pick.target, chosen = rivalChosen(pick), run = ++rivalRun;
   if (!chosen.length) { pick.error = tr("rivalNeedOne"); renderRival(); return; }
+  const shops = pick.checked.map((i) => pick.candidates[i].shop || pick.candidates[i].title).concat(pastedLinks(pick.extra).map((l, i) => tr("rivalShop", String.fromCharCode(65 + pick.checked.length + i)))).slice(0, chosen.length);
   const own = t.mine && lastData ? lastData.items.map((i) => ({ theme: i.theme, bucket: i.bucket, fake: !!(i.likely_fake && i.likely_fake.flag) })) : [];  // no Bedah ulasan for this link: compare the rivals only
-  rival = { step: "comparing", target: t }; renderRival();
+  rival = { step: "comparing", target: t, from: pick.from }; renderRival();
   let next;
   try {
     const out = await postJson("/api/competitors/compare", { url: t.url, title: t.title, own, competitors: chosen });
     if (!out) { rival = { step: "idle" }; renderRival(); return; }  // not signed in: the sign-in screen is up
     if (run !== rivalRun) return;
     if (out.ok && out.data.quota) setQuota(out.data.quota);  // a comparison is one of the day's analyses
-    next = out.ok ? { step: "result", target: t, data: out.data } : Object.assign(pick, { step: "pick", error: errText(out.data, tr("errGeneric", ""), true) });
+    next = out.ok ? { step: "result", target: t, from: pick.from, data: out.data, shops } : Object.assign(pick, { step: "pick", error: errText(out.data, tr("errGeneric", ""), true) });
   } catch (e) {
     if (run !== rivalRun) return;
     next = Object.assign(pick, { step: "pick", error: tr("errNetwork") });
   }
-  rival = next; renderRival();
+  rival = next; renderRival(); toTop();
 }
-$("rivals-open").addEventListener("click", () => openRivals(true));
-desktopQuery.addEventListener("change", () => {  // crossing 900px: the plan, the steps and Tugas are laid out differently
-  if (desktop() && currentView === "rivals") show(checkerView);
-  if (lastData) render(lastData, false); else renderRival();
-  if (currentView === "plan") renderPlanView(); else if (currentView === "fixes") renderFixes();
+function finishRival() {  // Selesai on a Hasil Bedah pesaing: the catch-up items join the product's box under "Dari pesaing"
+  const st = rival;
+  if (!st || st.step !== "result" || st.data.example) return;
+  const t = st.target || {}, key = t.url || fxStr(t.title, 150).toLowerCase(), items = rivalItemsFrom(st.data, st.shops), boxes = loadBoxes();
+  const at = boxes.findIndex((b) => (t.sig && b.sig === t.sig) || (key && b.product === key));
+  if (items.length) {
+    if (at >= 0) { const b = boxes[at]; boxes[at] = Object.assign({}, b, { items: b.items.filter((i) => i.kind !== "rival").concat(items).slice(0, MAX_ITEMS), doneAt: 0 }); }
+    else boxes.push(cleanBox({ sig: "r" + rid(), product: key, label: t.title || "", url: t.url || "", created: Date.now(), items }));
+    saveBoxes(boxes.filter(Boolean));
+  }
+  track("fix_marked");
+  playDone(items.length, () => { rival = { step: "idle" }; rivalRun += 1; if (items.length) showToast(tr("doneToast", items.length)); openFixes(); });
+}
+
+desktopQuery.addEventListener("change", () => {  // crossing 900px: the layout changes, the content stays
+  if (lastData) render(lastData, false);
+  if (currentView === "fixes") renderFixes();
 });
 
 /* ---------- views ---------- */
-const VIEWS = { input: "view-input", loading: "view-loading", results: "view-results", fixes: "view-fixes", plan: "view-plan", history: "view-history" };
+const VIEWS = { input: "view-input", loading: "view-loading", results: "view-results", rival: "view-rival", fixes: "view-fixes", history: "view-history" };
 function show(view) {
   const before = currentView;
   currentView = view;
   const tasks = view === "fixes" || view === "history";  // Riwayat belongs with Tugas
-  if (view !== "rivals" && !tasks) checkerView = view;  // where the Bedah ulasan tab goes back to
-  $("workspace").dataset.section = view === "rivals" ? "rivals" : "checker";  // on a phone the two sections take turns; a wide screen shows both
-  $("workspace").classList.toggle("tasks-full", tasks);  // a wide screen: Tugas takes the whole width
+  if (view !== "rival" && !tasks) checkerView = view;  // where the Bedah ulasan tab goes back to
+  $("workspace").classList.toggle("wide", view === "results" || view === "fixes" || view === "history" && false);  // a wide screen: Hasil Bedah and Tugas use the full width, the rest a centred column
   for (const [v, id] of Object.entries(VIEWS)) $(id).hidden = view !== v;
   $("hero").hidden = view !== "input";
-  $("view-steps").hidden = view !== "input";
-  $("pchip").hidden = !(lastData && (view === "results" || view === "plan")); $("print-d").hidden = view !== "results";
+  $("print-d").hidden = view !== "results";
   $("back-results").hidden = !(lastData && view === "input");
-  $("nav-check").setAttribute("aria-current", view === "rivals" || tasks ? "false" : "page");
+  $("nav-check").setAttribute("aria-current", tasks ? "false" : "page");
   $("nav-tasks").setAttribute("aria-current", tasks ? "page" : "false");
-  $("nav-rivals").setAttribute("aria-current", view === "rivals" ? "page" : "false");
-  $("ptab-mine").setAttribute("aria-current", view === "rivals" ? "false" : "page"); $("ptab-rivals").setAttribute("aria-current", view === "rivals" ? "page" : "false");
-  $("ptabs").hidden = tasks;
-  $("fixes-btn").classList.toggle("on", tasks); $("check-btn").classList.toggle("on", view !== "rivals" && !tasks);
+  $("fixes-btn").classList.toggle("on", tasks); $("check-btn").classList.toggle("on", !tasks);
 
-  if (before !== view && view !== "plan") animateIn(view === "rivals" ? $("feature2") : $(VIEWS[view]));  // a new screen rises in; the steps slide sideways instead
+  if (before !== view) animateIn($(VIEWS[view]));  // a new screen rises in
 }
-$("nav-check").addEventListener("click", () => { show(currentView === "rivals" || currentView === "fixes" || currentView === "history" ? (checkerView === "loading" && !$("run").disabled ? "input" : checkerView) : currentView); toTop(); });
+$("nav-check").addEventListener("click", () => { show(currentView === "rival" || currentView === "fixes" || currentView === "history" ? (checkerView === "loading" && !$("run").disabled ? "input" : checkerView) : currentView); toTop(); });
 $("check-btn").addEventListener("click", () => $("nav-check").click());
-$("nav-rivals").addEventListener("click", () => openRivals(false));
 $("nav-tasks").addEventListener("click", () => openFixes());
-$("ptab-mine").addEventListener("click", () => $("nav-check").click());
-$("ptab-rivals").addEventListener("click", () => openRivals(false));
-$("done-btn").addEventListener("click", () => {  // for now: the tasks of this analysis are made and Riwayat opens (the full Selesai arrives with the Tugas step)
-  const p = lastData ? planFor(lastData) : null, n = p ? stepsOf(p).length : 0;
-  if (n) showToast(tr("doneToast", n));
-  if (hasAccount()) openHistory(); else openFixes();
-});
-$("pchip-change").addEventListener("click", () => { clearInputs(); show("input"); toTop(); });
+$("done-btn").addEventListener("click", finishResult);
+$("rivals-open").addEventListener("click", () => openRivals({ from: "results" }));
 $("back-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
 $("print-d").addEventListener("click", () => window.print());
 $("logout").addEventListener("click", async () => { await leaveWithFixes(); if (sb) { try { await sb.auth.signOut(); } catch (e) { /* reload anyway */ } } try { await fetch("/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); } catch (e) { /* reload anyway */ } location.reload(); });
-$("fixes-btn").addEventListener("click", () => { if (currentView === "fixes") { $("fixes-back").click(); } else openFixes(); });
-$("fixes-back").addEventListener("click", () => { const v = viewBeforeFixes; show(v === "loading" || v === "fixes" || ((v === "results" || v === "plan") && !lastData) ? "input" : v); toTop(); });
-$("fixes-export").addEventListener("click", exportFixes);
-$("fixes-import").addEventListener("click", () => $("fixes-file").click());
-$("fixes-file").addEventListener("change", async (e) => { await importFixes(e.target.files[0]); e.target.value = ""; });
+$("fixes-btn").addEventListener("click", () => { if (currentView === "fixes") $("nav-check").click(); else openFixes(); });
 
 function tabKeys(listEl, selector, onSelect) {
   listEl.addEventListener("keydown", (e) => {
@@ -3318,7 +3043,7 @@ async function enterApp(session) {
   await maybeIntro();
   showApp();
 }
-function onSignedOut() { userId = null; userEmail = ""; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync(); dropPending(); forgetJob(); lastData = null; memPlans = []; taskOpen = ""; closeSheet(); renderAccount(); showGate("choose", false); }  // nothing of this account stays in memory for the next sign-in on this page
+function onSignedOut() { userId = null; userEmail = ""; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync(); dropPending(); forgetJob(); lastData = null; clearBoxes(); closeSheet(); renderAccount(); showGate("choose", false); }  // nothing of this account stays in memory for the next sign-in on this page
 function handleUnauthorized() {
   if (!sb) { location.reload(); return; }
   userId = null; userEmail = ""; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync(); forgetJob(); renderAccount();
@@ -3388,7 +3113,7 @@ $("delete-confirm").addEventListener("click", async () => {
   btn.disabled = false; btn.textContent = tr("delConfirm");
   if (!done) { resetFixSync(); syncFixes(); return; }  // nothing was deleted: carry on as before
   try { await sb.auth.signOut({ scope: "local" }); } catch (e) { /* the account is gone either way */ }
-  try { [FIX_KEY, FIX_OWNER_KEY, DEVICE_KEY, PLAN_KEY].forEach((k) => localStorage.removeItem(k)); sessionStorage.setItem("bedahreview-deleted", "1"); } catch (e) { /* ignore */ }
+  try { [FIX_KEY, FIX_OWNER_KEY, DEVICE_KEY, BOX_KEY, HELD_KEY, LOG_KEY].forEach((k) => localStorage.removeItem(k)); sessionStorage.setItem("bedahreview-deleted", "1"); } catch (e) { /* ignore */ }
   forgetJob(); dropPending();
   location.reload();  // a clean page: no review, result or note is left in memory
 });
@@ -3408,7 +3133,7 @@ if ("serviceWorker" in navigator) {
 }
 
 function applyBox(cfg, first) {  // the link box: shown only when the server says this visitor may use it
-  linkBoxOn = !!cfg.url_box; rivalsOn = cfg.rivals === undefined ? linkBoxOn : !!cfg.rivals; renderRival(); stepOneText();
+  linkBoxOn = !!cfg.url_box; rivalsOn = cfg.rivals === undefined ? linkBoxOn : !!cfg.rivals; renderRival();
   $("intab-link").hidden = !cfg.url_box;  // the tabs are gone; the box decides by what is pasted
   if (cfg.url_box) {
     $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit; syncLimit();
@@ -3429,10 +3154,7 @@ async function loadConfig() {
   document.body.classList.add("ready");
 }
 
-function stepOneText() {  // step 1 names the way in this visitor really has: a link only when the link box is on
-  $("step1-t").dataset.i18n = linkBoxOn ? "step1TLink" : "step1T"; $("step1-d").dataset.i18n = linkBoxOn ? "step1DLink" : "step1D";
-  $("step1-t").textContent = tr($("step1-t").dataset.i18n); $("step1-d").textContent = tr($("step1-d").dataset.i18n);
-}
+
 
 $("share-tip").hidden = isIos();  // sharing into a web app does not work on iPhone, so the tip would only mislead
 document.querySelectorAll("details.xp").forEach(smoothDetails);

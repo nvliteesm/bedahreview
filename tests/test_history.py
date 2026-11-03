@@ -40,11 +40,11 @@ class HistoryTableTests(unittest.TestCase):
         self.assertIn("alter table public.history  enable row level security", SQL)
         self.assertRegex(SQL, r"create index if not exists \w+ on public\.history \(user_id, created_at desc\)")
 
-    def test_14_days_is_the_same_in_the_page_the_text_and_the_optional_clean_up(self):
-        self.assertIn("HISTORY_DAYS = 14", PAGE)
-        self.assertIn("Dihapus otomatis setelah 14 hari.", PAGE)
-        self.assertIn("deleted automatically after 14 days", PAGE)
-        self.assertIn("interval '14 days'", SQL)
+    def test_60_days_is_the_same_in_the_page_the_text_and_the_optional_clean_up(self):
+        self.assertIn("HISTORY_DAYS = 60", PAGE)
+        self.assertIn("Dihapus otomatis setelah 60 hari.", PAGE)
+        self.assertIn("deleted automatically after 60 days", PAGE)
+        self.assertIn("interval '60 days'", SQL)
 
     def test_deleting_an_account_also_deletes_its_history(self):
         self.assertIn("history", TABLES)

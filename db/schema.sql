@@ -1,11 +1,11 @@
--- BedahReview: tables for accounts, usage events, each seller's fixes list and a 14-day history of analyses. Paste this whole file into the Supabase SQL editor and run it.
+-- BedahReview: tables for accounts, usage events, each seller's fixes list and a 60-day history of analyses. Paste this whole file into the Supabase SQL editor and run it.
 -- Safe to run twice. It only creates things in the "public" schema and never touches auth.users.
 --
 -- What is NOT stored here, on purpose: review text, reviewer names, IP addresses.
 -- The email address lives only in Supabase Auth.
 -- The one place a product name, product link and the seller's own short note ARE stored is `fixes` (the seller's own "mark as fixed" list),
 -- so it can be opened from another phone. That is a deliberate product choice; the privacy page says so.
--- `history` (Riwayat) also holds the product name the seller typed, next to counts only, for 14 days.
+-- `history` (Riwayat) also holds the product name the seller typed, next to counts only, for 60 days.
 --
 -- Access model: the browser (role "authenticated") may read its own rows and edit its own profile.
 -- Events are written only by our server with the secret key (role "service_role"), never by the browser.
@@ -67,10 +67,10 @@ alter table public.fixes add column if not exists remind text not null default '
 alter table public.fixes drop constraint if exists fixes_remind_check;
 alter table public.fixes add constraint fixes_remind_check check (remind in ('whatsapp', 'calendar', 'none'));
 
--- ---------- history: a summary of each analysis (Riwayat), kept 14 days ----------
+-- ---------- history: a summary of each analysis (Riwayat), kept 60 days ----------
 -- One row per analysis by a signed-in seller, written by the browser with the seller's own sign-in. It holds the date, the product name the seller
 -- typed (optional), the number of reviews, the four group counts and the theme name of the top complaint: never review text, quotes, drafts or
--- AI suggestions. The page deletes the seller's rows older than 14 days whenever they open Riwayat or a row is saved. Keep the theme names in sync
+-- AI suggestions. The page deletes the seller's rows older than 60 days whenever they open Riwayat or a row is saved. Keep the theme names in sync
 -- with prompts/output_schema.json (a test compares them).
 create table if not exists public.history (
   id         bigint generated always as identity primary key,
@@ -85,10 +85,10 @@ create table if not exists public.history (
   top_theme  text check (top_theme in ('Not as described / claim vs reality', 'Colour vs photo', 'Sizing & fit', 'Fabric & material quality', 'Defect / not working', 'Wrong variant / item sent', 'Quantity shortage / missing item', 'Packaging / damaged on arrival', 'Spoilage / freshness', 'Portion / low meat or filler', 'Taste / subjective', 'Fake / authenticity doubt', 'Praise: quality / material', 'Praise: value for money', 'Praise: seller service', 'Praise: delivery / packing', 'Praise: taste', 'Praise: works as described', 'No text', 'Other'))
 );
 create index if not exists history_user_created_idx on public.history (user_id, created_at desc);
--- Optional, NOT verified on this project: a nightly clean-up inside Supabase, so rows of sellers who never come back also go after 14 days.
+-- Optional, NOT verified on this project: a nightly clean-up inside Supabase, so rows of sellers who never come back also go after 60 days.
 -- To use it, remove the two leading dashes from both lines below and run them once (Database > Extensions must allow pg_cron).
 -- create extension if not exists pg_cron;
--- select cron.schedule('bedahreview-history-14d', '0 3 * * *', $$delete from public.history where created_at < now() - interval '14 days'$$);
+-- select cron.schedule('bedahreview-history-60d', '0 3 * * *', $$delete from public.history where created_at < now() - interval '60 days'$$);
 
 -- ---------- per-account ceilings, counted outside the policies ----------
 -- A policy may not read its own table: Postgres stops every insert with "infinite recursion detected in policy" (seen live on 2026-11-02).
@@ -139,7 +139,7 @@ drop policy if exists history_select_own on public.history;
 drop policy if exists history_insert_own on public.history;
 drop policy if exists history_delete_own on public.history;
 create policy history_select_own on public.history for select to authenticated using (user_id = (select auth.uid()));
--- a ceiling per account: far above 14 days of daily limits, so a broken page cannot fill the table
+-- a ceiling per account: far above 60 days of daily limits, so a broken page cannot fill the table
 create policy history_insert_own on public.history for insert to authenticated
   with check (user_id = (select auth.uid()) and (select private.my_history_count()) < 500);
 create policy history_delete_own on public.history for delete to authenticated using (user_id = (select auth.uid()));

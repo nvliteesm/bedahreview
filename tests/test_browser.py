@@ -92,17 +92,18 @@ window.__probe = (async () => {
     out.draftAfterBack = (document.querySelector("#panel-fight .draft .bahasa") || {}).textContent;
   }
   if (location.hash === "#desktop") {
-    out.cols = getComputedStyle(document.querySelector(".workspace")).gridTemplateColumns.split(" ").map(parseFloat);
-    out.hostBefore = document.getElementById("rival-body").parentNode.id;
-    out.formBefore = !!document.getElementById("rival-url");
+    out.noAside = document.getElementById("feature2") === null && document.getElementById("ptabs") === null;
     document.getElementById("sample").click();
     document.getElementById("run").click();
     for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
-    out.hostAfter = document.getElementById("rival-body").parentNode.id;
+    const res = document.getElementById("view-results"), sum = document.getElementById("sumbox");
+    out.cols = getComputedStyle(res).gridTemplateColumns.split(" ").map(parseFloat);
+    out.sticky = getComputedStyle(sum).position;
+    out.sumSide = sum.getBoundingClientRect().left > document.getElementById("tabs").getBoundingClientRect().right - 1;
     out.sumLabel = (document.querySelector("#sumbox .eb") || {}).textContent || "";
-    out.rivalTab = !!document.getElementById("tab-rival");
     out.board = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
-    out.chip = document.getElementById("pchip").hidden;
+    out.pills = [...document.querySelectorAll("#check-btn, #fixes-btn")].map((b) => getComputedStyle(b).display !== "none");
+    out.bottom = getComputedStyle(document.querySelector(".bottombar")).display;
     const before = document.documentElement.dataset.theme || "";
     document.getElementById("theme").click();
     out.themeChanged = (document.documentElement.dataset.theme || "") !== before;
@@ -296,32 +297,6 @@ window.__probe = (async () => {
     await openHistory(); out.hist.noScreen = document.getElementById("view-history").hidden;
   }
 
-  if (location.hash === "#wa") {
-    const KEY = "bedahreview-fixes-v1", PRE = "https://wa.me/?text=";
-    const mk = (i, note, label, extra) => Object.assign({ id: "f" + i, theme: "Sizing & fit", variant: "", product: "p-" + label, productLabel: label, note, date: "2026-11-0" + i, updated: i, before: { count: 1, total: 4, sig: "a.4", date: "" }, after: null, checkOn: "2026-11-15", done: false }, extra || {});
-    const seven = [1, 2, 3, 4, 5, 6, 7].map((i) => mk(i, "langkah nomor " + i, "Kaos Boxy"));
-    const text = (url) => decodeURIComponent(url.slice(PRE.length));
-    out.wa = { prefix: waLink(seven).indexOf(PRE) === 0, lines: text(waLink(seven)).split(String.fromCharCode(10)) };
-    out.wa.empty = [waLink([]), waLink([mk(1, "x", "K", { done: true })]), waBlock([]) === null];
-    const noNote = text(waLink([mk(1, "", "Kaos Boxy", { variant: "Putih" })]));
-    out.wa.noNote = noNote.split(String.fromCharCode(10))[2];
-    out.wa.linkLabel = text(waLink([mk(1, "ganti foto", "https://www.tokopedia.com/toko/produk-panjang")])).split(String.fromCharCode(10));
-    const heavy = [1, 2, 3, 4, 5].map((i) => mk(i, "ä".repeat(200), "L".repeat(200)));
-    out.wa.heavy = [waLink(heavy).length <= 1800, text(waLink(heavy)).split(String.fromCharCode(10)).filter((l) => l.indexOf("- ") === 0).length];
-    lang = "en";
-    out.wa.en = text(waLink([mk(1, "change the photo", "Boxy Tee")])).split(String.fromCharCode(10));
-    lang = "id";
-    const old = Object.assign(mk(1, "ganti foto", "Kaos Boxy"), { remind: "whatsapp" });
-    delete old.done;
-    localStorage.setItem(KEY, JSON.stringify([old, Object.assign(mk(2, "ganti bahan", "Kaos Boxy"), { remind: "calendar" })]));
-    const loaded = loadFixes();
-    out.wa.old = [loaded.length, loaded.every((f) => !("remind" in f)), loaded.every((f) => f.done === false)];
-    renderFixes();
-    out.wa.oldCards = document.getElementById("fixes-list").textContent;
-    out.wa.oldBlock = !!document.querySelector("#tasks-body .wabtn");
-    saveFixes([]);
-  }
-
   if (location.hash === "#events") {
     const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
     document.getElementById("sample").click();
@@ -348,33 +323,30 @@ window.__probe = (async () => {
     await wait(500);
   }
 
-  if (location.hash === "#sections") {
+  if (location.hash === "#sections") { try {
     const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
     await until(() => linkBoxOn === false);
     document.getElementById("sample").click();
     document.getElementById("run").click();
     await until(() => !document.getElementById("view-results").hidden);
-    out.sec = { boardTabs: document.querySelectorAll("#tabs button").length, openVisible: getComputedStyle(document.getElementById("rivals-open")).display !== "none" };
-    document.getElementById("rivals-open").click();
-    out.sec.section = document.getElementById("workspace").dataset.section;
-    out.sec.mainHidden = getComputedStyle(document.getElementById("main")).display === "none";
-    out.sec.asideShown = getComputedStyle(document.getElementById("feature2")).display !== "none";
+    out.sec = { openVisible: getComputedStyle(document.getElementById("rivals-open")).display !== "none", gone: [document.getElementById("nav-rivals"), document.getElementById("ptabs"), document.getElementById("feature2")].map((e) => e === null),
+      bottom: [...document.querySelectorAll(".bottombar .nav")].map((n) => n.id) };
+    document.getElementById("rivals-open").click();  // pasted reviews have no link: a short form asks for it
+    out.sec.view = [currentView, !document.getElementById("view-rival").hidden];
     out.sec.nameFilled = document.getElementById("rival-name").value;
-    out.sec.noBox = document.getElementById("rival-body").textContent.indexOf("kotak tautan") >= 0;
-    out.sec.wantButtons = document.querySelectorAll("#rival-body .want button").length;
-    out.sec.nav = [document.getElementById("nav-rivals").getAttribute("aria-current"), document.getElementById("nav-check").getAttribute("aria-current")];
+    out.sec.back = document.querySelector("#view-rival .back").textContent;
     [...document.querySelectorAll("#rival-body button")].find((b) => b.textContent.indexOf("contoh") >= 0).click();
-    const body = document.getElementById("rival-body").textContent;
-    out.sec.example = ["Contoh, bukan data nyata", "Pelajari dari pesaing", "Hindari", "Abaikan"].map((w) => body.indexOf(w) >= 0);
-    out.sec.groupCards = [...document.querySelectorAll("#rival-body .group")].map((g) => g.querySelectorAll(".ins").length);
-    out.sec.chips = document.querySelectorAll("#rival-body .group.ignore .chip").length;
-    document.getElementById("nav-check").click();
-    out.sec.back = [document.getElementById("workspace").dataset.section, !document.getElementById("view-results").hidden];
+    const body = document.getElementById("rival-body");
+    out.sec.example = { head: body.querySelector("h2").textContent, tabs: [...body.querySelectorAll(".gtab")].map((x) => x.textContent), sum: !!body.querySelector(".sumbox"), notice: body.textContent.indexOf("Contoh, bukan data nyata") >= 0,
+      doneHidden: [...body.querySelectorAll(".res-end .btn.primary")].every((b) => b.hidden) };
+    out.sec.cards = body.querySelectorAll(".rcard").length;
+    body.querySelector(".back").click();
+    out.sec.returned = [currentView, !document.getElementById("view-results").hidden];
     const g = groupInsights(EXAMPLE_COMPARE.insights, EXAMPLE_COMPARE.rows);
     out.sec.groups = [g.learn.length, g.avoid.length, g.ignore];
     const st = { checked: [0, 1, 2], candidates: [0, 1, 2].map((i) => ({ url: "https://www.tokopedia.com/s/p" + i, title: "t" + i })), extra: "https://www.tokopedia.com/x/y" };
     out.sec.chosen = [rivalChosen(Object.assign({ want: 1 }, st)).length, rivalChosen(Object.assign({ want: 2 }, st)).length, rivalChosen(st).length];
-  }
+  } catch (e) { out.err = String(e && e.stack || e); } }
   return out;
 })();
 </script>
@@ -541,16 +513,17 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(out["stepsId"], ["Minta foto."])
         self.assertTrue(out["draftAfterBack"].startswith("Halo Kak"))  # ...while the reply to the buyer is always Bahasa
 
-    def test_wide_screen_puts_the_competitor_panel_in_its_own_column(self):
+    def test_wide_screen_has_header_pills_and_two_columns_with_a_sticky_summary(self):
         out = self.probe("/#desktop", width=1300)
+        self.assertTrue(out["noAside"])  # the competitor column and the two-tab switch are gone
         self.assertEqual(len(out["cols"]), 2)
-        self.assertAlmostEqual(out["cols"][0] / sum(out["cols"]), 0.6, places=2)  # review triage 60%, competitors 40%
+        self.assertEqual(round(out["cols"][1]), 380)  # content left, the summary 380 px on the right
+        self.assertEqual(out["sticky"], "sticky")
+        self.assertTrue(out["sumSide"])
         self.assertEqual(out["sumLabel"], "RINGKASAN · 2 HAL PERLU DIPERBAIKI")  # the summary box names how many things to fix
-        self.assertEqual((out["hostBefore"], out["formBefore"]), ("rival-home", True))
-        self.assertEqual(out["hostAfter"], "rival-home")  # it stays put when results arrive
-        self.assertFalse(out["rivalTab"])  # the competitor section is not a tab of the results any more
         self.assertEqual(out["board"][:2], ["Perbaiki2", "Tanggapi1"])
-        self.assertFalse(out["chip"])  # the product chip shows once results are in
+        self.assertEqual(out["pills"], [True, True])  # Bedah ulasan and Tugas pills in the header...
+        self.assertEqual(out["bottom"], "none")  # ...instead of the bottom bar
         self.assertTrue(out["themeChanged"])
 
     def test_fix_tracking_logic(self):
@@ -662,29 +635,11 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(hist["counts"], [3, 1, 1, 0, 1])
         self.assertIsNone(hist["oddTheme"])  # only the fixed theme names
         self.assertIsNone(hist["noGroup"])
-        self.assertEqual(hist["days"], 14)
+        self.assertEqual(hist["days"], 60)
         self.assertEqual(hist["hidden"], [True, True])  # no account here: no Riwayat anywhere
         self.assertTrue(hist["tasksLink"])
         self.assertTrue(hist["noScreen"])
 
-    def test_whatsapp_message_is_short_plain_and_hidden_when_there_is_nothing_to_send(self):
-        wa = self.probe("/#wa")["wa"]
-        self.assertTrue(wa["prefix"])
-        self.assertEqual(wa["lines"][:2], ["Perbaikan BedahReview", "Kaos Boxy"])  # the product name once, then the steps
-        items = [l for l in wa["lines"] if l.startswith("- ")]
-        self.assertEqual(len(items), 5)  # seven fixes, five are sent, newest first
-        self.assertEqual(items[0], "- langkah nomor 7 (cek lagi 15 Nov)")
-        self.assertEqual(items[-1], "- langkah nomor 3 (cek lagi 15 Nov)")
-        self.assertEqual(wa["empty"], ["", "", True])  # zero open fixes: no link, no button
-        self.assertEqual(wa["noNote"], "- Perbaiki ukuran tidak pas Putih (cek lagi 15 Nov)")
-        self.assertEqual(wa["linkLabel"], ["Perbaikan BedahReview", "- ganti foto (cek lagi 15 Nov)"])  # a web address is not a product name
-        self.assertEqual(wa["heavy"][0], True)  # the link is cut to fewer steps rather than grow past a safe length
-        self.assertLess(wa["heavy"][1], 5)
-        self.assertEqual(wa["en"], ["BedahReview fixes", "Boxy Tee", "- change the photo (check again 15 Nov)"])
-        self.assertEqual(wa["old"], [2, True, True])  # fixes saved before this change, with a WhatsApp or calendar reminder, still load and just have no reminder
-        self.assertNotIn("WhatsApp", wa["oldCards"])
-        self.assertNotIn("Kalender", wa["oldCards"])
-        self.assertTrue(wa["oldBlock"])
 
     def test_usage_events_and_the_feedback_question(self):
         buf = io.StringIO()
@@ -704,20 +659,23 @@ class BrowserTests(unittest.TestCase):
         for word in ("tulisannya", "Kaos Boxy Retro", "bahannya"):  # no review text and no product name anywhere in the log
             self.assertNotIn(word, everything)
 
-    def test_phone_has_two_sections_and_the_example_is_free_and_labelled(self):
-        sec = self.probe("/#sections")["sec"]
-        self.assertEqual((sec["boardTabs"], sec["openVisible"]), (4, True))  # Rivals is not a results tab any more
-        self.assertEqual((sec["section"], sec["mainHidden"], sec["asideShown"]), ("rivals", True, True))
-        self.assertEqual(sec["nameFilled"], "Kaos Boxy Retro")  # the product from the checker is filled in
-        self.assertTrue(sec["noBox"])  # no link box on this server: it says so, and still offers the example
-        self.assertEqual(sec["nav"], ["page", "false"])
-        self.assertEqual(sec["example"], [True, True, True, True])
-        self.assertEqual(sec["groupCards"], [3, 1, 0])  # learn from 3, avoid 1, nothing to act on is just a list of themes
-        self.assertEqual(sec["chips"], 1)
-        self.assertEqual(sec["back"], ["checker", True])
+    def test_competitors_are_not_in_the_bottom_bar_and_the_free_example_is_labelled(self):
+        pr = self.probe("/#sections")
+        self.assertNotIn("err", pr, pr.get("err"))
+        sec = pr["sec"]
+        self.assertTrue(sec["openVisible"])  # the second button at the end of Hasil Bedah
+        self.assertEqual(sec["gone"], [True, True, True])  # no Pesaing tab, no section switch, no side column
+        self.assertEqual(sec["bottom"], ["nav-check", "nav-tasks"])
+        self.assertEqual(sec["view"], ["rival", True])
+        self.assertEqual(sec["nameFilled"], "Kaos Boxy Retro")  # pasted reviews have no link: the form asks for it, the name is filled in
+        self.assertEqual(sec["back"], "Hasil Bedah")  # the back link names where it returns to
+        self.assertEqual(sec["example"]["head"], "Hasil Bedah pesaing")
+        self.assertEqual(sec["example"]["tabs"], ["Perlu dikejar3", "Keunggulanmu1"])
+        self.assertTrue(sec["example"]["sum"] and sec["example"]["notice"] and sec["example"]["doneHidden"])  # the made-up example never adds tasks
+        self.assertEqual(sec["cards"], 3)
+        self.assertEqual(sec["returned"], ["results", True])
         self.assertEqual(sec["groups"], [3, 1, ["Praise: quality / material"]])
-        self.assertEqual(sec["chosen"], [1, 2, 3])  # 1 to 3 competitors, pasted links count towards the same number
-        self.assertEqual(sec["wantButtons"], 3)
+        self.assertEqual(sec["chosen"], [1, 2, 3])  # pasted links count towards the same number
 
 
 if __name__ == "__main__":

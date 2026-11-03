@@ -70,8 +70,8 @@ a { color: var(--accent); font-weight: 600; }
     <li><b>Profil (opsional).</b> Platform jualan, tautan toko, kategori produk, dan bahasa. Boleh dilewati.</li>
     <li><b>Catatan pemakaian, per akun.</b> Kejadian seperti “membuka aplikasi”, “membuka tab”, “menyalin draf”, jumlah ulasan yang dibedah, dan saat analisis gagal atau kena batas (hanya jenis kesalahannya). Tanpa isi ulasan, tanpa nama produk, tanpa alamat IP. Satu-satunya teks bebas adalah komentar yang kamu ketik sendiri di pertanyaan “Apakah hasil ini berguna?”.</li>
     <li><b>Daftar perbaikan, kalau kamu memakainya.</b> Saat kamu mencatat perbaikan (“Tandai sudah diperbaiki”, atau langkah Catat di rencana hari ini), kami menyimpan tema keluhan, varian, tanggal, jumlah keluhan sebelum dan sesudah, tanggal cek berikutnya, <b>nama atau tautan produk</b>, dan <b>catatan singkatmu</b>. Ini agar daftarmu bisa dibuka dari HP lain. Lewat aplikasi, hanya akunmu yang bisa membacanya; pembuat aplikasi bisa melihatnya di dasbor Supabase. Jangan menulis nama orang di catatan.</li>
-    <li><b>Riwayat analisis, kalau kamu masuk.</b> Setiap kali kamu membedah ulasan, kami menyimpan ringkasannya: tanggal, nama produk (kalau kamu mengisinya), jumlah ulasan, jumlah di tiap kelompok (Perbaiki, Tanggapi, Abaikan, Pertahankan), dan nama keluhan terbanyak. Tanpa teks ulasan, kutipan, draf, atau saran AI. Riwayat dihapus setelah 14 hari, dan ikut terhapus bersama akunmu.</li>
-    <li><b>Di perangkatmu.</b> Sesi masuk, pilihan bahasa dan tema, salinan daftar perbaikan, rencana hari ini (langkah mana yang sudah dikerjakan, nomor ulasan, dan jumlah; tanpa teks ulasan, dihapus setelah 7 hari atau saat kamu keluar), dan penanda acak perangkat. Semuanya di penyimpanan browser (localStorage), bukan cookie pelacak.</li>
+    <li><b>Riwayat analisis, kalau kamu masuk.</b> Setiap kali kamu membedah ulasan, kami menyimpan ringkasannya: tanggal, nama produk (kalau kamu mengisinya), jumlah ulasan, jumlah di tiap kelompok (Perbaiki, Tanggapi, Abaikan, Pertahankan), dan nama keluhan terbanyak. Tanpa teks ulasan, kutipan, draf, atau saran AI. Riwayat dihapus setelah 60 hari, dan ikut terhapus bersama akunmu.</li>
+    <li><b>Di perangkatmu.</b> Sesi masuk, pilihan bahasa dan tema, salinan daftar perbaikan, kotak Tugas (kalimat tugas dan mana yang sudah dicentang; tanpa teks ulasan; 30 hari), catatan analisismu (tanggal, jumlah, status), hasil analisis yang belum kamu selesaikan (termasuk kutipan ulasan, ditahan 7 hari supaya kamu bisa menekan “Lanjutkan”; tidak dikirim ke server), dan penanda acak perangkat. Kotak, catatan, dan hasil ini dihapus saat kamu keluar. Semuanya di penyimpanan browser (localStorage), bukan cookie pelacak.</li>
     <li><b>Analisis gratis sebelum masuk.</b> Tanpa akun, kamu bisa membedah ulasan sekali. Server tidak menyimpan apa pun darinya: hanya hitungan jumlahnya. Browser mencatat bahwa analisis gratis sudah dipakai. Kalau kamu masuk dengan Google, hasilnya menunggu di penyimpanan tab ini (sessionStorage) selama kamu ke halaman Google, lalu langsung dihapus begitu tampil lagi.</li>
   </ul>
 
@@ -94,7 +94,7 @@ a { color: var(--accent); font-weight: 600; }
   <ul>
     <li>Catatan pemakaian: kami berencana menghapus yang lebih dari 90 hari (dilakukan manual).</li>
     <li>Profil dan daftar perbaikan: sampai kamu menghapus akunmu.</li>
-    <li>Riwayat analisis: 14 hari, atau lebih cepat kalau kamu menghapus akunmu.</li>
+    <li>Riwayat analisis: 60 hari, atau lebih cepat kalau kamu menghapus akunmu.</li>
     <li>Catatan Google Cloud: sesuai pengaturan Google (umumnya sekitar 30 hari).</li>
   </ul>
 
@@ -123,8 +123,8 @@ a { color: var(--accent); font-weight: 600; }
     <li><b>Profile (optional).</b> Where you sell, your shop link, product category and language. You can skip it.</li>
     <li><b>Usage records, per account.</b> Events like “opened the app”, “opened a tab”, “copied a draft”, how many reviews were analysed, and when an analysis fails or hits a limit (only the kind of error). No review text, no product names, no IP address. The only free text is a comment you type yourself under “Was this useful?”.</li>
     <li><b>Your fixes list, if you use it.</b> When you log a fix (“Mark as fixed”, or the Log step of today's plan) we keep the complaint theme, variant, date, complaint counts before and after, the next check date, the <b>product name or link</b> and your <b>short note</b>. This is so your list opens on another phone. Through the app only your account can read it; the person who runs the app can see it in the Supabase dashboard. Please do not write people's names in a note.</li>
-    <li><b>Your analysis history, when signed in.</b> Each time you analyse reviews we keep a summary: the date, the product name (if you typed one), the number of reviews, the count in each group (Fix, Respond, Ignore, Keep) and the name of the top complaint. No review text, quotes, drafts or AI suggestions. History is deleted after 14 days, and with your account.</li>
-    <li><b>On your device.</b> Your sign-in session, language and theme choice, a copy of your fixes list, today's plan (which steps are done, review numbers and counts; no review text, removed after 7 days or when you sign out), and a random device marker. All in browser storage (localStorage), not tracking cookies.</li>
+    <li><b>Your analysis history, when signed in.</b> Each time you analyse reviews we keep a summary: the date, the product name (if you typed one), the number of reviews, the count in each group (Fix, Respond, Ignore, Keep) and the name of the top complaint. No review text, quotes, drafts or AI suggestions. History is deleted after 60 days, and with your account.</li>
+    <li><b>On your device.</b> Your sign-in session, language and theme choice, a copy of your fixes list, your Tasks boxes (the task sentences and which are ticked; no review text; 30 days), a log of your analyses (date, counts, status), results you have not finished (including review quotes, kept 7 days so you can press “Continue”; never sent to a server), and a random device marker. The boxes, the log and these results are removed when you sign out. All in browser storage (localStorage), not tracking cookies.</li>
     <li><b>The free analysis before signing in.</b> Without an account you can analyse reviews once. The server keeps nothing from it except a count. Your browser notes that the free analysis was used. If you sign in with Google, the result waits in this tab's storage (sessionStorage) while you are on Google's page, and is removed as soon as it is shown again.</li>
   </ul>
 
@@ -147,7 +147,7 @@ a { color: var(--accent); font-weight: 600; }
   <ul>
     <li>Usage records: we plan to delete those older than 90 days (done by hand).</li>
     <li>Profile and fixes list: until you delete your account.</li>
-    <li>Analysis history: 14 days, or sooner if you delete your account.</li>
+    <li>Analysis history: 60 days, or sooner if you delete your account.</li>
     <li>Google Cloud logs: as Google sets it (usually about 30 days).</li>
   </ul>
 

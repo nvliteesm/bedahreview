@@ -6,7 +6,7 @@ Nothing else is ever logged. The list lives in one place, `src/bedahreview/event
 ## What is never logged
 
 - Review text and reviewer names, anywhere.
-- Product names, product links, shop names and notes in the events or the log. (A seller's own fixes list does hold a product name, link and note, and the 14-day history holds the product name: see the two sections below. They are separate tables, never events.)
+- Product names, product links, shop names and notes in the events or the log. (A seller's own fixes list does hold a product name, link and note, and the 60-day history holds the product name: see the two sections below. They are separate tables, never events.)
 - IP addresses and user agents. (The request log prints the path only.)
 
 ## Accounts and the device id
@@ -27,11 +27,11 @@ Marking a complaint as fixed keeps a small record: the theme, the variant, the d
 - "Hapus akun dan data saya" deletes the account's events, fixes, history and profile, then the account, and clears this browser's copy (see the README).
 - Honest limit: a fix deleted on one phone can come back from another phone that was offline with an old copy.
 
-## History (Riwayat, a separate table, 14 days)
+## History (Riwayat, a separate table, 60 days)
 
 After each analysis by a signed-in seller, the page saves one row in the account's `history` table, with the seller's own sign-in: the date, the product name the seller typed (optional), the number of reviews, the four group counts (fix, fight, ignore, keep) and the theme name of the top complaint (one of the fixed theme names, or none). **No review text, quotes, drafts or AI suggestions**, and no product link. Example results and the free analysis before sign-in are not saved.
 
-- Retention: 14 days. The page deletes that seller's older rows whenever they open Riwayat or a new row is saved, and never shows older rows. Rows of a seller who never comes back stay until the optional `pg_cron` job in `db/schema.sql` is switched on (not verified on this project).
+- Retention: 60 days. The page deletes that seller's older rows whenever they open Riwayat or a new row is saved, and never shows older rows. Rows of a seller who never comes back stay until the optional `pg_cron` job in `db/schema.sql` is switched on (not verified on this project).
 - A failed save is never shown and never stops the analysis.
 - Riwayat cannot reopen an old result: only the summary exists. "Bedah lagi" starts a new analysis with the product name filled in.
 - Only that account can read it from the app; whoever runs the Supabase project can read it in the dashboard. "Hapus akun dan data saya" deletes it with the account (and `on delete cascade` would too).
