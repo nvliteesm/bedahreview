@@ -74,7 +74,6 @@ window.__probe = (async () => {
     out.cards = document.querySelectorAll("#panel-fix .card").length;
     out.chips = [...document.querySelectorAll("#panel-fight .chip")].map((c) => c.textContent);
     out.keep = document.querySelectorAll("#panel-keep blockquote").length;
-    out.legendShown = getComputedStyle(document.querySelector(".legend")).display !== "none";  // the 4 groups are explained on a phone too
     out.aiNotes = [...document.querySelectorAll(".ai-note")].map((n) => n.closest("[role=tabpanel]").id);  // one note above the drafts of each tab
     out.footHidden = document.getElementById("foot").hidden; out.noDev = !/analytics\.md|Model:|Demo:/.test(document.body.innerText);
     const cache = await caches.open("bedahreview-shell-v2");
@@ -84,12 +83,12 @@ window.__probe = (async () => {
     document.getElementById("lang").click();
     out.enTabs = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
     out.enLang = document.documentElement.lang;
-    out.draftStillBahasa = (document.querySelector("#panel-fix .bahasa") || {}).textContent;
+    out.draftStillBahasa = (document.querySelector("#panel-fix .todo li") || {}).textContent;
     out.whyEn = (document.querySelector("#panel-fight .why") || {}).textContent;
-    out.stepsEn = [...document.querySelectorAll("#panel-fight .steps-list li")].map((li) => li.textContent);
+    out.stepsEn = [...document.querySelectorAll("#panel-fight .todo li")].map((li) => li.textContent);
     document.getElementById("lang").click();
     out.whyId = (document.querySelector("#panel-fight .why") || {}).textContent;
-    out.stepsId = [...document.querySelectorAll("#panel-fight .steps-list li")].map((li) => li.textContent);
+    out.stepsId = [...document.querySelectorAll("#panel-fight .todo li")].map((li) => li.textContent);
     out.draftAfterBack = (document.querySelector("#panel-fight .draft .bahasa") || {}).textContent;
   }
   if (location.hash === "#desktop") {
@@ -100,7 +99,7 @@ window.__probe = (async () => {
     document.getElementById("run").click();
     for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
     out.hostAfter = document.getElementById("rival-body").parentNode.id;
-    out.start = (document.querySelector("#start .prow b") || {}).textContent || "";
+    out.sumLabel = (document.querySelector("#sumbox .eb") || {}).textContent || "";
     out.rivalTab = !!document.getElementById("tab-rival");
     out.board = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
     out.chip = document.getElementById("pchip").hidden;
@@ -329,7 +328,7 @@ window.__probe = (async () => {
     document.getElementById("run").click();
     await until(() => !document.getElementById("view-results").hidden);
     document.getElementById("tab-fight").click();
-    document.querySelector("#panel-fix .copy").click();
+    document.querySelector("#panel-fight .copy").click();
     const fb = document.getElementById("feedback");
     out.ev = { askShown: !fb.hidden, textareaBeforeAnswer: !!fb.querySelector("textarea") };
     [...fb.querySelectorAll("button")].find((b) => b.dataset.a === "partly").click();
@@ -522,19 +521,18 @@ class BrowserTests(unittest.TestCase):
 
     def test_results_board_and_language_switch(self):
         out = self.probe("/#flow")
-        self.assertEqual(out["tabs"][:3], ["2Perbaiki", "1Tanggapi", "0Abaikan"])  # a 2x2 board: Pertahankan is the fourth tab
-        self.assertTrue(out["tabs"][3].endswith("Pertahankan"), out["tabs"])
+        self.assertEqual([out["tabs"][0], out["tabs"][1], out["tabs"][3]], ["Perbaiki2", "Tanggapi1", "Abaikan0"])  # four group tabs: Perbaiki, Tanggapi, Pertahankan, Abaikan
+        self.assertTrue(out["tabs"][2].startswith("Pertahankan"), out["tabs"])
         self.assertEqual(out["cards"], 1)  # the two colour complaints become one card
         self.assertIn("Kurir? Cek dulu", out["chips"])
         self.assertGreaterEqual(out["keep"], 1)  # praise sits in its own Pertahankan tab
-        self.assertTrue(out["legendShown"])
         self.assertEqual(out["aiNotes"], ["panel-fix", "panel-fight"])
         self.assertTrue(out["footHidden"] and out["noDev"])  # pasted reviews: no footer note, and no developer text anywhere
         self.assertIn("/", out["cachedPaths"])  # the app shell is cached...
         self.assertFalse([p for p in out["cachedPaths"] if p.startswith("/api/")], out["cachedPaths"])  # ...reviews never are
-        self.assertGreaterEqual(out["copyButtons"], 3)
-        self.assertEqual(out["enTabs"][:3], ["2Fix", "1Respond", "0Ignore"])
-        self.assertTrue(out["enTabs"][3].endswith("Keep"), out["enTabs"])
+        self.assertGreaterEqual(out["copyButtons"], 2)  # chat and public reply (a fix has nothing to copy)
+        self.assertEqual([out["enTabs"][0], out["enTabs"][1], out["enTabs"][3]], ["Fix2", "Respond1", "Ignore0"])
+        self.assertTrue(out["enTabs"][2].startswith("Keep"), out["enTabs"])
         self.assertEqual(out["enLang"], "en")
         self.assertEqual(out["draftStillBahasa"], "Ganti foto varian.")  # drafts stay Bahasa in English mode
         self.assertIn("Likely transit damage.", out["whyEn"])  # the explanation and steps follow the page language...
@@ -547,11 +545,11 @@ class BrowserTests(unittest.TestCase):
         out = self.probe("/#desktop", width=1300)
         self.assertEqual(len(out["cols"]), 2)
         self.assertAlmostEqual(out["cols"][0] / sum(out["cols"]), 0.6, places=2)  # review triage 60%, competitors 40%
-        self.assertEqual(out["start"], "Catat perbaikan warna beda dari foto")  # the plan starts with the biggest fix
+        self.assertEqual(out["sumLabel"], "RINGKASAN · 2 HAL PERLU DIPERBAIKI")  # the summary box names how many things to fix
         self.assertEqual((out["hostBefore"], out["formBefore"]), ("rival-home", True))
         self.assertEqual(out["hostAfter"], "rival-home")  # it stays put when results arrive
         self.assertFalse(out["rivalTab"])  # the competitor section is not a tab of the results any more
-        self.assertEqual(out["board"][:2], ["2Perbaiki", "1Tanggapi"])  # the board texts are unchanged by the card layout
+        self.assertEqual(out["board"][:2], ["Perbaiki2", "Tanggapi1"])
         self.assertFalse(out["chip"])  # the product chip shows once results are in
         self.assertTrue(out["themeChanged"])
 
@@ -572,6 +570,7 @@ class BrowserTests(unittest.TestCase):
         self.assertIsNone(fx["negative"])  # more complaints than reviews cannot be true
         self.assertEqual(fx["saveWhenBlocked"], [False, 1])
 
+    @unittest.skip("the plan card and fix tracker are gone from Hasil Bedah; the Selesai and Tugas steps of the R11 revision rebuild this")
     def test_marking_a_fix_then_analysing_new_reviews_shows_before_and_after(self):
         fl = self.probe("/#fixflow")["fl"]
         self.assertEqual((fl["n"], fl["theme"], fl["variant"], fl["note"], fl["before"]), (1, "Colour vs photo", "Putih", "foto varian diganti", [2, 5]))
@@ -585,6 +584,7 @@ class BrowserTests(unittest.TestCase):
         self.assertTrue(fl["hiddenAtFirst"])
         self.assertEqual(fl["afterDelete"], [0, False])  # the fix is gone; the open steps keep the Tugas count
 
+    @unittest.skip("the plan card and fix tracker are gone from Hasil Bedah; the Selesai and Tugas steps of the R11 revision rebuild this")
     def test_results_become_a_plan_of_two_steps_and_a_summary(self):
         pl = self.probe("/#planflow")["pl"]
         self.assertEqual(pl["rows"], ["Catat perbaikan warna beda dari foto", "Balas 1 ulasan buruk"])  # the praise is in the summary, not a step
@@ -628,6 +628,7 @@ class BrowserTests(unittest.TestCase):
         self.assertTrue(pl["waTasks"])
         self.assertEqual(pl["waNote"], "WhatsApp terbuka dengan pesan siap kirim. Kami tidak mengirim apa pun sendiri.")
 
+    @unittest.skip("the plan card and fix tracker are gone from Hasil Bedah; the Selesai and Tugas steps of the R11 revision rebuild this")
     def test_a_check_up_moves_on_and_every_new_fix_gets_a_check_date(self):
         cu = self.probe("/#checkup")["cu"]
         self.assertEqual(cu["after"], True)
@@ -637,6 +638,7 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(cu["again"], ["", "Sepatu Lari", "input"])  # the old reviews are gone, the new name is in
         self.assertEqual(cu["noName"], "")
 
+    @unittest.skip("the plan card and fix tracker are gone from Hasil Bedah; the Selesai and Tugas steps of the R11 revision rebuild this")
     def test_tasks_are_finished_in_place_and_the_end_starts_fresh(self):
         tp = self.probe("/#tasksinplace", width=1200)["tp"]
         self.assertEqual(sorted(tp["titles"]), sorted(["Catat perbaikan warna beda dari foto", "Balas 1 ulasan buruk"]))
@@ -696,7 +698,7 @@ class BrowserTests(unittest.TestCase):
             self.assertIn(name, names)
         self.assertEqual(len({e["device"] for e in logged}), 1)  # one browser, one random id
         by = {e["event"]: e for e in logged}
-        self.assertEqual((by["analysed"]["source"], by["analysed"]["lang"], by["tab_viewed"]["tab"], by["draft_copied"]["kind"]), ("paste", "id", "fight", "fix"))
+        self.assertEqual((by["analysed"]["source"], by["analysed"]["lang"], by["tab_viewed"]["tab"], by["draft_copied"]["kind"]), ("paste", "id", "fight", "chat"))
         self.assertEqual([e["comment"] for e in logged if e["event"] == "feedback"], ["cukup berguna"])  # the refused comment never left the page
         everything = buf.getvalue()
         for word in ("tulisannya", "Kaos Boxy Retro", "bahannya"):  # no review text and no product name anywhere in the log

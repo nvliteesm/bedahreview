@@ -284,7 +284,7 @@ window.__probe = (async () => {
     await until(() => vis("g-intro")); byId("g-skip").click();
     await until(() => !byId("workspace").hidden && !byId("view-results").hidden, 80);
     out.after = { unlock: vis("unlock"), panels: shown("panels"), acct: vis("acct"), signinBtn: vis("signin-btn"), email: byId("acct-email").textContent, queued: eventQueue.map((e) => e.event),
-      plan: !!byId("start").querySelector(".plan") };  // the email code keeps the tab: the result is drawn again with today's plan
+      plan: shown("res-end") };  // the email code keeps the tab: the result is drawn again, now with the Selesai button
   }
 
   if (hash === "#free-link") {
@@ -601,7 +601,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertIn("free_unlocked", after["queued"])
         self.assertIn("analysed", after["queued"])  # the free analysis now counts for the account
         self.assertEqual(after["queued"].count("analysed"), 1)  # drawn again in full, but counted once
-        self.assertTrue(after["plan"])  # today's plan, not the locked one-line "Mulai dari sini"
+        self.assertTrue(after["plan"])  # Selesai and the competitor button show once the result is unlocked
 
     def test_a_visitor_can_use_a_product_link_for_the_free_analysis(self):
         out = self.probe("#free-link")
@@ -610,7 +610,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual(out["shopee"], {"note": True, "chip": True})
         self.assertTrue(out["noDemo"])  # no "demo" or cost talk in front of sellers
         self.assertEqual((out["locked"]["unlock"], out["locked"]["panels"]), (True, False))
-        self.assertEqual(out["locked"]["counts"], ["1", "1", "0", "1"])  # the four numbers show; the quotes and drafts wait for a sign-in
+        self.assertEqual(out["locked"]["counts"], ["1", "1", "1", "0"])  # the four numbers show (Perbaiki, Tanggapi, Pertahankan, Abaikan); the quotes and drafts wait for a sign-in
         self.assertIn("Kaos Boxy Retro", out["locked"]["summary"])
 
     def test_a_visitor_is_asked_to_sign_in_for_competitors_and_then_can_search(self):
