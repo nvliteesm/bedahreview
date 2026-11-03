@@ -289,9 +289,17 @@ window.__probe = (async () => {
 
   if (hash === "#free-link") {
     await until(() => !byId("workspace").hidden && !byId("intab-link").hidden);
-    out.linkFirst = byId("intab-link").getAttribute("aria-selected") === "true" && !byId("in-link").hidden;
     out.noDemo = !/demo|sen dolar|cents/i.test(byId("view-input").textContent);
-    byId("url").value = "https://www.tokopedia.com/toko/kaos-boxy"; byId("fetch").click();
+    out.emptyFirst = byId("in-link").hidden && !byId("in-paste").hidden && byId("run").classList.contains("off");  // an empty box waits; nothing to choose first
+    byId("paste").value = "https://www.tokopedia.com/toko/kaos-boxy"; byId("paste").dispatchEvent(new Event("input"));
+    out.linkFirst = !byId("in-link").hidden && byId("in-paste").hidden && !byId("detect").hidden && byId("detect-text").textContent.includes("Tokopedia");  // a pasted link is detected, no tab to pick
+    const put = (v) => { byId("paste").value = v; byId("paste").dispatchEvent(new Event("input")); };
+    put("★☆☆☆☆ ukurannya kekecilan\\n★★☆☆☆ bahannya tipis");
+    out.text = { run: byId("run").textContent, product: !byId("product-fld").hidden, chip: byId("detect-text").textContent, off: byId("run").classList.contains("off") };
+    put("https://shopee.co.id/produk-i.1.2");
+    out.shopee = { note: !byId("shopee-note").hidden, chip: byId("detect").hidden };  // a Shopee link says "not yet" and promises nothing
+    put("https://www.tokopedia.com/toko/kaos-boxy");
+    byId("fetch").click();
     await until(() => !byId("view-results").hidden, 80);
     out.locked = { unlock: vis("unlock"), panels: shown("panels"), counts: [...document.querySelectorAll("#tabs button .n")].map((n) => n.textContent), summary: byId("summary").textContent };
   }
@@ -597,7 +605,9 @@ class SignInBrowserTests(unittest.TestCase):
 
     def test_a_visitor_can_use_a_product_link_for_the_free_analysis(self):
         out = self.probe("#free-link")
-        self.assertTrue(out["linkFirst"])  # the link is the way in, on a phone too
+        self.assertTrue(out["emptyFirst"] and out["linkFirst"])  # one box: a link is detected by itself
+        self.assertEqual(out["text"], {"run": "Bedah 2 ulasan", "product": True, "chip": "2 ulasan terbaca", "off": False})  # pasted text: the count is on the button
+        self.assertEqual(out["shopee"], {"note": True, "chip": True})
         self.assertTrue(out["noDemo"])  # no "demo" or cost talk in front of sellers
         self.assertEqual((out["locked"]["unlock"], out["locked"]["panels"]), (True, False))
         self.assertEqual(out["locked"]["counts"], ["1", "1", "0", "1"])  # the four numbers show; the quotes and drafts wait for a sign-in

@@ -447,6 +447,15 @@ body.free-locked #panels, body.free-locked #board-cap { display: none !important
 .badge:not([hidden]) { animation: pop 0.2s var(--ease); }
 
 /* first screen: what the app does, and how, folded */
+.boxhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.boxhead label { font-weight: 700; font-size: 0.95rem; }
+.qbtn { width: 44px; height: 44px; margin: -8px -8px -8px 0; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 800; font-size: 1.05rem; cursor: pointer; border-radius: 50%; }
+.chip { display: flex; align-items: center; gap: 8px; background: var(--accent-soft); color: var(--accent-ink); border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; font-weight: 600; }
+.chip svg.i { flex: none; }
+#paste { min-height: 132px; }
+#view-input.linkmode #paste { min-height: 72px; }
+#tips { display: grid; gap: 8px; }
+.linkbtn.quiet { color: var(--muted); font-weight: 600; }
 .hero { display: grid; gap: 10px; }
 .hero h1 { font-size: 23px; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em; }
 @media (max-width: 359px) { .hero h1 { font-size: 20px; } }
@@ -815,66 +824,14 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
   <section id="view-input" aria-label="Ulasan baru" data-i18n-label="newReviews">
     <button class="plain dsk" id="back-results" type="button" hidden></button>
     <div class="card-box">
-      <div class="seg" role="tablist" id="intabs" hidden>
+      <div class="seg" role="tablist" id="intabs" hidden aria-hidden="true">
         <button role="tab" id="intab-link" aria-controls="in-link" aria-selected="false" tabindex="-1" type="button" data-t="link" hidden><span data-i18n="tabLink"></span></button>
         <button role="tab" id="intab-paste" aria-controls="in-paste" aria-selected="true" type="button" data-t="paste" data-i18n="tabPaste"></button>
       </div>
 
-      <div id="in-link" role="tabpanel" aria-labelledby="intab-link" style="display:grid;gap:12px" hidden>
-        <label class="field" for="url"><span data-i18n="linkLabel"></span>
-          <input id="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" data-i18n-ph="linkPh" placeholder="It supports Tokopedia, Lazada, TikTok Shop" aria-describedby="url-error">
-        </label>
-        <p class="ferr" id="url-error" role="alert" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span id="url-error-text"></span></p>
-        <div class="notice" id="shopee-note" role="status" hidden>
-          <div class="t"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="shopeeNote"></span></div>
-          <button class="btn ghost" id="shopee-paste" type="button" data-i18n="toPaste"></button>
-        </div>
-        <p class="hint" id="shopee-hint"><span data-i18n="shopeeHintA"></span> <b data-i18n="tabPaste"></b>.</p>
-        <p class="small muted dsk" id="link-hint"></p>
-        <details class="opts xp">
-          <summary id="link-opts"></summary>
-          <div class="row xp-body" style="display:flex">
-            <label class="fld" for="mode" style="flex:1 1 150px"><span data-i18n="modeLabel"></span>
-              <select id="mode"><option value="complaints" data-i18n="modeComplaints"></option><option value="latest" data-i18n="modeLatest"></option></select>
-            </label>
-            <label class="fld" for="limit" style="flex:0 0 96px"><span data-i18n="limitLabel"></span>
-              <input id="limit" type="number" min="1" max="20" value="10" inputmode="numeric">
-            </label>
-          </div>
-        </details>
-        <p class="quota" id="quota-link" role="status" hidden></p>
-        <div class="actions">
-          <button class="btn primary" id="fetch" type="button" data-i18n="fetchRun"></button>
-          <button class="plain strong" id="try-sample" type="button" data-i18n="trySample"></button>
-        </div>
-        <span id="fetch-anchor" hidden></span>
-        <p class="small muted" id="link-note" data-i18n="linkNote"></p>
-      </div>
-
-      <div id="in-paste" role="tabpanel" aria-labelledby="intab-paste" style="display:grid;gap:12px">
-        <div class="fallback" id="fallback" hidden>
-          <h3 data-i18n="fbTitle"></h3>
-          <ol class="steps-list" id="fb-steps"></ol>
-        </div>
-        <p class="muted" id="paste-hint" data-i18n="pasteHint"></p>
-        <div class="callout" id="shared-note" hidden></div>
-        <div class="fld" id="paste-fld">
-          <label for="paste" data-i18n="reviewsLabel"></label>
-          <div class="ta-wrap">
-            <textarea id="paste" spellcheck="false" placeholder="★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem&#10;★★☆☆☆  Hitam, L   Pas sampe koyak bajunya"></textarea>
-            <button class="ta-clear" id="clear" type="button" hidden data-i18n-label="clear"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-          </div>
-        </div>
-        <p class="small muted" id="paste-count" role="status" hidden></p>
-        <label class="field" for="product" id="product-fld"><span data-i18n="productLabel"></span>
-          <input id="product" type="text" maxlength="150" autocomplete="off" data-i18n-ph="productPh">
-        </label>
-        <p class="quota" id="quota-note" role="status" hidden></p>
-        <button class="btn primary" id="run" type="button" data-i18n="run"></button>
-        <span id="run-anchor" hidden></span>
-        <button class="btn ghost" id="fb-retry" type="button" hidden data-i18n="fbRetry"></button>
-        <p><button class="plain strong" id="sample" type="button" data-i18n="sample"></button></p>
-        <div>
+      <div id="in-box" style="display:grid;gap:10px">
+        <div class="boxhead"><label for="paste" id="box-label" data-i18n="boxLabel"></label><button class="qbtn" id="tips-btn" type="button" aria-expanded="false" aria-controls="tips" data-i18n-label="tipsBtn">?</button></div>
+        <div id="tips" hidden>
           <details class="xp">
             <summary data-i18n="howSummary"></summary>
             <div class="xp-body"><pre data-i18n="howBody"></pre></div>
@@ -888,6 +845,52 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
             </div>
           </details>
         </div>
+        <div class="fallback" id="fallback" hidden>
+          <h3 data-i18n="fbTitle"></h3>
+          <ol class="steps-list" id="fb-steps"></ol>
+        </div>
+        <div class="callout" id="shared-note" hidden></div>
+        <div class="ta-wrap">
+          <textarea id="paste" spellcheck="false" data-i18n-ph="boxPh"></textarea>
+          <button class="ta-clear" id="clear" type="button" hidden data-i18n-label="clear"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </div>
+        <p class="small muted" id="paste-hint" data-i18n="pasteHint"></p>
+        <p class="chip" id="detect" role="status" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span id="detect-text"></span></p>
+      </div>
+
+      <div id="in-link" role="tabpanel" aria-labelledby="intab-link" style="display:grid;gap:12px" hidden>
+        <input id="url" type="hidden">
+        <p class="ferr" id="url-error" role="alert" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span id="url-error-text"></span></p>
+        <div class="notice" id="shopee-note" role="status" hidden>
+          <div class="t"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="shopeeNote"></span></div>
+          <button class="btn ghost" id="shopee-paste" type="button" data-i18n="toPaste"></button>
+        </div>
+        <p class="quota" id="quota-link" role="status" hidden></p>
+        <button class="btn primary" id="fetch" type="button" data-i18n="fetchRun"></button>
+        <span id="fetch-anchor" hidden></span>
+        <details class="opts xp">
+          <summary id="link-opts"></summary>
+          <div class="row xp-body" style="display:flex">
+            <label class="fld" for="mode" style="flex:1 1 150px"><span data-i18n="modeLabel"></span>
+              <select id="mode"><option value="complaints" data-i18n="modeComplaints"></option><option value="latest" data-i18n="modeLatest"></option></select>
+            </label>
+            <label class="fld" for="limit" style="flex:0 0 96px"><span data-i18n="limitLabel"></span>
+              <input id="limit" type="number" min="1" max="20" value="10" inputmode="numeric">
+            </label>
+          </div>
+        </details>
+        <p class="small muted" id="link-note" data-i18n="linkNote"></p>
+      </div>
+
+      <div id="in-paste" role="tabpanel" aria-labelledby="intab-paste" style="display:grid;gap:12px">
+        <p class="small muted" id="paste-count" role="status" hidden></p>
+        <label class="field" for="product" id="product-fld" hidden><span data-i18n="productLabel"></span>
+          <input id="product" type="text" maxlength="150" autocomplete="off" data-i18n-ph="productPh">
+        </label>
+        <p class="quota" id="quota-note" role="status" hidden></p>
+        <button class="btn primary off" id="run" type="button" aria-disabled="true"></button>
+        <span id="run-anchor" hidden></span>
+        <button class="btn ghost" id="fb-retry" type="button" hidden data-i18n="fbRetry"></button>
       </div>
 
       <div class="error" id="error" role="alert" tabindex="-1" hidden>
@@ -895,6 +898,8 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
         <div><strong id="error-title" hidden></strong><span id="error-text"></span><span class="sub" id="error-sub" hidden></span><button class="btn ghost" id="error-paste" type="button" hidden data-i18n="toPaste"></button></div>
       </div>
     </div>
+    <button class="linkbtn" id="sample" type="button" data-i18n="sample"></button>
+    <button class="linkbtn quiet" id="in-history" type="button" data-i18n="histTitle" hidden></button>
   </section>
 
   <!-- loading -->
@@ -1015,20 +1020,20 @@ const TEXT = {
   id: {
     navCheck: "Periksa", navNew: "Ulasan baru", newReviews: "Ulasan baru",
     tabPaste: "Tempel", tabLink: "Tautan",
-    pasteHint: "Cukup 10–20 ulasan bintang 1–3. Salin dari aplikasi Shopee atau Tokopedia, lalu tempel apa adanya di sini.",
-    productLabel: "Nama produk (opsional)", productPh: "mis. Kaos Boxy Retro", reviewsLabel: "Ulasan",
+    pasteHint: "Shopee? Salin ulasannya dari aplikasi, lalu tempel di sini.",
+    productLabel: "Nama produk (opsional)", productPh: "mis. Kaos Boxy Retro", boxLabel: "Tempel tautan atau ulasan", boxPh: "Tautan Tokopedia, TikTok Shop, Lazada… atau teks ulasan yang kamu salin dari Shopee", tipsBtn: "Tips menempel", runN: "Bedah %s ulasan", detectLink: "%s Kami ambil %s ulasan, %s.", detectPf: "Tautan %s.", detectPlain: "Tautan produk.", detectText: "%s ulasan terbaca", modeComplaintsShort: "keluhan dulu", modeLatestShort: "terbaru dulu",
     howSummary: "Tips agar hasilnya lebih tepat",
     howBody: "Satu ulasan per baris paling mudah dibaca. Kalau satu ulasan terdiri dari beberapa baris, beri baris kosong di antara ulasan.\n\nBintang dan varian boleh ditulis di depan, tidak wajib:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya",
-    run: "Bedah ulasan", running: "Membedah…", sample: "Belum punya ulasan? Coba dengan contoh", clear: "Hapus teks",
+    run: "Bedah ulasan", running: "Membedah…", sample: "Belum punya? Coba dengan contoh", clear: "Hapus teks",
     shareTip: "Di Android: bagikan langsung dari aplikasi toko",
     shareSteps: ["Pasang BedahReview di layar utama (Android Chrome: menu ⋮ > Pasang aplikasi).", "Di Shopee, tekan lama teks ulasan, lalu pilih Bagikan.", "Pilih BedahReview. Teksnya masuk ke kotak Tempel. Ketuk Bedah ulasan."],
     shareCaveat: "Kalau teksnya tidak masuk, salin dan tempel saja.",
     install: "Pasang di layar utama",
     sharedOk: "Teks dari menu Bagikan sudah masuk. Ketuk Bedah ulasan.",
     sharedLinkOnly: "Yang dikirim hanya tautan, bukan teks ulasan. Salin teks ulasannya, lalu tempel.",
-    linkLabel: "Tautan produk", linkPh: "Mendukung Tokopedia, Lazada, TikTok Shop",
+   
     modeLabel: "Ambil", modeComplaints: "Keluhan dulu (1-3★)", modeLatest: "Ulasan terbaru", limitLabel: "Jumlah", fetchRun: "Ambil & bedah",
-    linkNote: "Tautan pendek dari tombol Bagikan juga bisa. Mengambil ulasan bisa makan waktu hingga satu menit, dan kadang hasilnya lebih sedikit dari yang diminta.",
+    linkNote: "Butuh sampai 1 menit.",
     errPaste: "Tempel ulasan dulu.", errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa terhubung ke BedahReview. Periksa koneksi internetmu, lalu coba lagi.",
     pasteFound: "%s ulasan terdeteksi. Yang pertama: “%s”", pasteTooMany: "%s ulasan terdeteksi, tapi maksimal %s per analisis. Kurangi dulu.",
     loadingPart: "%s dari %s bagian selesai.", loadingFetching: "Mengambil ulasan dari tautan…", loadingResume: "Melanjutkan analisis tadi…", e_job_gone: "Analisis ini sudah tidak tersedia. Coba bedah lagi.",
@@ -1068,7 +1073,7 @@ const TEXT = {
     step1T: "Salin & tempel ulasan", step1D: "dari Shopee, Tokopedia, atau aplikasi toko lain",
     step1TLink: "Tempel tautan atau ulasan", step1DLink: "tautan Tokopedia, TikTok Shop, Lazada, atau teks ulasannya", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
     step3T: "Kamu dapat rencana singkat", step3D: "plus draf balasan siap kirim",
-    linkHint: "Kami membaca hingga %s ulasan terbaru yang berisi teks (maksimal %s). Nama pembeli tidak disimpan.", linkOpts: "Atur jumlah ulasan (%s)", trySample: "Belum punya tautan? Coba dengan contoh",
+    linkOpts: "Pengaturan lanjutan",
     navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Bandingkan dengan pesaing",
     rivalWantLbl: "Berapa pesaing?", rivalExampleBtn: "Lihat contoh (gratis)", rivalExampleHead: "Contoh, bukan data nyata.",
     rivalExampleBody: "Angka dan kutipan di bawah dibuat untuk contoh. “Contoh Kaos Boxy” bukan produkmu: tidak ada toko atau pembeli sungguhan, dan tidak ada biaya.",
@@ -1145,7 +1150,7 @@ const TEXT = {
     startNone: "Tidak ada keluhan yang perlu ditindak. Lihat yang dipuji pembeli di Pertahankan.", whySteps: "Kenapa & langkahnya",
     // final design: first screen, link tab, results plan, the three steps, summary, Tugas
     heroTitle: "Pilah ulasan produkmu jadi daftar tindakan", howTitle: "Cara kerjanya", how1: "Tempel tautan atau ulasan", how2: "Kami pilah ulasannya jadi 4 kelompok, dengan kutipan asli", how3: "Kamu dapat rencana singkat, plus draf balasan siap kirim",
-    shopeeNote: "Shopee belum bisa lewat tautan. Salin ulasannya dari aplikasi Shopee, lalu tempel.", toPaste: "Tempel ulasan", shopeeHintA: "Shopee? Pakai tab", refunded: "Jatah analisis hari ini dikembalikan.",
+    shopeeNote: "Shopee belum bisa lewat tautan. Salin ulasannya dari aplikasi Shopee, lalu tempel.", toPaste: "Tempel ulasan", refunded: "Jatah analisis hari ini dikembalikan.",
     boardCap: "Ketuk kelompok untuk melihat kutipan asli.", close: "Tutup", navTasks: "Tugas", ptabMine: "Analisis saya", ptabRivals: "Pesaing", sections: "Bagian", sheetT: "%s · %s ulasan",
     hOne: "Keluhan terbanyak cuma satu: %s.", hTop: "Keluhan terbanyak: %s.", hFight: "Tidak ada yang perlu diperbaiki, tapi %s ulasan perlu dibalas.", hNone: "Tidak ada keluhan yang perlu ditindak.",
     lFix: "%s dari %s ulasan menyebutnya, dan itu bisa diperbaiki.", lFight: "%s ulasan perlu dibalas.", lKeep: "%s pembeli memuji %s.", lKeepAny: "%s pembeli memuji produkmu.", and: "dan",
@@ -1190,20 +1195,20 @@ const TEXT = {
   en: {
     navCheck: "Check", navNew: "New reviews", newReviews: "New reviews",
     tabPaste: "Paste", tabLink: "Link",
-    pasteHint: "10–20 reviews with 1–3 stars is enough. Copy them from the Shopee or Tokopedia app, then paste them here as they are.",
-    productLabel: "Product name (optional)", productPh: "e.g. Retro Boxy Tee", reviewsLabel: "Reviews",
+    pasteHint: "Shopee? Copy the reviews from the app, then paste them here.",
+    productLabel: "Product name (optional)", productPh: "e.g. Retro Boxy Tee", boxLabel: "Paste a link or reviews", boxPh: "A Tokopedia, TikTok Shop or Lazada link… or review text you copied from Shopee", tipsBtn: "Paste tips", runN: "Check %s reviews", detectLink: "%s We fetch %s reviews, %s.", detectPf: "%s link.", detectPlain: "Product link.", detectText: "%s reviews found", modeComplaintsShort: "complaints first", modeLatestShort: "latest first",
     howSummary: "Tips for better results",
     howBody: "One review per line reads best. If a review has several lines, put a blank line between reviews.\n\nStars and variant can go first, but they are optional:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya",
-    run: "Check reviews", running: "Working…", sample: "No reviews at hand? Try an example", clear: "Clear the text",
+    run: "Check reviews", running: "Working…", sample: "Nothing yet? Try an example", clear: "Clear the text",
     shareTip: "On Android: share straight from the shop app",
     shareSteps: ["Install BedahReview to your home screen (Android Chrome: ⋮ menu > Install app).", "In Shopee, long-press the review text and choose Share.", "Pick BedahReview. The text lands in the Paste box. Tap Check reviews."],
     shareCaveat: "If the text does not arrive, copy and paste it instead.",
     install: "Add to home screen",
     sharedOk: "Text from the Share menu is in. Tap Check reviews.",
     sharedLinkOnly: "Only a link was shared, not the review text. Copy the review text and paste it.",
-    linkLabel: "Product link", linkPh: "It supports Tokopedia, Lazada, TikTok Shop",
+   
     modeLabel: "Get", modeComplaints: "Complaints first (1-3★)", modeLatest: "Latest reviews", limitLabel: "Reviews", fetchRun: "Fetch & analyse",
-    linkNote: "Short links from the Share button work too. Reading the reviews can take up to a minute, and sometimes returns fewer than asked.",
+    linkNote: "Takes up to 1 minute.",
     errPaste: "Paste some reviews first.", errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach BedahReview. Check your internet connection and try again.",
     pasteFound: "%s reviews found. The first one: “%s”", pasteTooMany: "%s reviews found, but the limit is %s per analysis. Remove some first.",
     loadingPart: "%s of %s parts done.", loadingFetching: "Fetching reviews from the link…", loadingResume: "Picking up your earlier analysis…", e_job_gone: "This analysis is no longer available. Please run it again.",
@@ -1243,7 +1248,7 @@ const TEXT = {
     step1T: "Copy & paste your reviews", step1D: "from Shopee, Tokopedia or any shop app",
     step1TLink: "Paste a link or the reviews", step1DLink: "a Tokopedia, TikTok Shop or Lazada link, or the review text", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
     step3T: "You get a short plan", step3D: "plus reply drafts ready to send",
-    linkHint: "We read up to %s of the newest reviews that have text (at most %s). Buyer names are not saved.", linkOpts: "Set number of reviews (%s)", trySample: "No link yet? Try an example",
+    linkOpts: "Advanced settings",
     navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Compare with competitors",
     rivalWantLbl: "How many competitors?", rivalExampleBtn: "See an example (free)", rivalExampleHead: "Example, not live data.",
     rivalExampleBody: "The numbers and quotes below were made up for this example. “Contoh Kaos Boxy” is not your product: no real shops or buyers, and no cost.",
@@ -1319,7 +1324,7 @@ const TEXT = {
     startHere: "Start here", startFix: "Fix “%s”: %s review(s) complain about this.", startSeeFix: "See the fix", startFight: "Answer the review about “%s”. The draft is ready to copy.", startSeeFight: "See the draft",
     startNone: "No complaints to act on. See what buyers praise under Keep.", whySteps: "Why & steps",
     heroTitle: "Turn your product reviews into a to-do list", howTitle: "How it works", how1: "Paste a link or reviews", how2: "We sort the reviews into 4 groups, with the buyers' own words", how3: "You get a short plan, plus reply drafts ready to send",
-    shopeeNote: "Shopee links don't work yet. Copy the reviews from the Shopee app, then paste them.", toPaste: "Paste reviews", shopeeHintA: "Shopee? Use the", refunded: "Today's analysis was given back.",
+    shopeeNote: "Shopee links don't work yet. Copy the reviews from the Shopee app, then paste them.", toPaste: "Paste reviews", refunded: "Today's analysis was given back.",
     boardCap: "Tap a group to see the exact quotes.", close: "Close", navTasks: "Tasks", ptabMine: "My analysis", ptabRivals: "Competitors", sections: "Sections", sheetT: "%s · %s reviews",
     hOne: "There is only one big complaint: %s.", hTop: "The biggest complaint: %s.", hFight: "Nothing to fix, but %s review(s) need a reply.", hNone: "No complaints to act on.",
     lFix: "%s of %s reviews mention it, and it can be fixed.", lFight: "%s review(s) need a reply.", lKeep: "%s buyer(s) praise %s.", lKeepAny: "%s buyer(s) praise your product.", and: "and",
@@ -1452,14 +1457,14 @@ function applyLang() {
   if (currentView === "fixes") renderFixes();
   if (currentView === "history") renderHistory();
   if (!$("run").disabled) $("run").textContent = tr("run");
-  syncCount(); syncShopee(); syncLimit();
+  syncCount(); detectInput(); syncShopee(); syncLimit();
   if (lastData) render(lastData, false); else renderRival();
   if (currentView === "plan") renderPlanView();
   if (!$("sheet").hidden && sheetBucket) sheetTitle();
 }
 function syncLimit() {  // the link box says how many reviews it will read: the seller's number (10 unless changed), never more than the server allows
   const max = parseInt($("limit").max, 10) || 20, n = Math.max(1, Math.min(max, parseInt($("limit").value, 10) || 10));
-  $("link-hint").textContent = tr("linkHint", n, max); $("link-opts").textContent = tr("linkOpts", n);
+  $("link-opts").textContent = tr("linkOpts");
   return n;
 }
 $("limit").addEventListener("input", syncLimit);
@@ -2027,13 +2032,13 @@ function startFresh() {  // "Bedah produk lain" at the end of a plan: an empty s
   rival = { step: "idle" }; rivalRun += 1; rivalForm = { url: "", name: "" };
   clearInputs(); closeSheet(); renderRival(); renderFixBadge();
   show("input"); toTop();
-  if (!$("in-link").hidden) $("url").focus(); else $("paste").focus();
+  $("paste").focus();
 }
 function reanalyse(product, label) {  // back to the start with the product filled in, so a check-up is one tap
   closeSheet(); show("input"); toTop();
-  if (/^https:\/\//.test(product || "") && !$("intab-link").hidden) { selectInput("link", false); $("url").value = product; syncShopee(); $("url").focus(); }
+  if (/^https:\/\//.test(product || "") && linkBoxOn) { $("paste").value = product; syncClear(); $("paste").focus(); }
   else {  // fresh reviews only: the box never keeps the last product's reviews under this product's name
-    selectInput("paste", false); $("paste").value = ""; $("product").value = label && !/^https?:/.test(label) ? label : ""; $("shared-note").hidden = true; syncClear(); $("paste").focus();
+    $("paste").value = ""; $("product").value = label && !/^https?:/.test(label) ? label : ""; $("shared-note").hidden = true; syncClear(); $("paste").focus();
   }
 }
 function renderFixes(message) {  // the Tugas screen
@@ -2918,20 +2923,36 @@ function tabKeys(listEl, selector, onSelect) {
   });
 }
 
+const LINK_RE = /^https?:\/\/\S+$/i;
+const isLinkText = (t) => linkBoxOn && LINK_RE.test(t.trim());
+function platformName(u) { try { const h = new URL(u.trim()).hostname; if (/tokopedia/i.test(h)) return "Tokopedia"; if (/lazada/i.test(h)) return "Lazada"; if (/tiktok/i.test(h)) return "TikTok Shop"; if (/shopee/i.test(h)) return "Shopee"; } catch (e) { /* plain link */ } return ""; }
+function detectInput() {  // one box: a single web address is a product link, anything else is pasted reviews
+  const text = $("paste").value, link = isLinkText(text), empty = !text.trim();
+  $("url").value = link ? text.trim() : $("url").value;
+  selectInput(link ? "link" : "paste", false);
+  $("view-input").classList.toggle("linkmode", link);
+  $("paste-hint").hidden = !empty;
+  $("product-fld").hidden = empty || link;
+  const n = link ? 0 : (empty ? 0 : countReviewsRough(text));
+  const run = $("run"); run.textContent = n ? tr("runN", n) : tr("run");
+  run.classList.toggle("off", empty || quotaOut()); run.setAttribute("aria-disabled", empty || quotaOut() ? "true" : "false");
+  const d = $("detect"); d.hidden = empty;
+  if (link && platformName(text) === "Shopee") d.hidden = true;
+  else if (link) { const pf = platformName(text), lim = syncLimit(); $("detect-text").textContent = tr("detectLink", pf ? tr("detectPf", pf) : tr("detectPlain"), lim, tr($("mode").value === "latest" ? "modeLatestShort" : "modeComplaintsShort")); }
+  else if (!empty) $("detect-text").textContent = tr("detectText", n);
+  if (link) syncShopee();
+}
 function selectInput(which, focus) {
   for (const t of ["paste", "link"]) {
     const on = t === which;
     $("intab-" + t).setAttribute("aria-selected", on ? "true" : "false"); $("intab-" + t).tabIndex = on ? 0 : -1;
     $("in-" + t).hidden = !on;
-    if (on && focus) $("intab-" + t).focus();
+    if (on && focus) $("paste").focus();
   }
   showError("");
 }
 function setFallback(on) { $("fallback").hidden = !on; $("fb-retry").hidden = !on; }  // shown after a link could not be read: the paste route, with steps
-document.querySelectorAll("#intabs button").forEach((b) => b.addEventListener("click", () => { setFallback(false); selectInput(b.dataset.t, false); }));
-$("fb-retry").addEventListener("click", () => { setFallback(false); selectInput("link", true); });
-$("try-sample").addEventListener("click", () => { setFallback(false); selectInput("paste", false); $("sample").click(); });
-tabKeys($("intabs"), "button", (t) => selectInput(t.dataset.t, true));
+$("fb-retry").addEventListener("click", () => { setFallback(false); if ($("url").value) $("paste").value = $("url").value; syncClear(); $("paste").focus(); });
 
 function showError(msg, title, opts) {  // right under the button that was tapped, scrolled into view, and read out
   opts = opts || {};
@@ -2947,18 +2968,19 @@ function showError(msg, title, opts) {  // right under the button that was tappe
 }
 function showUrlError(msg) {  // a link that is not right: the field turns red and says why, right under it
   $("url-error-text").textContent = msg || ""; $("url-error").hidden = !msg;
-  if (msg) { $("url").setAttribute("aria-invalid", "true"); $("url").focus(); } else $("url").removeAttribute("aria-invalid");
+  if (msg) { $("paste").setAttribute("aria-invalid", "true"); $("paste").focus(); } else $("paste").removeAttribute("aria-invalid");
 }
 const isShopee = (u) => { try { return /(^|\.)shopee\./i.test(new URL(u.trim()).hostname); } catch (e) { return /shopee\./i.test(u); } };
 function syncShopee() {  // a Shopee link gets "not yet" and a way forward before anything is spent; the fetch button looks quiet until there is a link
   const u = $("url").value, shopee = !!u.trim() && isShopee(u);
-  $("shopee-note").hidden = !shopee; $("shopee-hint").hidden = shopee;
+  $("shopee-note").hidden = !shopee;
   const out = quotaOut();
   $("fetch").classList.toggle("off", out || shopee || !u.trim()); $("fetch").setAttribute("aria-disabled", out || shopee ? "true" : "false");
-  $("run").classList.toggle("off", out); $("run").setAttribute("aria-disabled", out ? "true" : "false");
+  const none = !$("paste").value.trim();
+  $("run").classList.toggle("off", out || none); $("run").setAttribute("aria-disabled", out || none ? "true" : "false");
 }
-function toPaste(withSteps) { showError(""); setFallback(!!withSteps); selectInput("paste", false); $("paste").focus(); }
-$("url").addEventListener("input", () => { showUrlError(""); syncShopee(); });
+function toPaste(withSteps) { showError(""); if (isLinkText($("paste").value)) $("paste").value = ""; syncClear(); setFallback(!!withSteps); $("paste").focus(); }  // the box holds the link: clear it so reviews can go in its place
+$("paste").addEventListener("input", () => showUrlError(""));
 $("shopee-paste").addEventListener("click", () => toPaste(false));
 $("error-paste").addEventListener("click", () => toPaste(true));
 
@@ -3011,7 +3033,7 @@ function finishAnalysis(status, data) {  // the one place that turns a reply int
     show("input");
     if (data && data.limit === "daily") setQuota({ used: data.max, max: data.max });
     const code = data && data.code, onLink = !$("in-link").hidden;
-    if (code === "shopee" && onLink) { syncShopee(); $("shopee-note").hidden = false; $("shopee-hint").hidden = true; $("shopee-paste").focus(); return; }
+    if (code === "shopee" && onLink) { syncShopee(); $("shopee-note").hidden = false; $("shopee-paste").focus(); return; }
     if (LINK_FIELD_CODES.includes(code) && onLink) { showUrlError(errText(data, tr("errGeneric", status))); return; }  // the link itself is wrong: say so on the field
     const pasteWay = data && data.fallback === "paste";
     const unreadable = pasteWay && !data.limit;  // a daily limit is not "this link cannot be read"
@@ -3090,7 +3112,7 @@ function runFetch() {
 $("run").addEventListener("click", runPaste);
 $("fetch").addEventListener("click", runFetch);
 $("print").addEventListener("click", () => window.print());
-$("url").addEventListener("keydown", (e) => { if (e.key === "Enter") runFetch(); });
+$("paste").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && isLinkText($("paste").value)) { e.preventDefault(); runFetch(); } });
 $("sample").addEventListener("click", () => {
   $("paste").value = [
     "★★★★★  Putih, L   bagus banget pakenya sama bahannya bagus luamayan tebel",
@@ -3101,17 +3123,17 @@ $("sample").addEventListener("click", () => {
   ].join("\n");
   $("product").value = "Kaos Boxy Retro"; syncClear(); showError(""); $("paste").focus();
 });
-function syncClear() { $("clear").hidden = !$("paste").value; syncCount(); }  // the × in the review box shows only when there is text to clear
+function syncClear() { $("clear").hidden = !$("paste").value; syncCount(); detectInput(); }  // the × in the review box shows only when there is text to clear
 function syncCount() {  // "12 reviews found": the same split the server makes, so a paste that was cut in the wrong places shows before an analysis is spent
   const el = $("paste-count"), text = $("paste").value, max = 50;
-  if (!text.trim()) { el.hidden = true; return; }
+  if (!text.trim() || isLinkText(text)) { el.hidden = true; return; }
   const n = countReviewsRough(text), first = text.trim().split(/\n\s*\n/)[0].trim().split("\n")[0].replace(/^[★☆\s]+/, "").trim();
   el.textContent = n > max ? tr("pasteTooMany", n, max) : tr("pasteFound", n, first.length > 60 ? first.slice(0, 60) + "…" : first);
   el.hidden = false;
 }
 $("paste").addEventListener("input", syncClear);
 $("clear").addEventListener("click", () => { $("paste").value = ""; $("product").value = ""; $("url").value = ""; $("shared-note").hidden = true; syncClear(); showError(""); $("paste").focus(); });
-$("paste").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") runPaste(); });
+$("paste").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { if (isLinkText($("paste").value)) runFetch(); else runPaste(); } });
 
 /* ---------- Share menu: /?title=...&text=...&url=... ---------- */
 function sharedFrom(search) {  // a shop app sends the product title as "title" and the review as "text": the title is the product name, not a review
@@ -3127,7 +3149,7 @@ function takeShared() {
   const note = $("shared-note");
   if (/^https?:\/\/\S+$/.test(shared.all)) {  // only a link arrived, not review text
     note.textContent = tr("sharedLinkOnly"); note.hidden = false;
-    if (!$("intab-link").hidden) { $("url").value = shared.all; selectInput("link", false); }
+    if (linkBoxOn) { $("paste").value = shared.all; syncClear(); }
     return;
   }
   $("paste").value = shared.reviews; syncClear();
@@ -3213,7 +3235,7 @@ function renderAccount() {  // the header shows "Masuk" to a visitor and the acc
   $("acct-email").textContent = userEmail || (userId ? "" : tr("acctCode"));  // an access-code tester has no email to show
   $("acct-initial").textContent = (userEmail || (userId ? "?" : "#")).charAt(0);
   $("delete-area").hidden = !(sb && signedIn && userId && cfgCanDelete);
-  $("acct-history").hidden = !hasAccount();  // Riwayat lives in the account: nothing to show without one
+  $("acct-history").hidden = !hasAccount(); $("in-history").hidden = !hasAccount();  // Riwayat lives in the account: nothing to show without one
   if (!on && !visitor) setMenu(false);
   renderRival();  // the competitor buttons say "sign in" to a visitor
 }
@@ -3230,6 +3252,8 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("acct
 $("acct-theme").addEventListener("click", () => $("theme").click());
 $("acct-fixes").addEventListener("click", () => { setMenu(false); $("fixes-btn").click(); });
 $("acct-history").addEventListener("click", () => { setMenu(false); openHistory(); });
+$("in-history").addEventListener("click", () => openHistory());
+$("tips-btn").addEventListener("click", () => { const open = $("tips").hidden; $("tips").hidden = !open; $("tips-btn").setAttribute("aria-expanded", open ? "true" : "false"); });
 $("tasks-history").addEventListener("click", () => openHistory());
 $("history-back").addEventListener("click", () => { const v = viewBeforeHistory; show(v === "loading" || v === "history" || ((v === "results" || v === "plan") && !lastData) ? "input" : v); toTop(); });
 function gateInfo(msg) { $("g-info").textContent = msg || ""; $("g-info").hidden = !msg; }
@@ -3424,11 +3448,11 @@ if ("serviceWorker" in navigator) {
 
 function applyBox(cfg, first) {  // the link box: shown only when the server says this visitor may use it
   linkBoxOn = !!cfg.url_box; rivalsOn = cfg.rivals === undefined ? linkBoxOn : !!cfg.rivals; renderRival(); stepOneText();
-  $("intab-link").hidden = !cfg.url_box; $("intabs").hidden = !cfg.url_box;  // paste alone needs no tabs
+  $("intab-link").hidden = !cfg.url_box;  // the tabs are gone; the box decides by what is pasted
   if (cfg.url_box) {
     $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit; syncLimit();
-    if (first && !$("paste").value && !location.search) selectInput("link", false);  // a link is the quickest way in, on a phone too
-  } else if ($("intab-link").getAttribute("aria-selected") === "true") selectInput("paste", false);
+  }
+  syncClear();
 }
 async function refreshBox() {  // after a sign-in the answer can change: a trusted account gets the link box that a normal one does not
   try { applyBox(await (await api("/api/config")).json(), false); } catch (e) { /* keep what we have */ }
