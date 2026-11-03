@@ -228,7 +228,7 @@ window.__probe = (async () => {
     byId("tasks-history").click();
     await until(() => byId("history-body").querySelector(".hrow"), 40);
     byId("product").value = "";
-    [...byId("history-body").querySelectorAll("button")].find((b) => b.textContent === "Bedah lagi").click();  // a row this device does not know: just the paste screen with the name
+    [...byId("history-body").querySelectorAll("button")].filter((b) => b.textContent === "Bedah lagi").pop().click();  // a row this device does not know: just the paste screen with the name
     out.again = [vis("view-input"), byId("product").value];
   }
 
@@ -573,7 +573,7 @@ class SignInBrowserTests(unittest.TestCase):
         done = out["afterDone"]
         self.assertEqual(done["cards"][0][2], "Selesai")
         self.assertIn("tugas dibuat", done["cards"][0][1])
-        self.assertEqual(done["cards"][0][3], ["Analisis pesaing"])
+        self.assertEqual(done["cards"][0][3], ["Analisis pesaing", "Bedah lagi"])
         self.assertIn("tugas masuk", done["toast"])
         self.assertEqual(done["badge"], "2")  # the red count on Tugas: unticked items
         self.assertFalse(done["held"])  # finished: the held result is gone

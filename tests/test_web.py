@@ -274,19 +274,20 @@ class TriageBoardTests(unittest.TestCase):
         pairs = [_item(*spec[:1], **spec[1]) for spec in specs]
         return build_response([r for _, r in pairs], [i for i, _ in pairs], "m")
 
-    def test_fix_cards_group_by_theme_and_base_variant_with_counts(self):
+    def test_fix_cards_group_by_theme_only_and_list_the_variants(self):
         out = self.board([
             ("1", dict(bucket="fix", variant="Putih, L", stars=1)),
             ("2", dict(bucket="fix", variant="Putih, M", stars=3)),
+            ("5", dict(bucket="fix", variant="Hitam, M", stars=2)),
             ("3", dict(bucket="fix", theme="Packaging / damaged on arrival", variant="Putih, L", stars=4)),
             ("4", dict(bucket="fight", variant="Hitam, L", stars=2)),
         ])
-        self.assertEqual(out["complaints"], 4)
+        self.assertEqual(out["complaints"], 5)
         first, second = out["groups"]
-        self.assertEqual((first["theme"], first["variant"], first["ids"], first["n"], first["of"]), ("Colour vs photo", "Putih", ["1", "2"], 2, 4))
+        self.assertEqual((first["theme"], first["variants"], first["ids"], first["n"], first["of"]), ("Colour vs photo", ["Putih", "Hitam"], ["1", "2", "5"], 3, 5))
         self.assertEqual((second["theme"], second["ids"], second["n"]), ("Packaging / damaged on arrival", ["3"], 1))
-        self.assertEqual(out["star_avg"], 2.5)
-        self.assertEqual(out["reviews"], 4)
+        self.assertEqual(out["star_avg"], 2.4)
+        self.assertEqual(out["reviews"], 5)
 
     def test_likely_fake_reviews_are_left_out_of_counts_and_cards(self):
         out = self.board([
@@ -309,7 +310,7 @@ class TriageBoardTests(unittest.TestCase):
 
     def test_fix_groups_ignore_non_fix_reviews(self):
         items = [_item("1", "keep")[0], _item("2", "fix", variant=None)[0]]
-        self.assertEqual(fix_groups(items, 1), [{"theme": "Colour vs photo", "variant": None, "ids": ["2"], "n": 1, "of": 1}])
+        self.assertEqual(fix_groups(items, 1), [{"theme": "Colour vs photo", "variant": None, "variants": [], "ids": ["2"], "n": 1, "of": 1}])
 
 
 if __name__ == "__main__":

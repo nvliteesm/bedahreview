@@ -320,13 +320,18 @@ def _base_variant(variant: Optional[str]) -> Optional[str]:
 
 
 def fix_groups(items: List[Dict[str, Any]], complaints: int) -> List[Dict[str, Any]]:
-    """Group Fix-it reviews into cards by theme and variant, biggest first, each with 'n of complaints'."""
-    groups: Dict[Any, List[str]] = {}
+    """Group Fix-it reviews into cards by theme only, biggest first, each with 'n of complaints'.
+    The variants (usually colours) the complaints came from are listed on the card as plain text, never as separate cards."""
+    groups: Dict[str, List[Dict[str, Any]]] = {}
     for item in items:
         if item["bucket"] == "fix" and not item["likely_fake"]["flag"]:
-            groups.setdefault((item["theme"], _base_variant(item["variant"])), []).append(item["id"])
+            groups.setdefault(item["theme"], []).append(item)
     ordered = sorted(groups.items(), key=lambda kv: -len(kv[1]))  # stable: ties keep input order
-    return [{"theme": t, "variant": v, "ids": ids, "n": len(ids), "of": complaints} for (t, v), ids in ordered]
+    out = []
+    for theme, members in ordered:
+        variants = list(dict.fromkeys(v for v in (_base_variant(m["variant"]) for m in members) if v))
+        out.append({"theme": theme, "variant": None, "variants": variants, "ids": [m["id"] for m in members], "n": len(members), "of": complaints})
+    return out
 
 
 def build_response(

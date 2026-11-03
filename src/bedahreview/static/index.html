@@ -66,9 +66,7 @@ h2[tabindex="-1"]:focus, .error:focus { outline: none; }
 .brand .wm span { color: var(--accent); }
 .logo { width: 30px; height: 30px; color: var(--ink); flex: none; }
 .tools { display: flex; align-items: center; gap: 8px; }
-.lang { display: inline-flex; gap: 2px; min-height: 44px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; align-items: center; }
-.lang .o { padding: 6px 14px; border-radius: 999px; }
-.lang .o.on { background: var(--ink); color: var(--surface); }
+.lang { display: inline-flex; gap: 2px; min-height: 44px; min-width: 44px; padding: 0 2px; border: 0; background: none; color: var(--muted); font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; align-items: center; justify-content: center; }
 .theme { position: relative; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
 main { max-width: 480px; margin: 0 auto; display: grid; gap: 14px; align-content: start;
   padding: 16px max(var(--gutter), env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left)); }
@@ -128,20 +126,20 @@ table.cmp { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
 table.cmp th, table.cmp td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: center; font-variant-numeric: tabular-nums; }
 table.cmp th:first-child { text-align: left; font-weight: 600; min-width: 130px; }
 table.cmp thead th { font-size: 0.78rem; color: var(--muted); }
-table.cmp tr.sec th { background: var(--ignore-soft); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+table.cmp tr.sec th { background: var(--ignore-soft); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 table.cmp td.top.bad { color: var(--fight); font-weight: 800; } table.cmp td.top.good { color: var(--keep); font-weight: 800; }
 .rule { font-size: 0.9rem; color: var(--muted); }
 .card { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: var(--radius); padding: 14px; display: grid; gap: 10px; min-width: 0; }
 .panel[data-b="fix"] { --c: var(--fix); } .panel[data-b="fight"] { --c: var(--fight); } .panel[data-b="ignore"] { --c: var(--ignore); } .panel[data-b="keep"] { --c: var(--keep); }
 .stars { color: var(--fix); letter-spacing: 1px; white-space: nowrap; }
 blockquote { margin: 0; padding: 8px 12px; border-left: 4px solid var(--c); background: var(--quote); border-radius: 0 8px 8px 0; display: grid; gap: 2px; overflow-wrap: anywhere; font-size: 0.95rem; }
-blockquote .src { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+blockquote .src { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
 .full summary { font-size: 0.85rem; min-height: 44px; }
 .full p { font-size: 0.88rem; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
 .why { font-size: 0.92rem; color: var(--muted); }
 .draft { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); overflow: hidden; }
 .draft-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 4px 2px 12px; background: var(--ignore-soft); }
-.draft-head .lbl { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.draft-head .lbl { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
 .copy { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; background: transparent; color: var(--accent); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
 .copy.done { color: var(--keep); }
 .draft .bahasa { padding: 12px; font-size: 0.95rem; overflow-wrap: anywhere; white-space: pre-wrap; user-select: text; -webkit-user-select: text; }
@@ -190,9 +188,8 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 @media (min-width: 900px) { #check-btn { display: inline-flex !important; } }
 body.gated #check-btn { display: none !important; }
 #check-btn.on { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
-@media (max-width: 479px) { .has-acct #fixes-btn { display: none; } .has-acct .mitem.m-only { display: flex; } #fixes-btn .lbl { display: none; } .theme.fixes-pill { width: 44px; padding: 0; } }  /* a phone: Fixes moves into the account menu (a local run has no menu, so it keeps its icon) */
+@media (max-width: 479px) { .has-acct .mitem.m-only { display: flex; } }
 @media (min-width: 900px) { .has-acct #theme, .visitor #theme { display: grid; } #acct-theme { display: none; } }
-@media (max-width: 399px) { .lang .o:not(.on) { display: none; } }  /* a small phone: the language switch shows only the current one, and a tap still switches */
 .gbtn[disabled], .btn[disabled] { opacity: 0.6; cursor: progress; }
 .or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.85rem; }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
@@ -209,7 +206,7 @@ body.gated #check-btn { display: none !important; }
 main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-columns: minmax(0, 1fr); }  /* one column that never grows past its box, even for a long product name */
 .start { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--accent-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
 .start > div { flex: 1 1 220px; min-width: 0; display: grid; gap: 2px; }
-.start .eb { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.start .eb { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
 .start .st { font-weight: 700; overflow-wrap: anywhere; }
 .start .btn.primary { width: auto; flex: none; }
 
@@ -229,6 +226,7 @@ main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-
 .group.learn h3 { color: var(--keep); } .group.avoid h3 { color: var(--fix); } .group.ignore h3 { color: var(--ignore); }
 .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .card-head .chips { justify-content: flex-end; }
+.card-head .ttl { display: grid; gap: 2px; min-width: 0; } .vtxt { font-size: 0.8rem; color: var(--muted); }
 .lbl-b { font-weight: 800; color: var(--ink); }
 .actions { display: grid; gap: 10px; }
 .plain { border: 0; background: none; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; padding: 0 0 0 4px; min-height: 36px; }
@@ -279,14 +277,14 @@ main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-
 .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
 .dots.bad i { background: var(--fight); } .dots.good i { background: var(--keep); }
 table.cmp td.top { font-weight: 800; }
-table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem; }
+table.cmp thead th small { display: block; font-weight: 500; font-size: 0.75rem; }
 .dnote { display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
 .dnote p { font-size: 0.9rem; overflow-wrap: anywhere; }
 .dnote code { display: block; font: 0.78rem var(--font-mono); color: var(--muted); }
-.tag { display: inline-block; margin-right: 6px; padding: 0 9px; border-radius: 999px; border: 1px solid currentColor; font-size: 0.72rem; font-weight: 700; }
+.tag { display: inline-block; margin-right: 6px; padding: 0 9px; border-radius: 999px; border: 1px solid currentColor; font-size: 0.75rem; font-weight: 700; }
 .tag.small { color: var(--fix); background: var(--fix-soft); } .tag.fail { color: var(--fight); background: var(--fight-soft); } .tag.skip { color: var(--muted); background: var(--ignore-soft); }
 .pcard-more summary { font-size: 0.85rem; }
-.badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--accent); color: var(--on-accent); font-size: 0.72rem; font-weight: 800; display: grid; place-items: center; }
+.badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--accent); color: var(--on-accent); font-size: 0.75rem; font-weight: 800; display: grid; place-items: center; }
 .track { display: grid; gap: 8px; background: var(--keep-soft); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 0.92rem; }
 .track .when { font-weight: 800; color: var(--keep); }
 .nums { display: grid; gap: 4px; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
@@ -326,7 +324,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   .ftile.rival { background: var(--rival-soft); color: var(--rival); }
   .ftile svg { width: 22px; height: 22px; }
   .ftext { flex: 1 1 250px; min-width: 0; }
-  .eyebrow { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; color: var(--accent); }
+  .eyebrow { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; color: var(--accent); }
   .eyebrow.rival { color: var(--rival); }
   .fhead h1 { margin: 0; font-size: 1.8rem; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; }
   .fside { display: flex; align-items: center; gap: 8px; flex: 0 1 auto; max-width: 100%; min-width: 0; margin-left: auto; }
@@ -358,7 +356,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
   .card h3 { font-size: 1.15rem; }
   .why b { color: var(--ink); }
   blockquote { border-left-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font: 0.92rem/1.5 var(--font-mono); }
-  blockquote .src { font-size: 0.72rem; }
+  blockquote .src { font-size: 0.75rem; }
   .drafts { display: grid; gap: 12px; }
   .drafts .draft { display: none; }
   .drafts[data-active="side"] .draft[data-k="side"], .drafts[data-active="chat"] .draft[data-k="chat"], .drafts[data-active="public"] .draft[data-k="public"], .drafts[data-active="report"] .draft[data-k="report"] { display: block; }
@@ -390,7 +388,6 @@ body { -webkit-font-smoothing: antialiased; transition: background-color 0.2s, c
 .wm { font-size: 18.5px; line-height: 1; letter-spacing: -0.035em; white-space: nowrap; }
 .wm b { font-weight: 700; color: var(--ink); } .wm i { font-style: normal; font-weight: 500; color: var(--accent); }
 .tools { gap: 6px; }
-.lang { min-height: 44px; min-width: 44px; padding: 0 2px; border: 0; background: none; justify-content: center; }
 .lang .pill { display: inline-flex; gap: 4px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 700; color: var(--muted); }
 .lang .pill em { font-style: normal; color: var(--ink); }
 @media (max-width: 359px) { .lang .alt { display: none; } }  /* the smallest phones: only the current language, a tap still switches */
@@ -409,7 +406,6 @@ body.free-locked #panels, body.free-locked #board-cap { display: none !important
 @media (min-width: 600px) and (max-width: 899px) {
   main, .workspace[data-section="rivals"] > .col-2, .topbar-in, .bottombar-in { max-width: 600px; }
 }
-.bottombar-in { grid-template-columns: repeat(3, 1fr); }
 .nav .ic { position: relative; display: inline-flex; }
 .nav .badge { top: -7px; right: auto; left: 13px; border: 2px solid var(--surface); }
 .badge:not([hidden]) { animation: pop 0.2s var(--ease); }
@@ -428,7 +424,7 @@ body.free-locked #panels, body.free-locked #board-cap { display: none !important
 .hero h1 { font-size: 23px; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em; }
 @media (max-width: 359px) { .hero h1 { font-size: 20px; } }
 .howdots { display: inline-flex; gap: 4px; margin-left: 10px; }
-.howdots span { width: 20px; height: 20px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 800; display: grid; place-items: center; }
+.howdots span { width: 20px; height: 20px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 800; display: grid; place-items: center; }
 .numsteps { list-style: none; padding: 0 0 12px; display: grid; gap: 10px; }
 .numsteps li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; font-size: 15px; color: var(--ink); }
 .numsteps .n { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: 12.5px; font-weight: 800; }
@@ -476,7 +472,7 @@ input[aria-invalid="true"] { border: 2px solid var(--fight); }
 .btn:active:not([disabled]), .board button:active, .nav:active, .task:active { transform: scale(0.97); }
 .plan { background: var(--accent-soft); border: 1px solid var(--line); border-radius: 16px; padding: 4px 14px 8px; display: grid; }
 .plan .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; }
-.eb { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.eb { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
 .plan .meta { font-size: 0.8rem; font-weight: 700; color: var(--accent); }
 .plan h3 { font-size: 17px; font-weight: 800; line-height: 1.3; padding-bottom: 6px; }
 .plan .go-d { display: none; }
@@ -497,11 +493,11 @@ input[aria-invalid="true"] { border: 2px solid var(--fight); }
 .stephd .stepper { flex: 0 1 auto; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: max-content; }  /* the plan has 1 to 3 steps: the pill is as wide as they are */
 .stepper { gap: 2px; padding: 4px; }
 .stepper li { justify-content: center; gap: 5px; padding: 4px 6px; min-height: 36px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; border-radius: 999px; transition: color 0.2s; }
-.stepper .dot { width: 24px; height: 24px; font-size: 0.72rem; transition: background-color 0.25s, border-color 0.25s, color 0.25s; }
+.stepper .dot { width: 24px; height: 24px; font-size: 0.75rem; transition: background-color 0.25s, border-color 0.25s, color 0.25s; }
 .stepper .short { display: none; }
 @media (max-width: 359px) { .stepper .full { display: none; } .stepper .short { display: inline; } }
 .stask { display: grid; gap: 8px; }
-.tag { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; border: 0; padding: 0; margin: 0; background: none; border-radius: 0; }
+.tag { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; border: 0; padding: 0; margin: 0; background: none; border-radius: 0; }
 .tag.fix { color: var(--fix); } .tag.fight { color: var(--fight); } .tag.keep { color: var(--keep); }
 .h2s { font-size: 20px; line-height: 1.3; font-weight: 800; letter-spacing: -0.01em; }
 .q { font-size: 0.88rem; font-weight: 800; }
@@ -590,7 +586,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 #sheet.dlg .sheet-box { top: 50%; bottom: auto; left: 50%; right: auto; width: min(480px, calc(100% - 32px)); border-radius: 22px; padding: 24px; transform: translate(-50%, -46%); opacity: 0; transition: transform 0.24s var(--ease), opacity 0.24s; background: var(--surface); }
 #sheet.dlg.open .sheet-box { transform: translate(-50%, -50%); opacity: 1; }
 #sheet.dlg .grab { display: none; }
-.toast2 { position: fixed; left: 16px; right: 16px; top: calc(68px + env(safe-area-inset-top)); z-index: 45; max-width: 440px; margin: 0 auto; background: var(--ink); color: var(--bg); font-size: 0.85rem; font-weight: 600; padding: 10px 14px; border-radius: 12px; text-align: center; animation: rise 0.24s var(--ease); }
+.toast2 { position: fixed; left: 16px; right: 16px; top: calc(64px + env(safe-area-inset-top)); z-index: 45; pointer-events: none; max-width: 440px; margin: 0 auto; background: var(--ink); color: var(--bg); font-size: 0.85rem; font-weight: 600; padding: 10px 14px; border-radius: 12px; text-align: center; animation: rise 0.24s var(--ease); }
 
 /* motion: short, and only where something moves or appears; off when the system asks for less motion */
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -633,7 +629,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
   #sheet.open:not(.dlg) .sheet-box { transform: none; }
   #sheet:not(.dlg) .scrim { top: 72px; }
   #sheet .grab { display: none; }
-  .toast2 { top: 84px; }
+  .toast2 { top: 80px; }
 }
 @media (min-width: 1200px) {
   .prow { grid-template-columns: 30px minmax(0, 1.1fr) minmax(0, 1fr) 64px; }
@@ -664,6 +660,9 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 .sumbox .also { font-size: 0.9rem; color: var(--muted); }
 .gtabs { display: flex; gap: 8px; overflow-x: auto; margin: 0 calc(-1 * var(--gutter)); padding: 2px var(--gutter); scrollbar-width: none; }
 .gtabs::-webkit-scrollbar { display: none; }
+.gtabs.more-r { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
+.gtabs.more-l { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent); }
+.gtabs.more-l.more-r { -webkit-mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent); }
 .gtab { flex: none; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; white-space: nowrap; }
 .gtab .n { font-style: normal; font-size: 0.75rem; min-width: 20px; height: 20px; border-radius: 10px; background: var(--ignore-soft); display: grid; place-items: center; padding: 0 5px; }
 .gtab[aria-selected="true"] { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
@@ -705,7 +704,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 .tbox .it.dn .t { color: var(--muted); text-decoration: line-through; }
 .tbox .it .x { width: 44px; height: 44px; border: 0; background: none; color: var(--fight); cursor: pointer; display: grid; place-items: center; }
 .tbox .tlinks { display: flex; gap: 20px; flex-wrap: wrap; }
-.tbox .tlinks .plain { min-height: 44px; font-weight: 700; font-size: 0.9rem; color: var(--accent); }
+.tbox .tlinks .plain { min-height: 44px; padding-top: 0; padding-bottom: 0; font-weight: 700; font-size: 0.9rem; color: var(--accent); }
 .tbox.alldone { background: var(--accent-soft); border-color: var(--accent); padding: 16px; gap: 10px; }
 .tbox.alldone .okh { display: flex; align-items: center; gap: 10px; color: var(--accent-ink); font-weight: 800; font-size: 1.05rem; }
 .tbox.alldone .okh svg { width: 26px; height: 26px; }
@@ -977,13 +976,13 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
     </div>
     <div id="panels"></div>
     <div id="notes" style="display:grid;gap:8px"></div>
+    <div class="card-box" id="feedback" hidden></div>
     <div class="res-end" id="res-end">
       <h3 data-i18n="endTitle"></h3>
       <button class="btn primary" id="done-btn" type="button" data-i18n="selesaiBtn"></button>
       <button class="btn ghost" id="rivals-open" type="button" data-i18n="rivalsOpen"></button>
       <p class="small muted" id="end-note"></p>
     </div>
-    <div class="card-box" id="feedback" hidden></div>
     <p class="foot" id="foot" hidden></p>
     <p class="foot"><a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a> · <a href="/terms" target="_blank" rel="noopener" data-i18n="termsLink"></a></p>
   </section>
@@ -1510,10 +1509,10 @@ function draft(label, text, key) {
 
 /* ---------- cards ---------- */
 function quote(item) {
-  const src = ["#" + item.id, item.variant].filter(Boolean).join(" · ");
+  const src = item.variant || "";
   return h("blockquote", {},
     h("span", { lang: "id" }, item.stars ? h("span", { class: "stars", "aria-label": tr("stars", item.stars), text: starsText(item.stars) + " " }) : null, item.proof_quote ? "“" + item.proof_quote + "”" : tr("noText")),
-    h("span", { class: "src", text: src }));
+    src ? h("span", { class: "src", text: src }) : null);
 }
 function fullText(item) {
   if (!item.text || item.text === item.proof_quote) return null;
@@ -1540,12 +1539,11 @@ function replyCard(item) {  // the same shape as a fix card; the drafts are numb
   const drafts = [["chat", tr("dChat"), kit.chat_to_buyer], ["public", tr("dPublic"), kit.public_reply],
     ["side", tr("dCheckSide"), item.bucket === "check" ? item.fix_suggestion_id : null], ["report", tr("dReport"), kit.report_text]].filter((d) => d[2]);
   return h("article", { class: "card rcard" },
-    h("div", { class: "card-head" }, h("h3", { text: themeName(item.theme) }),
+    h("div", { class: "card-head" }, h("div", { class: "ttl" }, h("h3", { text: themeName(item.theme) }), item.variant ? h("span", { class: "vtxt", text: item.variant }) : null),
       h("div", { class: "chips" },
         fake ? h("span", { class: "chip hot", text: tr("chipFake") }) : null,
         item.bucket === "check" ? h("span", { class: "chip soft", text: tr("chipCheck") }) : null,
         item.check_first ? h("span", { class: "chip hot", text: tr("chipCourier") }) : null,
-        item.variant ? h("span", { class: "chip soft", text: item.variant }) : null,
         item.confidence === "low" ? h("span", { class: "chip", text: tr("chipLow") }) : null)),
     buyerBox([item]), todoBox(todo, lang, true, whyLine),
     drafts.length ? h("div", { class: "drafts" }, drafts.map(([k, label, text]) => draft((NUM[k] || "") + label, text, k))) : null);
@@ -1554,8 +1552,8 @@ function fixCard(group, byId) {
   const members = group.ids.map((id) => byId[id]);
   const suggestions = [...new Set(members.map((m) => m.fix_suggestion_id).filter(Boolean))];
   return h("article", { class: "card rcard" },
-    h("div", { class: "card-head" }, h("h3", { text: themeName(group.theme) }),
-      h("div", { class: "chips" }, group.variant ? h("span", { class: "chip soft", text: group.variant }) : null, h("span", { class: "cn", text: tr("cardN", group.n) }))),
+    h("div", { class: "card-head" }, h("div", { class: "ttl" }, h("h3", { text: themeName(group.theme) }), (group.variants || []).length ? h("span", { class: "vtxt", text: group.variants.join(", ") }) : null),
+      h("div", { class: "chips" }, h("span", { class: "cn", text: tr("cardN", group.n) }))),
     buyerBox(members.slice(0, 2), members.slice(2)), todoBox(suggestions, "id", false));
 }
 function startHere(groups, fight, byId) {  // the one task to do first: the biggest fix, else the first review to answer
@@ -1577,7 +1575,7 @@ function keepBody(keep) {
     keep.map((k) => quote(k))];
 }
 function ignoreList(items) {
-  return h("ul", { class: "ignore-list" }, items.map((it) => h("li", { lang: "id", text: "#" + it.id + (it.stars ? " · " + starsText(it.stars) : "") + " · " + (it.text || tr("noText")) })));
+  return h("ul", { class: "ignore-list" }, items.map((it) => h("li", { lang: "id", text: (it.stars ? starsText(it.stars) + " · " : "") + (it.text || tr("noText")) })));
 }
 
 /* ---------- anonymous usage events and the feedback question ----------
@@ -1908,7 +1906,11 @@ const dropHeld = (sig) => writeList(HELD_KEY, readList(HELD_KEY).filter((x) => x
 const entryState = (e) => (e.expired ? "expired" : e.done ? "done" : "open");
 function boxItemsFrom(data) {  // the biggest fix first, then the groups of replies
   const byId = {}; data.items.forEach((it) => { byId[it.id] = it; });
-  const out = (data.groups || []).map((g) => ({ id: rid(), kind: "fix", theme: g.theme, text: g.ids.map((id) => (byId[id] || {}).fix_suggestion_id).find(Boolean) || "", n: g.n }));
+  const out = [], seen = new Set();
+  (data.groups || []).forEach((g) => {  // one theme, one task; the same sentence never twice
+    const text = g.ids.map((id) => (byId[id] || {}).fix_suggestion_id).find(Boolean) || "", key = g.theme + "|" + text;
+    if (!seen.has(key)) { seen.add(key); out.push({ id: rid(), kind: "fix", theme: g.theme, text, n: g.n }); }
+  });
   const replies = new Map();
   data.items.forEach((it) => { if ((it.bucket === "fight" || it.bucket === "check") && replyText(it) && !isFake(it)) replies.set(it.theme, (replies.get(it.theme) || 0) + 1); });
   replies.forEach((n, theme) => out.push({ id: rid(), kind: "reply", theme, n }));
@@ -1948,7 +1950,7 @@ function finishResult() {  // Selesai on a Hasil Bedah: the tasks are made, the 
   logAnalysis(lastData, lastCounts);
   updateLog(sig, { done: true, tasks: n }); dropHeld(sig);
   track("fix_marked"); renderFixBadge();
-  playDone(n, () => { if (n) showToast(tr("doneToast", n)); if (hasAccount()) openHistory(); else openFixes(); });
+  playDone(n, () => { if (hasAccount()) openHistory(); else openFixes(); if (n) showToast(tr("doneToast", n)); });  // go first: a new screen clears any toast
 }
 function toggleItem(sig, id) {
   saveBoxes(loadBoxes().map((b) => {
@@ -2091,10 +2093,11 @@ function historyCard(it) {
   const e = it.e, st = e ? entryState(e) : "", day = new Date(it.ts), held = e && st === "open" ? heldFor(e.sig) : null;
   const meta = [isNaN(day) ? "" : fmtDayShort(isoDay(day)), tr("histCounts", it.reviews), st === "done" && e.tasks ? tr("histTasks", e.tasks) : "", st === "expired" ? tr("histExpired", e.expired.open, e.expired.total) : ""].filter(Boolean).join(" · ");
   const links = [];
-  if (st === "done" && e) links.push(h("button", { class: "plain", type: "button", text: tr("rivalsBtnShort"), onclick: () => openRivals({ from: "history", url: e.url, title: e.label, sig: e.sig }) }));
+  // one rule: "Lanjutkan" when this device still holds the result; "Bedah lagi" on every other row; "Analisis pesaing" too once the analysis is finished
   if (held) links.push(h("button", { class: "plain", type: "button", text: tr("histResume"), onclick: () => resumeHeld(e.sig) }));
-  if (st !== "done" && !held) links.push(h("button", { class: "plain", type: "button", text: tr("histAgain"), onclick: () => reanalyse(e ? e.url : "", it.label) }));
-  return h("article", { class: "hrow" }, h("div", { class: "hh" }, h("b", { title: it.label || null, text: shortLabel(it.label, 70) || tr("fixNoProduct") }), st ? h("span", { class: "st " + st, text: tr("st_" + st) }) : null),
+  if (st === "done" && e) links.push(h("button", { class: "plain", type: "button", text: tr("rivalsBtnShort"), onclick: () => openRivals({ from: "history", url: e.url, title: e.label, sig: e.sig }) }));
+  if (!held) links.push(h("button", { class: "plain", type: "button", text: tr("histAgain"), onclick: () => reanalyse(e ? e.url : "", it.label) }));
+  return h("article", { class: "hrow" }, h("div", { class: "hh" }, h("b", { title: it.label || null, text: shortLabel(it.label, 70) || tr("noProductName") }), st ? h("span", { class: "st " + st, text: tr("st_" + st) }) : null),
     h("span", { class: "hm", text: meta }), links.length ? h("div", { class: "hl" }, links) : null);
 }
 function resumeHeld(sig) {  // "Lanjutkan": the result this browser kept, drawn again without counting as a new analysis
@@ -2168,6 +2171,7 @@ window.addEventListener("popstate", () => { if ($("sheet").classList.contains("o
 $("sheet-scrim").addEventListener("click", () => closeSheet());
 $("sheet-x").addEventListener("click", () => closeSheet());
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("sheet").classList.contains("open")) closeSheet(); });
+function clearToast() { clearTimeout(toastTimer); $("toast2").hidden = true; }
 function showToast(msg) { const t = $("toast2"); announce(msg); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3200); }
 function animateIn(el, cls) { if (!el || reduceMotion()) return; el.classList.remove("enter", "enter-fwd", "enter-bwd"); void el.offsetWidth; el.classList.add(cls || "enter"); }
 function smoothDetails(d) {  // a row that opens grows to its height, and shrinks back, instead of jumping
@@ -2213,7 +2217,14 @@ function selectTab(key, focus) {  // which group's cards show under the tabs
     if (t) { t.setAttribute("aria-selected", on ? "true" : "false"); t.tabIndex = on ? 0 : -1; if (on && focus) t.focus(); }
     const pn = $("panel-" + k); if (pn) pn.hidden = !on;
   }
+  const at = $("tab-" + key); if (at && at.scrollIntoView) at.scrollIntoView({ block: "nearest", inline: "center", behavior: "auto" });
+  tabFades();
 }
+function tabFades() {  // a row that runs past the screen edge fades there, so a seller can see there are more tabs
+  const r = $("tabs"); if (!r) return;
+  r.classList.toggle("more-l", r.scrollLeft > 4); r.classList.toggle("more-r", r.scrollLeft + r.clientWidth < r.scrollWidth - 4);
+}
+$("tabs").addEventListener("scroll", tabFades, { passive: true }); window.addEventListener("resize", tabFades);
 function headline(groups, fight, keep, items) {  // one calm sentence and one line of context, counts only
   let hd = tr("hNone");
   if (groups.length) hd = tr(groups.length === 1 ? "hOne" : "hTop", lowerTheme(groups[0].theme));
@@ -2227,7 +2238,7 @@ function headline(groups, fight, keep, items) {  // one calm sentence and one li
   return { h: hd, lead: parts.join(" ") };
 }
 function renderSummary(groups, fight, keep, counts) {  // the soft-green box: what is wrong, in three to four lines, then what else the reviews hold
-  const bullets = groups.slice(0, 3).map((g) => tr("sumItem", themeName(g.theme) + (g.variant ? " " + g.variant : ""), g.n));
+  const bullets = groups.slice(0, 3).map((g) => tr("sumItem", themeName(g.theme), g.n));
   if (groups.length > 3) bullets.push(tr("sumMore", groups.length - 3, groups.slice(3, 6).map((g) => lowerTheme(g.theme)).join(", ")));
   if (!bullets.length) bullets.push(tr("sumNothing"));
   const also = [];
@@ -2289,10 +2300,10 @@ function render(data, fresh) {
   tabKeys($("tabs"), "button", (t) => { selectTab(t.dataset.b, true); track("tab_viewed", { tab: t.dataset.b }); });
   const plat = platformName(src.url || "");
   const panel = (k, body, extra) => h("div", { class: "panel", role: "tabpanel", id: "panel-" + k, "aria-labelledby": "tab-" + k, "data-b": k, hidden: true },
-    h("p", { class: "rule", text: tr(k + "Rule") }), extra, body);
+    k === "fix" || k === "fight" ? null : h("p", { class: "rule", text: tr(k + "Rule") }), extra, body);  // Perbaiki and Tanggapi open with their one note, not a stack of them
   $("panels").replaceChildren(
     panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") }), fixItems.length ? aiNote() : null),
-    panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") }), [h("div", { class: "callout hot" }, h("b", { text: tr("noRemove") + " " }), tr("noRemoveBody", plat, plat)), fight.length ? aiNote() : null]),
+    panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") }), [h("div", { class: "callout" }, h("b", { text: tr("noRemove") + " " }), tr("noRemoveBody", plat, plat)), fight.length ? aiNote() : null]),
     panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })),
     panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })));
   renderRival(); renderFeedback();
@@ -2561,7 +2572,7 @@ function finishRival() {  // Selesai on a Hasil Bedah pesaing: the catch-up item
     saveBoxes(boxes.filter(Boolean));
   }
   track("fix_marked");
-  playDone(items.length, () => { rival = { step: "idle" }; rivalRun += 1; if (items.length) showToast(tr("doneToast", items.length)); openFixes(); });
+  playDone(items.length, () => { rival = { step: "idle" }; rivalRun += 1; openFixes(); if (items.length) showToast(tr("doneToast", items.length)); });
 }
 
 desktopQuery.addEventListener("change", () => {  // crossing 900px: the layout changes, the content stays
@@ -2585,7 +2596,7 @@ function show(view) {
   $("nav-tasks").setAttribute("aria-current", tasks ? "page" : "false");
   $("fixes-btn").classList.toggle("on", tasks); $("check-btn").classList.toggle("on", !tasks);
 
-  if (before !== view) animateIn($(VIEWS[view]));  // a new screen rises in
+  if (before !== view) { clearToast(); animateIn($(VIEWS[view])); }  // a new screen rises in, and the last screen's toast goes
 }
 $("nav-check").addEventListener("click", () => { show(currentView === "rival" || currentView === "fixes" || currentView === "history" ? (checkerView === "loading" && !$("run").disabled ? "input" : checkerView) : currentView); toTop(); });
 $("check-btn").addEventListener("click", () => $("nav-check").click());
