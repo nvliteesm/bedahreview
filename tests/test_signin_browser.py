@@ -116,10 +116,12 @@ window.__probe = (async () => {
     out.gate = vis("gate"); out.workspaceHidden = byId("workspace").hidden;
     out.title = byId("gate-h").textContent; out.google = byId("g-google").textContent.trim();
     out.histHidden = byId("acct-history").hidden && byId("tasks-history").hidden;
-    out.consent = byId("g-choose").textContent.includes("Kami mencatat fitur yang kamu pakai per akun (misalnya bagian yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.");
-    out.codeLink = vis("g-codelink"); out.signinBtn = vis("signin-btn");
+    out.consent = byId("g-choose").textContent.includes("Teks ulasanmu tidak kami simpan.");
+    out.twoChoices = vis("g-google") && vis("g-send") && vis("g-close") && !byId("g-example") && !byId("g-codelink") && !document.querySelector("details.gate-opts");
+    out.signinBtn = vis("signin-btn");
     out.noContactAsk = /hubungi|wawancara|contacted|interview/i.test(byId("gate").textContent);
-    out.keepInOptions = !!byId("g-keep").closest("details.gate-opts") && !byId("g-keep").closest("details").open && byId("g-keep").checked;  // on by default, and out of the way
+    byId("acct-btn").click(); out.menuVisitor = [...document.querySelectorAll("#acct-menu .mitem")].filter((b) => b.offsetParent).map((b) => b.id || "link");  // access code, theme and the stay-signed-in choice live in the avatar menu
+    out.keepInMenu = byId("g-keep").checked && !!byId("g-keep").closest("#acct-menu");  // on by default, and out of the way
     out.otp = [byId("otp-0").getAttribute("autocomplete"), byId("otp-0").getAttribute("inputmode"), byId("otp-1").getAttribute("autocomplete"), document.querySelectorAll("#otp input").length];
     byId("lang").click(); out.titleEn = byId("gate-h").textContent; byId("lang").click();
     byId("g-google").click(); await wait(100); out.oauth = calls("oauth")[0].slice(1);
@@ -370,11 +372,7 @@ window.__probe = (async () => {
   if (hash === "#example") {
     await until(() => !byId("workspace").hidden); byId("signin-btn").click();
     await until(() => vis("gate"));
-    byId("g-example").click();
-    await until(() => !byId("view-results").hidden, 80);
-    out.results = !byId("view-results").hidden; out.note = byId("start").textContent.includes("contoh dengan ulasan rekaan");
-    out.feedbackHidden = byId("feedback").hidden; out.fixButtons = document.querySelectorAll("#panel-fix .fixform").length;
-    out.signinBtn = vis("signin-btn"); out.counts = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
+    showApp();
     localStorage.setItem("bedahreview-free-used", "1");  // the free analysis was already used in this browser
     show("input"); byId("sample").click(); byId("run").click();
     await wait(300);
@@ -431,16 +429,17 @@ class SignInBrowserTests(unittest.TestCase):
     def test_a_visitor_lands_in_the_app_and_the_sign_in_opens_from_the_header(self):
         out = self.probe("#out")
         self.assertTrue(out["histHidden"])  # signed out: no Riwayat in the menu or on Tugas
-        self.assertEqual(out["start"], {"gate": False, "app": True, "signinBtn": True, "acct": False})  # the first analysis is free, so the app comes first
+        self.assertEqual(out["start"], {"gate": False, "app": True, "signinBtn": True, "acct": True})  # a visitor gets the avatar menu too (theme, access code)  # the first analysis is free, so the app comes first
         self.assertEqual((out["gate"], out["workspaceHidden"]), (True, True))
-        self.assertEqual(out["title"], "Masuk untuk membedah ulasanmu")
+        self.assertEqual(out["title"], "Masuk untuk menyimpan hasilmu")
         self.assertEqual(out["google"], "Masuk dengan Google")
         self.assertTrue(out["consent"])
-        self.assertTrue(out["codeLink"])  # interviewers with an access code still have a way in
+        self.assertTrue(out["twoChoices"])  # Google, email and "Nanti saja" only
+        self.assertIn("acct-theme", out["menuVisitor"])  # the visitor's menu holds the theme switch
         self.assertFalse(out["noContactAsk"])  # no "may we contact you" question anywhere
-        self.assertTrue(out["keepInOptions"])
+        self.assertTrue(out["keepInMenu"])
         self.assertEqual(out["otp"], ["one-time-code", "numeric", "off", 6])
-        self.assertEqual(out["titleEn"], "Sign in to analyse your reviews")
+        self.assertEqual(out["titleEn"], "Sign in to save your results")
         self.assertEqual(out["oauth"], ["google", "http://127.0.0.1:%d/" % self.port])
         self.assertEqual((out["badEmail"], out["otpCalls"]), ("Alamat email tidak valid.", 0))  # a bad address never reaches Supabase
 
@@ -576,19 +575,15 @@ class SignInBrowserTests(unittest.TestCase):
         out = self.probe("#keep", user_agent=iphone)
         self.assertTrue(out["ios"])
 
-    def test_the_free_example_works_without_signing_in_and_analysing_asks_for_it(self):
+    def test_analysing_after_the_free_analysis_is_used_asks_for_a_sign_in(self):
         out = self.probe("#example")
-        self.assertTrue(out["results"] and out["note"])
-        self.assertTrue(out["feedbackHidden"])
-        self.assertEqual(out["fixButtons"], 0)  # nothing from the example can be saved as a real fix
-        self.assertTrue(out["signinBtn"])
         self.assertTrue(out["gateAfterRun"])  # the free analysis was used: analysing asks for a sign-in
         self.assertEqual(out["info"], "Analisis gratismu sudah terpakai. Masuk untuk lanjut, tetap gratis.")
         self.assertTrue(out["closeShown"] and out["backInApp"])
 
     def test_one_free_analysis_shows_the_counts_and_a_sign_in_shows_the_rest(self):
         out = self.probe("#free")
-        self.assertEqual(out["start"], {"gate": False, "signinBtn": True, "acct": False})
+        self.assertEqual(out["start"], {"gate": False, "signinBtn": True, "acct": True})
         self.assertEqual(out["locked"], {"unlock": True, "panels": False, "counts": 4, "flag": "1"})  # the four numbers show, the details wait
         self.assertTrue(out["tabPointsToSignIn"])
         self.assertEqual(out["second"], {"gate": True, "info": "Analisis gratismu sudah terpakai. Masuk untuk lanjut, tetap gratis.", "close": True})
@@ -627,7 +622,8 @@ class SignInBrowserTests(unittest.TestCase):
         out = self.probe("#account")
         self.assertFalse(out["closed"])
         self.assertEqual(out["open"], [True, "true", "mitem"])  # opens with the first item focused
-        self.assertEqual(out["items"][:2], ["Riwayat", "Keluar"])  # Riwayat sits at the top of the menu for a signed-in account
+        self.assertIn(out["items"][1], ("Mode gelap", "Mode terang"))  # the label follows the current theme
+        self.assertEqual(out["items"][:1] + out["items"][2:], ["Riwayat", "Kebijakan privasi", "Syarat penggunaan", "Keluar", "Hapus akun dan data saya"])  # the owner's order; Riwayat on top, delete last and apart
         self.assertIn("Kebijakan privasi", out["items"])
         self.assertEqual(out["items"][-1], "Hapus akun dan data saya")  # last, apart from the rest
         self.assertTrue(out["deleteRed"])

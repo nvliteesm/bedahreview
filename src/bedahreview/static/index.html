@@ -24,6 +24,7 @@
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --gutter: 16px; --radius: 14px;
   --bar: #ffffff; --shadow: none; --rival: #4338ca; --rival-soft: #eceafc;
+  --summary-soft: #e9f3ef; --summary-line: #cfe3db; --accent-ink: #0b4f42;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -32,6 +33,7 @@
     --fix: #f0a24a; --fix-soft: #33261a; --fight: #f27088; --fight-soft: #351c22;
     --ignore: #a3aca8; --ignore-soft: #242b28; --check: #a5b4fc; --keep: #86efac; --keep-soft: #12281a;
     --bar: #1a211e; --rival: #a5b4fc; --rival-soft: #232647;
+    --summary-soft: #1b2a25; --summary-line: #2c4a41; --accent-ink: #7fd1b8;
   }
 }
 :root[data-theme="dark"] {
@@ -40,6 +42,7 @@
   --fix: #f0a24a; --fix-soft: #33261a; --fight: #f27088; --fight-soft: #351c22;
   --ignore: #a3aca8; --ignore-soft: #242b28; --check: #a5b4fc; --keep: #86efac; --keep-soft: #12281a;
   --bar: #1a211e; --rival: #a5b4fc; --rival-soft: #232647;
+  --summary-soft: #1b2a25; --summary-line: #2c4a41; --accent-ink: #7fd1b8;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -195,6 +198,13 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 .has-acct #theme, .visitor #theme, .visitor #fixes-btn { display: none; }
 .theme.fixes-pill { width: auto; padding: 0 16px 0 12px; border-radius: 999px; display: inline-flex; gap: 8px; font: inherit; font-weight: 700; font-size: 0.9rem; }
 .mitem.m-only { display: none; }
+#acct-person { display: none; } .visitor #acct-person { display: block; } .visitor #acct-initial { display: none; }
+.visitor .avatar { background: var(--accent-soft); color: var(--accent-ink); }
+.mitem.check { gap: 10px; font-weight: 600; font-size: 0.92rem; } .mitem.check input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+#check-btn { display: none !important; }
+@media (min-width: 900px) { #check-btn { display: inline-flex !important; } }
+body.gated #check-btn { display: none !important; }
+#check-btn.on { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
 @media (max-width: 479px) { .has-acct #fixes-btn { display: none; } .has-acct .mitem.m-only { display: flex; } #fixes-btn .lbl { display: none; } .theme.fixes-pill { width: 44px; padding: 0; } }  /* a phone: Fixes moves into the account menu (a local run has no menu, so it keeps its icon) */
 @media (min-width: 900px) { .has-acct #theme, .visitor #theme { display: grid; } #acct-theme { display: none; } }
 @media (max-width: 399px) { .lang .o:not(.on) { display: none; } }  /* a small phone: the language switch shows only the current one, and a tap still switches */
@@ -207,8 +217,6 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 .check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 0.92rem; font-weight: 600; cursor: pointer; }
 .check input { width: 22px; height: 22px; min-height: 22px; padding: 0; margin: 0; accent-color: var(--accent); flex: none; }
 #start { display: grid; gap: 8px; }
-.gate-opts summary { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
-.gate-opts summary::after { content: "\00a0\25BE"; }
 .gate-card p a { color: inherit; }
 .gate-links { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
 .gate-links a { color: var(--accent); font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
@@ -246,8 +254,8 @@ main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-
 .error strong { display: block; font-size: 1.05rem; margin-bottom: 2px; }
 .error > div { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .legend { padding: 0 2px; }
-#legend { display: grid; gap: 6px; font-size: 0.9rem; color: var(--muted); padding-bottom: 6px; }
-#legend b { margin-right: 6px; }
+#legend, .legend-dlg { display: grid; gap: 6px; font-size: 0.9rem; color: var(--muted); padding-bottom: 6px; }
+#legend b, .legend-dlg b { margin-right: 6px; }
 .stepper { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 0; padding: 6px; list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
 .stepper li { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-size: 0.88rem; font-weight: 600; color: var(--muted); min-width: 0; }
 .stepper .dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line); font-size: 0.78rem; flex: none; }
@@ -309,7 +317,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.72rem;
 .ins.bad .big b:first-child { color: var(--fight); } .ins.good .big b:first-child { color: var(--keep); }
 .cand .meta { display: block; }
 .cmp-title { padding: 14px 10px 4px; }
-#legend .lg-fix { color: var(--fix); } #legend .lg-fight { color: var(--fight); } #legend .lg-ignore { color: var(--ignore); } #legend .lg-keep { color: var(--keep); }
+#legend .lg-fix, .legend-dlg .lg-fix { color: var(--fix); } #legend .lg-fight, .legend-dlg .lg-fight { color: var(--fight); } #legend .lg-ignore, .legend-dlg .lg-ignore { color: var(--ignore); } #legend .lg-keep, .legend-dlg .lg-keep { color: var(--keep); }
 
 @media (min-width: 900px) {
   :root { --radius: 22px; --bar: #e6eae7; --shadow: 0 1px 2px rgba(23, 32, 28, 0.05), 0 8px 24px rgba(23, 32, 28, 0.04); }
@@ -458,7 +466,7 @@ details.xp[open] > summary::after { transform: translate(0, 4px) rotate(-135deg)
 details.xp.closing > summary::after { transform: rotate(45deg); }
 .board button[data-on][data-b="fix"] { background: var(--fix-soft); border: 2px solid var(--fix); } .board button[data-on][data-b="fight"] { background: var(--fight-soft); border: 2px solid var(--fight); }
 .board button[data-on][data-b="ignore"] { background: var(--ignore-soft); border: 2px solid var(--ignore); } .board button[data-on][data-b="keep"] { background: var(--keep-soft); border: 2px solid var(--keep); }
-#fixes-btn.on { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+#fixes-btn.on { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
 #stabs { position: sticky; top: 50px; z-index: 1; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); justify-self: stretch; border-radius: 12px; }
 #stabs { margin-bottom: 12px; }
 #stabs button { padding: 0 6px; border-radius: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -468,7 +476,6 @@ details.xp.closing > summary::after { transform: rotate(45deg); }
 .stephd .stepper { flex: 0 1 auto; min-width: 0; } .stephd .stepper li { padding: 4px 6px; gap: 4px; font-size: 0.78rem; } .stephd .stepper .dot { width: 22px; height: 22px; }
 @media (max-width: 459px) { .stephd .stepper li:not(.on) .full, .stephd .stepper li:not(.on) .short { display: none; } }  /* a phone: only the current step keeps its name */
 details.xp > .xp-body { padding: 2px 2px 12px; display: grid; gap: 8px; }
-.gate-opts summary::after { content: none; }
 
 /* fields, errors and notices: the message sits where the seller tapped */
 input.filled { border: 2px solid var(--accent); }
@@ -703,19 +710,22 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
     </div>
     <div class="tools">
       <button class="btn pill" id="signin-btn" type="button" hidden data-i18n="signInShort"></button>
+      <button class="theme fixes-pill" id="check-btn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg><span class="lbl" data-i18n="navChecker"></span></button>
       <button class="theme fixes-pill" id="fixes-btn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="lbl" data-i18n="fixesBtn"></span><span class="badge" id="fixes-count" hidden></span></button>
       <button class="lang" id="lang" type="button" data-i18n-label="langBtn"></button>
       <button class="theme" id="theme" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path id="theme-icon" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
       <div class="acct" id="acct" hidden>
-        <button class="avatar" id="acct-btn" type="button" aria-expanded="false" aria-controls="acct-menu" data-i18n-label="acctMenu"><span id="acct-initial" aria-hidden="true"></span></button>
+        <button class="avatar" id="acct-btn" type="button" aria-expanded="false" aria-controls="acct-menu" data-i18n-label="acctMenu"><span id="acct-initial" aria-hidden="true"></span><svg class="i" id="acct-person" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></button>
         <div class="acct-menu" id="acct-menu" hidden>
-          <div class="acct-who"><span class="small muted" data-i18n="acctAs"></span><b id="acct-email"></b></div>
+          <div class="acct-who" id="acct-who"><span class="small muted" data-i18n="acctAs"></span><b id="acct-email"></b></div>
           <button class="mitem m-only" id="acct-fixes" type="button"></button>
           <button class="mitem" id="acct-history" type="button" data-i18n="histTitle" hidden></button>
-          <div id="logout-row" hidden><button class="mitem" id="logout" type="button" data-i18n="logout"></button></div>
           <button class="mitem" id="acct-theme" type="button"></button>
+          <label class="mitem check" id="acct-keep-row" for="g-keep" hidden><input type="checkbox" id="g-keep" checked><span data-i18n="gKeep"></span></label>
+          <a class="mitem" id="acct-code" href="/code" hidden data-i18n="acctCodeAsk"></a>
           <a class="mitem" href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a>
           <a class="mitem" href="/terms" target="_blank" rel="noopener" data-i18n="termsLink"></a>
+          <div id="logout-row" hidden><button class="mitem" id="logout" type="button" data-i18n="logout"></button></div>
           <div id="delete-area" hidden>
             <hr>
             <button class="mitem danger" id="delete-open" type="button" data-i18n="delBtn"></button>
@@ -743,13 +753,9 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
         <input id="g-email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" data-i18n-ph="gEmailPh">
       </label>
       <button class="btn primary" id="g-send" type="button" data-i18n="gSend"></button>
-      <p class="small muted"><span data-i18n="gConsent"></span></p>
-      <p class="small muted"><span data-i18n="agreePre"></span> <a href="/terms" target="_blank" rel="noopener" data-i18n="termsLink"></a> <span data-i18n="agreeAnd"></span> <a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a>.</p>
-      <details class="gate-opts"><summary data-i18n="gOpts"></summary><label class="check" for="g-keep"><input type="checkbox" id="g-keep" checked><span data-i18n="gKeep"></span></label></details>
+      <p class="small muted"><span data-i18n="gSmall"></span> <a href="/terms" target="_blank" rel="noopener" data-i18n="termsLink"></a> · <a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a></p>
       <div class="callout" id="g-ios" hidden data-i18n="gIosNote"></div>
-      <button class="btn ghost" id="g-example" type="button" data-i18n="gExample"></button>
       <div class="gate-links">
-        <a id="g-codelink" href="/code" hidden data-i18n="gCode"></a>
         <button class="plain" id="g-close" type="button" hidden data-i18n="gClose"></button>
       </div>
     </div>
@@ -1109,10 +1115,10 @@ const TEXT = {
     rivalLineWorse: "%s: %s di produkmu, di pesaing terbaik %s.", rivalLineOther: "%s: %s di produkmu, %s di %s.",
     rivalAlone: "Tanpa Bedah ulasan, kami tidak membandingkan dengan produkmu. Jalankan Bedah ulasan untuk melihat selisihnya.", rivalLinkLbl: "Lihat ulasannya",
     rivalLineWorseEx: "%s: %s di %s, di pesaing terbaik %s.", rivalLineOtherEx: "%s: %s di %s, %s di %s.",
-    gTitle: "Masuk untuk membedah ulasanmu", gSub: "Gratis, tanpa kata sandi. Pakai Google atau email.", gGoogle: "Masuk dengan Google", gOr: "atau pakai email",
-    gEmail: "Email", gEmailPh: "nama@email.com", gSend: "Kirim kode ke email", gConsent: "Kami mencatat fitur yang kamu pakai per akun (misalnya bagian yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.", gOpts: "Pengaturan masuk",
+    gTitle: "Masuk untuk menyimpan hasilmu", gSub: "Gratis, tanpa kata sandi.", gSmall: "Teks ulasanmu tidak kami simpan.", acctCodeAsk: "Punya kode akses?", gGoogle: "Masuk dengan Google", gOr: "atau pakai email",
+    gEmail: "Email", gEmailPh: "nama@email.com", gSend: "Kirim kode ke email", gConsent: "Kami mencatat fitur yang kamu pakai per akun (misalnya bagian yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.",
     gKeep: "Tetap masuk di HP ini", gIosNote: "Pasang ke layar utama dulu (Safari > Bagikan > Tambah ke Layar Utama), lalu masuk dari ikonnya. Di aplikasi yang terpasang, kamu perlu masuk sekali lagi.",
-    gExample: "Coba contoh dulu", gCode: "Punya kode akses? Masuk di sini", gClose: "Nanti saja", signInShort: "Masuk",
+    gClose: "Nanti saja", signInShort: "Masuk",
     gCodeTitle: "Masukkan kode 6 digit", gCodeSub: "Kode 6 digit sudah kami kirim ke %s. Buka email, salin kodenya, lalu tempel di kotak pertama. Belum ada? Cek folder spam.", gVerify: "Masuk", gResend: "Kirim ulang kode", gResendIn: "Kirim ulang kode (%s)",
     gSentAgain: "Kode baru sudah dikirim.", gChange: "Ganti email", gDigit: "Digit %s dari 6",
     gIntroTitle: "Sedikit tentang tokomu", gIntroSub: "Boleh dilewati. Ini membantu kami memahami siapa yang memakai BedahReview.", gPlatform: "Jualan di mana?", gPick: "Pilih…", gOther: "Lainnya",
@@ -1284,10 +1290,10 @@ const TEXT = {
     rivalLineWorse: "%s: %s for you, %s for the best competitor.", rivalLineOther: "%s: %s for you, %s at %s.",
     rivalAlone: "Without Review checker we cannot compare against your product. Run Review checker to see the gap.", rivalLinkLbl: "See the reviews",
     rivalLineWorseEx: "%s: %s for %s, %s for the best competitor.", rivalLineOtherEx: "%s: %s for %s, %s at %s.",
-    gTitle: "Sign in to analyse your reviews", gSub: "Free, no password. Use Google or email.", gGoogle: "Continue with Google", gOr: "or use email",
-    gEmail: "Email", gEmailPh: "name@email.com", gSend: "Send code to my email", gConsent: "We record which features you use, per account (for example which part you open), never review text, product names or an IP address.", gOpts: "Sign-in settings",
+    gTitle: "Sign in to save your results", gSub: "Free, no password.", gSmall: "We do not store your review text.", acctCodeAsk: "Have an access code?", gGoogle: "Continue with Google", gOr: "or use email",
+    gEmail: "Email", gEmailPh: "name@email.com", gSend: "Send code to my email", gConsent: "We record which features you use, per account (for example which part you open), never review text, product names or an IP address.",
     gKeep: "Keep me signed in on this phone", gIosNote: "Add to the Home Screen first (Safari > Share > Add to Home Screen), then sign in from the icon. In the installed app, you need to sign in one more time.",
-    gExample: "Try an example first", gCode: "Have an access code? Sign in here", gClose: "Not now", signInShort: "Sign in",
+    gClose: "Not now", signInShort: "Sign in",
     gCodeTitle: "Enter the 6-digit code", gCodeSub: "We sent a 6-digit code to %s. Open your email, copy the code, then paste it in the first box. Not there? Check your spam folder.", gVerify: "Sign in", gResend: "Send the code again", gResendIn: "Send the code again (%s)",
     gSentAgain: "A new code was sent.", gChange: "Change email", gDigit: "Digit %s of 6",
     gIntroTitle: "A little about your shop", gIntroSub: "You can skip this. It helps us understand who uses BedahReview.", gPlatform: "Where do you sell?", gPick: "Choose…", gOther: "Other",
@@ -1441,7 +1447,7 @@ function applyLang() {
   const other = lang === "id" ? "EN" : "ID";  // the current language first and darker; the other one goes on the smallest phones
   $("lang").replaceChildren(h("span", { class: "pill" }, h("em", { text: lang.toUpperCase() }), h("span", { class: "alt", "aria-hidden": "true", text: "/" }), h("span", { class: "alt", text: other })));
   $("pchip-change").textContent = tr("change"); $("back-results").textContent = tr("backResults"); $("print-d").textContent = tr("print");
-  $("legend").replaceChildren(...["fix", "fight", "ignore", "keep"].map((k) => h("p", {}, h("b", { class: "lg-" + k, text: tr(k) }), tr("legend" + k[0].toUpperCase() + k.slice(1)))));
+  $("legend").replaceChildren(...legendNodes());
   themeLabel(); renderFixBadge(); renderGate(); renderAccount(); setQuota(lastQuota);
   if (currentView === "fixes") renderFixes();
   if (currentView === "history") renderHistory();
@@ -2014,6 +2020,7 @@ function taskRow(t) {  // one open step; a tap opens it right here
   return open ? h("div", { class: "taskbox" }, row, taskPanel(t)) : row;
 }
 function clearInputs() { ["url", "paste", "product"].forEach((id) => { $(id).value = ""; }); $("shared-note").hidden = true; showError(""); showUrlError(""); setFallback(false); syncClear(); syncShopee(); }
+function legendNodes() { return ["fix", "fight", "ignore", "keep"].map((k) => h("p", {}, h("b", { class: "lg-" + k, text: tr(k) }), tr("legend" + k[0].toUpperCase() + k.slice(1)))); }
 function startFresh() {  // "Bedah produk lain" at the end of a plan: an empty start, nothing of the last product left in the fields or the competitor panel
   if ($("run").disabled) { show("loading"); toTop(); return; }  // an analysis is still running: show it, do not wipe the form under it
   lastData = null; lastChanged = []; lastCounts = null;
@@ -2877,10 +2884,12 @@ function show(view) {
   $("nav-rivals").setAttribute("aria-current", view === "rivals" ? "page" : "false");
   $("ptab-mine").setAttribute("aria-current", view === "rivals" ? "false" : "page"); $("ptab-rivals").setAttribute("aria-current", view === "rivals" ? "page" : "false");
   $("ptabs").hidden = tasks;
-  $("fixes-btn").classList.toggle("on", tasks);
+  $("fixes-btn").classList.toggle("on", tasks); $("check-btn").classList.toggle("on", view !== "rivals" && !tasks);
+
   if (before !== view && view !== "plan") animateIn(view === "rivals" ? $("feature2") : $(VIEWS[view]));  // a new screen rises in; the steps slide sideways instead
 }
 $("nav-check").addEventListener("click", () => { show(currentView === "rivals" || currentView === "fixes" || currentView === "history" ? (checkerView === "loading" && !$("run").disabled ? "input" : checkerView) : currentView); toTop(); });
+$("check-btn").addEventListener("click", () => $("nav-check").click());
 $("nav-rivals").addEventListener("click", () => openRivals(false));
 $("nav-tasks").addEventListener("click", () => openFixes());
 $("ptab-mine").addEventListener("click", () => $("nav-check").click());
@@ -3199,12 +3208,13 @@ function showApp() {
 function renderAccount() {  // the header shows "Masuk" to a visitor and the account menu to someone signed in (an account, or a tester's access code)
   const on = signedIn && !!(userId || cfgAccess);
   $("signin-btn").hidden = !sb || signedIn;
-  $("acct").hidden = !on; $("logout-row").hidden = !on; document.body.classList.toggle("has-acct", on); document.body.classList.toggle("visitor", !!sb && !signedIn);
+  const visitor = !!sb && !signedIn;
+  $("acct").hidden = !(on || visitor); $("acct-who").hidden = !on; $("acct-keep-row").hidden = !visitor; $("acct-code").hidden = !(cfgAccess && !on); $("logout-row").hidden = !on; document.body.classList.toggle("has-acct", on); document.body.classList.toggle("visitor", visitor);
   $("acct-email").textContent = userEmail || (userId ? "" : tr("acctCode"));  // an access-code tester has no email to show
   $("acct-initial").textContent = (userEmail || (userId ? "?" : "#")).charAt(0);
   $("delete-area").hidden = !(sb && signedIn && userId && cfgCanDelete);
   $("acct-history").hidden = !hasAccount();  // Riwayat lives in the account: nothing to show without one
-  if (!on) setMenu(false);
+  if (!on && !visitor) setMenu(false);
   renderRival();  // the competitor buttons say "sign in" to a visitor
 }
 function setMenu(open) {
@@ -3239,7 +3249,7 @@ function renderGate() {
   $("g-vsub").textContent = tr("gCodeSub", gateEmail);
   fillSelect($("g-platform"), PLATFORMS, (v) => PLATFORM_NAME[v] || tr("gOther"));
   fillSelect($("g-category"), CATEGORIES, (v) => tr("cat_" + v));
-  $("g-codelink").hidden = !cfgAccess; $("g-close").hidden = !sb;  // the app is open without an account, so the sign-in can always wait
+  $("g-close").hidden = !sb;  // the app is open without an account, so the sign-in can always wait
   $("g-ios").hidden = !(isIos() && !isInstalled());  // an iPhone's installed app has its own storage, so signing in inside Safari would not carry over
   $("g-keep").checked = keepFlag();
   tickResend();
@@ -3398,15 +3408,6 @@ $("delete-confirm").addEventListener("click", async () => {
   location.reload();  // a clean page: no review, result or note is left in memory
 });
 $("signin-btn").addEventListener("click", () => showGate("choose"));
-$("g-example").addEventListener("click", async () => {
-  try {
-    const res = await fetch("/api/example");
-    if (!res.ok) throw new Error("example");
-    const data = await res.json();
-    exampleShown = true; showApp(); render(data, true);
-  } catch (e) { showGateError(tr("gErrNet")); }
-});
-
 /* ---------- install and offline ---------- */
 let deferredInstall = null;
 window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredInstall = e; $("install").hidden = false; });
