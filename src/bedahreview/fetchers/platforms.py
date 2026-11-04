@@ -1,4 +1,4 @@
-"""Fetch reviews from a Tokopedia, Lazada or TikTok Shop product link through paid Apify actors (demo only).
+"""Fetch reviews from a Tokopedia or TikTok Shop product link (Lazada too when BEDAHREVIEW_LAZADA=1) through paid Apify actors (demo only).
 
 The seller pastes one link and never picks a platform: the link decides. Platform terms are not verified.
 Nothing here tries to get around blocks, logins or captchas. Short links are followed only through plain
@@ -7,6 +7,7 @@ outside tools (checked 2026-10-26), so a Shopee link gets a clear message and co
 """
 from __future__ import annotations
 
+import os
 import re
 import threading
 import time
@@ -44,8 +45,19 @@ _MAX_HOPS = 5
 _URL_IN_TEXT = re.compile(r"https?://[^\s<>\"']+")
 _TIKTOK_ID = re.compile(r"/(\d{15,})(?:/|$)")
 
-SUPPORTED = "Tokopedia, Lazada or TikTok Shop"
-SHOPEE_MESSAGE = "Shopee Indonesia does not give its reviews to outside tools right now, so a Shopee link cannot be read. Paste the reviews or use Share from the Shopee app instead."
+LAZADA_MESSAGE = "Lazada links are not supported yet. Use a product link from Tokopedia or TikTok Shop."
+
+
+def lazada_on() -> bool:
+    """Lazada is off unless BEDAHREVIEW_LAZADA=1 (owner decision 2026-11-04): its actor gives no product name and no seller replies, and one actor stopped after its free runs. The fetcher below stays, so turning it back on needs no code change."""
+    return os.environ.get("BEDAHREVIEW_LAZADA", "").strip() == "1"
+
+
+def supported() -> str:
+    return "Tokopedia, Lazada or TikTok Shop" if lazada_on() else "Tokopedia or TikTok Shop"
+
+
+SHOPEE_MESSAGE ="Shopee Indonesia does not give its reviews to outside tools right now, so a Shopee link cannot be read. Paste the reviews or use Share from the Shopee app instead."
 
 
 # -- links ----------------------------------------------------------------
@@ -99,18 +111,20 @@ def identify_link(text: str, resolver: Callable[[str], str] = resolve_short_link
     url = (found.group(0) if found else (text or "").strip()).rstrip(".,;)")
     parts, host, bad = _split(url)
     if bad and parts.scheme != "https":
-        raise LinkError("Paste the full https link of a %s product." % SUPPORTED, code="link_https")
+        raise LinkError("Paste the full https link of a %s product." % supported(), code="link_https")
     if bad:
         raise LinkError("That does not look like a product link.", code="not_product")
     if host in SHORT_HOSTS:
         url = resolver(url)
         parts, host, bad = _split(url)
         if bad or not _allowed_host(host):
-            raise LinkError("That short link does not lead to a %s product." % SUPPORTED, code="short_bad")
+            raise LinkError("That short link does not lead to a %s product." % supported(), code="short_bad")
     path = parts.path
     if host == "shopee.co.id" or host.endswith(".shopee.co.id"):
         raise LinkError(SHOPEE_MESSAGE, code="shopee")
     if host in LAZADA_HOSTS:
+        if not lazada_on():
+            raise LinkError(LAZADA_MESSAGE, code="lazada_off")  # refused before anything is spent, like Shopee
         if not path.startswith("/products/") or not path.endswith(".html"):
             raise LinkError("Open the Lazada product page and copy its link. It should start with lazada.co.id/products/", code="lazada_link")
         return "lazada", "https://www.lazada.co.id" + path
@@ -123,7 +137,7 @@ def identify_link(text: str, resolver: Callable[[str], str] = resolve_short_link
         if len([s for s in path.split("/") if s]) < 2:
             raise LinkError("Open the Tokopedia product page and copy its link (it has the shop name, then the product).", code="tokopedia_link")
         return "tokopedia", "https://www.tokopedia.com" + path
-    raise LinkError("This link is not supported. Paste a %s product link, or paste the reviews." % SUPPORTED, code="link_unsupported")
+    raise LinkError("This link is not supported. Paste a %s product link, or paste the reviews." % supported(), code="link_unsupported")
 
 
 # -- shared pieces ----------------------------------------------------------

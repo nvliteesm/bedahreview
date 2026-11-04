@@ -1,11 +1,13 @@
 import http.client
 import json
+import os
 import tempfile
 import threading
 import unittest
 import urllib.error
 from email.message import Message
 from pathlib import Path
+from unittest import mock
 
 from bedahreview.fetchers import FetchError, LinkError
 from bedahreview.web import make_server
@@ -74,12 +76,31 @@ def router(rows, resolver=_no_resolve, status="SUCCEEDED"):
 class IdentifyTests(unittest.TestCase):
     def test_each_platform_is_recognised_from_the_link_alone(self):
         self.assertEqual(identify_link(TOKO + "?aff_unique_id=&channel=others", _no_resolve), ("tokopedia", TOKO))
-        self.assertEqual(identify_link(LAZADA + "?pvid=abc&search=jfy&spm=x", _no_resolve), ("lazada", LAZADA))
         self.assertEqual(identify_link(TIKTOK, _no_resolve), ("tiktokshop", TIKTOK))
         self.assertEqual(identify_link("https://www.tiktok.com/shop/pdp/some-name/" + TIKTOK_ID + "?x=1", _no_resolve), ("tiktokshop", TIKTOK))
 
     def test_a_share_message_with_words_around_the_link_works(self):
-        self.assertEqual(identify_link("Lihat produk ini! %s?pvid=1 Mantap." % LAZADA, _no_resolve)[0], "lazada")
+        self.assertEqual(identify_link("Lihat produk ini! %s?aff=1 Mantap." % TOKO, _no_resolve)[0], "tokopedia")
+
+    def test_lazada_is_refused_by_default_and_costs_nothing(self):  # owner decision 2026-11-04: the actor gives no product name or seller replies
+        with mock.patch.dict(os.environ, {"BEDAHREVIEW_LAZADA": ""}):
+            for link in (LAZADA, LAZADA + "?pvid=abc&search=jfy&spm=x", "Lihat produk ini! %s Mantap." % LAZADA):
+                with self.assertRaises(LinkError, msg=link) as ctx:
+                    identify_link(link, _no_resolve)
+                self.assertEqual(ctx.exception.code, "lazada_off")
+                self.assertIn("Tokopedia or TikTok Shop", str(ctx.exception))
+            with self.assertRaises(LinkError) as ctx:
+                identify_link("halo", _no_resolve)
+            self.assertIn("Tokopedia or TikTok Shop", str(ctx.exception))  # the other messages stop naming Lazada too
+            self.assertNotIn("Lazada", str(ctx.exception))
+
+    def test_lazada_works_again_when_the_switch_is_on(self):
+        with mock.patch.dict(os.environ, {"BEDAHREVIEW_LAZADA": "1"}):
+            self.assertEqual(identify_link(LAZADA + "?pvid=abc&search=jfy&spm=x", _no_resolve), ("lazada", LAZADA))
+            self.assertEqual(identify_link("Lihat produk ini! %s?pvid=1 Mantap." % LAZADA, _no_resolve)[0], "lazada")
+            with self.assertRaises(LinkError) as ctx:
+                identify_link("halo", _no_resolve)
+            self.assertIn("Lazada", str(ctx.exception))
 
     def test_short_links_are_resolved_then_identified(self):
         seen = []
@@ -135,6 +156,11 @@ class ShortLinkTests(unittest.TestCase):
 
 
 class FetchTests(unittest.TestCase):
+    def setUp(self):  # the Lazada fetcher is kept and tested; only the link router refuses Lazada unless this is on
+        patcher = mock.patch.dict(os.environ, {"BEDAHREVIEW_LAZADA": "1"})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_tokopedia_sends_the_right_input_and_keeps_only_low_rated_reviews_with_text(self):
         r, client = router(TOKO_ROWS)
         out = r.fetch_reviews(TOKO + "?utm=1", 5, "complaints")
@@ -280,6 +306,13 @@ class WebFlowTests(unittest.TestCase):
         self.assertIn("Paste the reviews", out["error"])
         self.assertEqual(out["code"], "shopee")  # the page says it in Bahasa from the code
         self.assertEqual(self.client.calls, [])
+
+    def test_lazada_link_is_a_clean_400_that_costs_nothing(self):
+        with mock.patch.dict(os.environ, {"BEDAHREVIEW_LAZADA": ""}):
+            status, out = self.post({"url": LAZADA + "?pvid=1"})
+        self.assertEqual(status, 400)
+        self.assertEqual(out["code"], "lazada_off")  # the page says it in Bahasa from the code
+        self.assertEqual(self.client.calls, [])  # nothing reached the paid service
 
 
 if __name__ == "__main__":

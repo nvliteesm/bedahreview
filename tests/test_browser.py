@@ -435,6 +435,34 @@ window.__probe = (async () => {
     nav.away = [vis(), document.getElementById("toast2").hidden];
     nav.errors = errors;
   } catch (e) { out.err = String(e && e.stack || e); } }
+  if (location.hash === "#nolazada") { try {  // owner decision 2026-11-04: Lazada is not read for now; said at once, nothing is sent
+    const u = document.getElementById("url"); let sent = 0; const realFetch = window.fetch;
+    window.fetch = (...a) => { if (String(a[0]).indexOf("/api/classify") >= 0) sent += 1; return realFetch(...a); };
+    const put = async (v) => { u.value = v; u.dispatchEvent(new Event("input", { bubbles: true })); await wait(250); };
+    const st = () => [document.getElementById("url-error").hidden ? "" : document.getElementById("url-error-text").textContent, document.getElementById("fetch").classList.contains("off")];
+    await put("https://www.lazada.co.id/products/pdp-i160018103-s181853952.html?scm=1");
+    out.lz = { lazada: st() };
+    document.getElementById("fetch").click(); await wait(250); out.lz.sent = sent;
+    await put("https://www.tokopedia.com/toko/kaos-boxy"); out.lz.toko = st();
+    window.fetch = realFetch;
+  } catch (e) { out.err = String(e && e.stack || e); } }
+  if (location.hash === "#layout") { try {  // desktop and tablet placement, from the UI review of 2026-11-04
+    const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
+    const rect = (el) => { const b = (typeof el === "string" ? document.getElementById(el) : el).getBoundingClientRect(); return { left: Math.round(b.left), top: Math.round(b.top), right: Math.round(b.right), bottom: Math.round(b.bottom) }; };
+    const lay = {}; out.lay = lay;
+    runSample(); await until(() => !document.getElementById("view-results").hidden);
+    window.scrollTo(0, 0); document.getElementById("workspace").scrollTo(0, 0); await wait(200);
+    lay.cols = getComputedStyle(document.getElementById("view-results")).gridTemplateColumns.split(" ").length;
+    lay.title = rect("results-h"); lay.sum = rect("sumbox"); lay.tabs = rect("tabs"); lay.logo = rect("brand-home"); lay.tools = rect(document.querySelector(".tools"));
+    lay.noPrintButton = document.getElementById("print-d") === null;  // printing lives in the account menu
+    lay.quoteFont = getComputedStyle(document.querySelector("#panels blockquote")).fontFamily;
+    document.getElementById("brand-home").click(); await wait(300);
+    lay.back = rect("back-results"); lay.card = rect(document.querySelector("#view-input .card-box")); lay.sample = rect("sample");
+    lay.backShown = [!document.getElementById("back-results").hidden, getComputedStyle(document.getElementById("back-results")).display];
+    document.getElementById("back-results").click(); await wait(300);
+    document.getElementById("done-btn").click(); await until(() => currentView === "fixes"); await wait(200);
+    lay.tugas = { title: rect("fixes-h"), box: rect(document.querySelector("#tasks-body .tbox")), action: (document.querySelector("#tasks-body .tlinks .btn") || {}).className || "" };
+  } catch (e) { out.err = String(e && e.stack || e); } }
   return out;
 })();
 </script>
@@ -798,6 +826,39 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(sec["returned"], ["results", True])
         self.assertEqual(sec["groups"], [3, 1, ["Praise: quality / material"]])
         self.assertEqual(sec["chosen"], [1, 2, 3])  # pasted links count towards the same number
+
+    def test_a_lazada_link_is_refused_at_once_and_nothing_is_sent(self):
+        pr = self.probe("/#nolazada", 390)
+        self.assertNotIn("err", pr, pr.get("err"))
+        lz = pr["lz"]
+        self.assertEqual(lz["lazada"], ["Link Lazada belum didukung. Pakai link produk dari Tokopedia atau TikTok Shop.", True])  # the notice on the field, the button off
+        self.assertEqual(lz["sent"], 0)  # tapping it sends nothing to the server
+        self.assertEqual(lz["toko"], ["", False])  # a Tokopedia link works as before
+
+    def test_wide_screen_layout_lines_up_and_the_summary_sits_beside_the_title(self):
+        lay = self.probe("/#layout", width=1300)
+        self.assertNotIn("err", lay, lay.get("err"))
+        lay = lay["lay"]
+        self.assertEqual(lay["cols"], 2)
+        self.assertGreater(lay["sum"]["left"], lay["tabs"]["right"] - 1)  # the summary beside the cards
+        self.assertLessEqual(abs(lay["title"]["left"] - lay["logo"]["left"]), 1)  # the logo and Hasil Bedah start at the same edge
+        self.assertLessEqual(abs(lay["tools"]["right"] - lay["sum"]["right"]), 1)  # the header ends where the summary ends
+        self.assertTrue(lay["title"]["top"] - 8 <= lay["sum"]["top"] <= lay["title"]["top"] + 24)  # the summary starts level with the title, not below the banner
+        self.assertTrue(lay["noPrintButton"])
+        self.assertNotIn("mono", lay["quoteFont"].lower())  # quotes read as text, not code
+        self.assertEqual(lay["backShown"], [True, "flex"])  # "Lihat hasil terakhir" shows while a result is held...
+        self.assertGreaterEqual(lay["back"]["top"], lay["card"]["bottom"])  # ...as a quiet line under the box, not above it
+        self.assertGreaterEqual(lay["sample"]["top"], lay["back"]["bottom"] - 1)  # and each link has a line of its own
+        self.assertEqual(lay["tugas"]["box"]["left"], lay["tugas"]["title"]["left"])  # a lone Tugas box lines up with its title
+        self.assertIn("btn", lay["tugas"]["action"])  # Analisa Kompetitor is a button there
+
+    def test_a_narrower_desktop_gets_one_column_with_the_summary_above_the_tabs(self):
+        lay = self.probe("/#layout", width=1000)
+        self.assertNotIn("err", lay, lay.get("err"))
+        lay = lay["lay"]
+        self.assertEqual(lay["cols"], 1)  # two columns would leave the cards only 640 px
+        self.assertLessEqual(lay["sum"]["bottom"], lay["tabs"]["top"])
+        self.assertEqual(lay["sum"]["left"], lay["tabs"]["left"])
 
     def test_every_screen_has_a_way_back_and_a_way_home(self):
         pr = self.probe("/#navfix", 390)

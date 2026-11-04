@@ -299,7 +299,8 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.75rem;
   html, body { height: 100%; }
   body { overflow: hidden; display: flex; flex-direction: column; }
   .topbar { position: static; flex: none; padding: 0 36px; }
-  .topbar-in { max-width: none; min-height: 72px; }
+  .topbar { padding-left: 0; padding-right: 0; }
+  .topbar-in { max-width: 1240px; min-height: 72px; padding: 0 36px; box-sizing: border-box; }  /* the header shares the wide content's width: logo and Hasil Bedah start at the same edge, the pills end where the summary ends */
   .workspace { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }  /* 60 / 40: review triage is the main job */
   .col { min-width: 0; overflow-y: auto; padding: 28px 36px 56px; }
   main.col { max-width: none; margin: 0; gap: 18px; }
@@ -339,7 +340,7 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.75rem;
   .callout { font-weight: 500; } .callout b { font-weight: 800; }
   .card h3 { font-size: 1.15rem; }
   .why b { color: var(--ink); }
-  blockquote { border-left-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font: 0.92rem/1.5 var(--font-mono); }
+  blockquote { border-left-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 0.95rem; line-height: 1.5; }  /* the same quote text as on a phone: monospace on a wide screen read like code */
   blockquote .src { font-size: 0.75rem; }
   .drafts { display: grid; gap: 12px; }
   .drafts .draft { display: none; }
@@ -403,6 +404,7 @@ body.free-locked #panels, body.free-locked #board-cap { display: none !important
 #view-input.linkmode #url { min-height: 72px; }
 #tips { display: grid; gap: 8px; }
 .linkbtn.quiet { color: var(--muted); font-weight: 600; }
+#view-input .linkbtn { display: flex; }  /* the links under the box each get their own line: side by side they read as one sentence */
 .hero { display: grid; gap: 10px; }
 .hero h1 { font-size: 23px; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em; }
 @media (max-width: 359px) { .hero h1 { font-size: 20px; } }
@@ -686,7 +688,8 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 .tbox .itl input:focus-visible + .cb { outline: 3px solid var(--accent); outline-offset: 2px; }
 .tbox .it.dn .t { color: var(--muted); text-decoration: line-through; }
 .tbox .it .x { width: 44px; height: 44px; border: 0; background: none; color: var(--fight); cursor: pointer; display: grid; place-items: center; }
-.tbox .tlinks { display: flex; gap: 20px; flex-wrap: wrap; }
+.tbox .tlinks { display: flex; gap: 8px 20px; flex-wrap: wrap; align-items: center; padding-bottom: 6px; }
+.tbox .tlinks .btn { width: auto; min-height: 44px; padding: 0 18px; }  /* Analisa Kompetitor is the one real action here: a button, not a third small link */
 .tbox .tlinks .plain { min-height: 44px; padding-top: 0; padding-bottom: 0; font-weight: 700; font-size: 0.9rem; color: var(--accent); }
 .tbox.alldone { background: var(--accent-soft); border-color: var(--accent); padding: 16px; gap: 10px; }
 .tbox.alldone .okh { display: flex; align-items: center; gap: 10px; color: var(--accent-ink); font-weight: 800; font-size: 1.05rem; }
@@ -724,16 +727,20 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
   .hero:not([hidden]) { display: grid; } .hero h1 { font-size: 38px; }
   .res-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .res-top .res-meta { flex: 1 0 100%; } .res-top #results-h { flex: 1; }
-  #view-results { grid-template-columns: minmax(0, 1fr) 380px !important; column-gap: 32px; align-items: start; }
-  #view-results > * { grid-column: 1; }
-  #view-results > .res-top { grid-column: 1 / -1; }
-  #view-results > #sumbox { grid-column: 2; grid-row: 2 / span 12; position: sticky; top: 16px; }
   .tgrid { grid-template-columns: 1fr 1fr; align-items: start; }
   .tgrid > .tsec, .tgrid > .full-row { grid-column: 1 / -1; }
-  .tgrid > .tbox:only-child { grid-column: 1 / -1; width: 100%; max-width: 560px; justify-self: center; }  /* one box alone sits in the middle, not at the edge of an empty page */
+  .tgrid > .tbox:only-child { grid-column: 1 / -1; width: 100%; max-width: 560px; justify-self: start; }  /* one box alone lines up with its title, not floating in the middle */
   .rival-wrap { max-width: 720px; }
 }
-@media (min-width: 900px) and (max-width: 1199px) { #view-results { grid-template-columns: minmax(0, 1fr) 300px !important; } }
+/* Hasil Bedah: two columns with the summary beside the title from 1100px. Below that (a tablet held wide) it is one column with the summary above the tabs, as on a phone. */
+@media (min-width: 900px) and (max-width: 1099px) { #view-results { max-width: 720px; margin: 0 auto; } }
+@media (min-width: 1100px) {
+  #view-results { grid-template-columns: minmax(0, 1fr) 300px !important; column-gap: 32px; align-items: start; }
+  #view-results > * { grid-column: 1; }
+  #view-results > .res-top { grid-column: 1; }
+  #view-results > #sumbox { grid-column: 2; grid-row: 1 / span 12; position: sticky; top: 16px; margin-top: 8px; }
+}
+@media (min-width: 1200px) { #view-results { grid-template-columns: minmax(0, 1fr) 380px !important; } }
 @media (min-width: 900px) { .gtabs { flex-wrap: wrap; } }
 </style>
 </head>
@@ -835,9 +842,8 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
     </details>
   </div>
 
-  <!-- input: one box for a product link (Tokopedia, TikTok Shop, Lazada) -->
+  <!-- input: one box for a product link (Tokopedia, TikTok Shop; Lazada is off, see BEDAHREVIEW_LAZADA) -->
   <section id="view-input" aria-label="Link produk" data-i18n-label="newReviews">
-    <button class="linkbtn" id="back-results" type="button" hidden></button>
     <div class="card-box">
       <div id="in-link" style="display:grid;gap:12px">
         <div class="boxhead"><label for="url" id="box-label" data-i18n="boxLabel"></label></div>
@@ -869,6 +875,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
         <div><strong id="error-title" hidden></strong><span id="error-text"></span><span class="sub" id="error-sub" hidden></span></div>
       </div>
     </div>
+    <button class="linkbtn quiet" id="back-results" type="button" hidden></button>  <!-- only while an unfinished result is held: a quiet line under the box, not above it -->
     <button class="linkbtn" id="sample" type="button" data-i18n="sample"></button>
     <button class="linkbtn quiet" id="in-history" type="button" data-i18n="histTitle" hidden></button>
   </section>
@@ -903,7 +910,6 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
   <section id="view-results" hidden aria-labelledby="results-h" style="display:grid;gap:12px">
     <div class="res-top">
       <h2 id="results-h" tabindex="-1" data-i18n="resultsTitle"></h2>
-      <button class="btn ghost dsk" id="print-d" type="button" hidden></button>
       <p class="res-meta" id="summary"></p>
     </div>
     <div id="start"></div>
@@ -966,7 +972,7 @@ const TEXT = {
     navCheck: "Periksa", navNew: "Ulasan baru", newReviews: "Ulasan baru",
   
    
-  boxLabel: "Tempel Link Produk", boxPh: "Platform ini mendukung link produk dari Tokopedia, TikTok Shop, dan Lazada. Untuk sementara kami belum mendukung link produk Shopee.",detectLink: "%s Kami ambil %s ulasan, %s.", detectPf: "Tautan %s.", detectPlain: "Tautan produk.",modeComplaintsShort: "keluhan dulu", modeLatestShort: "terbaru dulu",
+  boxLabel: "Tempel Link Produk", boxPh: "Platform ini mendukung link produk dari Tokopedia dan TikTok Shop. Untuk sementara kami belum mendukung link produk Shopee dan Lazada.",detectLink: "%s Kami ambil %s ulasan, %s.", detectPf: "Tautan %s.", detectPlain: "Tautan produk.",modeComplaintsShort: "keluhan dulu", modeLatestShort: "terbaru dulu",
    
    
     run: "Bedah ulasan", running: "Membedah…", sample: "Belum punya? Coba dengan contoh", clear: "Hapus teks",
@@ -1015,7 +1021,7 @@ const TEXT = {
     f1Title: "Bedah ulasan", f1Sub: "Pilah ulasan produkmu jadi daftar tindakan",
     f2Title: "Analisa Kompetitor", f2Sub: "Bandingkan keluhan & pujian dengan toko lain",
     step1T: "Salin & tempel ulasan", step1D: "dari Shopee, Tokopedia, atau aplikasi toko lain",
-    step1TLink: "Tempel tautan atau ulasan", step1DLink: "tautan Tokopedia, TikTok Shop, Lazada, atau teks ulasannya", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
+    step1TLink: "Tempel tautan atau ulasan", step1DLink: "tautan Tokopedia atau TikTok Shop, atau teks ulasannya", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
     step3T: "Kamu dapat daftar tugas singkat", step3D: "plus draf balasan siap kirim",
     linkOpts: "Pengaturan lanjutan",
     navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Analisa Kompetitor",
@@ -1050,7 +1056,7 @@ const TEXT = {
     importOk: "Diimpor: %s perbaikan. Dilewati karena tidak valid: %s.", importBad: "File ini tidak bisa dibuka sebagai catatan BedahReview.", importBig: "File terlalu besar.", fixSaveFail: "Tidak bisa menyimpan di browser ini. Buka Lainnya di Tugas, lalu Simpan ke file, supaya catatan tidak hilang.",
     limitBudget: "Membaca lewat link sedang tidak tersedia hari ini. Coba lagi besok.", limitBudgetRival: "Pencarian pesaing sedang tidak tersedia hari ini. Coba lagi besok.", limitHour: "Terlalu banyak pengambilan lewat link dalam satu jam. Coba lagi nanti.",
  
-    errFetchTitle: "Ulasan dari tautan ini tidak bisa dibaca", backResults: "← Kembali ke hasil", pastedName: "Ulasan yang ditempel",
+    errFetchTitle: "Ulasan dari tautan ini tidak bisa dibaca", backResults: "Lihat hasil terakhir", pastedName: "Ulasan yang ditempel",
     change: "Ubah", shown: "Ditampilkan", themeDark: "Mode gelap", themeLight: "Mode terang",
     boardFix: "ulasan bisa kamu perbaiki sendiri", boardFight: "ulasan perlu kamu balas", boardIgnore: "ulasan tanpa isi, lewati saja", boardKeep: "ulasan memuji produkmu",
     legendSummary: "Apa arti 4 kelompok?", legendFix: "Keluhan yang asalnya dari tokomu, misalnya ukuran atau foto. Bisa kamu ubah sendiri.", legendFight: "Mungkin bukan salah tokomu (kurir atau ulasan palsu). Cek buktinya dulu, lalu balas dengan sopan.",
@@ -1131,11 +1137,12 @@ const TEXT = {
     taskSent: "Sudah dibalas", taskAllSent: "Sudah kubalas semua", taskNoDrafts: "Draf balasan hanya ada selama hasil analisisnya masih terbuka. Sudah kamu balas di marketplace?",
     taskDone: "Tugas selesai.",dismiss: "Hapus dari Tugas", noProductName: "Ulasan yang ditempel",
     // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
-    e_not_link: "Itu tidak terlihat seperti tautan.", e_link_https: "Tempel tautan https lengkap dari produk Tokopedia, Lazada, atau TikTok Shop.", e_not_product: "Itu tidak terlihat seperti tautan produk.",
-    e_short_bad: "Tautan pendek itu tidak mengarah ke produk Tokopedia, Lazada, atau TikTok Shop.", e_short_open: "Tautan pendek itu tidak bisa dibuka. Buka produknya, lalu salin tautan lengkapnya.",
-    e_shopee: "Link Shopee belum didukung. Pakai link produk dari Tokopedia, TikTok Shop, atau Lazada.",
+    e_not_link: "Itu tidak terlihat seperti tautan.", e_link_https: "Tempel tautan https lengkap dari produk Tokopedia atau TikTok Shop.", e_not_product: "Itu tidak terlihat seperti tautan produk.",
+    e_short_bad: "Tautan pendek itu tidak mengarah ke produk Tokopedia atau TikTok Shop.", e_short_open: "Tautan pendek itu tidak bisa dibuka. Buka produknya, lalu salin tautan lengkapnya.",
+    e_shopee: "Link Shopee belum didukung. Pakai link produk dari Tokopedia atau TikTok Shop.",
+    e_lazada_off: "Link Lazada belum didukung. Pakai link produk dari Tokopedia atau TikTok Shop.",
     e_lazada_link: "Buka halaman produk Lazada, lalu salin tautannya. Awalnya harus lazada.co.id/products/", e_tiktok_link: "Itu bukan tautan produk TikTok Shop.",
-    e_tokopedia_link: "Buka halaman produk Tokopedia, lalu salin tautannya (berisi nama toko, lalu nama produk).", e_link_unsupported: "Link ini belum didukung. Tempel link produk Tokopedia, Lazada, atau TikTok Shop.",
+    e_tokopedia_link: "Buka halaman produk Tokopedia, lalu salin tautannya (berisi nama toko, lalu nama produk).", e_link_unsupported: "Link ini belum didukung. Tempel link produk Tokopedia atau TikTok Shop.",
     e_fetch_slow: "Layanan pengambil ulasan terlalu lama.", e_fetch_failed: "Layanan pengambil ulasan tidak bisa membaca ulasan dari tautan itu.",
     e_no_low: "Tidak ada ulasan bintang rendah yang berisi komentar untuk produk ini. Coba Ulasan terbaru.", e_no_reviews: "Tidak ada ulasan berisi komentar untuk produk ini.", e_service_paused: "Pengambil ulasan untuk platform ini sedang berhenti.",
     e_box_off: "Kotak tautan sedang tidak aktif.", e_no_title: "Nama produk belum ada, jadi pesaing tidak bisa dicari. Isi nama produknya.",
@@ -1148,13 +1155,14 @@ const TEXT = {
   en: {
     e_pasteRivals: "You can paste a competitor link.", e_other: "Try another competitor.",
     printSave: "Print or save as PDF",
-    e_link_unsupported: "This link is not supported yet. Paste a product link from Tokopedia, Lazada or TikTok Shop.",
-    e_shopee: "Shopee links are not supported yet. Use a product link from Tokopedia, TikTok Shop or Lazada.",
+    e_link_unsupported: "This link is not supported yet. Paste a product link from Tokopedia or TikTok Shop.",
+    e_shopee: "Shopee links are not supported yet. Use a product link from Tokopedia or TikTok Shop.",
+    e_lazada_off: "Lazada links are not supported yet. Use a product link from Tokopedia or TikTok Shop.",
     e_not_link: "That does not look like a link.",
     navCheck: "Check", navNew: "New reviews", newReviews: "New reviews",
   
    
-  boxLabel: "Paste product link", boxPh: "This platform supports product links from Tokopedia, TikTok Shop and Lazada. For now, we do not support Shopee product links.",detectLink: "%s We fetch %s reviews, %s.", detectPf: "%s link.", detectPlain: "Product link.",modeComplaintsShort: "complaints first", modeLatestShort: "latest first",
+  boxLabel: "Paste product link", boxPh: "This platform supports product links from Tokopedia and TikTok Shop. For now, we do not support Shopee or Lazada product links.",detectLink: "%s We fetch %s reviews, %s.", detectPf: "%s link.", detectPlain: "Product link.",modeComplaintsShort: "complaints first", modeLatestShort: "latest first",
    
    
     run: "Check reviews", running: "Working…", sample: "Nothing yet? Try an example", clear: "Clear the text",
@@ -1203,7 +1211,7 @@ const TEXT = {
     f1Title: "Review checker", f1Sub: "Sort your product's reviews into a to-do list",
     f2Title: "Competitor analysis", f2Sub: "Compare complaints & praise with other shops",
     step1T: "Copy & paste your reviews", step1D: "from Shopee, Tokopedia or any shop app",
-    step1TLink: "Paste a link or the reviews", step1DLink: "a Tokopedia, TikTok Shop or Lazada link, or the review text", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
+    step1TLink: "Paste a link or the reviews", step1DLink: "a Tokopedia or TikTok Shop link, or the review text", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
     step3T: "You get a short to-do list", step3D: "plus reply drafts ready to send",
     linkOpts: "Advanced settings",
     navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Competitor analysis",
@@ -1238,7 +1246,7 @@ const TEXT = {
     importOk: "Imported: %s fix(es). Skipped as invalid: %s.", importBad: "This file could not be opened as a BedahReview log.", importBig: "The file is too large.", fixSaveFail: "Could not save in this browser. Open More in Tasks, then Save to a file, so your log is not lost.",
     limitBudget: "Reading from a link is not available today. Try again tomorrow.", limitBudgetRival: "Competitor search is not available for the rest of today. Try again tomorrow.", limitHour: "Too many link fetches this hour. Try again later.",
  
-    errFetchTitle: "The reviews from this link could not be read", backResults: "← Back to results", pastedName: "Pasted reviews",
+    errFetchTitle: "The reviews from this link could not be read", backResults: "See your last result", pastedName: "Pasted reviews",
     change: "Change", shown: "Showing", themeDark: "Dark mode", themeLight: "Light mode",
     boardFix: "reviews you can fix yourself", boardFight: "reviews to answer", boardIgnore: "reviews with no content, skip", boardKeep: "reviews praising your product",
     legendSummary: "What do these 4 groups mean?", legendFix: "Complaints that come from your shop, such as sizing or photos. You can change these yourself.", legendFight: "Maybe not your shop's fault (courier or fake review). Check the proof first, then reply politely.",
@@ -1409,7 +1417,7 @@ function applyLang() {
   document.querySelectorAll("[data-i18n-label]").forEach((el) => { el.setAttribute("aria-label", tr(el.dataset.i18nLabel)); });
   const other = lang === "id" ? "EN" : "ID";  // the current language first and darker; the other one goes on the smallest phones
   $("lang").replaceChildren(h("span", { class: "pill" }, h("em", { text: lang.toUpperCase() }), h("span", { class: "alt", "aria-hidden": "true", text: "/" }), h("span", { class: "alt", text: other })));
-  $("back-results").textContent = tr("backResults"); $("print-d").textContent = tr("print");
+  $("back-results").textContent = tr("backResults");
   themeLabel(); renderFixBadge(); renderGate(); renderAccount(); setQuota(lastQuota);
   if (currentView === "fixes") renderFixes();
   if (currentView === "history") renderHistory();
@@ -2026,7 +2034,7 @@ function boxName(b) { return shortLabel(b.label, 70) || tr("noProductName"); }
 function taskBox(b) {
   const total = b.items.length, n = b.items.filter((i) => i.done).length, edit = boxEdit === b.sig;
   const again = () => reanalyse(b.url, b.label);
-  const compete = h("button", { class: "plain", type: "button", text: tr("rivalsBtnShort"), onclick: () => openRivals({ from: "fixes", url: b.url, title: b.label, sig: b.sig, mine: !!lastData && reviewSig(lastData.items) === b.sig }) });
+  const compete = h("button", { class: "btn ghost", type: "button", text: tr("rivalsBtnShort"), onclick: () => openRivals({ from: "fixes", url: b.url, title: b.label, sig: b.sig, mine: !!lastData && reviewSig(lastData.items) === b.sig }) });
   if (boxDone(b)) {
     return h("article", { class: "tbox alldone" }, h("div", { class: "okh" }, svgIcon(["M7.5 12.5l3 3 6-7", "M12 2.5a9.5 9.5 0 100 19 9.5 9.5 0 000-19z"]), tr("taskProgress", total, total)),
       h("b", { title: b.label || null, text: boxName(b) }), h("p", { text: tr("taskAllDoneP") }),
@@ -2038,7 +2046,7 @@ function taskBox(b) {
     h("span", { class: "tmeta", text: tr("taskProgress", n, total) }),
     h("div", { class: "bar", role: "progressbar", "aria-valuenow": String(n), "aria-valuemin": "0", "aria-valuemax": String(total), "aria-label": tr("taskProgress", n, total) }, h("span", { style: "width:" + Math.round((n / total) * 100) + "%" })),
     checklist(b, edit),
-    h("div", { class: "tlinks" }, h("button", { class: "plain", type: "button", text: tr("calBtn"), onclick: () => addToCalendar(b) }), compete,
+    h("div", { class: "tlinks" }, compete, h("button", { class: "plain", type: "button", text: tr("calBtn"), onclick: () => addToCalendar(b) }),
       h("button", { class: "plain", type: "button", text: tr(edit ? "taskEditDone" : "taskEdit"), onclick: () => { boxEdit = edit ? "" : b.sig; renderFixes(); } })));
 }
 function boxRow(b) {
@@ -2643,7 +2651,7 @@ function show(view) {
   $("workspace").classList.toggle("wide", view === "results" || view === "fixes" || view === "history" && false);  // a wide screen: Hasil Bedah and Tugas use the full width, the rest a centred column
   for (const [v, id] of Object.entries(VIEWS)) $(id).hidden = view !== v;
   $("hero").hidden = view !== "input";
-  $("print-d").hidden = view !== "results"; $("acct-print").hidden = view !== "results";
+  $("acct-print").hidden = view !== "results";  // printing lives in the account menu only
   $("back-results").hidden = !(lastData && view === "input");
   $("nav-check").setAttribute("aria-current", tasks ? "false" : "page");
   $("nav-tasks").setAttribute("aria-current", tasks ? "page" : "false");
@@ -2698,7 +2706,6 @@ $("nav-tasks").addEventListener("click", () => openFixes());
 $("done-btn").addEventListener("click", finishResult);
 $("rivals-open").addEventListener("click", () => openRivals({ from: "results" }));
 $("back-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
-$("print-d").addEventListener("click", () => window.print());
 $("logout").addEventListener("click", async () => { await leaveWithFixes(); if (sb) { try { await sb.auth.signOut(); } catch (e) { /* reload anyway */ } } try { await fetch("/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); } catch (e) { /* reload anyway */ } location.reload(); });
 $("fixes-btn").addEventListener("click", () => { if (currentView === "fixes") $("nav-check").click(); else openFixes(); });
 
@@ -2719,16 +2726,18 @@ const LINK_RE = /https?:\/\/[^\s<>"']+/i;
 const linkIn = (t) => { const m = LINK_RE.exec(t || ""); return m ? m[0] : ""; };  // a shop app shares "title + link": the link is what counts
 function linkPlatform(u) { try { const h = new URL(u.trim()).hostname; if (/tokopedia/i.test(h)) return "Tokopedia"; if (/lazada/i.test(h)) return "Lazada"; if (/tiktok/i.test(h)) return "TikTok Shop"; if (/shopee/i.test(h)) return "Shopee"; } catch (e) { /* plain link */ } return ""; }
 const isShopee = (u) => { try { return /(^|\.)shopee\./i.test(new URL(u.trim()).hostname); } catch (e) { return /shopee\./i.test(u); } };
+const isLazada = (u) => { try { return /(^|\.)lazada\./i.test(new URL(u.trim()).hostname); } catch (e) { return /lazada\./i.test(u); } };  // Lazada is switched off (BEDAHREVIEW_LAZADA on the server): said at once, nothing is sent
+const notYet = (u) => (isShopee(u) ? "e_shopee" : isLazada(u) ? "e_lazada_off" : "");  // the text key for a platform the app does not read yet
 function detectInput() {  // the one box holds a product link: say what was found, and what a tap will do
-  const text = $("url").value, link = linkIn(text), shopee = !!link && isShopee(link), ok = !!link && !shopee, out = quotaOut();
+  const text = $("url").value, link = linkIn(text), nope = link ? notYet(link) : "", ok = !!link && !nope, out = quotaOut();
   $("view-input").classList.toggle("linkmode", !!link);
   const d = $("detect"); d.hidden = !ok;
   if (ok) { const pf = linkPlatform(link), lim = syncLimit(); $("detect-text").textContent = tr("detectLink", pf ? tr("detectPf", pf) : tr("detectPlain"), lim, tr($("mode").value === "latest" ? "modeLatestShort" : "modeComplaintsShort")); }
   $("link-extra").hidden = !ok; $("link-note").hidden = !ok;
   const b = $("fetch"); if (!b.disabled) b.textContent = tr(ok ? "fetchRun" : "run");
   b.classList.toggle("off", !ok || out); b.setAttribute("aria-disabled", !ok || out ? "true" : "false");
-  if (shopee) showUrlError(tr("e_shopee"), true);  // before anything is spent: Shopee is not read from a link
-  else if ($("url-error-text").textContent === tr("e_shopee")) showUrlError("");
+  if (nope) showUrlError(tr(nope), true);  // before anything is spent: Shopee and Lazada are not read from a link
+  else if (NOT_YET.some((k) => $("url-error-text").textContent === tr(k))) showUrlError("");
 }
 function showError(msg, title, opts) {  // right under the button that was tapped, scrolled into view, and read out
   opts = opts || {};
@@ -2744,7 +2753,8 @@ function showUrlError(msg, quiet) {  // a link that is not right: the field turn
   $("url-error-text").textContent = msg || ""; $("url-error").hidden = !msg;
   if (msg) { $("url").setAttribute("aria-invalid", "true"); if (!quiet) $("url").focus(); } else $("url").removeAttribute("aria-invalid");
 }
-$("url").addEventListener("input", () => { if ($("url-error-text").textContent !== tr("e_shopee")) showUrlError(""); });
+const NOT_YET = ["e_shopee", "e_lazada_off"];  // the link-box notices detectInput owns: typing does not clear them, a new link does
+$("url").addEventListener("input", () => { if (!NOT_YET.some((k) => $("url-error-text").textContent === tr(k))) showUrlError(""); });
 
 /* ---------- sending ---------- */
 let timer = null, loadRun = 0;  // loadRun: which wait is current; "Batal" moves it on, so the answer of a wait the seller gave up is never drawn
@@ -2791,7 +2801,7 @@ async function pollJob(id, stale) {  // resolves to {status, data} like the plai
     await new Promise((resolve) => setTimeout(resolve, JOB_POLL_MS));
   }
 }
-const LINK_FIELD_CODES = ["not_link", "link_https", "not_product", "short_bad", "short_open", "lazada_link", "tiktok_link", "tokopedia_link", "link_unsupported"];  // problems with the link itself
+const LINK_FIELD_CODES = ["not_link", "link_https", "not_product", "short_bad", "short_open", "lazada_off", "lazada_link", "tiktok_link", "tokopedia_link", "link_unsupported"];  // problems with the link itself
 function finishAnalysis(status, data) {  // the one place that turns a reply into the screen: results, the sign-in box, or a plain error
   stopLoading();
   if (status === 401) {  // signed out or the sign-in ran out: ask again. Without an account: the free analysis is used up.
@@ -2804,6 +2814,7 @@ function finishAnalysis(status, data) {  // the one place that turns a reply int
     if (data && data.limit === "daily") setQuota({ used: data.max, max: data.max });
     const code = data && data.code;
     if (code === "shopee") { showUrlError(tr("e_shopee")); return; }
+    if (code === "lazada_off") { showUrlError(tr("e_lazada_off")); return; }
     if (LINK_FIELD_CODES.includes(code)) { showUrlError(errText(data, tr("errGeneric", status))); return; }  // the link itself is wrong: say so on the field
     const unreadable = data && data.fallback === "paste" && !data.limit;  // a daily limit is not "this link cannot be read"
     showError(errText(data, tr("errGeneric", status)), unreadable ? tr("errFetchTitle") : "", unreadable ? { sub: tr("refunded") } : null);
@@ -2866,7 +2877,7 @@ function runFetch() {
   const text = $("url").value.trim(), url = linkIn(text);
   if (!text) { showUrlError(tr("errLink")); return; }
   if (!url) { showUrlError(tr("e_not_link")); return; }
-  if (isShopee(url)) { showUrlError(tr("e_shopee")); return; }  // nothing to spend: Shopee is not read from a link
+  if (notYet(url)) { showUrlError(tr(notYet(url))); return; }  // nothing to spend: Shopee and Lazada are not read from a link
   showUrlError("");
   send({ url, limit: syncLimit(), mode: $("mode").value }, tr("loadingFetch"));
 }

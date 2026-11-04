@@ -771,7 +771,7 @@ class SignInBrowserTests(unittest.TestCase):
         out = self.probe("#free-link")
         self.assertTrue(out["emptyFirst"] and out["linkFirst"])  # one box: a link is detected by itself
         self.assertEqual(out["text"], {"off": True, "chip": True, "err": "Itu tidak terlihat seperti tautan."})  # review text is not read: the box asks for a link
-        self.assertEqual(out["shopee"], {"err": "Link Shopee belum didukung. Pakai link produk dari Tokopedia, TikTok Shop, atau Lazada.", "chip": True, "off": True})
+        self.assertEqual(out["shopee"], {"err": "Link Shopee belum didukung. Pakai link produk dari Tokopedia atau TikTok Shop.", "chip": True, "off": True})
         self.assertTrue(out["shopeeCleared"])  # a good link takes the notice away
         self.assertTrue(out["noDemo"])  # no "demo" or cost talk in front of sellers
         self.assertEqual((out["locked"]["unlock"], out["locked"]["panels"]), (True, False))
