@@ -92,7 +92,7 @@ window.__probe = (async () => {
   out.pageFlag = document.documentElement.dataset.sw;
   const link = document.querySelector('link[rel=manifest]');
   const m = await (await fetch(link.href)).json();
-  out.manifest = { display: m.display, theme: m.theme_color, share: m.share_target && m.share_target.method, icons: m.icons.length };
+  out.manifest = { display: m.display, theme: m.theme_color, share: m.share_target === undefined, icons: m.icons.length };
   out.prefill = document.getElementById("url").value;
   out.search = location.search;
   out.urlError = document.getElementById("url-error").hidden ? "" : document.getElementById("url-error-text").textContent;
@@ -594,16 +594,16 @@ class BrowserTests(unittest.TestCase):
             chrome.terminate()
             chrome.wait(timeout=20)
 
-    def test_manifest_service_worker_and_share_prefill(self):
-        text = "Kaos Boxy Retro https://www.tokopedia.com/toko/kaos-boxy"
-        out = self.probe("/?title=&text=" + quote(text) + "&url=")
-        self.assertEqual(out["manifest"], {"display": "standalone", "theme": "#0f6b5a", "share": "GET", "icons": 3})
+    def test_manifest_and_service_worker(self):
+        out = self.probe("/")
+        self.assertEqual(out["manifest"], {"display": "standalone", "theme": "#0f6b5a", "share": True, "icons": 3})  # share: no Share-menu entry
         self.assertIn(out["sw"], ("ready:activating", "ready:activated"))
         self.assertEqual(out["pageFlag"], "ready")
-        self.assertEqual(out["prefill"], "https://www.tokopedia.com/toko/kaos-boxy")  # only the link goes in the box
-        self.assertEqual(out["search"], "")  # and the shared text is not left in the address bar
-        self.assertEqual((out["fetchLabel"], out["fetchOff"], out["urlError"]), ("Ambil & bedah", False, ""))
         self.assertEqual(out["lang"], "id")
+
+    def test_an_address_with_text_is_not_read_into_the_box(self):
+        out = self.probe("/?text=" + quote("Kaos Boxy https://www.tokopedia.com/toko/kaos-boxy"))
+        self.assertEqual((out["prefill"], out["urlError"]), ("", ""))  # the Share menu is gone: nothing in the address fills the box
 
     def test_try_an_example_shows_a_recorded_result_without_tasks(self):
         out = self.probe("/#example")["ex"]
@@ -623,17 +623,6 @@ class BrowserTests(unittest.TestCase):
         self.assertTrue(out["pasteGone"])  # no review box, product name, tabs, tips, Android share guide or Shopee paste note
         self.assertEqual((out["prefill"], out["fetchLabel"], out["fetchOff"]), ("", "Bedah ulasan", True))  # an empty box waits
         self.assertTrue(out["sw"].startswith("ready:"), out["sw"])
-
-    def test_shared_review_text_without_a_link_is_not_read(self):
-        out = self.probe("/?title=" + quote("Kaos Boxy") + "&text=" + quote("bagus banget"))
-        self.assertEqual(out["prefill"], "")
-        self.assertEqual(out["urlError"], "Itu tidak terlihat seperti tautan.")
-
-    def test_a_shared_shopee_link_is_kept_but_not_sent(self):
-        out = self.probe("/?text=" + quote("https://shopee.co.id/Kaos-i.1.2"))
-        self.assertEqual(out["prefill"], "https://shopee.co.id/Kaos-i.1.2")
-        self.assertIn("Shopee belum didukung", out["urlError"])
-        self.assertTrue(out["fetchOff"])
 
     def test_results_board_and_language_switch(self):
         out = self.probe("/#flow")

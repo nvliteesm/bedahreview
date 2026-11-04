@@ -75,7 +75,7 @@ a { color: var(--accent); font-weight: 600; }
     <li><b>Analisis gratis sebelum masuk.</b> Tanpa akun, kamu bisa membedah sekali. Server tidak menyimpan apa pun darinya, hanya hitungan jumlah, per alamat perangkat dan di memori saja (alamat tidak pernah ditulis ke catatan). Browser mencatat bahwa analisis gratis sudah dipakai. Kalau kamu masuk dengan Google, hasilnya menunggu di penyimpanan tab ini (sessionStorage) selama kamu ke halaman Google, lalu langsung dihapus begitu tampil lagi.</li>
   </ul>
 
-  <h2>Yang tidak kami simpan</h2>
+  <h2>Yang tidak kami simpan, atau hanya sebentar</h2>
   <ul>
     <li>Teks ulasan yang kami baca dari link produkmu. Teks itu dikirim untuk dianalisis, lalu tidak kami simpan di basis data. Hasil analisis hanya ditahan di memori server paling lama 10 menit setelah selesai, supaya HP-mu bisa mengambilnya kalau koneksi putus. Setelah itu terhapus. Salinan hasil bacaan link ditahan di server paling lama 24 jam supaya link yang sama tidak dibayar dua kali; nama pembeli tidak ikut disimpan.</li>
     <li>Nama pembeli.</li>
@@ -84,11 +84,12 @@ a { color: var(--accent); font-weight: 600; }
 
   <h2>Ke mana datamu pergi</h2>
   <ul>
-    <li><b>Layanan AI pihak ketiga (berbayar).</b> Teks ulasan dari link produkmu dikirim ke sana untuk dianalisis. Kami memakai layanan berbayar, dan menurut ketentuan penyedianya untuk layanan berbayar, teks itu tidak dipakai untuk melatih atau meningkatkan produk mereka. Penyedia dapat menyimpannya sebentar, hanya untuk mendeteksi penyalahgunaan dan memenuhi kewajiban hukum.</li>
-    <li><b>Supabase.</b> Menyimpan akun, profil, catatan pemakaian, kotak Tugas, riwayat analisis, dan daftar perbaikan lama.</li>
-    <li><b>Google Cloud Run.</b> Tempat aplikasi berjalan. Google Cloud menyimpan catatan permintaan standarnya sendiri, yang bisa memuat alamat IP, di luar kendali kami.</li>
-    <li><b>Apify.</b> Saat kamu menempel link produk, atau saat kami mencari produk pesaing, link dan judul produk dikirim ke layanan ini dan ke pembuat alat pengambil ulasan di dalamnya, untuk membaca ulasan yang tampil publik di halaman produk. Ulasan pesaing dibaca sebentar untuk perbandingan dan tidak kami simpan.</li>
+    <li><b>Google Gemini API (berbayar).</b> Teks ulasan dari link produkmu dikirim ke sana untuk dianalisis. Kami memakai layanan berbayar, dan menurut ketentuan penyedianya untuk layanan berbayar, teks itu tidak dipakai untuk melatih atau meningkatkan produk mereka. Penyedia dapat menyimpannya sebentar, hanya untuk mendeteksi penyalahgunaan dan memenuhi kewajiban hukum.</li>
+    <li><b>Supabase (Tokyo, Jepang).</b> Menyimpan akun, profil, catatan pemakaian, kotak Tugas, riwayat analisis, dan daftar perbaikan lama.</li>
+    <li><b>Google Cloud Run (Jakarta).</b> Tempat aplikasi berjalan. Google Cloud menyimpan catatan permintaan standarnya sendiri, yang bisa memuat alamat IP, di luar kendali kami.</li>
+    <li><b>Apify.</b> Saat kamu menempel link produk, atau saat kami mencari produk pesaing, link dan judul produk dikirim ke layanan ini dan ke pembuat alat pengambil ulasan di dalamnya, untuk membaca ulasan yang tampil publik di halaman produk. Ulasan pesaing dibaca sebentar untuk perbandingan dan tidak kami simpan. Apify menyimpan data jalannya sendiri menurut pengaturannya, di luar kendali kami.</li>
   </ul>
+  <p>Sebagian layanan di atas berada di luar Indonesia (Jepang untuk Supabase; Google dan Apify memproses datanya di luar negeri). Dengan memakai aplikasi ini dan menyetujui kebijakan ini, kamu setuju datamu diproses di sana.</p>
 
   <h2>Berapa lama</h2>
   <ul>
@@ -130,7 +131,7 @@ a { color: var(--accent); font-weight: 600; }
     <li><b>The free analysis before signing in.</b> Without an account you can analyse once. The server keeps nothing from it except a count, per device address and in memory only (the address is never written to a log). Your browser notes that the free analysis was used. If you sign in with Google, the result waits in this tab's storage (sessionStorage) while you are on Google's page, and is removed as soon as it is shown again.</li>
   </ul>
 
-  <h2>What we do not keep</h2>
+  <h2>What we do not keep, or only briefly</h2>
   <ul>
     <li>The review text we read from your product link. It is sent to be analysed, and we do not store it in a database. The result is held in the server's memory for at most 10 minutes after it finishes, so your phone can fetch it if the connection drops. Then it is erased. A copy of what was read from a link stays on the server for at most 24 hours so the same link is not paid for twice; buyer names are not kept in it.</li>
     <li>Buyer names.</li>
@@ -139,11 +140,12 @@ a { color: var(--accent); font-weight: 600; }
 
   <h2>Where your data goes</h2>
   <ul>
-    <li><b>Third-party AI service (paid).</b> The review text read from your product link is sent there to be analysed. We use a paid service, and under its provider's terms for paid use the text is not used to train or improve their products. The provider may keep it briefly, only to detect abuse and meet legal duties.</li>
-    <li><b>Supabase.</b> Holds the account, profile, usage records, Tasks boxes, analysis history and the old fixes list.</li>
-    <li><b>Google Cloud Run.</b> Where the app runs. Google Cloud keeps its own standard request logs, which can include IP addresses, outside our control.</li>
-    <li><b>Apify.</b> When you paste a product link, or when we look for competitor products, the link and product title are sent to this service, and to the makers of the review-reading tools on it, to read the reviews shown publicly on the product page. Competitor reviews are read briefly for the comparison and are not stored by us.</li>
+    <li><b>Google Gemini API (paid).</b> The review text read from your product link is sent there to be analysed. We use a paid service, and under its provider's terms for paid use the text is not used to train or improve their products. The provider may keep it briefly, only to detect abuse and meet legal duties.</li>
+    <li><b>Supabase (Tokyo, Japan).</b> Holds the account, profile, usage records, Tasks boxes, analysis history and the old fixes list.</li>
+    <li><b>Google Cloud Run (Jakarta).</b> Where the app runs. Google Cloud keeps its own standard request logs, which can include IP addresses, outside our control.</li>
+    <li><b>Apify.</b> When you paste a product link, or when we look for competitor products, the link and product title are sent to this service, and to the makers of the review-reading tools on it, to read the reviews shown publicly on the product page. Competitor reviews are read briefly for the comparison and are not stored by us. Apify keeps its own run data under its own settings, outside our control.</li>
   </ul>
+  <p>Some of these services are outside Indonesia (Japan for Supabase; Google and Apify process data abroad). By using the app and agreeing to this policy you agree that your data is processed there.</p>
 
   <h2>How long</h2>
   <ul>

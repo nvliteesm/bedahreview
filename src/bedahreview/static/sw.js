@@ -21,7 +21,7 @@ self.addEventListener('fetch', (e) => {
   const inShell = url.pathname === '/' || SHELL.some((p) => new URL(p, location.href).pathname === url.pathname);
   if (!inShell) return;
   // Network first so an updated page is picked up; the cached copy is the offline fallback.
-  // ignoreSearch: /?text=... (the Share menu) is the same page as /.
+  // ignoreSearch: /?code=... (the return from a Google sign-in) is the same page as /.
   e.respondWith(
     fetch(e.request).then((res) => {
       if (res.ok && url.search === '') { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }

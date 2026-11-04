@@ -184,6 +184,9 @@ body.gated #check-btn { display: none !important; }
 @media (max-width: 479px) { .has-acct .mitem.m-only { display: flex; } }
 @media (min-width: 900px) { .has-acct #theme, .visitor #theme { display: grid; } #acct-theme { display: none; } }
 .gbtn[disabled], .btn[disabled] { opacity: 0.6; cursor: progress; }
+.consent { align-items: flex-start; font-size: 0.88rem; line-height: 1.4; padding: 6px 0; min-height: 0; } .consent input { margin-top: 1px; } .consent a { color: var(--accent); text-decoration: underline; }
+.consent.nudge { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+[data-needs-consent][aria-disabled="true"] { opacity: 0.5; }
 .or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.85rem; }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .otp { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }  /* the six boxes fill the card's width, like the button under them */
@@ -799,13 +802,14 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
     <div class="gate-step" id="g-choose">
       <div class="callout" id="g-info" role="status" hidden></div>
       <div><h1 id="gate-h" tabindex="-1" data-i18n="gTitle"></h1><p class="muted" data-i18n="gSub"></p></div>
-      <button class="gbtn" id="g-google" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i18n="gGoogle"></span></button>
+      <label class="check consent" id="g-consent"><input type="checkbox"><span><span data-i18n="agreePre"></span> <a href="/terms" target="_blank" rel="noopener" data-i18n="termsLink"></a> <span data-i18n="agreeAnd"></span> <a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a>.</span></label>
+      <button class="gbtn" id="g-google" type="button" data-needs-consent aria-disabled="true"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i18n="gGoogle"></span></button>
       <p class="or" data-i18n="gOr"></p>
       <label class="field" for="g-email"><span data-i18n="gEmail"></span>
         <input id="g-email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" data-i18n-ph="gEmailPh">
       </label>
-      <button class="btn primary" id="g-send" type="button" data-i18n="gSend"></button>
-      <p class="small muted"><span data-i18n="gSmall"></span> <a href="/terms" target="_blank" rel="noopener" data-i18n="termsLink"></a> · <a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a></p>
+      <button class="btn primary" id="g-send" type="button" data-i18n="gSend" data-needs-consent aria-disabled="true"></button>
+      <p class="small muted"><span data-i18n="gSmall"></span></p>
       <div class="callout" id="g-ios" hidden data-i18n="gIosNote"></div>
       <div class="gate-links">
         <button class="plain" id="g-close" type="button" hidden data-i18n="gClose"></button>
@@ -924,10 +928,10 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
       <svg class="i lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
       <h3 id="unlock-h" tabindex="-1" data-i18n="unlockTitle"></h3>
       <p class="muted" data-i18n="unlockBody"></p>
-      <button class="gbtn" id="unlock-google" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i18n="gGoogle"></span></button>
+      <label class="check consent" id="unlock-consent"><input type="checkbox"><span><span data-i18n="agreePre"></span> <a href="/terms" target="_blank" rel="noopener" data-i18n="termsLink"></a> <span data-i18n="agreeAnd"></span> <a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a>.</span></label>
+      <button class="gbtn" id="unlock-google" type="button" data-needs-consent aria-disabled="true"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i18n="gGoogle"></span></button>
       <button class="btn ghost" id="unlock-email" type="button" data-i18n="unlockEmail"></button>
       <p class="small muted"><span data-i18n="unlockNote"></span> <span data-i18n="gConsent"></span></p>
-      <p class="small muted"><span data-i18n="agreePre"></span> <a href="/terms" target="_blank" rel="noopener" data-i18n="termsLink"></a> <span data-i18n="agreeAnd"></span> <a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a>.</p>
     </div>
     <div id="panels"></div>
     <div id="notes" style="display:grid;gap:8px"></div>
@@ -1099,7 +1103,7 @@ const TEXT = {
     gErrNet: "Tidak bisa menghubungi layanan masuk. Periksa koneksi, lalu coba lagi.", gErrGeneric: "Tidak bisa masuk (%s). Coba lagi.", gErrLoad: "Layanan masuk tidak bisa dimuat. Muat ulang halaman.",
     gErrShop: "Tautan toko harus diawali https://", gErrOauth: "Masuk dengan Google dibatalkan atau gagal. Coba lagi.",
     exampleNote: "Ini contoh dengan ulasan rekaan, bukan data nyata. Masuk untuk membedah ulasanmu sendiri.",
-    privLink: "Kebijakan privasi", termsLink: "Syarat penggunaan", agreePre: "Dengan masuk, kamu setuju dengan", agreeAnd: "dan", delBtn: "Hapus akun dan data saya", delTitle: "Hapus akun dan semua datamu?",
+    privLink: "Kebijakan privasi", termsLink: "Syarat penggunaan", agreePre: "Saya setuju dengan", agreeAnd: "dan", delBtn: "Hapus akun dan data saya", delTitle: "Hapus akun dan semua datamu?",
     delBody: "Ini menghapus akunmu, profilmu, catatan pemakaianmu, daftar perbaikanmu (termasuk nama produk dan catatan), dan riwayat analisismu di server kami, serta salinannya di perangkat ini. Tidak bisa dibatalkan.",
     delConfirm: "Ya, hapus semuanya", delCancel: "Batal", delDeleting: "Menghapus…", delErr: "Tidak bisa menghapus akun sekarang. Coba lagi sebentar lagi.",
     delUnavailable: "Penghapusan akun belum tersedia di server ini.", gDeleted: "Akunmu dan semua datanya sudah dihapus.",
@@ -1289,7 +1293,7 @@ const TEXT = {
     gErrNet: "Could not reach the sign-in service. Check your connection and try again.", gErrGeneric: "Could not sign in (%s). Try again.", gErrLoad: "The sign-in service could not be loaded. Reload the page.",
     gErrShop: "The shop link must start with https://", gErrOauth: "Google sign-in was cancelled or failed. Try again.",
     exampleNote: "This is an example with made-up reviews, not real data. Sign in to analyse your own reviews.",
-    privLink: "Privacy policy", termsLink: "Terms of use", agreePre: "By signing in you agree to the", agreeAnd: "and the", delBtn: "Delete my account and data", delTitle: "Delete your account and all your data?",
+    privLink: "Privacy policy", termsLink: "Terms of use", agreePre: "I agree to the", agreeAnd: "and the", delBtn: "Delete my account and data", delTitle: "Delete your account and all your data?",
     delBody: "This deletes your account, your profile, your usage records, your fixes list (including product names and notes) and your analysis history on our server, and the copy on this device. It cannot be undone.",
     delConfirm: "Yes, delete everything", delCancel: "Cancel", delDeleting: "Deleting…", delErr: "The account could not be deleted right now. Try again in a moment.",
     delUnavailable: "Deleting an account is not available on this server.", gDeleted: "Your account and all your data have been deleted.",
@@ -2062,12 +2066,16 @@ function boxRow(b) {
     h("span", { class: "tt" }, h("b", { text: boxName(b) }), h("span", { text: boxDone(b) ? tr("taskRowDone", n, total) : tr("taskRowOpen", total, daysLeft(b)) })), svgIcon(["M6 9l6 6 6-6"]));
 }
 function signBox(titleKey, bodyKey, withLater) {  // the account is what keeps tasks: Google first, email second
-  const g = h("button", { class: "gbtn", type: "button" }, $("g-google").querySelector("svg").cloneNode(true), h("span", { text: tr("gGoogle") }));
-  g.addEventListener("click", () => { closeSheet(); googleSignIn(); });
+  const g = h("button", { class: "gbtn", type: "button", "data-needs-consent": "", "aria-disabled": String(!consented) }, $("g-google").querySelector("svg").cloneNode(true), h("span", { text: tr("gGoogle") }));
+  const agree = $("g-consent").cloneNode(true); agree.removeAttribute("id");  // the same tick as on the sign-in card, with the page's links
+  const box = h("section", { class: "signbox" });
+  g.addEventListener("click", () => { if (!consentOk(box)) return; closeSheet(); googleSignIn(); });
   const mail = h("button", { class: "btn ghost", type: "button", text: tr("unlockEmail"), onclick: () => { closeSheet(); showGate("choose"); } });
   const lock = svgIcon(ICON_LOCK); lock.classList.add("lock");
-  return h("section", { class: "signbox" }, lock, h("h2", { text: tr(titleKey) }), h("p", { class: "muted", text: tr(bodyKey) }), g, mail,
-    withLater ? h("button", { class: "plain strong", type: "button", text: tr("later"), style: "justify-self:center;min-height:44px", onclick: () => closeSheet() }) : null);
+  [lock, h("h2", { text: tr(titleKey) }), h("p", { class: "muted", text: tr(bodyKey) }), agree, g, mail,
+    withLater ? h("button", { class: "plain strong", type: "button", text: tr("later"), style: "justify-self:center;min-height:44px", onclick: () => closeSheet() }) : null].forEach((n) => n && box.appendChild(n));
+  agree.querySelector("input").checked = consented;
+  return box;
 }
 function openSignDialog() { openDialog([signBox("tasksSignT", "tasksSignP", true)], "tasksSignT"); }
 function renderFixes() {  // the Tugas screen: finished boxes in green on top for a few days, the open boxes (the newest unfolded), the rest in one line each
@@ -2902,15 +2910,6 @@ function syncClear() { $("clear").hidden = !$("url").value; detectInput(); }  //
 $("url").addEventListener("input", syncClear);
 $("clear").addEventListener("click", () => { $("url").value = ""; syncClear(); showError(""); $("url").focus(); });
 
-/* ---------- Share menu: /?title=...&text=...&url=... (a shop app sends the product title and its link) ---------- */
-function takeShared() {
-  const q = new URLSearchParams(location.search), all = ["title", "text", "url"].map((k) => (q.get(k) || "").trim()).filter(Boolean).join("\n");
-  if (!all) return;
-  try { history.replaceState(null, "", location.pathname); } catch (e) { /* keep the query */ }  // do not leave shared text in the address bar
-  const link = linkIn(all);
-  if (link) { $("url").value = link; syncClear(); } else showUrlError(tr("e_not_link"), true);  // review text is not read any more: only a link is
-}
-
 /* ---------- sign-in (Supabase) ----------
    Only when the server says Supabase is on. The browser talks to Supabase directly, so its per-address limits count each person apart;
    our server only checks the token it is sent. Only the publishable key is in this page, never the secret key. */
@@ -3058,6 +3057,7 @@ for (let i = 0; i < OTP_LEN; i++) {
   otpBoxes.push(input); $("otp").append(input);
 }
 async function sendCode(again) {
+  if (!again && !consentOk($("g-choose"))) return;
   setKeep($("g-keep").checked);
   const email = again ? gateEmail : $("g-email").value.trim();
   if (!EMAIL_RE.test(email)) { showGateError(tr("gErrEmail")); $("g-email").focus(); return; }
@@ -3154,8 +3154,21 @@ async function googleSignIn() {  // leaves the page for Google; a locked free re
   } catch (e) { fail(tr("gErrNet")); }
 }
 $("g-keep").addEventListener("change", () => setKeep($("g-keep").checked));
-$("g-google").addEventListener("click", () => { setKeep($("g-keep").checked); googleSignIn(); });
-$("unlock-google").addEventListener("click", googleSignIn);
+/* The tick before any sign-in: one shared state, so ticking on one card ticks the others. Without it the Google and email buttons only point at the tick. */
+let consented = false;
+function syncConsent() {
+  document.querySelectorAll(".consent input").forEach((b) => { b.checked = consented; });
+  document.querySelectorAll("[data-needs-consent]").forEach((b) => b.setAttribute("aria-disabled", String(!consented)));
+}
+document.addEventListener("change", (e) => { if (e.target.matches && e.target.matches(".consent input")) { consented = e.target.checked; syncConsent(); } });
+function consentOk(root) {
+  if (consented) return true;
+  const row = root.querySelector(".consent");
+  if (row) { row.classList.add("nudge"); setTimeout(() => row.classList.remove("nudge"), 1500); row.querySelector("input").focus(); }
+  return false;
+}
+$("g-google").addEventListener("click", () => { if (!consentOk($("g-choose"))) return; setKeep($("g-keep").checked); googleSignIn(); });
+$("unlock-google").addEventListener("click", () => { if (consentOk($("unlock"))) googleSignIn(); });
 $("unlock-email").addEventListener("click", () => showGate("choose"));
 $("g-send").addEventListener("click", () => sendCode(false));
 $("g-email").addEventListener("keydown", (e) => { if (e.key === "Enter") sendCode(false); });
@@ -3219,7 +3232,6 @@ async function loadConfig() {
 document.querySelectorAll("details.xp").forEach(smoothDetails);
 $("how").open = desktop();  // "Cara kerjanya" is shown open on a wide screen, closed on a phone
 applyLang();
-takeShared();
 try { history.replaceState({ view: "input" }, ""); } catch (e) { /* Back simply leaves the page */ }  // the first step: Back from the start screen leaves the app, from any other screen it returns to the one before
 loadConfig().then(resumeJob);
 </script>

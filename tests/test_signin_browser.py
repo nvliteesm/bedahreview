@@ -147,13 +147,16 @@ window.__probe = (async () => {
     out.keepInMenu = byId("g-keep").checked && !!byId("g-keep").closest("#acct-menu");  // on by default, and out of the way
     out.otp = [byId("otp-0").getAttribute("autocomplete"), byId("otp-0").getAttribute("inputmode"), byId("otp-1").getAttribute("autocomplete"), document.querySelectorAll("#otp input").length];
     byId("lang").click(); out.titleEn = byId("gate-h").textContent; byId("lang").click();
+    byId("g-email").value = "ani@example.com"; byId("g-google").click(); byId("g-send").click(); await wait(100);  // no tick yet: nothing is sent, the tick is pointed at
+    out.untickedCalls = [calls("oauth").length, calls("otp").length, byId("g-consent").classList.contains("nudge"), byId("g-google").getAttribute("aria-disabled")];
+    byId("g-consent").querySelector("input").click(); out.tickedState = [byId("g-google").getAttribute("aria-disabled"), byId("g-send").getAttribute("aria-disabled"), byId("unlock-consent").querySelector("input").checked];
     byId("g-google").click(); await wait(100); out.oauth = calls("oauth")[0].slice(1);
     byId("g-email").value = "not an email"; byId("g-send").click(); out.badEmail = byId("g-error-text").textContent; out.otpCalls = calls("otp").length;
   }
 
   if (hash === "#otp") {
     await until(() => vis("gate"));
-    byId("g-email").value = "ani@example.com"; byId("g-send").click();
+    byId("g-consent").querySelector("input").click(); byId("g-email").value = "ani@example.com"; byId("g-send").click();
     await until(() => vis("g-verify"));
     out.sub = byId("g-vsub").textContent; out.resend = byId("g-resend").textContent; out.resendDisabled = byId("g-resend").disabled;
     paste("000000");
@@ -378,7 +381,7 @@ window.__probe = (async () => {
     byId("tab-fight").click(); out.tabPointsToSignIn = document.activeElement === byId("unlock-h");
     show("input"); byId("url").value = "https://www.tokopedia.com/toko/kaos-boxy"; byId("url").dispatchEvent(new Event("input")); byId("fetch").click(); await wait(300);
     out.second = { gate: vis("gate"), info: byId("g-info").textContent, close: vis("g-close") };
-    byId("g-email").value = "ani@example.com"; byId("g-send").click();
+byId("g-consent").querySelector("input").click(); byId("g-email").value = "ani@example.com"; byId("g-send").click();
     await until(() => vis("g-verify")); paste("123456");
     await until(() => vis("g-intro")); byId("g-skip").click();
     await until(() => !byId("workspace").hidden && !byId("view-results").hidden, 80);
@@ -411,7 +414,7 @@ window.__probe = (async () => {
     openRivals({ from: "results", url: "https://www.tokopedia.com/toko/kaos", title: "Kaos" });  // whatever the way in, a visitor is asked to sign in first
     await wait(200);
     out.gate = vis("gate"); out.info = byId("g-info").textContent;
-    byId("g-email").value = "ani@example.com"; byId("g-send").click();
+    byId("g-consent").querySelector("input").click(); byId("g-email").value = "ani@example.com"; byId("g-send").click();
     await until(() => vis("g-verify")); paste("123456");
     await until(() => vis("g-intro")); byId("g-skip").click();
     await until(() => !byId("workspace").hidden);
@@ -460,7 +463,7 @@ window.__probe = (async () => {
     if (!window.__back) {
       runSample();
       await until(() => vis("unlock"), 80);
-      byId("unlock-google").click(); await wait(300);
+      byId("unlock-consent").querySelector("input").click(); byId("unlock-google").click(); await wait(300);
       const saved = JSON.parse(sessionStorage.getItem("bedahreview-free-result") || "null");
       sessionStorage.setItem("probe-stage1", JSON.stringify({ oauth: calls("oauth").length, saved: !!(saved && saved.free && saved.items.length) }));
       sessionStorage.setItem("probe-back", "1");
@@ -504,7 +507,7 @@ window.__probe = (async () => {
     out.off = [localStorage.getItem("t1"), sessionStorage.getItem("t1"), store.getItem("t1")];
     out.flagOff = localStorage.getItem("bedahreview-keep");
     store.removeItem("t1"); out.removed = [localStorage.getItem("t1"), sessionStorage.getItem("t1")];
-    byId("g-email").value = "ani@example.com"; byId("g-send").click();
+    byId("g-consent").querySelector("input").click(); byId("g-email").value = "ani@example.com"; byId("g-send").click();
     out.flagAfterSend = localStorage.getItem("bedahreview-keep");  // still off: sending a code does not undo the choice
     byId("g-keep").click(); out.flagOn = localStorage.getItem("bedahreview-keep");
     out.ios = vis("g-ios");
@@ -581,6 +584,8 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertTrue(out["keepInMenu"])
         self.assertEqual(out["otp"], ["one-time-code", "numeric", "off", 6])
         self.assertEqual(out["titleEn"], "Sign in")
+        self.assertEqual(out["untickedCalls"], [0, 0, True, "true"])  # without the tick neither Google nor the email code starts; the tick is highlighted
+        self.assertEqual(out["tickedState"], ["false", "false", True])  # ticking once opens both buttons and ticks the other card too
         self.assertEqual(out["oauth"], ["google", "http://127.0.0.1:%d/" % self.port])
         self.assertEqual((out["badEmail"], out["otpCalls"]), ("Alamat email tidak valid.", 0))  # a bad address never reaches Supabase
 

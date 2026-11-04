@@ -20,3 +20,5 @@ fetch_cache/
 
 # Owner's private working notes (checklists, interview scripts): never committed
 internal/
+
+.playwright-mcp/

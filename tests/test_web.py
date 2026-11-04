@@ -81,7 +81,7 @@ class WebTests(unittest.TestCase):
         self.assertEqual((resp.status, resp.getheader("Content-Type").split(";")[0]), (200, "application/manifest+json"))
         manifest = json.loads(data)
         self.assertEqual((manifest["display"], manifest["theme_color"]), ("standalone", "#0f6b5a"))
-        self.assertEqual(manifest["share_target"], {"action": "./", "method": "GET", "params": {"title": "title", "text": "text", "url": "url"}})
+        self.assertNotIn("share_target", manifest)  # no Share-menu entry: review text in an address would reach Google's own request log
         sizes = {(i["sizes"], i.get("purpose")) for i in manifest["icons"]}
         self.assertEqual(sizes, {("192x192", None), ("512x512", None), ("512x512", "maskable")})
         for icon in manifest["icons"]:

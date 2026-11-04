@@ -266,8 +266,8 @@ class PrivacyPageTests(PageServerMixin, unittest.TestCase):
 
     def test_it_says_the_things_a_person_needs_to_know_in_both_languages(self):
         _, page = self.get(self.start(access_codes={"ani": "ani-secret-1"}), "/privacy")
-        for phrase in ("Hapus akun dan data saya", "nama atau tautan produk", "catatan singkatmu", "Layanan AI pihak ketiga (berbayar)", "tidak dipakai untuk melatih", "paling lama 10 menit", "Supabase", "Google Cloud Run", "Apify", "alamat IP", "90 hari", "Do Not Track", "cadangan",
-                       "Delete my account and data", "product name or link", "short note", "Third-party AI service (paid)", "not used to train or improve", "at most 10 minutes", "Google Cloud keeps its own standard request logs", "90 days", "backups"):
+        for phrase in ("Hapus akun dan data saya", "nama atau tautan produk", "catatan singkatmu", "Google Gemini API (berbayar)", "Supabase (Tokyo, Jepang)", "Google Cloud Run (Jakarta)", "tidak dipakai untuk melatih", "paling lama 10 menit", "Supabase", "Google Cloud Run", "Apify", "alamat IP", "90 hari", "Do Not Track", "cadangan",
+                       "Delete my account and data", "product name or link", "short note", "Google Gemini API (paid)", "Supabase (Tokyo, Japan)", "Google Cloud Run (Jakarta)", "not used to train or improve", "at most 10 minutes", "Google Cloud keeps its own standard request logs", "90 days", "backups"):
             self.assertIn(phrase, page, phrase)
 
     def test_it_loads_nothing_from_anywhere_else(self):
@@ -307,8 +307,8 @@ class TermsPageTests(PageServerMixin, unittest.TestCase):
     def test_the_app_links_to_it_from_the_menu_the_sign_in_boxes_and_the_footer(self):
         html = (web.STATIC / "index.html").read_text(encoding="utf-8")
         self.assertGreaterEqual(html.count('href="/terms"'), 4)
-        self.assertIn("Dengan masuk, kamu setuju dengan", html)
-        self.assertIn("By signing in you agree to the", html)
+        self.assertIn("Saya setuju dengan", html)  # the tick above the sign-in buttons
+        self.assertIn("I agree to the", html)
 
 
 if __name__ == "__main__":
