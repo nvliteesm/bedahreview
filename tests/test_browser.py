@@ -553,12 +553,12 @@ class BrowserTests(unittest.TestCase):
 
     def test_results_board_and_language_switch(self):
         out = self.probe("/#flow")
-        self.assertEqual([out["tabs"][0], out["tabs"][1], out["tabs"][3]], ["Perbaiki2", "Tanggapi1", "Abaikan0"])  # four group tabs: Perbaiki, Tanggapi, Pertahankan, Abaikan
+        self.assertEqual([out["tabs"][0], out["tabs"][1], out["tabs"][3]], ["Perbaiki2", "Balas1", "Abaikan0"])  # four group tabs: Perbaiki, Tanggapi, Pertahankan, Abaikan
         self.assertTrue(out["tabs"][2].startswith("Pertahankan"), out["tabs"])
         self.assertEqual(out["cards"], 1)  # the two colour complaints become one card
         self.assertIn("Kurir? Cek dulu", out["chips"])
         self.assertGreaterEqual(out["keep"], 1)  # praise sits in its own Pertahankan tab
-        self.assertEqual(out["aiNotes"], ["panel-fix", "panel-fight"])
+        self.assertEqual(out["aiNotes"], [])  # no "written by AI" line anywhere (owner decision 2026-11-04)
         self.assertTrue(out["footHidden"] and out["noDev"])  # no "fetched from the link" note under the result, and no developer text anywhere
         self.assertIn("/", out["cachedPaths"])  # the app shell is cached...
         self.assertFalse([p for p in out["cachedPaths"] if p.startswith("/api/")], out["cachedPaths"])  # ...reviews never are
@@ -582,7 +582,7 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(out["sticky"], "sticky")
         self.assertTrue(out["sumSide"])
         self.assertEqual(out["sumLabel"], "RINGKASAN · 2 HAL PERLU DIPERBAIKI")  # the summary box names how many things to fix
-        self.assertEqual(out["board"][:2], ["Perbaiki2", "Tanggapi1"])
+        self.assertEqual(out["board"][:2], ["Perbaiki2", "Balas1"])
         self.assertEqual(out["pills"], [True, True])  # Bedah ulasan and Tugas pills in the header...
         self.assertEqual(out["bottom"], "none")  # ...instead of the bottom bar
         self.assertTrue(out["themeChanged"])

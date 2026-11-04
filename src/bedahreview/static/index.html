@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="BedahReview">
 <style>
 /* Phone first: one column up to 480px wide, 16px gutters, 44px touch targets, safe-area padding.
-   A 2x2 board of four tabs: Perbaiki (Fix) and Tanggapi (Respond) on top as the main ones, Abaikan (Ignore) and Pertahankan (Keep) below. Light is the default; dark only after the seller taps the theme button. */
+   A 2x2 board of four tabs: Perbaiki (Fix) and Balas (Respond) on top as the main ones, Abaikan (Ignore) and Pertahankan (Keep) below. Light is the default; dark only after the seller taps the theme button. */
 :root {
   --bg: #f6f7f5; --surface: #ffffff; --ink: #17201c; --muted: #5d6963; --line: #dde2de; --field: #7d8782; --quote: #f3f5f2;
   --accent: #0f6b5a; --on-accent: #ffffff; --accent-soft: #dff1ec;
@@ -980,7 +980,7 @@ const TEXT = {
     loadingPart: "%s dari %s bagian selesai.", loadingFetching: "Mengambil ulasan dari tautan…", loadingResume: "Melanjutkan analisis tadi…", e_job_gone: "Analisis ini sudah tidak tersedia. Coba bedah lagi.",
     loadingTitle: "Membedah %s ulasan…", loadingFetch: "Mengambil ulasan, lalu membedahnya…", loadingSub: "Memilah: perbaiki, tanggapi, abaikan.",
     results: "Hasil", reviewsWord: "ulasan", print: "Cetak",
-    fix: "Perbaiki", fight: "Tanggapi", ignore: "Abaikan", keep: "Pertahankan",
+    fix: "Perbaiki", fight: "Balas", ignore: "Abaikan", keep: "Pertahankan",
     fixRule: "Penyebabnya produk, listing, atau pengemasan, dan bisa kamu ubah.",
     fightRule: "Kumpulkan bukti, klaim ke kurir, lalu balas di kolom ulasan.",
     ignoreRule: "Bintang tanpa teks atau komentar tanpa isi. Ikut dihitung, tapi isinya tidak dibahas.",
@@ -994,7 +994,6 @@ const TEXT = {
     noteDropped: "%s ulasan dilewati karena kutipannya tidak ketemu di ulasan aslinya.",
    
    
-    aiNote: "Saran dan draf ditulis oleh AI. Baca dulu sebelum dikirim ke pembeli.",
     stars: "%s dari 5 bintang",
     rival: "Pesaing", rivalRule: "Bandingkan keluhan dan pujian produkmu dengan produk serupa. Ini contoh kecil, bukan seluruh pasar.",
     rivalAsk: "Mau sekalian membandingkan dengan pesaing?", rivalAskBtn: "Ya, cari pesaing",
@@ -1183,7 +1182,6 @@ const TEXT = {
     noteDropped: "%s review(s) were skipped because the quote could not be found in the original review.",
    
    
-    aiNote: "Suggestions and drafts are written by AI, and the drafts are in Bahasa Indonesia. Read them before you send anything to a buyer.",
     stars: "%s of 5 stars",
     rival: "Rivals", rivalRule: "Compare your complaints and praise with similar products. This is a small sample, not the whole market.",
     rivalAsk: "Also compare with competitors?", rivalAskBtn: "Yes, find competitors",
@@ -1466,7 +1464,6 @@ function kitText(kit) {  // the explanation and steps follow the page language; 
   const mine = id ? kit.steps_id : kit.steps, other = id ? kit.steps : kit.steps_id;
   return { why, steps: (mine && mine.length ? mine : other) || [] };
 }
-const aiNote = () => h("p", { class: "small muted ai-note", text: tr("aiNote") });  // once above the drafts of a tab, where the Copy buttons are
 const WRENCH = ["M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"];
 const buyerBox = (quotes, more) => h("div", { class: "buyer" }, h("span", { class: "lab", text: tr("buyerLbl") }), quotes.map((m) => [quote(m), fullText(m)]),
   more && more.length ? h("details", { class: "full" }, h("summary", { text: tr("moreQuotes", more.length) }), h("div", { class: "stack" }, more.map((m) => [quote(m), fullText(m)]))) : null);
@@ -2149,7 +2146,7 @@ function smoothDetails(d) {  // a row that opens grows to its height, and shrink
 }
 
 /* ---------- results ---------- */
-const TABS = ["fix", "fight", "keep", "ignore"];  // Perbaiki, Tanggapi, Pertahankan, Abaikan
+const TABS = ["fix", "fight", "keep", "ignore"];  // Perbaiki, Balas, Pertahankan, Abaikan
 let lastData = null, activeTab = "fix", lastQuota = null;
 let quotaDay = "";
 function setQuota(q) {  // how many analyses are left today, shown right above the buttons once the server has said (accounts only)
@@ -2249,10 +2246,10 @@ function render(data, fresh) {
   }));
   tabKeys($("tabs"), "button", (t) => { selectTab(t.dataset.b, true); track("tab_viewed", { tab: t.dataset.b }); });
   const panel = (k, body, extra) => h("div", { class: "panel", role: "tabpanel", id: "panel-" + k, "aria-labelledby": "tab-" + k, "data-b": k, hidden: true },
-    k === "fix" || k === "fight" ? null : h("p", { class: "rule", text: tr(k + "Rule") }), extra, body);  // Perbaiki and Tanggapi open with their one note, not a stack of them
+    k === "fix" || k === "fight" ? null : h("p", { class: "rule", text: tr(k + "Rule") }), extra, body);  // Perbaiki and Balas open with their one note, not a stack of them
   $("panels").replaceChildren(
-    panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") }), fixItems.length ? aiNote() : null),
-    panel("fight", fight.length ? replyGroups(fight) : h("div", { class: "empty", text: tr("emptyFight") }), fight.length ? aiNote() : null),
+    panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") }), null),
+    panel("fight", fight.length ? replyGroups(fight) : h("div", { class: "empty", text: tr("emptyFight") }), null),
     panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })),
     panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })));
   renderRival(); renderFeedback();

@@ -61,7 +61,7 @@ a { color: var(--accent); font-weight: 600; }
   <p class="muted">Terakhir diperbarui: 29 Oktober 2026. Ditulis dengan bahasa sederhana oleh pembuat aplikasi ini. Ini bukan nasihat hukum.</p>
 
   <h2>Apa ini</h2>
-  <p>BedahReview membantu penjual memilah ulasan pembeli menjadi Perbaiki, Tanggapi, Abaikan, dan Pertahankan. Ini proyek pribadi untuk riset produk, bukan perusahaan.</p>
+  <p>BedahReview membantu penjual memilah ulasan pembeli menjadi Perbaiki, Balas, Abaikan, dan Pertahankan. Ini proyek pribadi untuk riset produk, bukan perusahaan.</p>
 
   <h2>Yang kami simpan</h2>
   <ul>
@@ -69,7 +69,7 @@ a { color: var(--accent); font-weight: 600; }
     <li><b>Profil (opsional).</b> Platform jualan, tautan toko, kategori produk, dan bahasa. Boleh dilewati.</li>
     <li><b>Catatan pemakaian, per akun.</b> Kejadian seperti “membuka aplikasi”, “membuka tab”, “menyalin draf”, jumlah ulasan yang dibedah, dan saat analisis gagal atau kena batas (hanya jenis kesalahannya). Tanpa isi ulasan, tanpa nama produk, tanpa alamat IP. Satu-satunya teks bebas adalah komentar yang kamu ketik sendiri di pertanyaan “Apakah hasil ini berguna?”.</li>
     <li><b>Daftar perbaikan, kalau kamu memakainya.</b> Saat kamu mencatat perbaikan (“Tandai sudah diperbaiki”, atau langkah Catat di rencana hari ini), kami menyimpan tema keluhan, varian, tanggal, jumlah keluhan sebelum dan sesudah, tanggal cek berikutnya, <b>nama atau tautan produk</b>, dan <b>catatan singkatmu</b>. Ini agar daftarmu bisa dibuka dari HP lain. Lewat aplikasi, hanya akunmu yang bisa membacanya; pembuat aplikasi bisa melihatnya di dasbor Supabase. Jangan menulis nama orang di catatan.</li>
-    <li><b>Riwayat analisis, kalau kamu masuk.</b> Setiap kali kamu membedah ulasan, kami menyimpan ringkasannya: tanggal, nama produk (kalau kamu mengisinya), jumlah ulasan, jumlah di tiap kelompok (Perbaiki, Tanggapi, Abaikan, Pertahankan), dan nama keluhan terbanyak. Tanpa teks ulasan, kutipan, draf, atau saran AI. Riwayat dihapus setelah 60 hari, dan ikut terhapus bersama akunmu.</li>
+    <li><b>Riwayat analisis, kalau kamu masuk.</b> Setiap kali kamu membedah ulasan, kami menyimpan ringkasannya: tanggal, nama produk (kalau kamu mengisinya), jumlah ulasan, jumlah di tiap kelompok (Perbaiki, Balas, Abaikan, Pertahankan), dan nama keluhan terbanyak. Tanpa teks ulasan, kutipan, draf, atau saran AI. Riwayat dihapus setelah 60 hari, dan ikut terhapus bersama akunmu.</li>
     <li><b>Di perangkatmu.</b> Sesi masuk, pilihan bahasa dan tema, salinan daftar perbaikan, kotak Tugas (kalimat tugas dan mana yang sudah dicentang; tanpa teks ulasan; 30 hari), catatan analisismu (tanggal, jumlah, status), hasil analisis yang belum kamu selesaikan (termasuk kutipan ulasan, ditahan 7 hari supaya kamu bisa menekan “Lanjutkan”; tidak dikirim ke server), dan penanda acak perangkat. Kotak, catatan, dan hasil ini dihapus saat kamu keluar. Semuanya di penyimpanan browser (localStorage), bukan cookie pelacak.</li>
     <li><b>Analisis gratis sebelum masuk.</b> Tanpa akun, kamu bisa membedah ulasan sekali. Server tidak menyimpan apa pun darinya: hanya hitungan jumlahnya. Browser mencatat bahwa analisis gratis sudah dipakai. Kalau kamu masuk dengan Google, hasilnya menunggu di penyimpanan tab ini (sessionStorage) selama kamu ke halaman Google, lalu langsung dihapus begitu tampil lagi.</li>
   </ul>

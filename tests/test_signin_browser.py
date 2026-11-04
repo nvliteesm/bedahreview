@@ -699,7 +699,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertTrue(out["shopeeCleared"])  # a good link takes the notice away
         self.assertTrue(out["noDemo"])  # no "demo" or cost talk in front of sellers
         self.assertEqual((out["locked"]["unlock"], out["locked"]["panels"]), (True, False))
-        self.assertEqual(out["locked"]["counts"], ["1", "1", "1", "0"])  # the four numbers show (Perbaiki, Tanggapi, Pertahankan, Abaikan); the quotes and drafts wait for a sign-in
+        self.assertEqual(out["locked"]["counts"], ["1", "1", "1", "0"])  # the four numbers show (Perbaiki, Balas, Pertahankan, Abaikan); the quotes and drafts wait for a sign-in
         self.assertIn("Kaos Boxy Retro", out["locked"]["summary"])
 
     def test_a_visitor_is_asked_to_sign_in_for_competitors(self):
