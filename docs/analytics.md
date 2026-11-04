@@ -45,7 +45,7 @@ Every event carries `event` and a server timestamp `ts`, plus the fields below (
 |---|---|---|
 | `opened` | the page loads | none |
 | `analysed` | an analysis finishes | `reviews` (a number, 0 to 50), `source` (`paste` or `link`), `lang` (`id` or `en`) |
-| `tab_viewed` | the tester opens a results tab, or the Competitors section (`rivals`) | `tab` (`fix`, `fight`, `ignore`, `keep` or `rivals`) |
+| `tab_viewed` | the tester opens a results tab, the Competitors section (`rivals`) or the Tugas screen (`tasks`) | `tab` (`fix`, `fight`, `ignore`, `keep`, `rivals` or `tasks`) |
 | `draft_copied` | the tester taps Copy | `kind` (`fix`, `side`, `chat`, `public` or `report`). The draft text is not sent. |
 | `fix_marked` | "Mark as fixed" is saved | none. The fix itself goes to the fixes table, not into the event. |
 | `rivals_started` | a competitor search starts | none |

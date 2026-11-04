@@ -391,6 +391,50 @@ window.__probe = (async () => {
     const st = { checked: [0, 1, 2], candidates: [0, 1, 2].map((i) => ({ url: "https://www.tokopedia.com/s/p" + i, title: "t" + i })), extra: "https://www.tokopedia.com/x/y" };
     out.sec.chosen = [rivalChosen(Object.assign({ want: 1 }, st)).length, rivalChosen(Object.assign({ want: 2 }, st)).length, rivalChosen(st).length];
   } catch (e) { out.err = String(e && e.stack || e); } }
+  if (location.hash === "#navfix") { try {  // found by a click-path audit on 2026-11-04: dead ends, no way home, Back leaving the app
+    const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
+    const vis = () => ["input", "loading", "results", "rival", "fixes", "history"].filter((v) => !document.getElementById("view-" + v).hidden).join(",");
+    const nav = {}; out.nav = nav;
+    const errors = []; window.addEventListener("error", (e) => errors.push(e.message));
+    runSample(); await until(() => !document.getElementById("view-results").hidden);
+    document.getElementById("nav-tasks").click(); await wait(200);  // the phone's Back goes one screen back, and Forward comes again
+    nav.at = vis();
+    history.back(); await wait(400); nav.back1 = vis();
+    history.back(); await wait(400); nav.back2 = vis();
+    history.forward(); await wait(400); nav.forward = vis();
+    document.getElementById("url").value = "https://www.tokopedia.com/toko/x";  // the Bedah ulasan tab on a result: a clean start, the result one tap away
+    document.getElementById("nav-check").click();
+    nav.tab = [vis(), !document.getElementById("hero").hidden, document.getElementById("url").value, !!document.getElementById("back-results").offsetParent];
+    document.getElementById("back-results").click(); nav.resultBack = vis();
+    document.getElementById("brand-home").click(); nav.logo = [vis(), document.getElementById("brand-home").tagName];  // the logo is a button now
+    document.getElementById("back-results").click();
+    nav.endButton = !!document.getElementById("another-btn").offsetParent;  // "Bedah produk lain" at the end of Hasil Bedah
+    document.getElementById("done-btn").click(); await until(() => currentView === "fixes");  // after Selesai the tab opens a clean start, not the finished result
+    document.getElementById("nav-check").click(); nav.afterSelesai = [vis(), !document.getElementById("hero").hidden, document.getElementById("url").value];
+    document.getElementById("fetch").disabled = true; startLoading("t");  // an analysis is running: Tugas, then the tab back (this used to throw)
+    document.getElementById("nav-tasks").click(); document.getElementById("nav-check").click();
+    nav.running = [vis(), errors.length];
+    document.getElementById("cancel-load").click();  // Batal: back to the start, the button usable again, the clock stopped
+    nav.cancel = [vis(), !document.getElementById("fetch").disabled, timer === null];
+    rival = { step: "idle" }; show("rival"); nav.emptyRival = !!document.querySelector("#view-rival .back");  // never an empty Pesaing screen
+    const realPost = postJson; let calls = 0;
+    window.postJson = async () => { calls += 1; return null; };  // the sign-in ran out while searching
+    show("results"); rivalFind({ url: "https://www.tokopedia.com/s/p", title: "t", mine: false, sig: "" }, "results"); await wait(200);
+    nav.expired = [vis(), rival.step];
+    window.postJson = async () => { calls += 1; return { ok: false, data: { code: "no_title" } }; };  // the server wants a product name
+    show("rival"); rivalFind({ url: "https://www.lazada.co.id/products/pdp-i1-s1.html", title: "t", mine: true, sig: "abc" }, "results"); await wait(200);  // the search starts on the Pesaing screen, as openRivals does
+    nav.noTitle = [vis(), !!rival.form, document.getElementById("rival-url").value, !!document.getElementById("rival-name"), !!document.querySelector("#view-rival .callout"), rival.mine];
+    window.postJson = async () => { calls += 1; return null; };
+    lastData.source = { kind: "url", url: "https://www.lazada.co.id/products/pdp-i160018103-s181853952.html", title: "" };  // a Lazada result carries no product name
+    show("results"); calls = 0; document.getElementById("rivals-open").click(); await wait(300);
+    nav.lazada = [vis(), !!rival.form, document.getElementById("rival-url").value.indexOf("lazada.co.id") > 0, calls];  // no search is started without a name
+    window.postJson = realPost;
+    const fresh = await (await fetch("/api/example")).json(); fresh.example = false; delete fresh.free; fresh.quota = { used: 1, max: 10 };
+    rival = { step: "pick", from: "results", target: { url: "https://www.tokopedia.com/s/p", title: "t", mine: false }, candidates: [], checked: [], extra: "" };
+    show("rival"); finishAnalysis(200, fresh); await wait(300);  // an analysis ends while the seller is on Pesaing: they stay there, with a note
+    nav.away = [vis(), document.getElementById("toast2").hidden];
+    nav.errors = errors;
+  } catch (e) { out.err = String(e && e.stack || e); } }
   return out;
 })();
 </script>
@@ -754,6 +798,25 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(sec["returned"], ["results", True])
         self.assertEqual(sec["groups"], [3, 1, ["Praise: quality / material"]])
         self.assertEqual(sec["chosen"], [1, 2, 3])  # pasted links count towards the same number
+
+    def test_every_screen_has_a_way_back_and_a_way_home(self):
+        pr = self.probe("/#navfix", 390)
+        self.assertNotIn("err", pr, pr.get("err"))
+        nav = pr["nav"]
+        self.assertEqual([nav["at"], nav["back1"], nav["back2"], nav["forward"]], ["fixes", "results", "input", "results"])  # Back steps through the screens, Forward comes again
+        self.assertEqual(nav["tab"], ["input", True, "", True])  # the Bedah ulasan tab on a result: a clean start, the link box empty, "Kembali ke hasil" visible on a phone too
+        self.assertEqual(nav["resultBack"], "results")
+        self.assertEqual(nav["logo"], ["input", "BUTTON"])  # the logo goes home
+        self.assertTrue(nav["endButton"])  # "Bedah produk lain" at the end of Hasil Bedah
+        self.assertEqual(nav["afterSelesai"], ["input", True, ""])  # after Selesai the tab opens the start, not the finished result
+        self.assertEqual(nav["running"], ["loading", 0])  # Tugas and back while an analysis runs: the running analysis, no error (this used to throw)
+        self.assertEqual(nav["cancel"], ["input", True, True])  # Batal: the start, the button usable again, the clock stopped
+        self.assertTrue(nav["emptyRival"])  # Pesaing is never empty: at least the way back
+        self.assertEqual(nav["expired"], ["results", "idle"])  # the sign-in ran out during the search: a screen with content, not a blank one
+        self.assertEqual(nav["noTitle"], ["rival", True, "https://www.lazada.co.id/products/pdp-i1-s1.html", True, True, True])  # the server wants a name: the form, link filled, a note, own reviews kept
+        self.assertEqual(nav["lazada"], ["rival", True, True, 0])  # a result without a product name asks for it and starts no search
+        self.assertEqual(nav["away"], ["rival", False])  # an analysis that ends while on Pesaing leaves the seller there, with a note
+        self.assertEqual(nav["errors"], [])
 
 
 if __name__ == "__main__":

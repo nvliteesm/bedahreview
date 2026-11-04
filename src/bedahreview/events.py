@@ -20,7 +20,7 @@ DEVICE_RE = re.compile(r"^[a-z0-9-]{8,40}$")  # a random id kept in the tester's
 EVENTS: Dict[str, Dict[str, tuple]] = {
     "opened": {},
     "analysed": {"reviews": ("int", 0, MAX_REVIEWS_FIELD), "source": ("enum", ("paste", "link")), "lang": ("enum", ("id", "en"))},
-    "tab_viewed": {"tab": ("enum", ("fix", "fight", "ignore", "keep", "rivals"))},
+    "tab_viewed": {"tab": ("enum", ("fix", "fight", "ignore", "keep", "rivals", "tasks"))},  # tasks: the Tugas screen, sent by openFixes; leaving it out made the server refuse whole batches
     "draft_copied": {"kind": ("enum", ("fix", "side", "chat", "public", "report"))},
     "fix_marked": {},
     "rivals_started": {},

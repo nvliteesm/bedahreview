@@ -54,6 +54,7 @@ h2[tabindex="-1"]:focus, .error:focus { outline: none; }
 .topbar-in { max-width: 480px; margin: 0 auto; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; }
 .brand .wm span { color: var(--accent); }
+button.brand { background: none; border: 0; padding: 0; margin: 0; color: inherit; font-family: inherit; text-align: left; cursor: pointer; min-height: 44px; }  /* the logo is the way home: a button that looks like the old plain logo */
 .logo { width: 30px; height: 30px; color: var(--ink); flex: none; }
 .tools { display: flex; align-items: center; gap: 8px; }
 .lang { display: inline-flex; gap: 2px; min-height: 44px; min-width: 44px; padding: 0 2px; border: 0; background: none; color: var(--muted); font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; align-items: center; justify-content: center; }
@@ -661,7 +662,8 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 .res-end h3 { font-size: 1.1rem; font-weight: 800; }
 .res-end .small { font-size: 12px; }
 #view-results.locked .res-end { display: none !important; }
-@media (min-width: 900px) { .res-end .btn { width: 260px; justify-self: start; } .gtabs { margin: 0; padding: 2px 0; flex-wrap: wrap; overflow: visible; } }
+#another-btn { justify-self: center; min-height: 44px; }  /* a quiet third choice under Selesai and Analisa Kompetitor */
+@media (min-width: 900px) { #another-btn { justify-self: start; } .res-end .btn { width: 260px; justify-self: start; } .gtabs { margin: 0; padding: 2px 0; flex-wrap: wrap; overflow: visible; } }
 @media print { .panel[hidden] { display: grid !important; } }
 
 /* ---------- Tugas boxes, Riwayat, Pesaing, Selesai (R11) ---------- */
@@ -739,10 +741,10 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand">
+    <button class="brand" id="brand-home" type="button" data-i18n-label="goHome">
       <svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><circle cx="20" cy="20" r="12.5" fill="none" stroke="currentColor" stroke-width="4.2"/><path transform="translate(10.4 10) scale(0.4)" d="M24 5 L29 18.12 L43.02 18.82 L32.08 27.63 L35.76 41.18 L24 33.5 L12.24 41.18 L15.92 27.63 L4.98 18.82 L19 18.12 Z" fill="var(--accent)"/><path d="M28.6 32 L32 28.6 L45.2 42.6 Q45.6 45.6 42.6 45.2 Z" fill="currentColor"/></svg>
       <span class="wm"><b>bedah</b><i>review</i></span>
-    </div>
+    </button>
     <div class="tools">
       <button class="btn pill" id="signin-btn" type="button" hidden data-i18n="signInShort"></button>
       <button class="theme fixes-pill" id="check-btn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg><span class="lbl" data-i18n="navChecker"></span></button>
@@ -835,7 +837,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 
   <!-- input: one box for a product link (Tokopedia, TikTok Shop, Lazada) -->
   <section id="view-input" aria-label="Link produk" data-i18n-label="newReviews">
-    <button class="plain dsk" id="back-results" type="button" hidden></button>
+    <button class="linkbtn" id="back-results" type="button" hidden></button>
     <div class="card-box">
       <div id="in-link" style="display:grid;gap:12px">
         <div class="boxhead"><label for="url" id="box-label" data-i18n="boxLabel"></label></div>
@@ -880,6 +882,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
     <h2 id="loading-title"></h2>
     <p class="muted" id="loading-sub"></p>
     <p class="small muted" id="elapsed" aria-hidden="true"></p>
+    <button class="btn ghost" id="cancel-load" type="button" data-i18n="cancelBtn"></button>
   </section>
 
   <!-- Tugas: one box per analysed product, kept in this browser (R11) -->
@@ -922,6 +925,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
       <h3 data-i18n="endTitle"></h3>
       <button class="btn primary" id="done-btn" type="button" data-i18n="selesaiBtn"></button>
       <button class="btn ghost" id="rivals-open" type="button" data-i18n="rivalsOpen"></button>
+      <button class="plain strong" id="another-btn" type="button" data-i18n="another"></button>
     </div>
     <p class="foot"><a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a> · <a href="/terms" target="_blank" rel="noopener" data-i18n="termsLink"></a></p>
   </section>
@@ -978,7 +982,7 @@ const TEXT = {
    errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa terhubung ke BedahReview. Periksa koneksi internetmu, lalu coba lagi.",
   
     loadingPart: "%s dari %s bagian selesai.", loadingFetching: "Mengambil ulasan dari tautan…", loadingResume: "Melanjutkan analisis tadi…", e_job_gone: "Analisis ini sudah tidak tersedia. Coba bedah lagi.",
-    loadingTitle: "Membedah %s ulasan…", loadingFetch: "Mengambil ulasan, lalu membedahnya…", loadingSub: "Memilah: perbaiki, tanggapi, abaikan.",
+    loadingTitle: "Membedah %s ulasan…", loadingFetch: "Mengambil ulasan, lalu membedahnya…", loadingSub: "Memilah: perbaiki, balas, abaikan.",
     results: "Hasil", reviewsWord: "ulasan", print: "Cetak",
     fix: "Perbaiki", fight: "Balas", ignore: "Abaikan", keep: "Pertahankan",
     fixRule: "Penyebabnya produk, listing, atau pengemasan, dan bisa kamu ubah.",
@@ -1116,7 +1120,7 @@ const TEXT = {
     stepOf: "Langkah %s dari %s",
     dF: "Perbaikan %s dicatat", 
     doIt: "Kerjakan", 
-    trCheck: "Cek lagi %s", more: "Lainnya", doneBtn: "Sudah dikerjakan", fixAct: "Perbaiki %s", waBtn: "Kirim ke WhatsApp", waNote: "WhatsApp terbuka dengan pesan siap kirim. Kami tidak mengirim apa pun sendiri.", waHead: "Perbaikan BedahReview", waCheck: "cek lagi %s", backRes2: "Kembali ke hasil", another: "Bedah produk lain",
+    trCheck: "Cek lagi %s", more: "Lainnya", goHome: "Ke halaman awal BedahReview", rivalNeedNameNote: "Tautan ini tidak memberi nama produk. Isi namanya sekali, lalu pencarian langsung jalan.", doneBtn: "Sudah dikerjakan", fixAct: "Perbaiki %s", waBtn: "Kirim ke WhatsApp", waNote: "WhatsApp terbuka dengan pesan siap kirim. Kami tidak mengirim apa pun sendiri.", waHead: "Perbaikan BedahReview", waCheck: "cek lagi %s", backRes2: "Kembali ke hasil", another: "Bedah produk lain",
     tasksSub: "Langkah yang belum selesai dan perbaikan yang sedang dipantau.", tasksSubAll: "Langkah yang belum selesai dan perbaikan yang sedang dipantau, untuk semua produkmu.",
     today: "Hari ini · %s", watched: "Dipantau · %s", sched: "Jadwal cek", schedToday: "Hari ini", schedNext: "Berikutnya", schedNextP: "Tanggal cek muncul di sini setelah kamu mencatat perbaikan.",
     langBtn: "Bahasa: Indonesia. Ganti ke English.", readyToast: "Analisis selesai. Buka lewat Bedah ulasan.", dueChip: "Waktunya cek", loggedOn: "%s · dicatat %s", reanalyse: "Bedah ulasan terbaru", skippedNote: "Langkah yang dilewati tetap di sini sampai kamu kerjakan.", noneToday: "Tidak ada langkah yang tersisa.",
@@ -1166,7 +1170,7 @@ const TEXT = {
    errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach BedahReview. Check your internet connection and try again.",
   
     loadingPart: "%s of %s parts done.", loadingFetching: "Fetching reviews from the link…", loadingResume: "Picking up your earlier analysis…", e_job_gone: "This analysis is no longer available. Please run it again.",
-    loadingTitle: "Reading %s reviews…", loadingFetch: "Fetching reviews, then reading them…", loadingSub: "Sorting: fix, fight, ignore.",
+    loadingTitle: "Reading %s reviews…", loadingFetch: "Fetching reviews, then reading them…", loadingSub: "Sorting: fix, respond, ignore.",
     results: "Results", reviewsWord: "reviews", print: "Print",
     fix: "Fix", fight: "Respond", ignore: "Ignore", keep: "Keep",
     fixRule: "The product, listing or packing caused it, and you can change it.",
@@ -1303,7 +1307,7 @@ const TEXT = {
     stepOf: "Step %s of %s",
     dF: "Fix for %s logged", 
     doIt: "Do it", 
-    trCheck: "Check again %s", more: "More", doneBtn: "Done", fixAct: "Fix %s", waBtn: "Send to WhatsApp", waNote: "WhatsApp opens with a message ready to send. We do not send anything ourselves.", waHead: "BedahReview fixes", waCheck: "check again %s", backRes2: "Back to results", another: "Analyse another product",
+    trCheck: "Check again %s", more: "More", goHome: "BedahReview home", rivalNeedNameNote: "This link does not give a product name. Type it once and the search starts right away.", doneBtn: "Done", fixAct: "Fix %s", waBtn: "Send to WhatsApp", waNote: "WhatsApp opens with a message ready to send. We do not send anything ourselves.", waHead: "BedahReview fixes", waCheck: "check again %s", backRes2: "Back to results", another: "Analyse another product",
     tasksSub: "Open steps and the fixes being tracked.", tasksSubAll: "Open steps and the fixes being tracked, for all your products.",
     today: "Today · %s", watched: "Tracked · %s", sched: "Check schedule", schedToday: "Today", schedNext: "Next", schedNextP: "Check dates show here once you log a fix.",
     langBtn: "Language: English. Switch to Indonesian.", readyToast: "Analysis ready. Open it under Review checker.", dueChip: "Time to check", loggedOn: "%s · logged %s", reanalyse: "Analyse the latest reviews", skippedNote: "Skipped steps stay here until you do them.", noneToday: "No steps left.",
@@ -1981,7 +1985,7 @@ function finishResult() {  // Selesai on a Hasil Bedah: the tasks are made, the 
   logAnalysis(lastData, lastCounts);
   updateLog(sig, { done: true, tasks: n }); dropHeld(sig);
   track("fix_marked"); renderFixBadge();
-  playDone(n, () => { openFixes(); if (n) showToast(tr("doneToast", n)); });  // go first: a new screen clears any toast
+  playDone(n, () => { clearInputs(); checkerView = "input"; openFixes(); if (n) showToast(tr("doneToast", n)); });  // go first: a new screen clears any toast. The Bedah ulasan tab now opens a clean start, not the finished result
 }
 function toggleItem(sig, id) {
   saveBoxes(loadBoxes().map((b) => {
@@ -2143,11 +2147,10 @@ function renderHistory() {
   else body.replaceChildren(...[historyRows === null ? h("div", { class: "callout warn", role: "status", text: tr("histDown") }) : null].concat(items.map(historyCard)).filter(Boolean));
 }
 
-let currentView = "input", viewBeforeFixes = "input", checkerView = "input", lastChanged = [];
+let currentView = "input", checkerView = "input", lastChanged = [];
 function openFixes() {
   if (!!sb && !signedIn && desktop()) { openSignDialog(); return; }  // a wide screen: the sign-in asks over the work, as a dialog
   closeSheet();
-  if (currentView !== "fixes") viewBeforeFixes = currentView;
   track("tab_viewed", { tab: "tasks" });
   renderFixes(); show("fixes"); toTop(); $("fixes-h").focus({ preventScroll: true });
   syncBoxes();  // another phone may have ticked something: fetch it (at most every 15 seconds)
@@ -2192,11 +2195,22 @@ function closeSheet(fromPop) {
   s.classList.remove("open"); document.body.classList.remove("sheet-open"); setBehind(false);
   const hide = () => { if (!s.classList.contains("open")) s.hidden = true; };
   if (reduceMotion()) hide(); else setTimeout(hide, 320);
-  if (sheetPushed) { sheetPushed = false; if (!fromPop) { try { history.back(); } catch (e) { /* ignore */ } } }
+  if (sheetPushed) {
+    sheetPushed = false;
+    if (!fromPop) { try { history.back(); backPending = true; setTimeout(() => { if (backPending) { backPending = false; flushPush(); } }, 1000); } catch (e) { /* ignore */ } }  // a screen opened meanwhile adds its step once this Back has landed
+  }
   if (sheetReturn && document.contains(sheetReturn) && sheetReturn.focus) sheetReturn.focus({ preventScroll: true });
   sheetReturn = null;
 }
-window.addEventListener("popstate", () => { if ($("sheet").classList.contains("open")) { sheetPushed = false; closeSheet(true); } });  // Back closes the sheet
+window.addEventListener("popstate", (e) => {
+  const wasPending = backPending; backPending = false;
+  if ($("sheet").classList.contains("open")) { sheetPushed = false; closeSheet(true); flushPush(); return; }  // Back closes the sheet
+  if (wasPending) { flushPush(); return; }  // the step back that a closing dialog asked for
+  const v = e.state && e.state.view;
+  if (!v || !Object.prototype.hasOwnProperty.call(VIEWS, v)) return;
+  if (!$("gate").hidden && !$("g-close").hidden) showApp();  // Back from the sign-in screen: the app works without an account, so it simply waits
+  restoreView(v);
+});
 $("sheet-scrim").addEventListener("click", () => closeSheet());
 $("sheet-x").addEventListener("click", () => closeSheet());
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("sheet").classList.contains("open")) closeSheet(); });
@@ -2407,6 +2421,16 @@ const visitor = () => !!sb && !signedIn;  // no account yet: competitor search n
 const noBoxNote = () => (rivalsOn === false ? h("div", { class: "callout warn", text: tr("rivalNoBox") }) : visitor() ? h("div", { class: "callout", text: tr("rivalSignInNote") }) : null);
 function rivalSignedIn() { if (!visitor()) return true; showGate("choose"); gateInfo(tr("rivalSignIn")); return false; }
 const RIVAL_BACK = { results: "resultsTitle", fixes: "fixesTitle", history: "histTitle" };  // the back link names the screen it returns to
+function askRivalName(t, from) {  // the short form with the link filled in and a line saying why the name is needed; "mine" keeps this product's own reviews in the comparison
+  rivalForm = { url: t.url, name: "" };
+  rival = { step: "idle", from, form: true, needName: true, ownUrl: t.url, mine: !!t.mine, sig: t.sig || "" };
+  renderRival();
+}
+function focusRivalName() { setTimeout(() => { const n = document.getElementById("rival-name"); if (n && currentView === "rival") n.focus({ preventScroll: true }); }, 0); }
+function rivalAbort() {  // the sign-in ran out while searching or comparing: the sign-in screen is up, and when it is closed the seller lands on a screen with content, not an empty one
+  rivalRun += 1; rival = { step: "idle" };
+  show(lastData ? "results" : "input");
+}
 function leaveRival() {
   const from = rival.from || "results";
   rivalRun += 1; rival = { step: "idle" };
@@ -2434,10 +2458,11 @@ function rivalIdle() {  // no link to start from (pasted reviews, or a box witho
     if (!rivalSignedIn()) return;  // the link and name stay filled in for after the sign-in
     if (!u) return fail(tr("rivalNeedLink"), url);
     if (!title) return fail(tr("rivalNeedName"), name);
-    rivalFind({ url: u, title, mine: false, sig: "" }, rival.from);
+    const own = !!rival.mine && u === rival.ownUrl;  // still the product that was analysed: its own reviews stay in the comparison
+    rivalFind({ url: u, title, mine: own, sig: own ? rival.sig : "" }, rival.from);
   });
   [url, name].forEach((f) => f.addEventListener("keydown", (e) => { if (e.key === "Enter") go.click(); }));
-  return h("div", { class: "stack rival-wrap" }, rivalBack(), noBoxNote(), h("h2", { text: tr("rivalTitleAlone") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
+  return h("div", { class: "stack rival-wrap" }, rivalBack(), noBoxNote(), rival.needName ? h("div", { class: "callout", role: "status", text: tr("rivalNeedNameNote") }) : null, h("h2", { text: tr("rivalTitleAlone") }), h("p", { class: "muted", text: tr("rivalIntroS") }),
     h("label", { class: "field", for: "rival-url" }, h("span", { text: tr("rivalYourLink") }), url),
     h("label", { class: "field", for: "rival-name" }, h("span", { text: tr("rivalYourName") }), name), err, go, exampleLink());
 }
@@ -2526,7 +2551,10 @@ function rivalBody() {
   if (rival.step === "result") return rivalResult(rival);
   return rival.form ? rivalIdle() : null;
 }
-function renderRival() { rivalBodyEl.replaceChildren(...[rivalBody()].flat(Infinity).filter(Boolean)); }
+function renderRival() {
+  const body = [rivalBody()].flat(Infinity).filter(Boolean);
+  rivalBodyEl.replaceChildren(...(body.length || currentView !== "rival" ? body : [h("div", { class: "stack rival-wrap" }, rivalBack())]));  // this screen is never empty: at least the way back
+}
 function openRivals(opts) {  // from the end of a result, a Riwayat entry or a Tugas box: with a link the search starts at once, without one a short form asks for it
   opts = opts || {};
   closeSheet(); track("tab_viewed", { tab: "rivals" });
@@ -2534,8 +2562,10 @@ function openRivals(opts) {  // from the end of a result, a Riwayat entry or a T
   rivalRun += 1;
   if (url) {
     const mine = opts.mine !== undefined ? opts.mine : !!own, sig = opts.sig || (mine && lastData ? reviewSig(lastData.items) : "");
-    show("rival"); toTop();
-    rivalFind({ url, title: opts.title || (own && own.title) || "", mine, sig }, from);
+    const title = opts.title || (own && own.title) || slugTitle(url);
+    if (!title) { askRivalName({ url, mine, sig }, from); show("rival"); toTop(); focusRivalName(); return; }  // a link that gives no name (Lazada): ask for it once instead of a search that cannot start
+    show("rival"); renderRival(); toTop();
+    rivalFind({ url, title, mine, sig }, from);
     return;
   }
   const src = lastData && lastData.source;
@@ -2552,8 +2582,9 @@ async function rivalFind(target, from) {
   let next;
   try {
     const out = await postJson("/api/competitors/suggest", { url: t.url, title: t.title });
-    if (!out) { rival = { step: "idle" }; renderRival(); return; }  // not signed in: the sign-in screen is up
+    if (!out) { rivalAbort(); return; }  // not signed in: the sign-in screen is up
     if (run !== rivalRun) return;
+    if (!out.ok && out.data && out.data.code === "no_title") { askRivalName(t, from); focusRivalName(); return; }  // the server wants a name: ask for it here, not in a dead end
     const cands = out.ok ? out.data.candidates : [];
     next = { step: "pick", target: t, want: rivalWant, from, candidates: cands, checked: cands.map((c, i) => (c.picked ? i : -1)).filter((i) => i >= 0).slice(0, rivalWant), extra: "", error: out.ok ? "" : errText(out.data, tr("errGeneric", ""), true) };
   } catch (e) {
@@ -2572,7 +2603,7 @@ async function rivalCompare() {
   let next;
   try {
     const out = await postJson("/api/competitors/compare", { url: t.url, title: t.title, own, competitors: chosen });
-    if (!out) { rival = { step: "idle" }; renderRival(); return; }  // not signed in: the sign-in screen is up
+    if (!out) { rivalAbort(); return; }  // not signed in: the sign-in screen is up
     if (run !== rivalRun) return;
     if (out.ok && out.data.quota) setQuota(out.data.quota);  // a comparison is one of the day's analyses
     next = out.ok ? { step: "result", target: t, from: pick.from, data: out.data, shops } : Object.assign(pick, { step: "pick", error: errText(out.data, tr("errGeneric", ""), true) });
@@ -2618,9 +2649,50 @@ function show(view) {
   $("nav-tasks").setAttribute("aria-current", tasks ? "page" : "false");
   $("fixes-btn").classList.toggle("on", tasks); $("check-btn").classList.toggle("on", !tasks);
 
+  if (view === "rival" && !rivalBodyEl.children.length) renderRival();  // Pesaing is never shown empty: at least the way back
   if (before !== view) { clearToast(); animateIn($(VIEWS[view])); }  // a new screen rises in, and the last screen's toast goes
+  pushView(view);
 }
-$("nav-check").addEventListener("click", () => { show(currentView === "rival" || currentView === "fixes" || currentView === "history" ? (checkerView === "loading" && !$("run").disabled ? "input" : checkerView) : currentView); toTop(); });
+
+/* Back: each screen the seller opens is one step in the browser's history, so the phone's Back button returns to the screen before instead of
+   leaving the app. "loading" is never a step (it is a wait on the Bedah ulasan screen). A step the page cannot draw again falls back to one it can. */
+let histView = "input", navFromPop = false, backPending = false, pushWanted = false;  // histView: the screen the current history step stands for
+function pushView(view) {
+  if (navFromPop || view === "loading" || view === histView) return;
+  if (backPending || sheetPushed) { pushWanted = true; return; }  // a dialog is still closing: its own Back comes first, then this step is added
+  try { history.pushState({ view }, ""); histView = view; } catch (e) { /* Back simply leaves the page */ }
+}
+function flushPush() {
+  if (!pushWanted) return;
+  pushWanted = false;
+  if (currentView !== histView && currentView !== "loading") { try { history.pushState({ view: currentView }, ""); histView = currentView; } catch (e) { /* ignore */ } }
+}
+function restoreView(v) {
+  const to = v === "loading" ? ($("fetch").disabled ? "loading" : "input")
+    : v === "results" && !lastData ? "input"
+    : v === "rival" && rival.step === "idle" && !rival.form ? (lastData ? "results" : "input")
+    : v === "history" && !hasAccount() ? "input" : v;
+  navFromPop = true;
+  try { if (to === "fixes") openFixes(); else if (to === "history") openHistory(); else show(to); } finally { navFromPop = false; }
+  histView = to;
+  if (to !== v) { try { history.replaceState({ view: to }, ""); } catch (e) { /* ignore */ } }
+  toTop();
+}
+function checkerTarget() { return (checkerView === "loading" && !$("fetch").disabled) || (checkerView === "results" && !lastData) ? "input" : checkerView; }  // where the Bedah ulasan tab goes back to
+function goChecker() {  // the Bedah ulasan tab: from Tugas, Riwayat or Pesaing back to the checker screen last used; from a result a clean start, the result stays one tap away
+  if (currentView === "results") { if (!$("fetch").disabled) { clearInputs(); show("input"); } }
+  else show(currentView === "rival" || currentView === "fixes" || currentView === "history" ? checkerTarget() : currentView);
+  toTop();
+}
+function goHome() {  // the logo: a clean start screen from anywhere; a result is kept, "Kembali ke hasil" brings it back
+  closeSheet();
+  if ($("fetch").disabled) { show("loading"); toTop(); return; }  // an analysis is still running: show it, do not wipe the form under it
+  if (currentView !== "input") clearInputs();
+  show("input"); toTop();
+}
+$("brand-home").addEventListener("click", goHome);
+$("another-btn").addEventListener("click", startFresh);
+$("nav-check").addEventListener("click", goChecker);
 $("check-btn").addEventListener("click", () => $("nav-check").click());
 $("nav-tasks").addEventListener("click", () => openFixes());
 $("done-btn").addEventListener("click", finishResult);
@@ -2675,14 +2747,21 @@ function showUrlError(msg, quiet) {  // a link that is not right: the field turn
 $("url").addEventListener("input", () => { if ($("url-error-text").textContent !== tr("e_shopee")) showUrlError(""); });
 
 /* ---------- sending ---------- */
-let timer = null;
+let timer = null, loadRun = 0;  // loadRun: which wait is current; "Batal" moves it on, so the answer of a wait the seller gave up is never drawn
 function startLoading(title) {
   const t0 = Date.now();
   $("loading-title").textContent = title; announce(title); $("loading-sub").textContent = tr("loadingSub"); $("elapsed").textContent = "0s";
   show("loading");
+  clearInterval(timer);
   timer = setInterval(() => { $("elapsed").textContent = Math.round((Date.now() - t0) / 1000) + "s"; }, 1000);
+  return ++loadRun;
 }
 function stopLoading() { clearInterval(timer); timer = null; }
+$("cancel-load").addEventListener("click", () => {  // stops waiting only: the server finishes the job by itself, and it still counts for today
+  loadRun += 1; forgetJob(); stopLoading();
+  $("fetch").disabled = false;
+  show("input"); detectInput(); toTop();
+});
 
 /* The analysis runs on the server as a background job: the page gets an id, then asks "done yet?" every couple of seconds. A phone that drops the
    connection, sleeps or reloads loses nothing: the id is kept (it is an opaque token, not review text) and the page picks the job up again. */
@@ -2695,9 +2774,10 @@ function savedJob() {
 function showProgress(job) {
   $("loading-sub").textContent = job.step === "fetching" ? tr("loadingFetching") : job.total > 1 ? tr("loadingPart", job.done, job.total) : tr("loadingSub");
 }
-async function pollJob(id) {  // resolves to {status, data} like the plain reply would have been; throws when the server cannot be reached for too long
+async function pollJob(id, stale) {  // resolves to {status, data} like the plain reply would have been; throws when the server cannot be reached for too long; {cancelled} once the seller pressed Batal
   const t0 = Date.now();
   for (;;) {
+    if (stale && stale()) return { cancelled: true };
     let res = null;
     try { res = await api("/api/job/" + id); } catch (e) { /* offline for now: try again */ }
     if (res) {
@@ -2731,47 +2811,53 @@ function finishAnalysis(status, data) {  // the one place that turns a reply int
   }
   setQuota(data.quota);
   if (data.free) markFreeUsed();
-  const wasAway = ["fixes", "history"].includes(currentView) || (currentView === "rivals" && !desktop()), awayView = currentView;
+  const wasAway = ["fixes", "history", "rival"].includes(currentView), awayView = currentView;
   render(data, true);
-  if (wasAway) { show(awayView); showToast(tr("readyToast")); }  // the seller moved on while it ran: tell them, do not pull them back
+  if (wasAway) {  // the seller moved on while it ran: tell them, do not pull them back
+    const wiped = awayView === "rival" && rival.step === "idle" && !rival.form;  // a new analysis ends a comparison of the old product: nothing left to show there, so the new result stays
+    if (!wiped) { show(awayView); showToast(tr("readyToast")); }  // wiped: the result is already on screen, nothing to point at
+  }
 }
 async function send(payload, title) {
   showError("");
   const buttons = [$("fetch")]; buttons.forEach((b) => { b.disabled = true; });
-  startLoading(title);
+  const run = startLoading(title), stale = () => run !== loadRun;  // stale: the seller pressed Batal (or a newer wait began): this one must not touch the screen any more
   try {
     const res = await api("/api/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ async: true }, payload)) });
     let data = null;
     try { data = await res.json(); } catch (e) { /* not JSON */ }
     let out = { status: res.status, data };
+    if (stale()) return;
     if (res.status === 202 && data && data.job) {
       rememberJob(data.job);
-      out = await pollJob(data.job);
+      out = await pollJob(data.job, stale);
+      if (stale()) return;
       forgetJob();
     }
     finishAnalysis(out.status, out.data);
   } catch (e) {
+    if (stale()) return;
     stopLoading(); show("input"); showError(tr("errNetwork"));
   } finally {
-    buttons.forEach((b) => { b.disabled = false; });
-    detectInput();
+    if (!stale()) { buttons.forEach((b) => { b.disabled = false; }); detectInput(); }
   }
 }
 async function resumeJob() {  // the page was reloaded or closed while an analysis ran: pick it up if the server still has it
   const id = savedJob();
   if (!id || $("fetch").disabled) return;
   const buttons = [$("fetch")]; buttons.forEach((b) => { b.disabled = true; });
-  startLoading(tr("loadingResume"));
+  const run = startLoading(tr("loadingResume")), stale = () => run !== loadRun;
   try {
-    const out = await pollJob(id);
+    const out = await pollJob(id, stale);
+    if (stale()) return;
     forgetJob();
     if (out.status === 404) { stopLoading(); show("input"); return; }  // already gone: nothing to say
     finishAnalysis(out.status, out.data);
   } catch (e) {
+    if (stale()) return;
     forgetJob(); stopLoading(); show("input");
   } finally {
-    buttons.forEach((b) => { b.disabled = false; });
-    detectInput();
+    if (!stale()) { buttons.forEach((b) => { b.disabled = false; }); detectInput(); }
   }
 }
 function runFetch() {
@@ -2905,7 +2991,7 @@ $("acct-legend").addEventListener("click", () => {  // what the four groups mean
 });
 $("in-history").addEventListener("click", () => openHistory());
 $("tasks-history").addEventListener("click", () => openHistory());
-$("history-back").addEventListener("click", () => { const v = viewBeforeHistory; show(v === "loading" || v === "history" || ((v === "results" || v === "plan") && !lastData) ? "input" : v); toTop(); });
+$("history-back").addEventListener("click", () => { const v = viewBeforeHistory; show(v === "loading" || v === "history" || (v === "results" && !lastData) || (v === "rival" && rival.step === "idle" && !rival.form) ? "input" : v); toTop(); });
 function gateInfo(msg) { $("g-info").textContent = msg || ""; $("g-info").hidden = !msg; }
 function fillSelect(sel, values, label) {
   const keep = sel.value;
@@ -3007,7 +3093,12 @@ async function enterApp(session) {
   await maybeIntro();
   showApp();
 }
-function onSignedOut() { userId = null; userEmail = ""; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync(); dropPending(); forgetJob(); lastData = null; clearBoxes(); closeSheet(); renderAccount(); showGate("choose", false); }  // nothing of this account stays in memory for the next sign-in on this page
+function onSignedOut() {
+  userId = null; userEmail = ""; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync(); dropPending(); forgetJob(); lastData = null; clearBoxes(); closeSheet();
+  ["panels", "start", "notes", "sumbox", "tabs"].forEach((id) => $(id).replaceChildren()); $("summary").textContent = "";  // the old result's text must not wait behind the next sign-in
+  rivalRun += 1; rival = { step: "idle" }; renderRival(); clearInputs(); show("input");
+  renderAccount(); showGate("choose", false);
+}  // nothing of this account stays in memory for the next sign-in on this page
 function handleUnauthorized() {
   if (!sb) { location.reload(); return; }
   userId = null; userEmail = ""; signedIn = false; eventQueue = []; cachedToken = ""; resetFixSync(); forgetJob(); renderAccount();
@@ -3116,6 +3207,7 @@ document.querySelectorAll("details.xp").forEach(smoothDetails);
 $("how").open = desktop();  // "Cara kerjanya" is shown open on a wide screen, closed on a phone
 applyLang();
 takeShared();
+try { history.replaceState({ view: "input" }, ""); } catch (e) { /* Back simply leaves the page */ }  // the first step: Back from the start screen leaves the app, from any other screen it returns to the one before
 loadConfig().then(resumeJob);
 </script>
 </body>
