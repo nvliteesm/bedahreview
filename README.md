@@ -110,7 +110,7 @@ so the seller never chooses. To switch it on:
 | Link | Actor (paid, third-party) | Tested 2026-10-26 (5 reviews) |
 |---|---|---|
 | Tokopedia product page | `shahidirfan/Tokopedia-Reviews-Scraper` | worked, 12.5 s |
-| Lazada Indonesia product page | `zen-studio/lazada-reviews-scraper` | worked, 8.9 s |
+| Lazada Indonesia product page | `lergassy/lazada-scraper` (since 2026-11-04; was `zen-studio/lazada-reviews-scraper`) | worked, 11 s, 5 reviews, $0.005 |
 | TikTok Shop (a `vt.tokopedia.com` share link, `shop-id.tokopedia.com`, or `tiktok.com/shop` link) | `web_wanderer/tiktok-reviews-scraper` | worked, 13.9 s |
 | Shopee Indonesia | none | blocked: the actor reports `reviews_blocked`. A Shopee link gets a message and costs nothing |
 
@@ -126,7 +126,7 @@ Evaluation on 2026-11-02 ("latest" mode, 5 links, 10 runs, $0.135 in total):
 | Lazada (1 product with 8 reviews) | 8 | 8 (all there are) | 8-10 s | $0.021 |
 | Lazada, next product | **nothing**: the actor answered "You have used all 10 free runs. Upgrade to a paid plan" | same | 2-4 s | $0.009 |
 
-So the Lazada actor stops after its free runs on this Apify plan: the app now says "the review service for this platform is paused" (`service_paused`) and offers paste, instead of "no reviews". Fixing it needs a paid Apify plan or renting the actor, an account decision. In "latest" mode one Tokopedia product gave ten 5-star reviews, so "Keluhan dulu (1-3★)" stays the default mode. TikTok Shop was not re-tested (no Indonesian test link to hand).
+(Update 2026-11-04: the first Lazada actor stopped after its free runs, so Lazada now uses `lergassy/lazada-scraper`: $0.001 a review, no start fee, one run per low star in complaints mode, no seller reply or product name in its output. One real run of 5 reviews cost $0.005. The paragraph below is the history.) The first Lazada actor stopped after its free runs on this Apify plan: the app now says "the review service for this platform is paused" (`service_paused`) and offers paste, instead of "no reviews". Fixing it needs a paid Apify plan or renting the actor, an account decision. In "latest" mode one Tokopedia product gave ten 5-star reviews, so "Keluhan dulu (1-3★)" stays the default mode. TikTok Shop was not re-tested (no Indonesian test link to hand).
 
 Short links from the Share button are followed through plain redirects, only between known shop hosts. Each run has a
 hard spending cap (`APIFY_MAX_COST_USD`, default 0.05). Results are saved in `fetch_cache/` per platform so the same

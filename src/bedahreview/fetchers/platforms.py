@@ -25,7 +25,7 @@ from .cache import DEFAULT_TTL_HOURS, CachedFetcher
 from .search import Candidate, search_products
 
 TOKOPEDIA_ACTOR = "shahidirfan/Tokopedia-Reviews-Scraper"
-LAZADA_ACTOR = "zen-studio/lazada-reviews-scraper"
+LAZADA_ACTOR = "lergassy/lazada-scraper"  # chosen 2026-11-04 after zen-studio's actor stopped at 10 free runs: $0.001 a review, no start fee, one run took 11 s for 5 reviews
 TIKTOK_ACTOR = "web_wanderer/tiktok-reviews-scraper"
 DEFAULT_MAX_COST_USD = 0.05  # per run; APIFY_MAX_COST_USD overrides it
 RUN_TIMEOUT_SECS = 90  # the three actors finished in 9-14 seconds when tested on 2026-10-26
@@ -232,19 +232,18 @@ def tokopedia_review(item: Dict[str, Any]) -> Review:
 
 
 def lazada_review(item: Dict[str, Any]) -> Optional[Review]:
-    review = item.get("review")
-    if not isinstance(review, dict):
-        return None  # a summary row, not a review
-    sku = review.get("sku_info")
+    if item.get("type") != "review":
+        return None  # the actor adds a free "notice" row with its run summary
+    sku = item.get("variant")
     variant = None
     if isinstance(sku, str):
-        values = [re.sub(r"^Int:\s*", "", p.split(":", 1)[1] if ":" in p else p).strip() for p in sku.split(", ")]  # "Tampilan Warna:Biru, Ukuran:Int:XXL" -> "Biru, XXL"
+        values = [re.sub(r"^Int:\s*", "", p.split(":", 1)[1] if ":" in p else p).strip() for p in sku.split(", ")]  # "Warna:Putih, Ukuran:Int:XXL" -> "Putih, XXL"
         variant = ", ".join(v for v in values if v) or None
-    product = item.get("product")
+    images = item.get("images")
     return Review(
-        star=_star(review.get("rating")), text=_text(review.get("content")), variant=variant,
-        date=_text(review.get("review_time")), photo_count=_count(review.get("image_count")),
-        replied=_replied(item.get("seller_reply")), product=(_text(product.get("title")) if isinstance(product, dict) else "") or None,
+        star=_star(item.get("rating")), text=_text(item.get("text")), variant=variant,
+        date=_iso_date(item.get("reviewTime")), photo_count=len(images) if isinstance(images, list) else 0,
+        replied=False, product=None,  # this actor gives neither the seller's reply nor the product name
     )
 
 
@@ -273,12 +272,26 @@ class LazadaFetcher(Fetcher):
     def __init__(self, actors: _Actors) -> None:
         self._actors = actors
 
+    def _run(self, url: str, count: int, rating: str) -> List[Review]:
+        rows = self._actors.run(LAZADA_ACTOR, {"mode": "reviews", "country": "ID", "startUrls": [url], "maxReviewsPerProduct": count, "reviewsRating": rating})
+        return [r for r in (lazada_review(i) for i in rows) if r]
+
     def fetch_reviews(self, url: str, limit: int, mode: str = "latest") -> List[Review]:
-        run_input: Dict[str, Any] = {"startUrls": [{"url": url}], "maxReviewsPerProduct": limit + SPARE_REVIEWS, "includeRatingSummary": False}
-        if mode == "complaints":
-            run_input["starRatings"] = [str(s) for s in COMPLAINT_STARS]
-        rows = self._actors.run(LAZADA_ACTOR, run_input)
-        return _finish([r for r in (lazada_review(i) for i in rows) if r], limit, mode)
+        want = limit + SPARE_REVIEWS
+        if mode != "complaints":
+            return _finish(self._run(url, want, "all"), limit, mode)
+        with ThreadPoolExecutor(max_workers=len(COMPLAINT_STARS)) as pool:  # the actor filters one star at a time
+            futures = [pool.submit(self._run, url, per_star_limit(want), str(star)) for star in COMPLAINT_STARS]
+        batches: List[List[Review]] = []
+        errors: List[FetchError] = []
+        for future in futures:
+            try:
+                batches.append(future.result())
+            except FetchError as exc:
+                errors.append(exc)
+        if not any(batches) and errors:
+            raise errors[0]
+        return _finish([r for batch in batches for r in batch], limit, mode)
 
 
 class TikTokShopFetcher(Fetcher):

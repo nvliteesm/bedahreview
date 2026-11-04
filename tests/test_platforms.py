@@ -54,11 +54,11 @@ TOKO_ROWS = [
     {"rating": 1, "review_text": "", "variant_name": "Putih", "review_time_iso": "2024-12-27T22:40:55.000Z"},
     {"rating": 5, "review_text": "bagus", "variant_name": "Hitam", "review_time_iso": "2024-12-28T00:00:00.000Z"},
 ]
-LAZADA_ROWS = [
-    {"review": {"rating": 2, "content": "ukuran kecil,padahal xxl", "sku_info": "Tampilan Warna:Abu-abu, Ukuran:Int:XXL", "review_time": "09 Okt 2023", "image_count": 0},
-     "product": {"title": "Singlet Cowok"}, "seller_reply": None, "buyer": {"buyer_name": SECRET_NAME}},
-    {"record_type": "summary", "rating_summary": {"average": 4}},
-    {"review": {"rating": 1, "content": "robek", "sku_info": "Warna:Biru", "review_time": "02 Feb 2024"}, "seller_reply": {"content": "terima kasih"}},
+LAZADA_ROWS = [  # the shape lergassy/lazada-scraper returned on 2026-11-04 (names removed)
+    {"type": "review", "rating": 2, "text": "ukuran kecil,padahal xxl", "variant": "Tampilan Warna:Abu-abu, Ukuran:Int:XXL", "reviewTime": "2026-10-09T00:00:00.000Z", "images": [],
+     "reviewer": SECRET_NAME, "verifiedPurchase": True},
+    {"type": "review", "rating": 1, "text": "robek", "variant": "Warna:Biru", "reviewTime": "2026-02-02T00:00:00.000Z", "images": ["https://x/1.jpg"], "reviewer": SECRET_NAME},
+    {"type": "notice", "notice": "Run summary: 2 row(s) delivered, charged review x2 = $0.002."},
 ]
 TIKTOK_ROWS = [
     {"review_rating": 4, "review_text": "ada bercak hitam", "sku_specification": "AiryFit - Putih , M", "review_time": "1788266820318",
@@ -150,14 +150,19 @@ class FetchTests(unittest.TestCase):
         self.assertEqual([x.star for x in out], [1, 5])
         self.assertEqual(client.calls[0][1]["sort_by"], "create_time desc")
 
-    def test_lazada_asks_for_low_stars_cleans_variants_and_skips_summary_rows(self):
+    def test_lazada_runs_once_per_low_star_cleans_variants_and_skips_the_notice_row(self):
         r, client = router(LAZADA_ROWS)
         out = r.fetch_reviews(LAZADA, 5, "complaints")
+        self.assertEqual(sorted(c[1]["reviewsRating"] for c in client.calls), ["1", "2", "3"])  # the actor filters one star at a time
         actor, run_input, _ = client.calls[0]
-        self.assertEqual((actor, run_input["starRatings"], run_input["startUrls"], run_input["includeRatingSummary"]), (LAZADA_ACTOR, ["1", "2", "3"], [{"url": LAZADA}], False))
-        self.assertEqual([(x.star, x.variant, x.replied, x.product) for x in out],
-                         [(1, "Biru", True, None), (2, "Abu-abu, XXL", False, "Singlet Cowok")])  # worst star first
+        self.assertEqual((actor, run_input["mode"], run_input["country"], run_input["startUrls"]), (LAZADA_ACTOR, "reviews", "ID", [LAZADA]))
+        self.assertEqual({(x.star, x.variant, x.photo_count) for x in out}, {(1, "Biru", 1), (2, "Abu-abu, XXL", 0)})  # worst star first, no notice row, no seller reply to keep
         self.assertEqual(r.last_platform, "lazada")
+
+    def test_lazada_latest_is_one_run_for_all_stars(self):
+        r, client = router(LAZADA_ROWS)
+        r.fetch_reviews(LAZADA, 5, "latest")
+        self.assertEqual([c[1]["reviewsRating"] for c in client.calls], ["all"])
 
     def test_tiktok_complaints_run_once_per_low_star_and_never_ask_for_personal_data(self):
         def rows(run_input):  # the actor filters by star, so only the 2-star run finds something

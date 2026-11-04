@@ -347,7 +347,7 @@ class SchemaTests(unittest.TestCase):
 
     def test_every_table_has_row_level_security_and_no_anon_access(self):
         tables = re.findall(r"create table if not exists public\.(\w+)", self.SQL)
-        self.assertEqual(set(tables), {"profiles", "events", "fixes", "history"})
+        self.assertEqual(set(tables), {"profiles", "events", "fixes", "history", "task_boxes"})
         for table in tables:
             self.assertIn("alter table public.%s" % table, self.SQL.replace("  ", " "))
             self.assertRegex(self.SQL, r"revoke all on public\.%s\s+from anon" % table)
@@ -359,7 +359,7 @@ class SchemaTests(unittest.TestCase):
             body = re.search(r"create table if not exists public\.%s \((.*?)\n\);" % table, self.SQL, re.S).group(1)
             return re.findall(r"^\s+(\w+)\s+(?:uuid|text|timestamptz|bigint|jsonb|boolean|integer|date)\b", body, re.M)
         # no table may hold an email, an address, a reviewer or review text
-        for table in ("profiles", "events", "fixes", "history"):
+        for table in ("profiles", "events", "fixes", "history", "task_boxes"):
             for forbidden in ("email", "name", "review", "text", "ip", "ip_address", "user_agent", "phone", "ok_to_contact", "reviewer"):
                 self.assertNotIn(forbidden, columns(table), table)
         # product names, links and notes live in the seller's own fixes list, on purpose; history keeps only the product name, for 14 days
@@ -370,6 +370,15 @@ class SchemaTests(unittest.TestCase):
             self.assertNotIn(column, columns("history"))
         self.assertTrue({"product", "product_label", "note"} <= set(columns("fixes")))
 
+    def test_task_boxes_are_private_to_their_owner_capped_and_hold_no_review_text(self):
+        for action in ("select", "insert", "update", "delete"):
+            self.assertRegex(self.SQL, r"create policy task_boxes_%s_own on public\.task_boxes for %s to authenticated" % (action, action))
+        self.assertIn("< 60", self.SQL)
+        body = re.search(r"create table if not exists public\.task_boxes \((.*?)\n\);", self.SQL, re.S).group(1)
+        for column in ("quote", "draft", "reviewer", "email", "ip"):
+            self.assertNotRegex(body, r"^\s+%s\b" % column, column)
+        self.assertIn("octet_length(items::text) <= 20000", body)  # a box cannot grow without limit
+
     def test_fixes_are_private_to_their_owner_and_capped(self):
         for action in ("select", "insert", "update", "delete"):
             self.assertRegex(self.SQL, r"create policy fixes_%s_own on public\.fixes for %s to authenticated" % (action, action))
@@ -379,11 +388,11 @@ class SchemaTests(unittest.TestCase):
     def test_no_policy_reads_its_own_table(self):
         # Postgres refuses such a policy at run time ("infinite recursion detected in policy"): every insert failed live on 2026-11-02
         policies = re.findall(r"create policy \w+ on public\.(\w+) (.*?);", self.SQL, re.S)
-        self.assertEqual(len(policies), 11)
+        self.assertEqual(len(policies), 15)
         for table, body in policies:
             self.assertNotRegex(body, r"\bfrom\s+public\.%s\b" % table, table)
         # the ceilings count through owner-run functions that see only the caller's rows, outside the exposed schema
-        for fn, table in (("my_fix_count", "fixes"), ("my_history_count", "history")):
+        for fn, table in (("my_fix_count", "fixes"), ("my_history_count", "history"), ("my_box_count", "task_boxes")):
             body = re.search(r"create or replace function private\.%s\(\) returns bigint language sql stable security definer set search_path = '' as \$\$(.*?)\$\$;" % fn, self.SQL, re.S)
             self.assertIsNotNone(body, fn)
             self.assertIn("from public.%s where user_id = (select auth.uid())" % table, body.group(1))

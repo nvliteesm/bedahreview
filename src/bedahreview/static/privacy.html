@@ -58,50 +58,52 @@ a { color: var(--accent); font-weight: 600; }
 <main>
 <article lang="id" id="p-id">
   <h1>Kebijakan privasi</h1>
-  <p class="muted">Terakhir diperbarui: 29 Oktober 2026. Ditulis dengan bahasa sederhana oleh pembuat aplikasi ini. Ini bukan nasihat hukum.</p>
+  <p class="muted">Terakhir diperbarui: 4 November 2026. Ditulis dengan bahasa sederhana oleh pembuat aplikasi ini. Ini bukan nasihat hukum.</p>
 
   <h2>Apa ini</h2>
-  <p>BedahReview membantu penjual memilah ulasan pembeli menjadi Perbaiki, Balas, Abaikan, dan Pertahankan. Ini proyek pribadi untuk riset produk, bukan perusahaan.</p>
+  <p>BedahReview membantu penjual memilah ulasan pembeli dari link produk menjadi Perbaiki, Balas, Pertahankan, dan Abaikan, lalu membandingkan produk dengan pesaing. Ini proyek pribadi untuk riset produk, bukan perusahaan.</p>
 
   <h2>Yang kami simpan</h2>
   <ul>
     <li><b>Akun.</b> Alamat email kamu, lewat Google atau kode yang dikirim ke email. Disimpan oleh Supabase (layanan masuk). Kami tidak pernah melihat kata sandi Google-mu.</li>
-    <li><b>Profil (opsional).</b> Platform jualan, tautan toko, kategori produk, dan bahasa. Boleh dilewati.</li>
-    <li><b>Catatan pemakaian, per akun.</b> Kejadian seperti “membuka aplikasi”, “membuka tab”, “menyalin draf”, jumlah ulasan yang dibedah, dan saat analisis gagal atau kena batas (hanya jenis kesalahannya). Tanpa isi ulasan, tanpa nama produk, tanpa alamat IP. Satu-satunya teks bebas adalah komentar yang kamu ketik sendiri di pertanyaan “Apakah hasil ini berguna?”.</li>
-    <li><b>Daftar perbaikan, kalau kamu memakainya.</b> Saat kamu mencatat perbaikan (“Tandai sudah diperbaiki”, atau langkah Catat di rencana hari ini), kami menyimpan tema keluhan, varian, tanggal, jumlah keluhan sebelum dan sesudah, tanggal cek berikutnya, <b>nama atau tautan produk</b>, dan <b>catatan singkatmu</b>. Ini agar daftarmu bisa dibuka dari HP lain. Lewat aplikasi, hanya akunmu yang bisa membacanya; pembuat aplikasi bisa melihatnya di dasbor Supabase. Jangan menulis nama orang di catatan.</li>
-    <li><b>Riwayat analisis, kalau kamu masuk.</b> Setiap kali kamu membedah ulasan, kami menyimpan ringkasannya: tanggal, nama produk (kalau kamu mengisinya), jumlah ulasan, jumlah di tiap kelompok (Perbaiki, Balas, Abaikan, Pertahankan), dan nama keluhan terbanyak. Tanpa teks ulasan, kutipan, draf, atau saran AI. Riwayat dihapus setelah 60 hari, dan ikut terhapus bersama akunmu.</li>
-    <li><b>Di perangkatmu.</b> Sesi masuk, pilihan bahasa dan tema, salinan daftar perbaikan, kotak Tugas (kalimat tugas dan mana yang sudah dicentang; tanpa teks ulasan; 30 hari), catatan analisismu (tanggal, jumlah, status), hasil analisis yang belum kamu selesaikan (termasuk kutipan ulasan, ditahan 7 hari supaya kamu bisa menekan “Lanjutkan”; tidak dikirim ke server), dan penanda acak perangkat. Kotak, catatan, dan hasil ini dihapus saat kamu keluar. Semuanya di penyimpanan browser (localStorage), bukan cookie pelacak.</li>
-    <li><b>Analisis gratis sebelum masuk.</b> Tanpa akun, kamu bisa membedah ulasan sekali. Server tidak menyimpan apa pun darinya: hanya hitungan jumlahnya. Browser mencatat bahwa analisis gratis sudah dipakai. Kalau kamu masuk dengan Google, hasilnya menunggu di penyimpanan tab ini (sessionStorage) selama kamu ke halaman Google, lalu langsung dihapus begitu tampil lagi.</li>
+    <li><b>Profil (opsional).</b> Platform jualan, link toko, kategori produk, dan bahasa. Boleh dilewati.</li>
+    <li><b>Catatan pemakaian, per akun.</b> Kejadian seperti “membuka aplikasi”, “membuka tab”, “menyalin draf”, “menekan Selesai”, jumlah ulasan yang dibedah, dan saat analisis gagal atau kena batas (hanya jenis kesalahannya). Tanpa isi ulasan, tanpa nama produk, tanpa alamat IP. Satu-satunya teks bebas adalah komentar yang kamu ketik sendiri di pertanyaan “Apakah hasil ini berguna?”.</li>
+    <li><b>Kotak Tugas, kalau kamu masuk.</b> Saat kamu menekan Selesai, kami menyimpan satu kotak per produk supaya daftarmu bisa dibuka dari HP lain: <b>nama atau tautan produk</b>, kalimat tugasnya, mana yang sudah kamu centang, dan tanggalnya. Kalimat tugas sebagian besar adalah saran yang ditulis AI dari ulasan (misalnya “Ganti foto varian”) dan nama keluhan. Tanpa teks ulasan, kutipan pembeli, draf balasan, atau nama pembeli. Lewat aplikasi, hanya akunmu yang bisa membacanya; pembuat aplikasi bisa melihatnya di dasbor Supabase. Kotak yang lebih dari 30 hari dihapus saat kamu membuka aplikasi.</li>
+    <li><b>Riwayat analisis, kalau kamu masuk.</b> Setiap kali kamu membedah ulasan, kami menyimpan ringkasannya: tanggal, nama produk, jumlah ulasan, jumlah di tiap kelompok, dan nama keluhan terbanyak. Tanpa teks ulasan, kutipan, draf, atau saran AI. Riwayat dihapus setelah 60 hari, dan ikut terhapus bersama akunmu.</li>
+    <li><b>Daftar perbaikan lama.</b> Versi aplikasi sebelumnya punya fitur “Tandai sudah diperbaiki”. Kalau kamu pernah memakainya, tema keluhan, tanggal, hitungan, <b>nama atau tautan produk</b>, dan <b>catatan singkatmu</b> masih tersimpan di akunmu sampai kamu menghapus akunmu. Fitur itu tidak membuat catatan baru lagi.</li>
+    <li><b>Di perangkatmu.</b> Sesi masuk, pilihan bahasa dan tema, salinan kotak Tugas, catatan analisismu (tanggal, jumlah, status), hasil analisis yang belum kamu selesaikan (termasuk kutipan ulasan, ditahan 7 hari supaya kamu bisa menekan “Lanjutkan”; tidak dikirim ke server), dan penanda acak perangkat. Salinan kotak, catatan, dan hasil ini dihapus dari perangkat saat kamu keluar (kotak tetap ada di akunmu). Semuanya di penyimpanan browser (localStorage), bukan cookie pelacak. File kalender dari “Tambah ke Kalender” dibuat di perangkatmu dan tidak dikirim ke mana pun.</li>
+    <li><b>Analisis gratis sebelum masuk.</b> Tanpa akun, kamu bisa membedah sekali. Server tidak menyimpan apa pun darinya, hanya hitungan jumlah, per alamat perangkat dan di memori saja (alamat tidak pernah ditulis ke catatan). Browser mencatat bahwa analisis gratis sudah dipakai. Kalau kamu masuk dengan Google, hasilnya menunggu di penyimpanan tab ini (sessionStorage) selama kamu ke halaman Google, lalu langsung dihapus begitu tampil lagi.</li>
   </ul>
 
   <h2>Yang tidak kami simpan</h2>
   <ul>
-    <li>Teks ulasan yang kamu tempel. Teks itu dikirim untuk dianalisis, lalu tidak kami simpan. Hasil analisis hanya ditahan di memori server paling lama 10 menit setelah selesai, supaya HP-mu bisa mengambilnya kalau koneksi putus. Setelah itu terhapus, dan tidak pernah masuk ke basis data.</li>
+    <li>Teks ulasan yang kami baca dari link produkmu. Teks itu dikirim untuk dianalisis, lalu tidak kami simpan di basis data. Hasil analisis hanya ditahan di memori server paling lama 10 menit setelah selesai, supaya HP-mu bisa mengambilnya kalau koneksi putus. Setelah itu terhapus. Salinan hasil bacaan link ditahan di server paling lama 24 jam supaya link yang sama tidak dibayar dua kali; nama pembeli tidak ikut disimpan.</li>
     <li>Nama pembeli.</li>
     <li>Alamat IP dan jenis perangkat di catatan kami sendiri.</li>
   </ul>
 
   <h2>Ke mana datamu pergi</h2>
   <ul>
-    <li><b>Layanan AI pihak ketiga (berbayar).</b> Teks ulasan yang kamu tempel dikirim ke sana untuk dianalisis. Kami memakai layanan berbayar, dan menurut ketentuan penyedianya untuk layanan berbayar, teks itu tidak dipakai untuk melatih atau meningkatkan produk mereka. Penyedia dapat menyimpannya sebentar, hanya untuk mendeteksi penyalahgunaan dan memenuhi kewajiban hukum.</li>
-    <li><b>Supabase.</b> Menyimpan akun, profil, catatan pemakaian, daftar perbaikan, dan riwayat analisis.</li>
+    <li><b>Layanan AI pihak ketiga (berbayar).</b> Teks ulasan dari link produkmu dikirim ke sana untuk dianalisis. Kami memakai layanan berbayar, dan menurut ketentuan penyedianya untuk layanan berbayar, teks itu tidak dipakai untuk melatih atau meningkatkan produk mereka. Penyedia dapat menyimpannya sebentar, hanya untuk mendeteksi penyalahgunaan dan memenuhi kewajiban hukum.</li>
+    <li><b>Supabase.</b> Menyimpan akun, profil, catatan pemakaian, kotak Tugas, riwayat analisis, dan daftar perbaikan lama.</li>
     <li><b>Google Cloud Run.</b> Tempat aplikasi berjalan. Google Cloud menyimpan catatan permintaan standarnya sendiri, yang bisa memuat alamat IP, di luar kendali kami.</li>
-    <li><b>Apify.</b> Saat kamu menempel tautan produk, tautan itu dikirim ke layanan ini untuk mengambil ulasan yang tampil publik di halaman produk. Kalau kamu menempel teks ulasan, Apify tidak dipakai.</li>
+    <li><b>Apify.</b> Saat kamu menempel link produk, atau saat kami mencari produk pesaing, link dan judul produk dikirim ke layanan ini dan ke pembuat alat pengambil ulasan di dalamnya, untuk membaca ulasan yang tampil publik di halaman produk. Ulasan pesaing dibaca sebentar untuk perbandingan dan tidak kami simpan.</li>
   </ul>
 
   <h2>Berapa lama</h2>
   <ul>
     <li>Catatan pemakaian: kami berencana menghapus yang lebih dari 90 hari (dilakukan manual).</li>
-    <li>Profil dan daftar perbaikan: sampai kamu menghapus akunmu.</li>
+    <li>Kotak Tugas: 30 hari, atau sampai kamu menghapus akunmu.</li>
+    <li>Profil dan daftar perbaikan lama: sampai kamu menghapus akunmu.</li>
     <li>Riwayat analisis: 60 hari, atau lebih cepat kalau kamu menghapus akunmu.</li>
     <li>Catatan Google Cloud: sesuai pengaturan Google (umumnya sekitar 30 hari).</li>
   </ul>
 
   <h2>Pilihanmu</h2>
   <ul>
-    <li><b>Hapus akun dan data saya.</b> Tombolnya ada di bagian bawah aplikasi. Ini menghapus akunmu, profilmu, catatan pemakaianmu, daftar perbaikanmu, dan riwayat analisismu di server kami, serta salinannya di perangkat itu. Tidak bisa dibatalkan.</li>
+    <li><b>Hapus akun dan data saya.</b> Tombolnya ada di menu akun (ketuk bulatan huruf di kanan atas). Ini menghapus akunmu, profilmu, catatan pemakaianmu, kotak Tugasmu, riwayat analisismu, dan daftar perbaikan lamamu di server kami, serta salinannya di perangkat itu. Tidak bisa dibatalkan.</li>
     <li><b>Do Not Track.</b> Kalau browsermu mengirimnya, catatan pemakaian tidak dikirim.</li>
-    <li><b>Simpan ke file dan Kirim ke WhatsApp.</b> Daftar perbaikan bisa disimpan ke file di perangkatmu. Tombol “Kirim ke WhatsApp” hanya membuka WhatsApp dengan teks berisi nama produk dan langkah yang kamu tulis, untuk kamu kirim sendiri; teks itu tidak memuat kutipan ulasan, dan kami tidak mengirim pesan apa pun.</li>
+    <li><b>Keluar.</b> Menghapus salinan kotak Tugas dan hasil yang belum selesai dari perangkat itu, jadi orang berikutnya di HP yang sama tidak melihatnya.</li>
   </ul>
   <p class="note">Batas yang jujur: layanan pihak ketiga (Supabase, Google) bisa menyimpan salinan sementara di sistem cadangannya setelah penghapusan. Tidak ada sistem yang sempurna, dan satu orang bisa membuat dua akun.</p>
 
@@ -111,50 +113,52 @@ a { color: var(--accent); font-weight: 600; }
 
 <article lang="en" id="p-en" hidden>
   <h1>Privacy policy</h1>
-  <p class="muted">Last updated: 29 October 2026. Written in plain words by the person who built this app. It is not legal advice.</p>
+  <p class="muted">Last updated: 4 November 2026. Written in plain words by the person who built this app. It is not legal advice.</p>
 
   <h2>What this is</h2>
-  <p>BedahReview helps sellers sort buyer reviews into Fix, Respond, Ignore and Keep. It is a personal project for product research, not a company.</p>
+  <p>BedahReview helps sellers sort buyer reviews, read from a product link, into Fix, Respond, Keep and Ignore, and compare a product with competitors. It is a personal project for product research, not a company.</p>
 
   <h2>What we keep</h2>
   <ul>
     <li><b>Account.</b> Your email address, through Google or a code sent to your email. It is kept by Supabase (the sign-in service). We never see your Google password.</li>
     <li><b>Profile (optional).</b> Where you sell, your shop link, product category and language. You can skip it.</li>
-    <li><b>Usage records, per account.</b> Events like “opened the app”, “opened a tab”, “copied a draft”, how many reviews were analysed, and when an analysis fails or hits a limit (only the kind of error). No review text, no product names, no IP address. The only free text is a comment you type yourself under “Was this useful?”.</li>
-    <li><b>Your fixes list, if you use it.</b> When you log a fix (“Mark as fixed”, or the Log step of today's plan) we keep the complaint theme, variant, date, complaint counts before and after, the next check date, the <b>product name or link</b> and your <b>short note</b>. This is so your list opens on another phone. Through the app only your account can read it; the person who runs the app can see it in the Supabase dashboard. Please do not write people's names in a note.</li>
-    <li><b>Your analysis history, when signed in.</b> Each time you analyse reviews we keep a summary: the date, the product name (if you typed one), the number of reviews, the count in each group (Fix, Respond, Ignore, Keep) and the name of the top complaint. No review text, quotes, drafts or AI suggestions. History is deleted after 60 days, and with your account.</li>
-    <li><b>On your device.</b> Your sign-in session, language and theme choice, a copy of your fixes list, your Tasks boxes (the task sentences and which are ticked; no review text; 30 days), a log of your analyses (date, counts, status), results you have not finished (including review quotes, kept 7 days so you can press “Continue”; never sent to a server), and a random device marker. The boxes, the log and these results are removed when you sign out. All in browser storage (localStorage), not tracking cookies.</li>
-    <li><b>The free analysis before signing in.</b> Without an account you can analyse reviews once. The server keeps nothing from it except a count. Your browser notes that the free analysis was used. If you sign in with Google, the result waits in this tab's storage (sessionStorage) while you are on Google's page, and is removed as soon as it is shown again.</li>
+    <li><b>Usage records, per account.</b> Events like “opened the app”, “opened a tab”, “copied a draft”, “pressed Done”, how many reviews were analysed, and when an analysis fails or hits a limit (only the kind of error). No review text, no product names, no IP address. The only free text is a comment you type yourself under “Was this useful?”.</li>
+    <li><b>Tasks boxes, when signed in.</b> When you press Done we keep one box per product so your list opens on another phone: the <b>product name or link</b>, the task sentences, which ones you ticked, and the dates. The task sentences are mostly steps written by AI from the reviews (for example “Change the variant photo”) and complaint names. No review text, buyer quotes, reply drafts or buyer names. Through the app only your account can read them; the person who runs the app can see them in the Supabase dashboard. A box older than 30 days is deleted when you open the app.</li>
+    <li><b>Your analysis history, when signed in.</b> Each time you analyse reviews we keep a summary: the date, the product name, the number of reviews, the count in each group and the name of the top complaint. No review text, quotes, drafts or AI suggestions. History is deleted after 60 days, and with your account.</li>
+    <li><b>The old fixes list.</b> An earlier version of the app had “Mark as fixed”. If you used it, the complaint theme, date, counts, the <b>product name or link</b> and your <b>short note</b> are still in your account until you delete your account. That feature no longer creates new records.</li>
+    <li><b>On your device.</b> Your sign-in session, language and theme choice, a copy of your Tasks boxes, a log of your analyses (date, counts, status), results you have not finished (including review quotes, kept 7 days so you can press “Continue”; never sent to a server), and a random device marker. The copy of the boxes, the log and these results are removed from the device when you sign out (the boxes stay in your account). All in browser storage (localStorage), not tracking cookies. The calendar file from “Add to Calendar” is made on your device and is not sent anywhere.</li>
+    <li><b>The free analysis before signing in.</b> Without an account you can analyse once. The server keeps nothing from it except a count, per device address and in memory only (the address is never written to a log). Your browser notes that the free analysis was used. If you sign in with Google, the result waits in this tab's storage (sessionStorage) while you are on Google's page, and is removed as soon as it is shown again.</li>
   </ul>
 
   <h2>What we do not keep</h2>
   <ul>
-    <li>The review text you paste. It is sent to be analysed, and we do not store it. The result is held in the server's memory for at most 10 minutes after it finishes, so your phone can fetch it if the connection drops. Then it is erased, and it never goes into a database.</li>
+    <li>The review text we read from your product link. It is sent to be analysed, and we do not store it in a database. The result is held in the server's memory for at most 10 minutes after it finishes, so your phone can fetch it if the connection drops. Then it is erased. A copy of what was read from a link stays on the server for at most 24 hours so the same link is not paid for twice; buyer names are not kept in it.</li>
     <li>Buyer names.</li>
     <li>IP addresses and device types in our own records.</li>
   </ul>
 
   <h2>Where your data goes</h2>
   <ul>
-    <li><b>Third-party AI service (paid).</b> The review text you paste is sent there to be analysed. We use a paid service, and under its provider's terms for paid use the text is not used to train or improve their products. The provider may keep it briefly, only to detect abuse and meet legal duties.</li>
-    <li><b>Supabase.</b> Holds the account, profile, usage records, fixes list and analysis history.</li>
+    <li><b>Third-party AI service (paid).</b> The review text read from your product link is sent there to be analysed. We use a paid service, and under its provider's terms for paid use the text is not used to train or improve their products. The provider may keep it briefly, only to detect abuse and meet legal duties.</li>
+    <li><b>Supabase.</b> Holds the account, profile, usage records, Tasks boxes, analysis history and the old fixes list.</li>
     <li><b>Google Cloud Run.</b> Where the app runs. Google Cloud keeps its own standard request logs, which can include IP addresses, outside our control.</li>
-    <li><b>Apify.</b> When you paste a product link, the link is sent to this service to read the reviews shown publicly on the product page. If you paste review text instead, Apify is not used.</li>
+    <li><b>Apify.</b> When you paste a product link, or when we look for competitor products, the link and product title are sent to this service, and to the makers of the review-reading tools on it, to read the reviews shown publicly on the product page. Competitor reviews are read briefly for the comparison and are not stored by us.</li>
   </ul>
 
   <h2>How long</h2>
   <ul>
     <li>Usage records: we plan to delete those older than 90 days (done by hand).</li>
-    <li>Profile and fixes list: until you delete your account.</li>
+    <li>Tasks boxes: 30 days, or until you delete your account.</li>
+    <li>Profile and the old fixes list: until you delete your account.</li>
     <li>Analysis history: 60 days, or sooner if you delete your account.</li>
     <li>Google Cloud logs: as Google sets it (usually about 30 days).</li>
   </ul>
 
   <h2>Your choices</h2>
   <ul>
-    <li><b>Delete my account and data.</b> The button is at the bottom of the app. It deletes your account, profile, usage records, fixes list and analysis history on our server, and the copy on that device. It cannot be undone.</li>
+    <li><b>Delete my account and data.</b> The button is in the account menu (tap the round letter at the top right). It deletes your account, profile, usage records, Tasks boxes, analysis history and old fixes list on our server, and the copy on that device. It cannot be undone.</li>
     <li><b>Do Not Track.</b> If your browser sends it, usage records are not sent.</li>
-    <li><b>Save to a file and Send to WhatsApp.</b> The fixes list can be saved to a file on your device. The “Send to WhatsApp” button only opens WhatsApp with a text holding the product name and the steps you wrote, for you to send yourself; the text has no review quotes, and we send no messages.</li>
+    <li><b>Sign out.</b> Removes the copy of your Tasks boxes and unfinished results from that device, so the next person on the same phone does not see them.</li>
   </ul>
   <p class="note">An honest limit: third-party services (Supabase, Google) may keep a copy in their backups for a while after deletion. No system is perfect, and one person can make two accounts.</p>
 

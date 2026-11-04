@@ -1736,7 +1736,7 @@ function mergeFixes(local, remote) {
   return [...byId.values()].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)).slice(-MAX_FIXES);
 }
 function renderSyncStatus() { /* the fixes list has no screen any more; the account copy is kept as it was */ }
-function resetFixSync() { clearTimeout(fixSync.timer); Object.assign(fixSync, { state: "off", userId: null, synced: new Map(), busy: false, dirty: false, timer: null }); }
+function resetFixSync() { resetBoxSync(); clearTimeout(fixSync.timer); Object.assign(fixSync, { state: "off", userId: null, synced: new Map(), busy: false, dirty: false, timer: null }); }
 async function syncFixes() {  // once per sign-in: fetch the account's list, merge it with this browser's, and push what the account does not have yet
   if (!sb || !userId || fixSync.userId === userId) return;
   const uid = userId; fixSync.userId = uid;
@@ -1793,11 +1793,83 @@ async function leaveWithFixes() {  // on "Keluar": save what is pending, then cl
   try { clearTimeout(fixSync.timer); await withTimeout(pushFixes(), 5000); } catch (e) { /* keep the local copy */ }
   const pending = loadFixes().some((f) => fixSync.synced.get(f.id) !== JSON.stringify(fixToRow(f, userId))) || [...fixSync.synced.keys()].some((id) => !loadFixes().some((f) => f.id === id));
   if (fixSync.state === "ok" && !pending) { memFixes = []; memOnly = false; try { localStorage.removeItem(FIX_KEY); } catch (e) { /* ignore */ } setFixOwner(""); }
-  clearBoxes();  // the boxes, the log and the held results live in this browser only: not for the next person on a shared phone
+  try { clearTimeout(boxSync.timer); if (boxSync.state === "ok") await withTimeout(pushBoxes(), 5000); } catch (e) { /* the account keeps what it has */ }
+  clearBoxes();  // the browser copy of the boxes, the log and the held results: not for the next person on a shared phone (the boxes stay in the account)
+}
+/* ---------- Tugas boxes in the account (added 2026-11-04) ----------
+   The browser copy is the working copy and always works. Signed in, each box is also kept in the account's task_boxes table, so the same list opens on
+   another phone: the two are merged when the app opens, when Tugas opens and when the app comes back to the front (the newer copy of a box wins), and
+   changes are pushed a moment after they are made. The rows hold the task sentences and their ticked state (the owner's decision), never review text.
+   If Supabase cannot be reached, or the table does not exist yet, the page carries on with the browser copy. */
+const BOX_OWNER_KEY = "bedahreview-boxes-owner", BOX_PUSH_DELAY_MS = 1200, BOX_PULL_EVERY_MS = 15000;
+const boxSync = { state: "off", userId: null, synced: new Map(), busy: false, dirty: false, timer: null, pulled: 0 };  // state: off | ok | down
+const boxOwner = () => { try { return localStorage.getItem(BOX_OWNER_KEY) || ""; } catch (e) { return ""; } };
+const setBoxOwner = (id) => { try { if (id) localStorage.setItem(BOX_OWNER_KEY, id); else localStorage.removeItem(BOX_OWNER_KEY); } catch (e) { /* ignore */ } };
+function boxToRow(b, uid) {  // the exact columns of the task_boxes table, in a fixed order so two copies compare equal
+  return { user_id: uid, sig: b.sig, updated_at: new Date(b.updated).toISOString(), created_at: new Date(b.created).toISOString(), done_at: b.doneAt ? new Date(b.doneAt).toISOString() : null,
+    product: b.product, label: b.label, url: b.url, items: b.items };
+}
+const boxFromRow = (r) => (r && typeof r === "object" ? cleanBox({ sig: r.sig, product: r.product, label: r.label, url: r.url, created: Date.parse(r.created_at), doneAt: r.done_at ? Date.parse(r.done_at) : 0, updated: Date.parse(r.updated_at), items: r.items }) : null);
+function resetBoxSync() { clearTimeout(boxSync.timer); Object.assign(boxSync, { state: "off", userId: null, synced: new Map(), busy: false, dirty: false, timer: null, pulled: 0 }); }
+async function syncBoxes(force) {  // fetch the account's boxes, merge them with this browser's, and push what the account does not have yet
+  if (!sb || !userId || boxSync.busy) return;
+  if (!force && boxSync.state === "ok" && boxSync.userId === userId && Date.now() - boxSync.pulled < BOX_PULL_EVERY_MS) return;
+  const uid = userId; boxSync.busy = true;
+  try {
+    const { data, error } = await withTimeout(sb.from("task_boxes").select("*"), 8000);
+    if (error) throw error;
+    const remote = (data || []).map(boxFromRow).filter(Boolean), other = boxOwner() && boxOwner() !== uid;  // a browser that held another account's boxes: never mixed into this one
+    const local = other ? [] : loadBoxes(), remoteBy = new Map(remote.map((b) => [b.sig, b])), localBy = new Map(local.map((b) => [b.sig, b])), merged = [];
+    for (const r of remote) {
+      const l = localBy.get(r.sig);
+      if (!l) { if (!boxSync.synced.has(r.sig)) merged.push(r); continue; }  // known here but gone from this browser: it was removed here, and the push removes it there too
+      merged.push(l.updated > r.updated ? l : r);
+    }
+    for (const l of local) {
+      if (remoteBy.has(l.sig)) continue;
+      const seen = boxSync.synced.get(l.sig);
+      if (seen === undefined || seen !== JSON.stringify(boxToRow(l, uid))) merged.push(l);  // new here, or changed here since the last sync; otherwise it was removed on another phone
+    }
+    merged.sort((a, b) => a.created - b.created);
+    setBoxOwner(uid);
+    writeList(BOX_KEY, merged.slice(-MAX_BOXES));
+    boxSync.synced = new Map(remote.map((b) => [b.sig, JSON.stringify(boxToRow(b, uid))]));
+    boxSync.userId = uid; boxSync.state = "ok"; boxSync.pulled = Date.now();
+    renderFixBadge(); if (currentView === "fixes") renderFixes();
+    await pushBoxesNow();
+  } catch (e) { boxSync.state = "down"; boxSync.userId = null; }  // down: the next change or the next opening tries again
+  finally { boxSync.busy = false; }
+  if (boxSync.dirty) { boxSync.dirty = false; scheduleBoxPush(); }
+}
+async function pushBoxesNow() {
+  const uid = boxSync.userId, list = loadBoxes(), rows = list.map((b) => boxToRow(b, uid));
+  const changed = rows.filter((r) => boxSync.synced.get(r.sig) !== JSON.stringify(r)), keep = new Set(list.map((b) => b.sig)), gone = [...boxSync.synced.keys()].filter((sig) => !keep.has(sig));
+  if (changed.length) {
+    const { error } = await withTimeout(sb.from("task_boxes").upsert(changed, { onConflict: "user_id,sig" }), 8000);
+    if (error) throw error;
+    changed.forEach((r) => boxSync.synced.set(r.sig, JSON.stringify(r)));
+  }
+  if (gone.length) {
+    const { error } = await withTimeout(sb.from("task_boxes").delete().in("sig", gone), 8000);
+    if (error) throw error;
+    gone.forEach((sig) => boxSync.synced.delete(sig));
+  }
+}
+function scheduleBoxPush() {
+  if (!sb || !userId || boxSync.state !== "ok") return;  // not signed in, or the first sync has not finished (it pushes what is new)
+  clearTimeout(boxSync.timer); boxSync.timer = setTimeout(pushBoxes, BOX_PUSH_DELAY_MS);
+}
+async function pushBoxes() {
+  if (!sb || !userId || boxSync.state !== "ok") return;
+  if (boxSync.busy) { boxSync.dirty = true; return; }
+  boxSync.busy = true;
+  try { await pushBoxesNow(); } catch (e) { boxSync.state = "down"; boxSync.userId = null; }
+  finally { boxSync.busy = false; }
+  if (boxSync.dirty) { boxSync.dirty = false; scheduleBoxPush(); }
 }
 /* ---------- Tugas: one box per analysed product (R11) ----------
-   Pressing Selesai on a Hasil Bedah turns it into a box: one checklist item per fix and one per group of replies. Boxes live in this browser only
-   (never on a server), last 30 days, and are cleared on sign-out. They hold task sentences (the AI's step, a theme name and a count), never review text.
+   Pressing Selesai on a Hasil Bedah turns it into a box: one checklist item per fix and one per group of replies. Boxes live in this browser and, signed in, in
+   the account (see above), last 30 days, and are cleared from the browser on sign-out. They hold task sentences (the AI's step, a theme name and a count), never review text.
    A small log of analyses (who, when, counts, status) and the last few results (7 days, so "Lanjutkan" works) are also kept in this browser only. */
 const BOX_KEY = "bedahreview-boxes-v1", HELD_KEY = "bedahreview-held-v1", LOG_KEY = "bedahreview-log-v1";
 const BOX_DAYS = 30, HELD_DAYS = 7, LOG_DAYS = 60, DONE_SHOWN_DAYS = 3, MAX_BOXES = 30, MAX_ITEMS = 30, DAY_MS = 864e5;
@@ -1815,7 +1887,8 @@ function cleanBox(b) {
   if (!b || typeof b !== "object" || !fxStr(b.sig, 40)) return null;
   const items = (Array.isArray(b.items) ? b.items : []).map(cleanItem).filter(Boolean).slice(0, MAX_ITEMS);
   if (!items.length) return null;
-  return { sig: fxStr(b.sig, 40), product: fxStr(b.product, 300), label: fxStr(b.label, 150), url: /^https:\/\//.test(b.url || "") ? fxStr(b.url, 300) : "", created: Number(b.created) || Date.now(), doneAt: Number(b.doneAt) || 0, items };
+  const created = Number(b.created) || Date.now();
+  return { sig: fxStr(b.sig, 40), product: fxStr(b.product, 300), label: fxStr(b.label, 150), url: /^https:\/\//.test(b.url || "") ? fxStr(b.url, 300) : "", created, doneAt: Number(b.doneAt) || 0, updated: Number(b.updated) || created, items };
 }
 function cleanLog(e) {
   if (!e || typeof e !== "object" || !fxStr(e.sig, 40)) return null;
@@ -1836,8 +1909,13 @@ function loadBoxes() {  // a box older than 30 days leaves Tugas; Riwayat rememb
   if (keep.length !== all.length) writeList(BOX_KEY, keep);
   return keep;
 }
-const saveBoxes = (list) => { writeList(BOX_KEY, list.slice(-MAX_BOXES)); renderFixBadge(); };
-function clearBoxes() { [BOX_KEY, HELD_KEY, LOG_KEY].forEach((k) => { memLists[k] = []; try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }); }
+const boxBody = (b) => JSON.stringify([b.product, b.label, b.url, b.doneAt, b.items]);  // what a box says, apart from when it was touched
+function saveBoxes(list) {  // a box that changed gets a new "updated" time, which is how two phones tell which copy is newer
+  const before = new Map(readList(BOX_KEY).map(cleanBox).filter(Boolean).map((b) => [b.sig, boxBody(b)])), now = Date.now();
+  writeList(BOX_KEY, list.slice(-MAX_BOXES).map((b) => (before.get(b.sig) === boxBody(b) ? b : Object.assign({}, b, { updated: now }))));
+  renderFixBadge(); scheduleBoxPush();
+}
+function clearBoxes() { setBoxOwner(""); [BOX_KEY, HELD_KEY, LOG_KEY].forEach((k) => { memLists[k] = []; try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }); }
 function logAnalysis(data, counts) {  // one line per analysis: counts and names only; the whole result is held separately for a week
   if (!data || data.example || data.free || !data.items) return;
   const sig = reviewSig(data.items), list = loadLog();
@@ -2072,6 +2150,7 @@ function openFixes() {
   if (currentView !== "fixes") viewBeforeFixes = currentView;
   track("tab_viewed", { tab: "tasks" });
   renderFixes(); show("fixes"); toTop(); $("fixes-h").focus({ preventScroll: true });
+  syncBoxes();  // another phone may have ticked something: fetch it (at most every 15 seconds)
 }
 const ICON_CHECK = ["M9 12l2 2 4-4", "M12 2a10 10 0 100 20 10 10 0 000-20z"], ICON_NEXT = ["M9 6l6 6-6 6"], ICON_LOCK = ["M7 11h10a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6a2 2 0 012-2z", "M8 11V7a4 4 0 018 0v4"];
 function clearInputs() { $("url").value = ""; showError(""); showUrlError(""); syncClear(); }
@@ -2791,7 +2870,7 @@ function showApp() {
   document.body.classList.remove("gated"); $("workspace").hidden = false; $("gate").hidden = true;
   renderAccount();
   openedOnce();
-  if (sb && signedIn && userId) { syncFixes(); refreshBox(); unlockFree(); }
+  if (sb && signedIn && userId) { syncFixes(); syncBoxes(true); refreshBox(); unlockFree(); }
 }
 function renderAccount() {  // the header shows "Masuk" to a visitor and the account menu to someone signed in (an account, or a tester's access code)
   const on = signedIn && !!(userId || cfgAccess);
@@ -2996,13 +3075,14 @@ $("delete-confirm").addEventListener("click", async () => {
     else { const data = await res.json().catch(() => null); fail(data && data.code === "delete_unavailable" ? tr("delUnavailable") : tr("delErr")); }
   } catch (e) { fail(tr("delErr")); }
   btn.disabled = false; btn.textContent = tr("delConfirm");
-  if (!done) { resetFixSync(); syncFixes(); return; }  // nothing was deleted: carry on as before
+  if (!done) { resetFixSync(); syncFixes(); syncBoxes(true); return; }  // nothing was deleted: carry on as before
   try { await sb.auth.signOut({ scope: "local" }); } catch (e) { /* the account is gone either way */ }
   try { [FIX_KEY, FIX_OWNER_KEY, DEVICE_KEY, BOX_KEY, HELD_KEY, LOG_KEY].forEach((k) => localStorage.removeItem(k)); sessionStorage.setItem("bedahreview-deleted", "1"); } catch (e) { /* ignore */ }
   forgetJob(); dropPending();
   location.reload();  // a clean page: no review, result or note is left in memory
 });
 $("signin-btn").addEventListener("click", () => showGate("choose"));
+document.addEventListener("visibilitychange", () => { if (!document.hidden) syncBoxes(); });  // back to the app: pick up what another phone changed
 /* ---------- offline ---------- */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready)

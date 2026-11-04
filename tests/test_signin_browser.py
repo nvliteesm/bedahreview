@@ -35,11 +35,11 @@ class LinkFetch(Fetcher):
 
 FAKE_SUPABASE = """
 <script>
-window.__sb = { calls: [], session: null, profile: null, listeners: [], fixes: [], fixesError: false, history: [] };
+window.__sb = { calls: [], session: null, profile: null, listeners: [], fixes: [], fixesError: false, history: [], boxes: [], boxesError: false };
 (function () {
   const hash = location.hash, user = { id: "user-1111-2222", email: "ani@example.com" };
   window.__stage = sessionStorage.getItem("bedahreview-deleted") ? 2 : 1;  // the delete test reloads the page once: stage 2 is the page after the deletion
-  const syncing = ["#sync-first", "#sync-other", "#sync-down", "#sync-edit", "#sync-leave", "#delete", "#history", "#rival-flow"];
+  const syncing = ["#sync-first", "#sync-other", "#sync-down", "#sync-edit", "#sync-leave", "#delete", "#history", "#rival-flow", "#boxsync", "#boxdown"];
   if (["#intro", "#returning", "#expired", "#events", "#account"].concat(syncing).includes(hash)) window.__sb.session = { access_token: hash === "#expired" ? "junk" : "__TOKEN__", user };
   if (["#returning", "#expired", "#events", "#account"].concat(syncing).includes(hash)) window.__sb.profile = { user_id: user.id };
   const fixA = { id: "aaa1", theme: "Sizing & fit", variant: "Hitam", product: "kaos boxy retro", productLabel: "Kaos Boxy Retro", note: "size chart diganti", date: "2026-10-20", before: { count: 2, total: 5, sig: "s1", date: "" }, after: null, updated: 1000 };
@@ -94,6 +94,14 @@ window.__sb = { calls: [], session: null, profile: null, listeners: [], fixes: [
       },
       upsert: async (rows) => { window.__sb.calls.push(["upsert-fixes", rows]); rows.forEach((r) => { window.__sb.fixes = window.__sb.fixes.filter((x) => x.id !== r.id).concat(r); }); return { error: null }; },
       delete: () => ({ in: async (col, ids) => { window.__sb.calls.push(["delete-fixes", ids]); window.__sb.fixes = window.__sb.fixes.filter((x) => !ids.includes(x.id)); return { error: null }; } }),
+    }) : table === "task_boxes" ? ({
+      select: () => {
+        window.__sb.calls.push(["select-boxes"]);
+        const res = window.__sb.boxesError ? { data: null, error: { message: "relation does not exist" } } : { data: JSON.parse(JSON.stringify(window.__sb.boxes)), error: null };
+        return { then: (a, b) => Promise.resolve(res).then(a, b) };
+      },
+      upsert: async (rows) => { window.__sb.calls.push(["upsert-boxes", rows.map((r) => r.sig)]); rows.forEach((r) => { window.__sb.boxes = window.__sb.boxes.filter((x) => x.sig !== r.sig).concat(JSON.parse(JSON.stringify(r))); }); return { error: null }; },
+      delete: () => ({ in: async (col, sigs) => { window.__sb.calls.push(["delete-boxes", sigs]); window.__sb.boxes = window.__sb.boxes.filter((x) => !sigs.includes(x.sig)); return { error: null }; } }),
     }) : ({
       select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: window.__sb.profile, error: null }) }) }),
       upsert: async (row) => { window.__sb.calls.push(["upsert", table, row]); window.__sb.profile = { user_id: row.user_id }; return { error: null }; },
@@ -243,6 +251,55 @@ window.__probe = (async () => {
     await until(() => byId("history-body").querySelector(".hrow"), 40);
     [...byId("history-body").querySelectorAll("button")].filter((b) => b.textContent === "Bedah lagi").pop().click();  // a row this device does not know: the link screen, empty
     out.again = [vis("view-input"), byId("url").value];
+  }
+
+  if (hash === "#boxsync") {  // Tugas follows the account: phone A makes a box, phone B (an empty browser) gets it, ticks it, and A sees the tick
+    await until(() => !byId("workspace").hidden);
+    await until(() => calls("select-boxes").length > 0);
+    await wait(100);
+    runSample();
+    await until(() => !byId("view-results").hidden, 80);
+    byId("done-btn").click();
+    await until(() => vis("view-fixes") && !vis("done-anim"), 80);
+    await until(() => window.__sb.boxes.length > 0, 40);
+    const row = window.__sb.boxes[0];
+    out.a = { rows: window.__sb.boxes.length, items: row.items.map((i) => [i.kind, i.done]), text: JSON.stringify(row), cols: Object.keys(row).sort() };
+    // phone B: nothing in this browser, same account
+    clearBoxes(); resetBoxSync(); renderFixes();
+    out.bBefore = document.querySelectorAll(".tbox").length;
+    await syncBoxes(true);
+    out.bAfter = [document.querySelectorAll(".tbox").length, document.querySelectorAll(".tbox .it").length];
+    document.querySelector(".tbox .it input").click();
+    await until(() => window.__sb.boxes[0].items.some((i) => i.done), 40);
+    out.bTick = window.__sb.boxes[0].items.map((i) => i.done);
+    // phone A again: the account has a newer copy with the second item ticked too
+    const remote = JSON.parse(JSON.stringify(window.__sb.boxes[0]));
+    remote.items = remote.items.map((i) => Object.assign({}, i, { done: true })); remote.updated_at = new Date(Date.now() + 5000).toISOString(); remote.done_at = remote.updated_at;
+    window.__sb.boxes = [remote];
+    await syncBoxes(true);
+    out.aSees = [document.querySelectorAll(".tbox .it input:checked").length, !!document.querySelector(".tbox.alldone")];
+    // removed on another phone: gone here too
+    window.__sb.boxes = [];
+    await syncBoxes(true);
+    out.removed = document.querySelectorAll(".tbox, .trow").length;
+    // a new box made here is pushed
+    runSample(); await until(() => !byId("view-results").hidden, 80); byId("done-btn").click();
+    await until(() => vis("view-fixes") && !vis("done-anim"), 80); await until(() => window.__sb.boxes.length > 0, 40);
+    out.pushedAgain = window.__sb.boxes.length;
+    // signing out clears the browser copy; the account keeps the box
+    await leaveWithFixes();
+    out.leave = [loadBoxes().length, window.__sb.boxes.length, localStorage.getItem("bedahreview-boxes-v1")];
+  }
+
+  if (hash === "#boxdown") {  // the table is missing or Supabase is down: Tugas still works from this browser
+    await until(() => !byId("workspace").hidden);
+    window.__sb.boxesError = true; await syncBoxes(true);  // the table cannot be read
+    runSample(); await until(() => !byId("view-results").hidden, 80);
+    byId("done-btn").click();
+    await until(() => vis("view-fixes") && !vis("done-anim"), 80);
+    document.querySelector(".tbox .it input").click();
+    await wait(300);
+    out.local = [document.querySelectorAll(".tbox").length, document.querySelectorAll(".tbox .it input:checked").length, boxSync.state];
   }
 
   if (hash === "#events") {
@@ -604,6 +661,25 @@ class SignInBrowserTests(unittest.TestCase):
         for word in ("koyak", "ijo", "hitem", "bagus", "tulisannya", "Halo Kak", "Mohon maaf"):  # the box holds task sentences, never review text or drafts
             self.assertNotIn(word, out["stored"])
         self.assertEqual(out["again"], [True, ""])  # Bedah lagi on a row this device does not know: the link screen, empty
+
+    def test_tugas_boxes_follow_the_account_to_another_phone(self):
+        out = self.probe("#boxsync")
+        self.assertEqual(out["a"]["rows"], 1)
+        self.assertEqual(out["a"]["items"], [["fix", False], ["reply", False]])
+        self.assertEqual(out["a"]["cols"], sorted(["user_id", "sig", "updated_at", "created_at", "done_at", "product", "label", "url", "items"]))  # exactly the columns
+        for word in ("koyak", "ijo", "hitem", "bagus", "Halo Kak", "Mohon maaf", "rahasia"):  # task sentences only: no review text, quote or draft
+            self.assertNotIn(word, out["a"]["text"])
+        self.assertEqual(out["bBefore"], 0)
+        self.assertEqual(out["bAfter"], [1, 2])  # an empty browser gets the box from the account
+        self.assertEqual(out["bTick"], [True, False])  # a tick there is pushed
+        self.assertEqual(out["aSees"], [2, True])  # the newer copy wins here
+        self.assertEqual(out["removed"], 0)  # a box removed on another phone goes here too
+        self.assertEqual(out["pushedAgain"], 1)
+        self.assertEqual(out["leave"], [0, 1, None])  # sign-out clears this browser, never the account
+
+    def test_tugas_still_works_when_the_account_table_cannot_be_reached(self):
+        out = self.probe("#boxdown")
+        self.assertEqual(out["local"], [1, 1, "down"])
 
     def test_events_wait_in_a_queue_and_go_out_together(self):
         out = self.probe("#events")

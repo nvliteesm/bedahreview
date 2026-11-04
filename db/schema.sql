@@ -1,4 +1,4 @@
--- BedahReview: tables for accounts, usage events, each seller's fixes list and a 60-day history of analyses. Paste this whole file into the Supabase SQL editor and run it.
+-- BedahReview: tables for accounts, usage events, each seller's fixes list, a 60-day history of analyses and the Tugas boxes (task lists) that follow a seller to another phone. Paste this whole file into the Supabase SQL editor and run it.
 -- Safe to run twice. It only creates things in the "public" schema and never touches auth.users.
 --
 -- What is NOT stored here, on purpose: review text, reviewer names, IP addresses.
@@ -90,6 +90,23 @@ create index if not exists history_user_created_idx on public.history (user_id, 
 -- create extension if not exists pg_cron;
 -- select cron.schedule('bedahreview-history-60d', '0 3 * * *', $$delete from public.history where created_at < now() - interval '60 days'$$);
 
+-- ---------- task_boxes: the Tugas boxes, so a seller's checklist opens on another phone (added 2026-11-04) ----------
+-- One row per box (one box per analysed product). "items" is a JSON list of the box's task sentences with their ticked state: the AI's step ("Ganti foto varian."),
+-- a fixed theme name, a count. It never holds review text, quotes, drafts or reviewer names. The owner chose on 2026-11-04 to store these step sentences,
+-- as an exception to "no AI suggestions on the server"; the privacy page says so. The page deletes a box after 30 days and on sign-out the browser copy is cleared.
+create table if not exists public.task_boxes (
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  sig        text not null check (char_length(sig) between 1 and 40),
+  updated_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  done_at    timestamptz,
+  product    text not null default '' check (char_length(product) <= 300),
+  label      text not null default '' check (char_length(label) <= 150),
+  url        text not null default '' check (char_length(url) <= 300),
+  items      jsonb not null default '[]'::jsonb check (jsonb_typeof(items) = 'array' and jsonb_array_length(items) <= 30 and octet_length(items::text) <= 20000),
+  primary key (user_id, sig)
+);
+
 -- ---------- per-account ceilings, counted outside the policies ----------
 -- A policy may not read its own table: Postgres stops every insert with "infinite recursion detected in policy" (seen live on 2026-11-02).
 -- So the ceilings below count through these functions. They run as the table owner, count only the caller's own rows, return a number and
@@ -103,7 +120,12 @@ $$;
 create or replace function private.my_history_count() returns bigint language sql stable security definer set search_path = '' as $$
   select count(*) from public.history where user_id = (select auth.uid())
 $$;
+create or replace function private.my_box_count() returns bigint language sql stable security definer set search_path = '' as $$
+  select count(*) from public.task_boxes where user_id = (select auth.uid())
+$$;
 revoke all on function private.my_fix_count() from public, anon;
+revoke all on function private.my_box_count() from public, anon;
+grant execute on function private.my_box_count() to authenticated;
 revoke all on function private.my_history_count() from public, anon;
 grant execute on function private.my_fix_count() to authenticated;
 grant execute on function private.my_history_count() to authenticated;
@@ -113,6 +135,7 @@ alter table public.profiles enable row level security;
 alter table public.events   enable row level security;
 alter table public.fixes    enable row level security;
 alter table public.history  enable row level security;
+alter table public.task_boxes enable row level security;
 
 drop policy if exists profiles_select_own on public.profiles;
 drop policy if exists profiles_insert_own on public.profiles;
@@ -144,18 +167,32 @@ create policy history_insert_own on public.history for insert to authenticated
   with check (user_id = (select auth.uid()) and (select private.my_history_count()) < 500);
 create policy history_delete_own on public.history for delete to authenticated using (user_id = (select auth.uid()));
 
+drop policy if exists task_boxes_select_own on public.task_boxes;
+drop policy if exists task_boxes_insert_own on public.task_boxes;
+drop policy if exists task_boxes_update_own on public.task_boxes;
+drop policy if exists task_boxes_delete_own on public.task_boxes;
+create policy task_boxes_select_own on public.task_boxes for select to authenticated using (user_id = (select auth.uid()));
+-- a ceiling per account, far above the page's 30 boxes (an upsert is checked as an insert first)
+create policy task_boxes_insert_own on public.task_boxes for insert to authenticated
+  with check (user_id = (select auth.uid()) and (select private.my_box_count()) < 60);
+create policy task_boxes_update_own on public.task_boxes for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+create policy task_boxes_delete_own on public.task_boxes for delete to authenticated using (user_id = (select auth.uid()));
+
 -- ---------- grants: start from nothing, then give only what is needed ----------
 revoke all on public.profiles from anon, authenticated;
 revoke all on public.events   from anon, authenticated;
 revoke all on public.fixes    from anon, authenticated;
 revoke all on public.history  from anon, authenticated;
+revoke all on public.task_boxes from anon, authenticated;
 
 grant select, insert, update on public.profiles to authenticated;
 grant select                 on public.events   to authenticated;
 grant select, insert, update, delete on public.fixes to authenticated;
 grant select, insert, delete         on public.history to authenticated;
+grant select, insert, update, delete on public.task_boxes to authenticated;
 
 grant select, insert, update, delete on public.profiles to service_role;
 grant select, insert, delete         on public.events   to service_role;
 grant select, delete                 on public.fixes    to service_role;
 grant select, delete                 on public.history  to service_role;
+grant select, delete                 on public.task_boxes to service_role;
