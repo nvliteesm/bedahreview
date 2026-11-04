@@ -128,6 +128,8 @@ Evaluation on 2026-11-02 ("latest" mode, 5 links, 10 runs, $0.135 in total):
 
 (Update 2026-11-04: the first Lazada actor stopped after its free runs, so Lazada now uses `lergassy/lazada-scraper`: $0.001 a review, no start fee, one run per low star in complaints mode, no seller reply or product name in its output. One real run of 5 reviews cost $0.005. The paragraph below is the history.) The first Lazada actor stopped after its free runs on this Apify plan: the app now says "the review service for this platform is paused" (`service_paused`) and offers paste, instead of "no reviews". Fixing it needs a paid Apify plan or renting the actor, an account decision. In "latest" mode one Tokopedia product gave ten 5-star reviews, so "Keluhan dulu (1-3★)" stays the default mode. TikTok Shop was not re-tested (no Indonesian test link to hand).
 
+(Update 2026-11-04, competitor search for TikTok Shop: `cunning_soil/tiktok-shop-product-search-api` works for Indonesia on the free Apify plan, $0.10 for one search page (6 listings in the live test); `lergassy/tiktok-shop-top-products-scraper` returns nothing on the free plan. Lazada links are refused by default (`BEDAHREVIEW_LAZADA=1` turns them back on).)
+
 Short links from the Share button are followed through plain redirects, only between known shop hosts. Each run has a
 hard spending cap (`APIFY_MAX_COST_USD`, default 0.05). Results are saved in `fetch_cache/` per platform so the same
 link is not paid for twice, for 24 hours (`FETCH_CACHE_HOURS`, 0 = do not save): expired copies are deleted, and so are copies from older versions. Reviewer names are never kept, and neither are seller replies (only whether the shop replied: a reply can name the buyer). These are small third-party scrapers: any of them can

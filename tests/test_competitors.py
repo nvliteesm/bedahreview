@@ -13,7 +13,8 @@ from bedahreview.competitors import (
 from bedahreview.fetchers import FetchError, Review
 from bedahreview.fetchers.platforms import LinkRouter
 from bedahreview.fetchers.search import (
-    LAZADA_SEARCH_ACTOR, TOKOPEDIA_SEARCH_ACTOR, Candidate, lazada_candidate, own_key, search_products, shortlist, tokopedia_candidate,
+    LAZADA_SEARCH_ACTOR, TIKTOK_SEARCH_ACTOR, TOKOPEDIA_SEARCH_ACTOR, Candidate, lazada_candidate, own_key, search_products, shortlist, tiktok_candidate,
+    tokopedia_candidate,
 )
 from bedahreview.web import make_server
 
@@ -21,6 +22,12 @@ from test_platforms import TOKO, FakeActors, _no_resolve
 
 OWN_TOKO = "https://www.tokopedia.com/nayla-hijab/hijab-segiempat-paris-f4b54"
 OWN_LAZADA = "https://www.lazada.co.id/products/pdp-i8819714593.html"
+TT = "https://shop-id.tokopedia.com/view/product/%s"
+OWN_TIKTOK = TT % "1736089506777433672"
+
+
+def tt_row(pid, shop, title="Kaos Fitted Tee", sold=912960, price="31.900"):  # the shape cunning_soil/tiktok-shop-product-search-api returned for Indonesia on 2026-11-04
+    return {"product_id": pid, "title": title, "sales_count": sold, "rating": 4.8, "price": {"sale_price": price, "currency": "Rp"}, "store_info": {"name": shop, "shop_id": "1"}}
 
 
 def toko_row(shop, name="Kaos Oversize Pria", price=60000):
@@ -46,6 +53,15 @@ class CandidateTests(unittest.TestCase):
         c = lazada_candidate({"type": "product", "title": "Kaos", "url": OWN_LAZADA, "price": 57999, "rating": 4.35, "soldQuantity": 351, "sellerName": "SilkSphere67"})
         self.assertEqual((c.platform, c.sold, c.shop), ("lazada", 351, "SilkSphere67"))
 
+    def test_tiktok_row_becomes_a_listing_with_a_link_the_link_reader_accepts(self):
+        c = tiktok_candidate(dict(tt_row("1732067307942741576", "mybasic.indonesia", "Mybasic Fitted Tee Heavy Weight"), buyer_name="Siti"))
+        self.assertEqual((c.platform, c.url, c.price, c.rating, c.sold, c.shop), ("tiktokshop", TT % "1732067307942741576", 31900, 4.8, 912960, "mybasic.indonesia"))
+        self.assertNotIn("Siti", repr(c))
+        self.assertEqual(tiktok_candidate(tt_row("1", "x")), None)  # not a product id
+        self.assertEqual(tiktok_candidate(dict(tt_row("1732067307942741576", "x"), title="")), None)
+        self.assertEqual(tiktok_candidate(tt_row("1732067307942741576", "x", price="37.000")).price, 37000)  # dots are thousands: Rp 37,000
+        self.assertIsNone(tiktok_candidate(dict(tt_row("1732067307942741576", "x"), price=None)).price)
+
     def test_a_zero_or_odd_number_is_unknown_not_zero(self):
         c = tokopedia_candidate(dict(toko_row("a"), price=0, rating=None, soldCount=True))
         self.assertEqual((c.price, c.rating, c.sold), (None, None, None))
@@ -56,6 +72,19 @@ class ShortlistTests(unittest.TestCase):
         self.assertEqual(own_key("tokopedia", OWN_TOKO), "nayla-hijab")
         self.assertEqual(own_key("lazada", OWN_LAZADA), "8819714593")
         self.assertEqual(own_key("lazada", "https://www.lazada.co.id/products/pdp-i5558538744-s13072104368.html"), "5558538744")
+
+    def test_own_key_of_a_tiktok_shop_link_is_the_product_id(self):
+        self.assertEqual(own_key("tiktokshop", OWN_TIKTOK), "1736089506777433672")
+        self.assertEqual(own_key("tiktokshop", "https://shop-id.tokopedia.com/other"), "")  # never "view", which would match every listing
+
+    def test_a_tiktok_search_drops_the_sellers_product_their_other_products_and_repeats_from_one_shop(self):
+        found = [tiktok_candidate(r) for r in (
+            tt_row("1736089506777433672", "mybasic.indonesia", "own"), tt_row("1732067307942741576", "mybasic.indonesia", "same shop"),
+            tt_row("1733631425122173989", "No Void Minds Store", "rival a"), tt_row("1734809277322069029", "No Void Minds Store", "rival a again"),
+            tt_row("1729636590878296655", "99koutlet", "rival b"))]
+        self.assertEqual([c.title for c in shortlist(found, "tiktokshop", OWN_TIKTOK)], ["rival a", "rival b"])
+        # the seller's product is not in the results: nothing can be told about their shop, only the exact product would go
+        self.assertEqual(len(shortlist(found[1:], "tiktokshop", OWN_TIKTOK)), 3)
 
     def test_own_shop_and_repeats_from_one_shop_are_dropped(self):
         found = [cand("nayla-hijab"), cand("ty-baju-kaos", "a"), cand("ty-baju-kaos", "b"), cand("kaibo", "c")]
@@ -90,12 +119,28 @@ class SearchProductsTests(unittest.TestCase):
         self.assertEqual(len(search_products(actors, "lazada", "kaos")), 1)
         self.assertEqual(actors.calls[0][0], LAZADA_SEARCH_ACTOR)
 
-    def test_tiktok_shop_and_empty_queries_are_refused_before_any_paid_run(self):
+    def test_tiktok_shop_search_asks_for_best_sellers_in_indonesia_and_skips_rows_without_a_product(self):
+        actors = self.Actors([tt_row("1732067307942741576", "a"), {"type": "notice", "notice": "free plan"}, {"title": "no id"}])
+        out = search_products(actors, "tiktokshop", "  kaos   fitted tee ")
+        self.assertEqual([c.url for c in out], [TT % "1732067307942741576"])
+        self.assertEqual(actors.calls, [(TIKTOK_SEARCH_ACTOR, {"query": "kaos fitted tee", "region": "ID", "resultsLimit": 10, "sortType": "BEST_SELLERS"})])
+
+    def test_empty_queries_and_platforms_with_no_search_are_refused_before_any_paid_run(self):
         actors = self.Actors([])
-        for platform, query in (("tiktokshop", "kaos"), ("tokopedia", "   ")):
+        for platform, query in (("tokopedia", "   "), ("tiktokshop", ""), ("shopee", "kaos")):
             with self.assertRaises(FetchError):
                 search_products(actors, platform, query)
         self.assertEqual(actors.calls, [])
+
+
+class SearchCapTests(unittest.TestCase):
+    def test_the_tiktok_shop_search_gets_room_for_its_ten_cent_page_and_other_runs_keep_the_usual_cap(self):
+        client = FakeActors([tt_row("1732067307942741576", "a")])
+        router = LinkRouter("t", 0.05, Path(tempfile.mkdtemp()), client=client, resolver=_no_resolve)
+        router.search("tiktokshop", "kaos")
+        router.search("tokopedia", "kaos")
+        caps = {actor: str(cap) for actor, _input, cap in client.calls}
+        self.assertEqual((caps[TIKTOK_SEARCH_ACTOR], caps[TOKOPEDIA_SEARCH_ACTOR]), ("0.11", "0.05"))  # a $0.05 cap would cut a $0.10 page off before it returned anything
 
 
 class ModelStepTests(unittest.TestCase):
@@ -116,6 +161,16 @@ class ModelStepTests(unittest.TestCase):
         found = [cand(s) for s in "abcdef"]
         with self.reply('{"picks": [4, 4, 9, "x", true, 0, 2, 1]}'):
             self.assertEqual(pick_comparable(None, "m", "own", found), [4, 0, 2])
+
+    def test_the_picker_sees_each_listings_shop_and_is_told_to_skip_the_sellers_own_brand(self):
+        # the real TikTok Shop search for a MyBasic tee (2026-11-04) listed another MyBasic product from the same shop, but not the seller's own listing
+        found = [tiktok_candidate(tt_row("1732067307942741576", "mybasic.indonesia", "Mybasic Fitted Tee Heavy Weight")), tiktok_candidate(tt_row("1733631425122173989", "No Void Minds Store"))]
+        with mock.patch.object(competitors, "_call", return_value='{"picks": [1]}') as call:
+            pick_comparable(None, "m", "MyBasic Fitted Tee AIRY BREEZEWEAR", found)
+        system, messages = call.call_args[0][2], call.call_args[0][3]
+        sent = json.loads(messages[0]["content"])
+        self.assertEqual([row["shop"] for row in sent["listings"]], ["mybasic.indonesia", "No Void Minds Store"])
+        self.assertIn("own brand or shop", system)
 
     def test_an_empty_pick_list_means_nothing_is_comparable(self):
         with self.reply('{"picks": []}'):
@@ -183,9 +238,16 @@ class SuggestEndpointTests(unittest.TestCase):
         self.assertEqual(self.calls, [("tokopedia", TOKO, "Hijab Segiempat")])
         self.assertEqual(self.client.calls, [])  # the fake suggester did the work: the endpoint itself runs nothing paid
 
-    def test_tiktok_shop_gets_the_paste_fallback_without_a_paid_run(self):
-        status, out = self.post({"url": "https://shop-id.tokopedia.com/view/product/1736089506777433672", "title": "Kaos"})
-        self.assertEqual((status, out.get("fallback")), (400, "paste"))
+    def test_a_tiktok_shop_link_reaches_the_suggester_with_the_clean_link(self):
+        status, out = self.post({"url": OWN_TIKTOK + "?_svg=1&checksum=abc", "title": "Kaos"})
+        self.assertEqual(status, 200)
+        self.assertEqual(self.calls, [("tiktokshop", OWN_TIKTOK, "Kaos")])
+        self.assertEqual(self.client.calls, [])
+
+    def test_a_lazada_link_is_refused_while_lazada_is_off_and_starts_nothing(self):
+        with mock.patch.dict("os.environ", {"BEDAHREVIEW_LAZADA": ""}):
+            status, out = self.post({"url": OWN_LAZADA, "title": "Kaos"})
+        self.assertEqual((status, out["code"]), (400, "lazada_off"))
         self.assertEqual(self.calls, [])
 
     def test_bad_links_and_missing_titles_are_clean_400s(self):

@@ -23,12 +23,13 @@ from urllib.parse import urljoin, urlsplit
 from .budget import DailyBudget
 from .base import COMPLAINT_STARS, Fetcher, FetchError, LinkError, Review, check_mode, clamp_limit, per_star_limit
 from .cache import DEFAULT_TTL_HOURS, CachedFetcher
-from .search import Candidate, search_products
+from .search import TIKTOK_SEARCH_ACTOR, Candidate, search_products
 
 TOKOPEDIA_ACTOR = "shahidirfan/Tokopedia-Reviews-Scraper"
 LAZADA_ACTOR = "lergassy/lazada-scraper"  # chosen 2026-11-04 after zen-studio's actor stopped at 10 free runs: $0.001 a review, no start fee, one run took 11 s for 5 reviews
 TIKTOK_ACTOR = "web_wanderer/tiktok-reviews-scraper"
 DEFAULT_MAX_COST_USD = 0.05  # per run; APIFY_MAX_COST_USD overrides it
+ACTOR_MIN_CAP_USD = {TIKTOK_SEARCH_ACTOR: 0.11}  # an actor whose one billed step costs more than the usual cap: the TikTok Shop search charges $0.10 for a page, so a $0.05 cap would cut it off before it returned anything
 RUN_TIMEOUT_SECS = 90  # the three actors finished in 9-14 seconds when tested on 2026-10-26
 SPARE_REVIEWS = 3  # ask for a few more than needed: some reviews have no text and are dropped
 MAX_CONCURRENT_RUNS = 3  # Apify refused the 6th of 6 simultaneous runs on 2026-10-27, so wait our turn instead
@@ -190,13 +191,16 @@ class _Actors:
     def __init__(self, client: Any, max_cost_usd: float, budget: Optional[DailyBudget] = None) -> None:
         self._client, self._cap, self._budget = client, max_cost_usd, budget
 
+    def _cap_for(self, actor_id: str) -> float:
+        return max(self._cap, ACTOR_MIN_CAP_USD.get(actor_id, 0.0))
+
     def _start(self, actor_id: str, run_input: Dict[str, Any]) -> Any:
         """Start an actor and wait for it. A start the API itself rejects is tried once more; nothing else is retried, so a run is never paid for twice."""
         for attempt in (1, 2):
             try:
                 with _RUN_SLOTS:  # the server handles requests on several threads, and one comparison starts up to six runs
                     return self._client.actor(actor_id).call(
-                        run_input=run_input, max_total_charge_usd=Decimal(str(self._cap)), timeout_secs=RUN_TIMEOUT_SECS, wait_secs=RUN_TIMEOUT_SECS
+                        run_input=run_input, max_total_charge_usd=Decimal(str(self._cap_for(actor_id))), timeout_secs=RUN_TIMEOUT_SECS, wait_secs=RUN_TIMEOUT_SECS
                     )
             except Exception as exc:
                 if attempt == 2 or type(exc).__name__ != "ApifyApiError":
@@ -206,7 +210,7 @@ class _Actors:
     def run(self, actor_id: str, run_input: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
             if self._budget:
-                self._budget.reserve(self._cap)  # before the run, at its worst-case cost; a cache hit never gets here
+                self._budget.reserve(self._cap_for(actor_id))  # before the run, at its worst-case cost; a cache hit never gets here
             run = self._start(actor_id, run_input)
             if not run:
                 raise FetchError("The fetch service took too long.", code="fetch_slow")

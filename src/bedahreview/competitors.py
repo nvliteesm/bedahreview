@@ -35,6 +35,7 @@ Return one JSON object: {"product_type": "...", "query": "..."}
 
 PICK_SYSTEM = """A seller sells the product named in "own". Below are listings found by searching the same platform.
 Choose up to 3 that a buyer would really compare with the seller's product: the same kind of product, similar use, similar price level. Skip bundles, accessories, other categories, and listings that only share a keyword.
+Never pick a listing from the seller's own brand or shop: if its title or "shop" carries the same brand name as "own" (for example own "MyBasic Fitted Tee" and a listing from the shop "mybasic.indonesia"), it is the seller's own product line, not a competitor.
 Return one JSON object: {"picks": [index, ...]} with the best match first. Return fewer than 3, or an empty list, if fewer are truly comparable. Judge only from the titles and prices given; do not invent facts."""
 
 
@@ -68,7 +69,7 @@ def pick_comparable(client: Any, model: str, own_title: str, candidates: List[Ca
     """Positions (into `candidates`) of the closest matches, best first. An unreadable reply falls back to the search order."""
     if not candidates:
         return []
-    listing = [{"index": i, "title": c.title, "price": c.price} for i, c in enumerate(candidates)]
+    listing = [{"index": i, "title": c.title, "shop": c.shop, "price": c.price} for i, c in enumerate(candidates)]
     content = json.dumps({"own": own_title, "listings": listing}, ensure_ascii=False)
     raw = _call(client, model, PICK_SYSTEM, [{"role": "user", "content": content}])
     try:
