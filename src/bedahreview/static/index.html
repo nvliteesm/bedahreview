@@ -146,6 +146,8 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 .gate-step { display: grid; gap: 14px; }
 .gate h1 { margin: 0 0 4px; font-size: 1.4rem; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em; }
 .gate h1:focus { outline: none; }
+.gate #g-verify h1 { font-size: 1.2rem; }
+#g-vsub { font-size: 0.9rem; line-height: 1.45; margin: 0; }  /* a short, quiet line: the long version made the code screen feel heavy */
 .gbtn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; border-radius: 12px; border: 1px solid #dadce0; background: #fff; color: #1f1f1f; font: inherit; font-weight: 700; cursor: pointer; }
 .gbtn svg { width: 20px; height: 20px; flex: none; }
 /* account menu: who is signed in, sign out, privacy, and (apart, in red) deleting the account */
@@ -443,7 +445,7 @@ input[aria-invalid="true"] { border: 2px solid var(--fight); }
 .notice .t { display: flex; gap: 8px; align-items: flex-start; } .notice .t svg { color: var(--fix); margin-top: 3px; }
 .notice .btn.ghost { width: 100%; }
 .hint { font-size: 0.88rem; color: var(--muted); margin-top: -4px; } .hint b { color: var(--ink); }
-.quota { font-size: 0.9rem; font-weight: 700; color: var(--ink); text-align: center; }
+.quota { font-size: 0.9rem; font-weight: 700; color: var(--ink); text-align: left; }
 .btn.off, .btn[aria-disabled="true"] { background: var(--ignore-soft); color: var(--muted); border-color: var(--line); }
 .error:not([hidden]), .ferr:not([hidden]), .notice:not([hidden]) { animation: rise 0.22s var(--ease); }
 .error .btn.ghost { margin-top: 8px; width: 100%; }
@@ -768,9 +770,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
           <div class="acct-who" id="acct-who"><span class="small muted" data-i18n="acctAs"></span><b id="acct-email"></b></div>
           <button class="mitem m-only" id="acct-fixes" type="button"></button>
           <button class="mitem" id="acct-history" type="button" data-i18n="histTitle" hidden></button>
-          <button class="mitem" id="acct-another" type="button" data-i18n="another"></button>
           <button class="mitem" id="acct-print" type="button" data-i18n="printSave" hidden></button>
-          <button class="mitem" id="acct-legend" type="button" data-i18n="legendSummary"></button>
           <button class="mitem" id="acct-theme" type="button"></button>
           <label class="mitem check" id="acct-keep-row" for="g-keep" hidden><input type="checkbox" id="g-keep" checked><span data-i18n="gKeep"></span></label>
           <a class="mitem" id="acct-code" href="/code" hidden data-i18n="acctCodeAsk"></a>
@@ -1038,7 +1038,7 @@ const TEXT = {
     st_done: "Selesai", st_open: "Belum selesai", st_expired: "Sudah lewat", histTasks: "%s tugas dibuat", histExpired: "%s dari %s tugas belum dicentang", histResume: "Lanjutkan", histGone: "Hasil ini sudah tidak tersimpan di HP ini. Bedah lagi untuk melihatnya.",
    
     rivalFor: "Untuk", rivalWait: "Sekitar 10 sampai 40 detik.", cancelBtn: "Batal", rivalSearching: "Mencari produk serupa…", rivalPickT: "Pilih 1 atau 2 pesaing", rivalFoundN: "Ketemu %s produk serupa. Yang paling mirip sudah dipilih.", rivalGoN: "Bandingkan (%s dipilih)",
-    rivalQuota: "Pakai 1 jatah analisis hari ini", rivalPasteSum: "Punya tautan pesaing sendiri?", rivalResultT: "Hasil Bedah pesaing", rivalVs: "Kamu vs %s", rivalCatchUp: "Perlu dikejar", rivalEdge: "Kamu unggul", buyerRivalLbl: "KATA PEMBELI PESAING",
+    rivalPasteSum: "Punya tautan pesaing sendiri?", rivalResultT: "Hasil Bedah pesaing", rivalVs: "Kamu vs %s", rivalCatchUp: "Perlu dikejar", rivalEdge: "Kamu unggul", buyerRivalLbl: "KATA PEMBELI PESAING",
     rivalDoWorse: "Cari tahu kenapa keluhan %s lebih sering muncul di produkmu daripada di pesaing, lalu perbaiki.", rivalDoGap: "Pelajari kenapa pembeli memuji %s di %s, lalu tonjolkan hal serupa di produkmu.", rivalDoEdge: "Pertahankan dan tonjolkan: pembeli pesaing mengeluhkan %s, produkmu tidak.", sumLabelFix: "RINGKASAN · %s HAL PERLU DIPERBAIKI", sumLabel: "RINGKASAN", sumItem: "%s (%s ulasan)", sumMore: "+%s lainnya: %s", moreReplies: "Balasan untuk %s ulasan lain", sumNothing: "Tidak ada keluhan yang perlu diperbaiki.", sumAlso: "Juga: %s", sumFight: "%s ulasan perlu ditanggapi", sumKeep: "%s pembeli memuji %s", cardN: "%s ulasan", buyerLbl: "KATA PEMBELI", todoLbl: "YANG PERLU KAMU LAKUKAN", endTitle: "Sudah selesai membaca?", selesaiBtn: "Selesai",doneToast: "%s tugas masuk",
     rivalWantLbl: "Berapa pesaing?", rivalExampleBtn: "Lihat contoh (gratis)", rivalExampleHead: "Contoh, bukan data nyata.",
     rivalExampleBody: "Angka dan kutipan di bawah dibuat untuk contoh. “Contoh Kaos Boxy” bukan produkmu: tidak ada toko atau pembeli sungguhan, dan tidak ada biaya.",
@@ -1089,7 +1089,7 @@ const TEXT = {
     gEmail: "Email", gEmailPh: "nama@email.com", gSend: "Kirim kode ke email", gConsent: "Kami mencatat fitur yang kamu pakai per akun (misalnya bagian yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.",
     gKeep: "Tetap masuk di HP ini", gIosNote: "Pasang ke layar utama dulu (Safari > Bagikan > Tambah ke Layar Utama), lalu masuk dari ikonnya. Di aplikasi yang terpasang, kamu perlu masuk sekali lagi.",
     gClose: "Nanti saja", signInShort: "Masuk",
-    gCodeTitle: "Masukkan kode 6 digit", gCodeSub: "Kode 6 digit sudah kami kirim ke %s. Buka email, salin kodenya, lalu tempel di kotak pertama. Belum ada? Cek folder spam.", gVerify: "Masuk", gResend: "Kirim ulang kode", gResendIn: "Kirim ulang kode (%s)",
+    gCodeTitle: "Masukkan kode 6 digit", gCodeSub: "Kode dikirim ke %s. Belum masuk? Cek folder spam.", gVerify: "Masuk", gResend: "Kirim ulang kode", gResendIn: "Kirim ulang kode (%s)",
     gSentAgain: "Kode baru sudah dikirim.", gChange: "Ganti email", gDigit: "Digit %s dari 6",
     gIntroTitle: "Sedikit tentang tokomu", gIntroSub: "Boleh dilewati. Ini membantu kami memahami siapa yang memakai BedahReview.", gPlatform: "Jualan di mana?", gPick: "Pilih…", gOther: "Lainnya",
     gShop: "Tautan toko (opsional)", gShopPh: "https://…", gCategory: "Kategori produk", gSave: "Simpan & mulai", gSkip: "Lewati",
@@ -1228,7 +1228,7 @@ const TEXT = {
     st_done: "Done", st_open: "Not finished", st_expired: "Ended", histTasks: "%s tasks created", histExpired: "%s of %s tasks not ticked", histResume: "Continue", histGone: "This result is no longer kept on this phone. Check again to see it.",
    
     rivalFor: "For", rivalWait: "About 10 to 40 seconds.", cancelBtn: "Cancel", rivalSearching: "Looking for similar products…", rivalPickT: "Pick 1 or 2 competitors", rivalFoundN: "Found %s similar products. The closest match is already picked.", rivalGoN: "Compare (%s picked)",
-    rivalQuota: "Uses 1 of today's analyses", rivalPasteSum: "Have a competitor link of your own?", rivalResultT: "Competitor results", rivalVs: "You vs %s", rivalCatchUp: "Catch up", rivalEdge: "Your edge", buyerRivalLbl: "WHAT COMPETITOR BUYERS SAY",
+    rivalPasteSum: "Have a competitor link of your own?", rivalResultT: "Competitor results", rivalVs: "You vs %s", rivalCatchUp: "Catch up", rivalEdge: "Your edge", buyerRivalLbl: "WHAT COMPETITOR BUYERS SAY",
     rivalDoWorse: "Find out why %s complaints show up more on your product than on theirs, then fix it.", rivalDoGap: "Learn why buyers praise %s at %s, then bring out something similar on your product.", rivalDoEdge: "Keep it and show it off: competitor buyers complain about %s, yours do not.", sumLabelFix: "SUMMARY · %s THINGS TO FIX", sumLabel: "SUMMARY", sumItem: "%s (%s reviews)", sumMore: "+%s more: %s", moreReplies: "Replies for %s other reviews", sumNothing: "Nothing to fix in these reviews.", sumAlso: "Also: %s", sumFight: "%s reviews to respond to", sumKeep: "%s buyers praise %s", cardN: "%s reviews", buyerLbl: "WHAT BUYERS SAY", todoLbl: "WHAT TO DO", endTitle: "Done reading?", selesaiBtn: "Done",doneToast: "%s tasks added",
     rivalWantLbl: "How many competitors?", rivalExampleBtn: "See an example (free)", rivalExampleHead: "Example, not live data.",
     rivalExampleBody: "The numbers and quotes below were made up for this example. “Contoh Kaos Boxy” is not your product: no real shops or buyers, and no cost.",
@@ -1279,7 +1279,7 @@ const TEXT = {
     gEmail: "Email", gEmailPh: "name@email.com", gSend: "Send code to my email", gConsent: "We record which features you use, per account (for example which part you open), never review text, product names or an IP address.",
     gKeep: "Keep me signed in on this phone", gIosNote: "Add to the Home Screen first (Safari > Share > Add to Home Screen), then sign in from the icon. In the installed app, you need to sign in one more time.",
     gClose: "Not now", signInShort: "Sign in",
-    gCodeTitle: "Enter the 6-digit code", gCodeSub: "We sent a 6-digit code to %s. Open your email, copy the code, then paste it in the first box. Not there? Check your spam folder.", gVerify: "Sign in", gResend: "Send the code again", gResendIn: "Send the code again (%s)",
+    gCodeTitle: "Enter the 6-digit code", gCodeSub: "We sent a code to %s. Not there? Check your spam folder.", gVerify: "Sign in", gResend: "Send the code again", gResendIn: "Send the code again (%s)",
     gSentAgain: "A new code was sent.", gChange: "Change email", gDigit: "Digit %s of 6",
     gIntroTitle: "A little about your shop", gIntroSub: "You can skip this. It helps us understand who uses BedahReview.", gPlatform: "Where do you sell?", gPick: "Choose…", gOther: "Other",
     gShop: "Shop link (optional)", gShopPh: "https://…", gCategory: "Product category", gSave: "Save & start", gSkip: "Skip",
@@ -2504,7 +2504,7 @@ function rivalPick(st) {
     !st.candidates.length ? h("div", { class: "callout", text: tr("rivalNone") }) : null,
     st.candidates.map((c, i) => pickRow(st, i)),
     h("details", { class: "xp", open: !st.candidates.length || !!st.extra }, h("summary", { text: tr("rivalPasteSum") }), h("div", { class: "xp-body" }, h("label", { class: "field", for: "rival-paste" }, h("span", { text: tr("rivalPaste") }), area))),
-    h("div", { class: "pickfoot" }, go, h("p", { class: "small muted", text: tr("rivalQuota") })));
+    h("div", { class: "pickfoot" }, go));
 }
 function groupInsights(insights, rows) {  // learn from: rivals do better or are praised more. Avoid: rivals get complaints you do not. Ignore: no real gap.
   const named = new Set(insights.map((x) => x.theme));
@@ -3000,12 +3000,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("acct
 $("acct-theme").addEventListener("click", () => $("theme").click());
 $("acct-fixes").addEventListener("click", () => { setMenu(false); $("fixes-btn").click(); });
 $("acct-history").addEventListener("click", () => { setMenu(false); openHistory(); });
-$("acct-another").addEventListener("click", () => { setMenu(false); startFresh(); });
 $("acct-print").addEventListener("click", () => { setMenu(false); window.print(); });
-$("acct-legend").addEventListener("click", () => {  // what the four groups mean, in a small dialog
-  setMenu(false);
-  openDialog([h("div", { class: "legend-dlg" }, ["fix", "fight", "ignore", "keep"].map((k) => h("p", {}, h("b", { class: "lg-" + k, text: tr(k) }), tr("legend" + k[0].toUpperCase() + k.slice(1)))))], "legendSummary");
-});
 $("in-history").addEventListener("click", () => openHistory());
 $("tasks-history").addEventListener("click", () => openHistory());
 $("history-back").addEventListener("click", () => { const v = viewBeforeHistory; show(v === "loading" || v === "history" || (v === "results" && !lastData) || (v === "rival" && rival.step === "idle" && !rival.form) ? "input" : v); toTop(); });

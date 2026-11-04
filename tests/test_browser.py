@@ -457,6 +457,7 @@ window.__probe = (async () => {
     lay.noPrintButton = document.getElementById("print-d") === null;  // printing lives in the account menu
     lay.quoteFont = getComputedStyle(document.querySelector("#panels blockquote")).fontFamily;
     lay.panels = rect("panels");
+    setQuota({ used: 1, max: 10 }); lay.quotaAlign = getComputedStyle(document.getElementById("quota-link")).textAlign;  // "Sisa analisis hari ini: 9 dari 10." sits at the left of the box
     const ra = document.getElementById("done-btn").getBoundingClientRect(), rb = document.getElementById("rivals-open").getBoundingClientRect();
     lay.actions = { sizeA: [Math.round(ra.width), Math.round(ra.height)], sizeB: [Math.round(rb.width), Math.round(rb.height)], topA: Math.round(ra.top), topB: Math.round(rb.top) };
     renderSummary([{ theme: "Colour vs photo", n: 1 }], [], [], { fix: 1, fight: 0, ignore: 0, keep: 0 });  // one fix, no replies and no praise: nothing after the bullets
@@ -853,6 +854,7 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(lay["actions"]["topA"], lay["actions"]["topB"])  # ...side by side, on one line
         self.assertNotIn("null", lay["summaryText"].lower())  # the summary never prints the word "null"
         self.assertTrue(lay["noPrintButton"])
+        self.assertIn(lay["quotaAlign"], ("left", "start"))
         self.assertNotIn("mono", lay["quoteFont"].lower())  # quotes read as text, not code
         self.assertEqual(lay["backShown"], [True, "flex"])  # "Lihat hasil terakhir" shows while a result is held...
         self.assertGreaterEqual(lay["back"]["top"], lay["card"]["bottom"])  # ...as a quiet line under the box, not above it

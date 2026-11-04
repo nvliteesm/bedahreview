@@ -586,7 +586,7 @@ class SignInBrowserTests(unittest.TestCase):
 
     def test_email_code_flow_then_skippable_intro_then_the_app(self):
         out = self.probe("#otp")
-        self.assertIn("ani@example.com", out["sub"])
+        self.assertEqual(out["sub"], "Kode dikirim ke ani@example.com. Belum masuk? Cek folder spam.")  # one short line: the long how-to paragraph overwhelmed a tester
         self.assertRegex(out["resend"], r"Kirim ulang kode \(\d+\)")  # the 60-second wait is shown
         self.assertTrue(out["resendDisabled"])
         self.assertEqual(out["wrong"], "Kodenya salah atau sudah habis waktunya. Minta kode baru.")
@@ -790,7 +790,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertTrue(out["searching"])
         self.assertEqual(out["pick"]["title"], "Pilih 1 atau 2 pesaing")
         self.assertEqual(out["pick"]["rows"], [True, False, False])  # the best match is already ticked
-        self.assertEqual((out["pick"]["go"], out["pick"]["quota"], out["pick"]["back"]), ("Bandingkan (1 dipilih)", True, "Hasil Bedah"))
+        self.assertEqual((out["pick"]["go"], out["pick"]["quota"], out["pick"]["back"]), ("Bandingkan (1 dipilih)", False, "Hasil Bedah"))  # no small "Pakai 1 jatah" line under the button (owner, 2026-11-04)
         self.assertEqual((out["two"][0], out["two"][1]), ([True, True, False], "Bandingkan (2 dipilih)"))
         self.assertEqual(out["three"], [True, True, False])  # a third shop is refused
         self.assertEqual(out["result"]["head"], "Hasil Bedah pesaing")
@@ -814,8 +814,8 @@ class SignInBrowserTests(unittest.TestCase):
         out = self.probe("#account")
         self.assertFalse(out["closed"])
         self.assertEqual(out["open"], [True, "true", "mitem"])  # opens with the first item focused
-        self.assertIn(out["items"][3], ("Mode gelap", "Mode terang"))  # the label follows the current theme
-        self.assertEqual(out["items"][:3] + out["items"][4:], ["Riwayat bedah", "Bedah produk lain", "Apa arti 4 kelompok?", "Kebijakan privasi", "Syarat penggunaan", "Keluar", "Hapus akun dan data saya"])  # the board's order; Cetak waits for a result; delete last and apart
+        self.assertIn(out["items"][1], ("Mode gelap", "Mode terang"))  # the label follows the current theme
+        self.assertEqual(out["items"][:1] + out["items"][2:], ["Riwayat bedah", "Kebijakan privasi", "Syarat penggunaan", "Keluar", "Hapus akun dan data saya"])  # no "Bedah produk lain" or "Apa arti 4 kelompok?" any more (owner, 2026-11-04); Cetak waits for a result; delete last and apart
         self.assertIn("Kebijakan privasi", out["items"])
         self.assertEqual(out["items"][-1], "Hapus akun dan data saya")  # last, apart from the rest
         self.assertTrue(out["deleteRed"])

@@ -1,0 +1,12 @@
+- banner [ref=f17e2]:
+  - generic [ref=f17e3]:
+    - button "Ke halaman awal BedahReview" [ref=f17e4] [cursor=pointer]:
+      - generic [ref=f17e9]: bedahreview
+    - generic [ref=f17e10]:
+      - 'button "Bahasa: Indonesia. Ganti ke English." [ref=f17e11] [cursor=pointer]':
+        - generic [ref=f17e12]:
+          - emphasis [ref=f17e13]: ID
+          - generic [aria-hidden] [ref=f17e14]: /
+          - generic [ref=f17e15]: EN
+      - button "Akun" [ref=f17e17] [cursor=pointer]:
+        - generic [aria-hidden] [ref=f17e18]: b
