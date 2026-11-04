@@ -186,8 +186,8 @@ body.gated #check-btn { display: none !important; }
 .gbtn[disabled], .btn[disabled] { opacity: 0.6; cursor: progress; }
 .or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.85rem; }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-.otp { display: flex; gap: 8px; justify-content: center; }
-.otp input { width: 46px; height: 56px; min-height: 56px; padding: 0; text-align: center; font-size: 1.5rem; font-weight: 800; border-radius: 12px; font-variant-numeric: tabular-nums; }
+.otp { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }  /* the six boxes fill the card's width, like the button under them */
+.otp input { width: 100%; min-width: 0; height: 56px; min-height: 56px; padding: 0; text-align: center; font-size: 1.5rem; font-weight: 800; border-radius: 12px; font-variant-numeric: tabular-nums; }
 .gate .btn.ghost { width: 100%; }
 .check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 0.92rem; font-weight: 600; cursor: pointer; }
 .check input { width: 22px; height: 22px; min-height: 22px; padding: 0; margin: 0; accent-color: var(--accent); flex: none; }
@@ -195,6 +195,7 @@ body.gated #check-btn { display: none !important; }
 .gate-card p a { color: inherit; }
 .gate-links { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
 .gate-links a { color: var(--accent); font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
+.gate-card .btn, .gate-card .btn.primary { width: 100%; justify-self: stretch; }  /* on a wide screen a primary button is otherwise 260 px: here it matches the field above it */
 @media (min-width: 900px) { .gate { padding-top: 56px; } .gate-card { padding: 32px; box-shadow: var(--shadow); } }
 main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-columns: minmax(0, 1fr); }  /* one column that never grows past its box, even for a long product name */
 .start { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--accent-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
@@ -1085,7 +1086,7 @@ const TEXT = {
     rivalLineWorse: "%s: %s di produkmu, di pesaing terbaik %s.", rivalLineOther: "%s: %s di produkmu, %s di %s.",
     rivalAlone: "Tanpa Bedah ulasan, kami tidak membandingkan dengan produkmu. Jalankan Bedah ulasan untuk melihat selisihnya.", rivalLinkLbl: "Lihat ulasannya",
     rivalLineWorseEx: "%s: %s di %s, di pesaing terbaik %s.", rivalLineOtherEx: "%s: %s di %s, %s di %s.",
-    gTitle: "Masuk untuk menyimpan hasilmu", gSub: "Gratis, tanpa password.", gSmall: "Teks ulasanmu tidak kami simpan.", acctCodeAsk: "Punya kode akses?", gGoogle: "Masuk dengan Google", gOr: "atau pakai email",
+    gTitle: "Sign In", gSub: "Masuk untuk menyimpan hasilmu, gratis tanpa password.", gSmall: "Teks ulasanmu tidak kami simpan.", acctCodeAsk: "Punya kode akses?", gGoogle: "Masuk dengan Google", gOr: "atau pakai email",
     gEmail: "Email", gEmailPh: "nama@email.com", gSend: "Kirim kode ke email", gConsent: "Kami mencatat fitur yang kamu pakai per akun (misalnya bagian yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.",
     gKeep: "Tetap masuk di HP ini", gIosNote: "Pasang ke layar utama dulu (Safari > Bagikan > Tambah ke Layar Utama), lalu masuk dari ikonnya. Di aplikasi yang terpasang, kamu perlu masuk sekali lagi.",
     gClose: "Nanti saja", signInShort: "Masuk",
@@ -1275,7 +1276,7 @@ const TEXT = {
     rivalLineWorse: "%s: %s for you, %s for the best competitor.", rivalLineOther: "%s: %s for you, %s at %s.",
     rivalAlone: "Without Review checker we cannot compare against your product. Run Review checker to see the gap.", rivalLinkLbl: "See the reviews",
     rivalLineWorseEx: "%s: %s for %s, %s for the best competitor.", rivalLineOtherEx: "%s: %s for %s, %s at %s.",
-    gTitle: "Sign in to save your results", gSub: "Free, no password.", gSmall: "We do not store your review text.", acctCodeAsk: "Have an access code?", gGoogle: "Continue with Google", gOr: "or use email",
+    gTitle: "Sign in", gSub: "Sign in to save your results. Free, no password.", gSmall: "We do not store your review text.", acctCodeAsk: "Have an access code?", gGoogle: "Continue with Google", gOr: "or use email",
     gEmail: "Email", gEmailPh: "name@email.com", gSend: "Send code to my email", gConsent: "We record which features you use, per account (for example which part you open), never review text, product names or an IP address.",
     gKeep: "Keep me signed in on this phone", gIosNote: "Add to the Home Screen first (Safari > Share > Add to Home Screen), then sign in from the icon. In the installed app, you need to sign in one more time.",
     gClose: "Not now", signInShort: "Sign in",
@@ -2639,7 +2640,7 @@ function finishRival() {  // Selesai on a Hasil Bedah pesaing: the catch-up item
     saveBoxes(boxes.filter(Boolean)); boxOpen = sig;  // the box that got the new items opens on Tugas
   }
   track("fix_marked");
-  playDone(items.length, () => { rival = { step: "idle" }; rivalRun += 1; openFixes(); if (items.length) showToast(tr("doneToast", items.length)); });
+  playDone(items.length, () => { rival = { step: "idle" }; rivalRun += 1; clearInputs(); checkerView = "input"; openFixes(); if (items.length) showToast(tr("doneToast", items.length)); });
 }
 
 desktopQuery.addEventListener("change", () => {  // crossing 900px: the layout changes, the content stays

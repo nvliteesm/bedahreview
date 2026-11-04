@@ -572,7 +572,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertTrue(out["histHidden"])  # signed out: no Riwayat in the menu or on Tugas
         self.assertEqual(out["start"], {"gate": False, "app": True, "signinBtn": True, "acct": True})  # a visitor gets the avatar menu too (theme, access code)  # the first analysis is free, so the app comes first
         self.assertEqual((out["gate"], out["workspaceHidden"]), (True, True))
-        self.assertEqual(out["title"], "Masuk untuk menyimpan hasilmu")
+        self.assertEqual(out["title"], "Sign In")  # owner, 2026-11-04: the title is just "Sign In", the line under it says why
         self.assertEqual(out["google"], "Masuk dengan Google")
         self.assertTrue(out["consent"])
         self.assertTrue(out["twoChoices"])  # Google, email and "Nanti saja" only
@@ -580,7 +580,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertFalse(out["noContactAsk"])  # no "may we contact you" question anywhere
         self.assertTrue(out["keepInMenu"])
         self.assertEqual(out["otp"], ["one-time-code", "numeric", "off", 6])
-        self.assertEqual(out["titleEn"], "Sign in to save your results")
+        self.assertEqual(out["titleEn"], "Sign in")
         self.assertEqual(out["oauth"], ["google", "http://127.0.0.1:%d/" % self.port])
         self.assertEqual((out["badEmail"], out["otpCalls"]), ("Alamat email tidak valid.", 0))  # a bad address never reaches Supabase
 

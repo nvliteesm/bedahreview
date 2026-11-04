@@ -433,6 +433,10 @@ window.__probe = (async () => {
     rival = { step: "pick", from: "results", target: { url: "https://www.tokopedia.com/s/p", title: "t", mine: false }, candidates: [], checked: [], extra: "" };
     show("rival"); finishAnalysis(200, fresh); await wait(300);  // an analysis ends while the seller is on Pesaing: they stay there, with a note
     nav.away = [vis(), document.getElementById("toast2").hidden];
+    rival = { step: "result", from: "results", target: { url: "https://www.tokopedia.com/s/p", title: "t", mine: false, sig: "" }, data: Object.assign({}, EXAMPLE_COMPARE, { example: false }), shops: ["A", "B"] };
+    show("rival"); finishRival(); await until(() => currentView === "fixes");  // Selesai on a competitor result: Tugas opens, and the Bedah ulasan tab then opens a clean start, not the result just read
+    document.getElementById("nav-check").click();
+    nav.afterRival = [vis(), !document.getElementById("hero").hidden, document.getElementById("url").value];
     nav.errors = errors;
   } catch (e) { out.err = String(e && e.stack || e); } }
   if (location.hash === "#nolazada") { try {  // owner decision 2026-11-04: Lazada is not read for now; said at once, nothing is sent
@@ -468,6 +472,8 @@ window.__probe = (async () => {
     document.getElementById("back-results").click(); await wait(300);
     document.getElementById("done-btn").click(); await until(() => currentView === "fixes"); await wait(200);
     lay.tugas = { title: rect("fixes-h"), box: rect(document.querySelector("#tasks-body .tbox")), action: (document.querySelector("#tasks-body .tlinks .btn") || {}).className || "" };
+    showGate("choose", false); lay.gateChoose = { btn: rect("g-send"), field: rect("g-email") };  // the sign-in cards: the green button is as wide as the field above it
+    showGate("verify", false); lay.gateVerify = { btn: rect("g-verify-btn"), boxes: rect("otp") };
   } catch (e) { out.err = String(e && e.stack || e); } }
   return out;
 })();
@@ -861,6 +867,8 @@ class BrowserTests(unittest.TestCase):
         self.assertGreaterEqual(lay["sample"]["top"], lay["back"]["bottom"] - 1)  # and each link has a line of its own
         self.assertEqual(lay["tugas"]["box"]["left"], lay["tugas"]["title"]["left"])  # a lone Tugas box lines up with its title
         self.assertIn("btn", lay["tugas"]["action"])  # Analisa Kompetitor is a button there
+        for card, above in (("gateChoose", "field"), ("gateVerify", "boxes")):  # the green button is exactly as wide as the field or the code boxes above it
+            self.assertEqual((lay[card]["btn"]["left"], lay[card]["btn"]["right"]), (lay[card][above]["left"], lay[card][above]["right"]), card)
 
     def test_the_two_end_buttons_are_side_by_side_and_equal_on_a_phone_too(self):
         lay = self.probe("/#layout", width=390)
@@ -895,6 +903,7 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(nav["noTitle"], ["rival", True, "https://www.lazada.co.id/products/pdp-i1-s1.html", True, True, True])  # the server wants a name: the form, link filled, a note, own reviews kept
         self.assertEqual(nav["lazada"], ["rival", True, True, 0])  # a result without a product name asks for it and starts no search
         self.assertEqual(nav["away"], ["rival", False])  # an analysis that ends while on Pesaing leaves the seller there, with a note
+        self.assertEqual(nav["afterRival"], ["input", True, ""])  # after Selesai on a competitor result the tab opens the start; "Lihat hasil terakhir" brings the result back
         self.assertEqual(nav["errors"], [])
 
 
