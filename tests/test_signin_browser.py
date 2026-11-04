@@ -139,7 +139,7 @@ window.__probe = (async () => {
     out.gate = vis("gate"); out.workspaceHidden = byId("workspace").hidden;
     out.title = byId("gate-h").textContent; out.google = byId("g-google").textContent.trim();
     out.histHidden = byId("acct-history").hidden && byId("tasks-history").hidden;
-    out.consent = byId("g-choose").textContent.includes("Teks ulasanmu tidak kami simpan.");
+    out.consent = byId("g-choose").textContent.includes("Teks ulasanmu tidak masuk basis data kami.");
     out.twoChoices = vis("g-google") && vis("g-send") && vis("g-close") && !byId("g-example") && !byId("g-codelink") && !document.querySelector("details.gate-opts");
     out.signinBtn = vis("signin-btn");
     out.noContactAsk = /hubungi|wawancara|contacted|interview/i.test(byId("gate").textContent);
