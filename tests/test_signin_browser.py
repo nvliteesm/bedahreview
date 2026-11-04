@@ -110,6 +110,15 @@ window.__probe = (async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const until = async (fn, n = 60) => { for (let i = 0; i < n; i++) { if (fn()) return true; await wait(100); } return false; };
   const byId = (id) => document.getElementById(id), vis = (id) => !byId(id).hidden;
+  const NL = String.fromCharCode(10);
+  const SAMPLE = [  // pasting reviews is gone from the page; the server route and the page's send() remain, so the tests feed them directly
+    "★★★★★  Putih, L   bagus banget pakenya sama bahannya bagus luamayan tebel",
+    "★★★★☆  Putih, L   nyaman bet dah pokoknya, bahannya tebel cuman pas dateng kok ada dikit noda kecil ya, tapi ini gacor sih bagus banget desainnya",
+    "★★★☆☆  Putih, M   di tampilan sebelom beli, warna tulisannya ijo, pas dateng warna tulisannya hitem",
+    "★★☆☆☆  Hitam, L   Pas sampe koyak bajunya",
+    "★☆☆☆☆  Putih, L   produk tidak sesuai deskripsi, warna hijau tapi realitanya hitam, kalo emg terima dari pabrikan nya hitam kenapa ga pasang foto hitam aja?",
+  ].join(NL);
+  const runSample = () => { if (!ensureSignedIn(true)) return; send({ text: SAMPLE, product: "Kaos Boxy Retro" }, "t"); };
   const calls = (kind) => window.__sb.calls.filter((c) => c[0] === kind);
   const paste = (text) => { const ev = new Event("paste", { bubbles: true, cancelable: true }); ev.clipboardData = { getData: () => text }; byId("otp-0").dispatchEvent(ev); };
   await until(() => document.body.classList.contains("ready"));
@@ -167,19 +176,19 @@ window.__probe = (async () => {
   if (hash === "#returning") {
     await until(() => !byId("workspace").hidden);
     out.intro = vis("g-intro"); out.upserts = calls("upsert").length;
-    byId("sample").click(); byId("run").click();
+    runSample();
     await until(() => !byId("view-results").hidden, 80);
     out.results = !byId("view-results").hidden; out.tabs = document.querySelectorAll("#tabs button").length;
-    out.quota = [vis("quota-note"), byId("quota-note").textContent];
+    out.quota = [vis("quota-link"), byId("quota-link").textContent];
     out.dailyText = errText({ limit: "daily", max: 10 }, "x");
   }
 
   if (hash === "#expired") {
     await until(() => !byId("workspace").hidden);
     out.appOpened = !byId("workspace").hidden;
-    byId("sample").click(); byId("run").click();
+    runSample();
     await until(() => vis("gate"), 80);
-    out.gate = vis("gate"); out.workspaceHidden = byId("workspace").hidden; out.runEnabled = !byId("run").disabled; out.signedOutSession = window.__sb.session === null;
+    out.gate = vis("gate"); out.workspaceHidden = byId("workspace").hidden; out.runEnabled = !byId("fetch").disabled; out.signedOutSession = window.__sb.session === null;
   }
 
   if (hash === "#history") {
@@ -188,7 +197,7 @@ window.__probe = (async () => {
     window.__sb.history = [{ id: 1, user_id: "user-1111-2222", created_at: daysAgo(70), product: "Kaos Lama", reviews: 4, fix_n: 1, fight_n: 0, ignore_n: 0, keep_n: 3, top_theme: "Sizing & fit" },
       { id: 2, user_id: "user-1111-2222", created_at: daysAgo(10), product: "Kaos Tengah", reviews: 6, fix_n: 2, fight_n: 0, ignore_n: 0, keep_n: 4, top_theme: "Sizing & fit" }];
     out.menuShown = !byId("acct-history").hidden;
-    byId("sample").click(); byId("run").click();
+    runSample();
     await until(() => !byId("view-results").hidden, 80);
     await until(() => calls("insert-history").length > 0, 40);
     const row = (calls("insert-history")[0] || [])[1] || {};
@@ -201,7 +210,7 @@ window.__probe = (async () => {
     await until(() => byId("history-body").querySelector(".hrow, .empty2, .callout"), 40);
     await wait(100);
     out.view = vis("view-history");
-    out.sub = byId("view-history").textContent.includes("Dihapus otomatis setelah 60 hari.");
+    out.noFooter = !byId("view-history").textContent.includes("Dihapus otomatis") && !byId("view-history").textContent.includes("hanya ada di HP");
     const cards = () => [...byId("history-body").querySelectorAll(".hrow")].map((c) => [c.querySelector("b").textContent, c.querySelector(".hm").textContent, (c.querySelector(".st") || {}).textContent || "", [...c.querySelectorAll(".hl button")].map((b) => b.textContent)]);
     out.cards = cards();
     out.expectDay = fmtDayShort(today());
@@ -213,9 +222,14 @@ window.__probe = (async () => {
     out.resumed = [vis("view-results"), byId("results-h").textContent, calls("insert-history").length];
     byId("done-btn").click();
     out.anim = vis("done-anim");
-    await until(() => vis("view-history") && !vis("done-anim"), 80);
+    await until(() => vis("view-fixes") && !vis("done-anim"), 80);
+    out.landedOn = [vis("view-fixes"), vis("view-history")];  // Selesai opens Tugas for a signed-in seller too
+    const landed = { toast: byId("toast2").textContent, badge: byId("tasks-count").textContent, held: !!heldFor(reviewSig(lastData.items)) };
+    const taskBox = () => ({ boxes: document.querySelectorAll(".tbox").length });
+    out.landedBox = taskBox();
+    byId("tasks-history").click();  // the result was saved in Riwayat as Selesai
     await until(() => byId("history-body").querySelector(".st.done"), 40);
-    out.afterDone = { cards: cards(), toast: byId("toast2").textContent, badge: byId("tasks-count").textContent, held: !!heldFor(reviewSig(lastData.items)) };
+    out.afterDone = Object.assign({ cards: cards() }, landed);
     byId("nav-tasks").click();
     const box = () => ({ boxes: document.querySelectorAll(".tbox").length, items: document.querySelectorAll(".tbox .it").length, meta: (document.querySelector(".tbox .tmeta") || {}).textContent, chip: (document.querySelector(".tbox .tchip") || {}).textContent,
       bar: (document.querySelector(".tbox .bar") || document.body).getAttribute("aria-valuenow"), cal: !!document.querySelector(".tbox .tlinks button") });
@@ -227,9 +241,8 @@ window.__probe = (async () => {
     out.stored = localStorage.getItem("bedahreview-boxes-v1");
     byId("tasks-history").click();
     await until(() => byId("history-body").querySelector(".hrow"), 40);
-    byId("product").value = "";
-    [...byId("history-body").querySelectorAll("button")].filter((b) => b.textContent === "Bedah lagi").pop().click();  // a row this device does not know: just the paste screen with the name
-    out.again = [vis("view-input"), byId("product").value];
+    [...byId("history-body").querySelectorAll("button")].filter((b) => b.textContent === "Bedah lagi").pop().click();  // a row this device does not know: the link screen, empty
+    out.again = [vis("view-input"), byId("url").value];
   }
 
   if (hash === "#events") {
@@ -302,11 +315,11 @@ window.__probe = (async () => {
   if (hash === "#free") {
     await until(() => !byId("workspace").hidden);
     out.start = { gate: vis("gate"), signinBtn: vis("signin-btn"), acct: vis("acct") };
-    byId("sample").click(); byId("run").click();
+    runSample();
     await until(() => !byId("view-results").hidden, 80);
     out.locked = { unlock: vis("unlock"), panels: shown("panels"), counts: document.querySelectorAll("#tabs button .n").length, flag: localStorage.getItem("bedahreview-free-used") };
     byId("tab-fight").click(); out.tabPointsToSignIn = document.activeElement === byId("unlock-h");
-    show("input"); byId("run").click(); await wait(300);
+    show("input"); byId("url").value = "https://www.tokopedia.com/toko/kaos-boxy"; byId("url").dispatchEvent(new Event("input")); byId("fetch").click(); await wait(300);
     out.second = { gate: vis("gate"), info: byId("g-info").textContent, close: vis("g-close") };
     byId("g-email").value = "ani@example.com"; byId("g-send").click();
     await until(() => vis("g-verify")); paste("123456");
@@ -317,17 +330,19 @@ window.__probe = (async () => {
   }
 
   if (hash === "#free-link") {
-    await until(() => !byId("workspace").hidden && !byId("intab-link").hidden);
+    await until(() => !byId("workspace").hidden);
     out.noDemo = !/demo|sen dolar|cents/i.test(byId("view-input").textContent);
-    out.emptyFirst = byId("in-link").hidden && !byId("in-paste").hidden && byId("run").classList.contains("off");  // an empty box waits; nothing to choose first
-    byId("paste").value = "https://www.tokopedia.com/toko/kaos-boxy"; byId("paste").dispatchEvent(new Event("input"));
-    out.linkFirst = !byId("in-link").hidden && byId("in-paste").hidden && !byId("detect").hidden && byId("detect-text").textContent.includes("Tokopedia");  // a pasted link is detected, no tab to pick
-    const put = (v) => { byId("paste").value = v; byId("paste").dispatchEvent(new Event("input")); };
-    put("★☆☆☆☆ ukurannya kekecilan\\n★★☆☆☆ bahannya tipis");
-    out.text = { run: byId("run").textContent, product: !byId("product-fld").hidden, chip: byId("detect-text").textContent, off: byId("run").classList.contains("off") };
-    put("https://shopee.co.id/produk-i.1.2");
-    out.shopee = { note: !byId("shopee-note").hidden, chip: byId("detect").hidden };  // a Shopee link says "not yet" and promises nothing
+    out.emptyFirst = byId("fetch").classList.contains("off") && byId("fetch").textContent === "Bedah ulasan" && byId("detect").hidden && byId("link-extra").hidden;  // an empty box waits; nothing to choose
+    const put = (v) => { byId("url").value = v; byId("url").dispatchEvent(new Event("input")); };
     put("https://www.tokopedia.com/toko/kaos-boxy");
+    out.linkFirst = !byId("detect").hidden && byId("detect-text").textContent.includes("Tokopedia") && byId("fetch").textContent === "Ambil & bedah" && !byId("fetch").classList.contains("off") && !byId("link-extra").hidden;  // a pasted link is detected, no tab to pick
+    put("★☆☆☆☆ ukurannya kekecilan" + NL + "★★☆☆☆ bahannya tipis");  // review text is not read any more
+    byId("fetch").click();
+    out.text = { off: byId("fetch").classList.contains("off"), chip: byId("detect").hidden, err: byId("url-error-text").textContent };
+    put("https://shopee.co.id/produk-i.1.2");
+    out.shopee = { err: byId("url-error-text").textContent, chip: byId("detect").hidden, off: byId("fetch").classList.contains("off") };  // a Shopee link says "not yet" and promises nothing
+    put("https://www.tokopedia.com/toko/kaos-boxy");
+    out.shopeeCleared = byId("url-error").hidden;
     byId("fetch").click();
     await until(() => !byId("view-results").hidden, 80);
     out.locked = { unlock: vis("unlock"), panels: shown("panels"), counts: [...document.querySelectorAll("#tabs button .n")].map((n) => n.textContent), summary: byId("summary").textContent };
@@ -356,10 +371,10 @@ window.__probe = (async () => {
       if (path.includes("/api/competitors/compare")) { window.__paths.push("compare:" + JSON.parse(o.body).competitors.length); const d = JSON.parse(JSON.stringify(EXAMPLE_COMPARE)); d.quota = { used: 2, max: 10 }; return Promise.resolve(new Response(JSON.stringify(d), { status: 200, headers: { "Content-Type": "application/json" } })); }
       return real(u, o);
     };
-    byId("sample").click(); byId("run").click();
+    runSample();
     await until(() => !byId("view-results").hidden, 80);
     byId("done-btn").click();   // the product gets its box first
-    await until(() => vis("view-history") && !vis("done-anim"), 80);
+    await until(() => vis("view-fixes") && !vis("done-anim"), 80);
     byId("nav-check").click();
     byId("rivals-open").click();   // pasted reviews have no link: the form asks for it
     out.form = [vis("view-rival"), !!byId("rival-url"), byId("rival-name").value];
@@ -368,7 +383,7 @@ window.__probe = (async () => {
     out.searching = !!byId("rival-body").querySelector(".spinner") || byId("rival-body").textContent.includes("Mencari produk serupa");
     await until(() => byId("rival-body").querySelector(".pick"), 60);
     const rows = () => [...byId("rival-body").querySelectorAll(".pick input")].map((c) => c.checked);
-    out.pick = { title: byId("rival-body").querySelector("h2").textContent, rows: rows(), go: byId("rival-go").textContent, quota: byId("rival-body").textContent.includes("Memakai 1 jatah analisis hari ini"), back: byId("rival-body").querySelector(".back").textContent };
+    out.pick = { title: byId("rival-body").querySelector("h2").textContent, rows: rows(), go: byId("rival-go").textContent, quota: byId("rival-body").textContent.includes("Pakai 1 jatah analisis hari ini"), back: byId("rival-body").querySelector(".back").textContent };
     byId("rival-body").querySelectorAll(".pick input")[1].click();
     out.two = [rows(), byId("rival-go").textContent];
     byId("rival-body").querySelectorAll(".pick input")[2].click();   // a third is refused: 1 or 2 shops
@@ -386,7 +401,7 @@ window.__probe = (async () => {
   if (hash === "#free-google") {
     await until(() => !byId("workspace").hidden);
     if (!window.__back) {
-      byId("sample").click(); byId("run").click();
+      runSample();
       await until(() => vis("unlock"), 80);
       byId("unlock-google").click(); await wait(300);
       const saved = JSON.parse(sessionStorage.getItem("bedahreview-free-result") || "null");
@@ -443,7 +458,7 @@ window.__probe = (async () => {
     await until(() => vis("gate"));
     showApp();
     localStorage.setItem("bedahreview-free-used", "1");  // the free analysis was already used in this browser
-    show("input"); byId("sample").click(); byId("run").click();
+    show("input"); runSample();
     await wait(300);
     out.gateAfterRun = vis("gate"); out.closeShown = vis("g-close"); out.info = byId("g-info").textContent;
     byId("g-close").click(); out.backInApp = !byId("workspace").hidden;
@@ -517,7 +532,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertIn("ani@example.com", out["sub"])
         self.assertRegex(out["resend"], r"Kirim ulang kode \(\d+\)")  # the 60-second wait is shown
         self.assertTrue(out["resendDisabled"])
-        self.assertEqual(out["wrong"], "Kode salah atau sudah kedaluwarsa. Minta kode baru.")
+        self.assertEqual(out["wrong"], "Kodenya salah atau sudah habis waktunya. Minta kode baru.")
         self.assertTrue(out["cleared"])
         self.assertEqual(out["verify"], [["ani@example.com", "000000", "email"], ["ani@example.com", "123456", "email"]])  # a paste fills all six boxes
         self.assertTrue(out["intro"])
@@ -559,7 +574,7 @@ class SignInBrowserTests(unittest.TestCase):
             self.assertNotIn(word, out["rowText"])
         self.assertEqual(out["inserts"], 1)
         self.assertTrue(out["heldBefore"])  # the result is kept in this browser so it can be continued
-        self.assertTrue(out["opened"] and out["view"] and out["sub"])
+        self.assertTrue(out["opened"] and out["view"] and out["noFooter"])  # no footer notes on Riwayat
         self.assertEqual([c[0] for c in out["cards"]], ["Kaos Boxy Retro", "Kaos Tengah"])  # newest first; the 70-day-old row was cleaned up
         mine, other = out["cards"]
         self.assertTrue(mine[1].startswith(out["expectDay"]) and "ulasan" in mine[1])
@@ -570,23 +585,25 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual(set(out["cutoffDays"]), {60})
         self.assertEqual(out["resumed"], [True, "Hasil Bedah", 1])  # Lanjutkan is not a new analysis: nothing is saved again
         self.assertTrue(out["anim"])
+        self.assertEqual(out["landedOn"], [True, False])  # Selesai goes to Tugas, and the box is already there
+        self.assertEqual(out["landedBox"]["boxes"], 1)
         done = out["afterDone"]
         self.assertEqual(done["cards"][0][2], "Selesai")
         self.assertIn("tugas dibuat", done["cards"][0][1])
-        self.assertEqual(done["cards"][0][3], ["Analisis pesaing", "Bedah lagi"])
+        self.assertEqual(done["cards"][0][3], ["Analisa Kompetitor", "Bedah lagi"])
         self.assertIn("tugas masuk", done["toast"])
         self.assertEqual(done["badge"], "2")  # the red count on Tugas: unticked items
         self.assertFalse(done["held"])  # finished: the held result is gone
         self.assertEqual((out["box"]["boxes"], out["box"]["items"], out["box"]["meta"], out["box"]["bar"]), (1, 2, "0 dari 2 selesai", "0"))
         self.assertRegex(out["box"]["chip"], r"^Sisa (29|30) hari$")
         self.assertTrue(out["box"]["cal"])
-        for word in ("Tambah ke Kalender", "Analisis pesaing", "Ubah"):
+        for word in ("Tambah ke Kalender", "Analisa Kompetitor", "Ubah"):
             self.assertIn(word, out["boxText"])
         self.assertEqual((out["ticked"][0], out["ticked"][1], out["ticked"][2]), ("1 dari 2 selesai", "1", "1"))  # the checkbox is the only way to tick
         self.assertEqual(out["allDone"], [True, "Bedah ulang produk ini", True])  # the box turns green and offers the one useful next step
         for word in ("koyak", "ijo", "hitem", "bagus", "tulisannya", "Halo Kak", "Mohon maaf"):  # the box holds task sentences, never review text or drafts
             self.assertNotIn(word, out["stored"])
-        self.assertEqual(out["again"], [True, "Kaos Tengah"])  # Bedah lagi: the paste screen with the product name filled in
+        self.assertEqual(out["again"], [True, ""])  # Bedah lagi on a row this device does not know: the link screen, empty
 
     def test_events_wait_in_a_queue_and_go_out_together(self):
         out = self.probe("#events")
@@ -677,8 +694,9 @@ class SignInBrowserTests(unittest.TestCase):
     def test_a_visitor_can_use_a_product_link_for_the_free_analysis(self):
         out = self.probe("#free-link")
         self.assertTrue(out["emptyFirst"] and out["linkFirst"])  # one box: a link is detected by itself
-        self.assertEqual(out["text"], {"run": "Bedah 2 ulasan", "product": True, "chip": "2 ulasan terbaca", "off": False})  # pasted text: the count is on the button
-        self.assertEqual(out["shopee"], {"note": True, "chip": True})
+        self.assertEqual(out["text"], {"off": True, "chip": True, "err": "Itu tidak terlihat seperti tautan."})  # review text is not read: the box asks for a link
+        self.assertEqual(out["shopee"], {"err": "Link Shopee belum didukung. Pakai link produk dari Tokopedia, TikTok Shop, atau Lazada.", "chip": True, "off": True})
+        self.assertTrue(out["shopeeCleared"])  # a good link takes the notice away
         self.assertTrue(out["noDemo"])  # no "demo" or cost talk in front of sellers
         self.assertEqual((out["locked"]["unlock"], out["locked"]["panels"]), (True, False))
         self.assertEqual(out["locked"]["counts"], ["1", "1", "1", "0"])  # the four numbers show (Perbaiki, Tanggapi, Pertahankan, Abaikan); the quotes and drafts wait for a sign-in
@@ -687,7 +705,7 @@ class SignInBrowserTests(unittest.TestCase):
     def test_a_visitor_is_asked_to_sign_in_for_competitors(self):
         out = self.probe("#rival-visitor")
         self.assertEqual(out["noEntry"], [True, 2])
-        self.assertEqual((out["gate"], out["info"]), (True, "Masuk untuk mencari dan membandingkan pesaing. Gratis, tanpa kata sandi."))
+        self.assertEqual((out["gate"], out["info"]), (True, "Masuk dulu untuk bandingkan dengan pesaing. Gratis, tanpa password."))
         self.assertEqual(out["after"], {"gate": False, "app": True})
 
     def test_competitor_flow_searches_picks_one_or_two_and_adds_items_to_the_same_box(self):
@@ -700,7 +718,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual((out["two"][0], out["two"][1]), ([True, True, False], "Bandingkan (2 dipilih)"))
         self.assertEqual(out["three"], [True, True, False])  # a third shop is refused
         self.assertEqual(out["result"]["head"], "Hasil Bedah pesaing")
-        self.assertEqual(out["result"]["tabs"], ["Perlu dikejar3", "Keunggulanmu1"])
+        self.assertEqual(out["result"]["tabs"], ["Perlu dikejar3", "Kamu unggul1"])
         self.assertEqual(out["result"]["paths"], ["suggest", "compare:2"])
         self.assertTrue(out["result"]["selesai"])
         self.assertTrue(out["anim"])
@@ -720,8 +738,8 @@ class SignInBrowserTests(unittest.TestCase):
         out = self.probe("#account")
         self.assertFalse(out["closed"])
         self.assertEqual(out["open"], [True, "true", "mitem"])  # opens with the first item focused
-        self.assertIn(out["items"][1], ("Mode gelap", "Mode terang"))  # the label follows the current theme
-        self.assertEqual(out["items"][:1] + out["items"][2:], ["Riwayat", "Kebijakan privasi", "Syarat penggunaan", "Keluar", "Hapus akun dan data saya"])  # the owner's order; Riwayat on top, delete last and apart
+        self.assertIn(out["items"][3], ("Mode gelap", "Mode terang"))  # the label follows the current theme
+        self.assertEqual(out["items"][:3] + out["items"][4:], ["Riwayat bedah", "Bedah produk lain", "Apa arti 4 kelompok?", "Kebijakan privasi", "Syarat penggunaan", "Keluar", "Hapus akun dan data saya"])  # the board's order; Cetak waits for a result; delete last and apart
         self.assertIn("Kebijakan privasi", out["items"])
         self.assertEqual(out["items"][-1], "Hapus akun dan data saya")  # last, apart from the rest
         self.assertTrue(out["deleteRed"])

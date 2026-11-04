@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <meta name="robots" content="noindex">
 <title>Syarat penggunaan · BedahReview</title>
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
@@ -11,7 +11,6 @@
 <style>
 /* Same tokens, fonts and header as the app (index.html), so the legal pages feel like part of it. */
 :root { --bg: #f6f7f5; --surface: #ffffff; --ink: #17201c; --muted: #5d6963; --line: #dde2de; --accent: #0f6b5a; --on-accent: #ffffff; --accent-soft: #dff1ec; --bar: #ffffff; --radius: 14px; --font-ui: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --accent: #4fc2a8; --on-accent: #0b1411; --accent-soft: #163a33; --bar: #1a211e; } }
 :root[data-theme="dark"] { --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --accent: #4fc2a8; --on-accent: #0b1411; --accent-soft: #163a33; --bar: #1a211e; }
 @font-face { font-family: "Plus Jakarta Sans"; src: url("fonts/plus-jakarta-sans.woff2") format("woff2"); font-weight: 200 800; font-style: normal; font-display: swap; }
 * { box-sizing: border-box; }
@@ -152,7 +151,7 @@ a { color: var(--accent); font-weight: 600; }
   var SUN = "M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3L4.9 4.9M19.1 19.1l-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4M12 8a4 4 0 100 8 4 4 0 000-8z";
   var root = document.documentElement, lang = "id";
   try { if (localStorage.getItem("bedahreview-lang") === "en") lang = "en"; } catch (e) { /* storage blocked */ }
-  function darkNow() { return root.dataset.theme ? root.dataset.theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  function darkNow() { return root.dataset.theme === "dark"; }
   function themeLabel() {
     var dark = darkNow(), btn = document.getElementById("theme"), label = THEME[lang][dark ? 1 : 0];
     btn.setAttribute("aria-label", label); btn.title = label;
@@ -184,7 +183,6 @@ a { color: var(--accent); font-weight: 600; }
     root.dataset.theme = next; root.style.colorScheme = next; themeLabel();
     try { localStorage.setItem("bedahreview-theme", next); } catch (e) { /* ignore */ }
   });
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", themeLabel);
   show(lang);
   // The address above is the default; BEDAHREVIEW_CONTACT_EMAIL, when set, replaces it.
   fetch("/api/config").then(function (r) { return r.json(); }).then(function (cfg) {

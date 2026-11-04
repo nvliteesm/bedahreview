@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <meta name="theme-color" content="#0f6b5a">
 <title>BedahReview</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="BedahReview">
 <style>
 /* Phone first: one column up to 480px wide, 16px gutters, 44px touch targets, safe-area padding.
-   A 2x2 board of four tabs: Perbaiki (Fix) and Tanggapi (Respond) on top as the main ones, Abaikan (Ignore) and Pertahankan (Keep) below. Light and dark follow the system. */
+   A 2x2 board of four tabs: Perbaiki (Fix) and Tanggapi (Respond) on top as the main ones, Abaikan (Ignore) and Pertahankan (Keep) below. Light is the default; dark only after the seller taps the theme button. */
 :root {
   --bg: #f6f7f5; --surface: #ffffff; --ink: #17201c; --muted: #5d6963; --line: #dde2de; --field: #7d8782; --quote: #f3f5f2;
   --accent: #0f6b5a; --on-accent: #ffffff; --accent-soft: #dff1ec;
@@ -25,16 +25,6 @@
   --gutter: 16px; --radius: 14px;
   --bar: #ffffff; --shadow: none; --rival: #4338ca; --rival-soft: #eceafc;
   --summary-soft: #e9f3ef; --summary-line: #cfe3db; --accent-ink: #0b4f42;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --field: #6b7872; --quote: #222a26;
-    --accent: #4fc2a8; --on-accent: #0b1411; --accent-soft: #163a33;
-    --fix: #f0a24a; --fix-soft: #33261a; --fight: #f27088; --fight-soft: #351c22;
-    --ignore: #a3aca8; --ignore-soft: #242b28; --check: #a5b4fc; --keep: #86efac; --keep-soft: #12281a;
-    --bar: #1a211e; --rival: #a5b4fc; --rival-soft: #232647;
-    --summary-soft: #1b2a25; --summary-line: #2c4a41; --accent-ink: #7fd1b8;
-  }
 }
 :root[data-theme="dark"] {
   --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --field: #6b7872; --quote: #222a26;
@@ -305,7 +295,6 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.75rem;
 @media (min-width: 900px) {
   :root { --bar: #e6eae7; }  /* flat cards, radius 14: the same tokens as a phone */
   :root[data-theme="dark"] { --bar: #1a211e; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bar: #1a211e; } }
   html, body { height: 100%; }
   body { overflow: hidden; display: flex; flex-direction: column; }
   .topbar { position: static; flex: none; padding: 0 36px; }
@@ -374,7 +363,6 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.75rem;
 @font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
 :root { --scrim: rgba(23, 32, 28, 0.38); --line-strong: #bfc8c3; --ease: cubic-bezier(0.2, 0.7, 0.2, 1); }
 :root[data-theme="dark"] { --scrim: rgba(0, 0, 0, 0.55); --line-strong: #48544e; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --scrim: rgba(0, 0, 0, 0.55); --line-strong: #48544e; } }
 body { -webkit-font-smoothing: antialiased; transition: background-color 0.2s, color 0.2s; }
 
 /* header: the wordmark, "Masuk" as the one pill, language as a small outlined ID / EN */
@@ -410,8 +398,8 @@ body.free-locked #panels, body.free-locked #board-cap { display: none !important
 .qbtn { width: 44px; height: 44px; margin: -8px -8px -8px 0; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 800; font-size: 1.05rem; cursor: pointer; border-radius: 50%; }
 .chip { display: flex; align-items: center; gap: 8px; background: var(--accent-soft); color: var(--accent-ink); border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; font-weight: 600; }
 .chip svg.i { flex: none; }
-#paste { min-height: 132px; }
-#view-input.linkmode #paste { min-height: 72px; }
+#url { min-height: 132px; font: 15px/1.5 var(--font-ui); padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--field); background: var(--surface); }
+#view-input.linkmode #url { min-height: 72px; }
 #tips { display: grid; gap: 8px; }
 .linkbtn.quiet { color: var(--muted); font-weight: 600; }
 .hero { display: grid; gap: 10px; }
@@ -767,6 +755,9 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
           <div class="acct-who" id="acct-who"><span class="small muted" data-i18n="acctAs"></span><b id="acct-email"></b></div>
           <button class="mitem m-only" id="acct-fixes" type="button"></button>
           <button class="mitem" id="acct-history" type="button" data-i18n="histTitle" hidden></button>
+          <button class="mitem" id="acct-another" type="button" data-i18n="another"></button>
+          <button class="mitem" id="acct-print" type="button" data-i18n="printSave" hidden></button>
+          <button class="mitem" id="acct-legend" type="button" data-i18n="legendSummary"></button>
           <button class="mitem" id="acct-theme" type="button"></button>
           <label class="mitem check" id="acct-keep-row" for="g-keep" hidden><input type="checkbox" id="g-keep" checked><span data-i18n="gKeep"></span></label>
           <a class="mitem" id="acct-code" href="/code" hidden data-i18n="acctCodeAsk"></a>
@@ -842,55 +833,22 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
     </details>
   </div>
 
-  <!-- input -->
-  <section id="view-input" aria-label="Ulasan baru" data-i18n-label="newReviews">
+  <!-- input: one box for a product link (Tokopedia, TikTok Shop, Lazada) -->
+  <section id="view-input" aria-label="Link produk" data-i18n-label="newReviews">
     <button class="plain dsk" id="back-results" type="button" hidden></button>
     <div class="card-box">
-      <div class="seg" role="tablist" id="intabs" hidden aria-hidden="true">
-        <button role="tab" id="intab-link" aria-controls="in-link" aria-selected="false" tabindex="-1" type="button" data-t="link" hidden><span data-i18n="tabLink"></span></button>
-        <button role="tab" id="intab-paste" aria-controls="in-paste" aria-selected="true" type="button" data-t="paste" data-i18n="tabPaste"></button>
-      </div>
-
-      <div id="in-box" style="display:grid;gap:10px">
-        <div class="boxhead"><label for="paste" id="box-label" data-i18n="boxLabel"></label><button class="qbtn" id="tips-btn" type="button" aria-expanded="false" aria-controls="tips" data-i18n-label="tipsBtn">?</button></div>
-        <div id="tips" hidden>
-          <details class="xp">
-            <summary data-i18n="howSummary"></summary>
-            <div class="xp-body"><pre data-i18n="howBody"></pre></div>
-          </details>
-          <details class="xp" id="share-tip">
-            <summary data-i18n="shareTip"></summary>
-            <div class="xp-body">
-              <ol class="numsteps" id="share-steps"></ol>
-              <p class="small muted" data-i18n="shareCaveat"></p>
-              <button class="btn ghost" id="install" type="button" hidden data-i18n="install"></button>
-            </div>
-          </details>
-        </div>
-        <div class="fallback" id="fallback" hidden>
-          <h3 data-i18n="fbTitle"></h3>
-          <ol class="steps-list" id="fb-steps"></ol>
-        </div>
-        <div class="callout" id="shared-note" hidden></div>
+      <div id="in-link" style="display:grid;gap:12px">
+        <div class="boxhead"><label for="url" id="box-label" data-i18n="boxLabel"></label></div>
         <div class="ta-wrap">
-          <textarea id="paste" spellcheck="false" data-i18n-ph="boxPh"></textarea>
+          <textarea id="url" spellcheck="false" autocapitalize="none" autocomplete="off" inputmode="url" data-i18n-ph="boxPh"></textarea>
           <button class="ta-clear" id="clear" type="button" hidden data-i18n-label="clear"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         </div>
-        <p class="small muted" id="paste-hint" data-i18n="pasteHint"></p>
-        <p class="chip" id="detect" role="status" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span id="detect-text"></span></p>
-      </div>
-
-      <div id="in-link" role="tabpanel" aria-labelledby="intab-link" style="display:grid;gap:12px" hidden>
-        <input id="url" type="hidden">
         <p class="ferr" id="url-error" role="alert" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span id="url-error-text"></span></p>
-        <div class="notice" id="shopee-note" role="status" hidden>
-          <div class="t"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="shopeeNote"></span></div>
-          <button class="btn ghost" id="shopee-paste" type="button" data-i18n="toPaste"></button>
-        </div>
+        <p class="chip" id="detect" role="status" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span id="detect-text"></span></p>
         <p class="quota" id="quota-link" role="status" hidden></p>
-        <button class="btn primary" id="fetch" type="button" data-i18n="fetchRun"></button>
+        <button class="btn primary off" id="fetch" type="button" aria-disabled="true"></button>
         <span id="fetch-anchor" hidden></span>
-        <details class="opts xp">
+        <details class="opts xp" id="link-extra" hidden>
           <summary id="link-opts"></summary>
           <div class="row xp-body" style="display:flex">
             <label class="fld" for="mode" style="flex:1 1 150px"><span data-i18n="modeLabel"></span>
@@ -901,23 +859,12 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
             </label>
           </div>
         </details>
-        <p class="small muted" id="link-note" data-i18n="linkNote"></p>
-      </div>
-
-      <div id="in-paste" role="tabpanel" aria-labelledby="intab-paste" style="display:grid;gap:12px">
-        <p class="small muted" id="paste-count" role="status" hidden></p>
-        <label class="field" for="product" id="product-fld" hidden><span data-i18n="productLabel"></span>
-          <input id="product" type="text" maxlength="150" autocomplete="off" data-i18n-ph="productPh">
-        </label>
-        <p class="quota" id="quota-note" role="status" hidden></p>
-        <button class="btn primary off" id="run" type="button" aria-disabled="true"></button>
-        <span id="run-anchor" hidden></span>
-        <button class="btn ghost" id="fb-retry" type="button" hidden data-i18n="fbRetry"></button>
+        <p class="small muted" id="link-note" data-i18n="linkNote" hidden></p>
       </div>
 
       <div class="error" id="error" role="alert" tabindex="-1" hidden>
         <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-        <div><strong id="error-title" hidden></strong><span id="error-text"></span><span class="sub" id="error-sub" hidden></span><button class="btn ghost" id="error-paste" type="button" hidden data-i18n="toPaste"></button></div>
+        <div><strong id="error-title" hidden></strong><span id="error-text"></span><span class="sub" id="error-sub" hidden></span></div>
       </div>
     </div>
     <button class="linkbtn" id="sample" type="button" data-i18n="sample"></button>
@@ -947,15 +894,14 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
     <button class="back i" id="history-back" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span data-i18n="back"></span></button>
     <div class="tasks-h"><h2 id="history-h" tabindex="-1" data-i18n="histTitle"></h2></div>
     <div id="history-body" class="stack"></div>
-    <p class="small muted" data-i18n="histFoot"></p>
   </section>
 
   <!-- results -->
   <section id="view-results" hidden aria-labelledby="results-h" style="display:grid;gap:12px">
     <div class="res-top">
-      <p class="res-meta" id="summary"></p>
       <h2 id="results-h" tabindex="-1" data-i18n="resultsTitle"></h2>
       <button class="btn ghost dsk" id="print-d" type="button" hidden></button>
+      <p class="res-meta" id="summary"></p>
     </div>
     <div id="start"></div>
     <div class="sumbox" id="sumbox"></div>
@@ -976,9 +922,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
       <h3 data-i18n="endTitle"></h3>
       <button class="btn primary" id="done-btn" type="button" data-i18n="selesaiBtn"></button>
       <button class="btn ghost" id="rivals-open" type="button" data-i18n="rivalsOpen"></button>
-      <p class="small muted" id="end-note"></p>
     </div>
-    <p class="foot" id="foot" hidden></p>
     <p class="foot"><a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a> · <a href="/terms" target="_blank" rel="noopener" data-i18n="termsLink"></a></p>
   </section>
 
@@ -1014,41 +958,42 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 /* ---------- text: Indonesian (default) and English. Drafts from the model stay in Bahasa Indonesia in both. ---------- */
 const TEXT = {
   id: {
+    printSave: "Cetak atau simpan PDF",
     navCheck: "Periksa", navNew: "Ulasan baru", newReviews: "Ulasan baru",
-    tabPaste: "Tempel", tabLink: "Tautan",
-    pasteHint: "Shopee? Salin ulasannya dari aplikasi, lalu tempel di sini.",
-    productLabel: "Nama produk (opsional)", productPh: "mis. Kaos Boxy Retro", boxLabel: "Tempel tautan atau ulasan", boxPh: "Tautan Tokopedia, TikTok Shop, Lazada… atau teks ulasan yang kamu salin dari Shopee", tipsBtn: "Tips menempel", runN: "Bedah %s ulasan", detectLink: "%s Kami ambil %s ulasan, %s.", detectPf: "Tautan %s.", detectPlain: "Tautan produk.", detectText: "%s ulasan terbaca", modeComplaintsShort: "keluhan dulu", modeLatestShort: "terbaru dulu",
-    howSummary: "Tips agar hasilnya lebih tepat",
-    howBody: "Satu ulasan per baris paling mudah dibaca. Kalau satu ulasan terdiri dari beberapa baris, beri baris kosong di antara ulasan.\n\nBintang dan varian boleh ditulis di depan, tidak wajib:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya",
+  
+   
+  boxLabel: "Tempel Link Produk", boxPh: "Platform ini mendukung link produk dari Tokopedia, TikTok Shop, dan Lazada. Untuk sementara kami belum mendukung link produk Shopee.",detectLink: "%s Kami ambil %s ulasan, %s.", detectPf: "Tautan %s.", detectPlain: "Tautan produk.",modeComplaintsShort: "keluhan dulu", modeLatestShort: "terbaru dulu",
+   
+   
     run: "Bedah ulasan", running: "Membedah…", sample: "Belum punya? Coba dengan contoh", clear: "Hapus teks",
-    shareTip: "Di Android: bagikan langsung dari aplikasi toko",
-    shareSteps: ["Pasang BedahReview di layar utama (Android Chrome: menu ⋮ > Pasang aplikasi).", "Di Shopee, tekan lama teks ulasan, lalu pilih Bagikan.", "Pilih BedahReview. Teksnya masuk ke kotak Tempel. Ketuk Bedah ulasan."],
-    shareCaveat: "Kalau teksnya tidak masuk, salin dan tempel saja.",
-    install: "Pasang di layar utama",
-    sharedOk: "Teks dari menu Bagikan sudah masuk. Ketuk Bedah ulasan.",
-    sharedLinkOnly: "Yang dikirim hanya tautan, bukan teks ulasan. Salin teks ulasannya, lalu tempel.",
+   
+   
+   
+   
+   
+   
    
     modeLabel: "Ambil", modeComplaints: "Keluhan dulu (1-3★)", modeLatest: "Ulasan terbaru", limitLabel: "Jumlah", fetchRun: "Ambil & bedah",
     linkNote: "Butuh sampai 1 menit.",
-    errPaste: "Tempel ulasan dulu.", errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa terhubung ke BedahReview. Periksa koneksi internetmu, lalu coba lagi.",
-    pasteFound: "%s ulasan terdeteksi. Yang pertama: “%s”", pasteTooMany: "%s ulasan terdeteksi, tapi maksimal %s per analisis. Kurangi dulu.",
+   errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa terhubung ke BedahReview. Periksa koneksi internetmu, lalu coba lagi.",
+  
     loadingPart: "%s dari %s bagian selesai.", loadingFetching: "Mengambil ulasan dari tautan…", loadingResume: "Melanjutkan analisis tadi…", e_job_gone: "Analisis ini sudah tidak tersedia. Coba bedah lagi.",
     loadingTitle: "Membedah %s ulasan…", loadingFetch: "Mengambil ulasan, lalu membedahnya…", loadingSub: "Memilah: perbaiki, tanggapi, abaikan.",
     results: "Hasil", reviewsWord: "ulasan", print: "Cetak",
     fix: "Perbaiki", fight: "Tanggapi", ignore: "Abaikan", keep: "Pertahankan",
     fixRule: "Penyebabnya produk, listing, atau pengemasan, dan bisa kamu ubah.",
-    fightRule: "Buktikan penyebabnya, ajukan klaim ke kurir, dan balas di publik. Ini bukan cara menghapus ulasan: Shopee hanya menghapus ulasan untuk alasan tertentu.",
-    ignoreRule: "Bintang tanpa teks atau komentar tanpa isi. Dihitung, tidak dianalisis.",
+    fightRule: "Kumpulkan bukti, klaim ke kurir, lalu balas di kolom ulasan.",
+    ignoreRule: "Bintang tanpa teks atau komentar tanpa isi. Ikut dihitung, tapi isinya tidak dibahas.",
     chipOf: "%s dari %s keluhan", chipCourier: "Kurir? Cek dulu", chipCheck: "Cek sendiri", chipFake: "Diduga palsu", chipLow: "Kurang yakin",
     dFix: "Yang bisa dilakukan", dCheckSide: "Cek di sisi toko", dChat: "Chat ke pembeli", dPublic: "Balasan publik", dReport: "Teks untuk melaporkan ulasan",
     copy: "Salin", copied: "Tersalin", selectIt: "Teks dipilih, salin manual", copiedAnn: "Disalin: %s",
     fullReview: "Ulasan lengkap", noText: "(tanpa teks)",
     emptyFix: "Tidak ada keluhan yang bisa kamu perbaiki di sini.", emptyFight: "Tidak ada ulasan yang perlu ditanggapi.", emptyIgnore: "Tidak ada ulasan yang diabaikan.",
     keepRule: "Yang disukai pembeli. Jaga ini.", emptyKeep: "Belum ada pujian yang jelas.",
-    noteFake: "%s ulasan diduga palsu dan tidak dihitung. Ada di tab Tanggapi, lengkap dengan teks laporan.",
-    noteDropped: "%s ulasan dilewati karena kutipan buktinya tidak bisa diverifikasi.",
-    noteNoText: "%s ulasan hanya bintang tanpa teks. Dihitung di Abaikan, tidak dianalisis.",
-    footFrom: "%s ulasan%s diambil dari tautan produk%s. ", footLow: " bintang rendah", footCached: " (salinan tersimpan, tanpa biaya baru)",
+    noteFake: "%s ulasan mencurigakan dan tidak dihitung.",
+    noteDropped: "%s ulasan dilewati karena kutipannya tidak ketemu di ulasan aslinya.",
+   
+   
     aiNote: "Saran dan draf ditulis oleh AI. Baca dulu sebelum dikirim ke pembeli.",
     stars: "%s dari 5 bintang",
     rival: "Pesaing", rivalRule: "Bandingkan keluhan dan pujian produkmu dengan produk serupa. Ini contoh kecil, bukan seluruh pasar.",
@@ -1060,36 +1005,36 @@ const TEXT = {
     rivalGo: "Bandingkan", rivalNeedOne: "Pilih atau tempel minimal satu pesaing.", rivalMax: "Maksimal %s pesaing.",
     rivalComparing: "Membandingkan ulasan…", rivalCompareSub: "Mengambil ulasan tiap toko lalu membedahnya. Sekitar 30-90 detik.",
     rivalSampleHead: "Contoh kecil:", rivalSampleBody: "sekitar 7 ulasan per toko (4 keluhan, 3 terbaru), bukan seluruh pasar. Angka adalah jumlah ulasan, bukan persen. Ulasan pesaing tidak disimpan.",
-    rivalFake: "%s ulasan pesaing diduga palsu dan tidak dihitung.", rivalFailed: "Tidak bisa diambil: %s Layanan pengambil ulasan gagal, atau toko ini belum punya ulasan. Coba lagi.", rivalYou: "Kamu", rivalComplaints: "Keluhan", rivalPraise: "Pujian",
+   rivalFailed: "Tidak bisa diambil: %s Layanan pengambil ulasan gagal, atau toko ini belum punya ulasan. Coba lagi.", rivalYou: "Kamu", rivalComplaints: "Keluhan", rivalPraise: "Pujian",
     rivalWorse: "Keluhan “%s”: %s di produkmu, di pesaing terbaik %s.", rivalOpp: "%s kena %s keluhan “%s” (kamu: %s). Peluang untuk menonjol.",
     rivalPraiseGap: "Pembeli lebih sering memuji “%s” di %s (%s, kamu: %s).", rivalNoInsight: "Belum ada selisih yang jelas. Contohnya masih kecil.", rivalSmall: "%s: kurang dari 5 ulasan yang bisa dipercaya, jadi tidak dipakai untuk kesimpulan.",
     rivalQuotes: "Kutipan ulasan", rivalAgain: "Mulai ulang", rivalShop: "Toko %s", rivalSold: "%s+ terjual",
     f1Title: "Bedah ulasan", f1Sub: "Pilah ulasan produkmu jadi daftar tindakan",
-    f2Title: "Analisis pesaing", f2Sub: "Bandingkan keluhan & pujian dengan toko lain",
+    f2Title: "Analisa Kompetitor", f2Sub: "Bandingkan keluhan & pujian dengan toko lain",
     step1T: "Salin & tempel ulasan", step1D: "dari Shopee, Tokopedia, atau aplikasi toko lain",
     step1TLink: "Tempel tautan atau ulasan", step1DLink: "tautan Tokopedia, TikTok Shop, Lazada, atau teks ulasannya", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
-    step3T: "Kamu dapat rencana singkat", step3D: "plus draf balasan siap kirim",
+    step3T: "Kamu dapat daftar tugas singkat", step3D: "plus draf balasan siap kirim",
     linkOpts: "Pengaturan lanjutan",
-    navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Analisis pesaing · 1 jatah",
+    navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Analisa Kompetitor",
     resultsTitle: "Hasil Bedah",
     doneAnimT: "Selesai!", doneAnimSub: "%s tugas masuk ke tab Tugas.", doneAnimNone: "Tidak ada tugas baru dari hasil ini.", taskReply: "Balas %s ulasan soal %s", taskRemove: "Hapus tugas ini", taskEdit: "Ubah", taskEditDone: "Selesai mengubah",
     taskProgress: "%s dari %s selesai", taskAllDoneP: "Semua tugas sudah dicentang. Bedah ulang produk ini untuk melihat apakah keluhannya berkurang.", taskSee: "Lihat tugas", taskAgain: "Bedah ulang produk ini", taskRowOpen: "%s tugas · sisa %s hari", taskRowDone: "%s dari %s · selesai",
-    daysLeft: "Sisa %s hari", fromRival: "DARI PESAING", calBtn: "Tambah ke Kalender", calEvent: "Cek lagi: %s", rivalsBtnShort: "Analisis pesaing", tasksNone: "Belum ada tugas", tasksNoneP: "Tugas muncul di sini setelah kamu menekan Selesai di Hasil Bedah.", tasksFinished: "SELESAI",
-    st_done: "Selesai", st_open: "Belum selesai", st_expired: "Kedaluwarsa", histTasks: "%s tugas dibuat", histExpired: "%s dari %s tugas belum dicentang", histResume: "Lanjutkan", histGone: "Hasil ini sudah tidak tersimpan di HP ini. Bedah lagi untuk melihatnya.",
-    histFoot: "Riwayat hanya menyimpan ringkasan, bukan isi ulasan. Dihapus otomatis setelah 60 hari. Status dan Lanjutkan hanya ada di HP tempat kamu membedah.",
+    daysLeft: "Sisa %s hari", fromRival: "DARI PESAING", calBtn: "Tambah ke Kalender", calEvent: "Cek lagi: %s", rivalsBtnShort: "Analisa Kompetitor", tasksNone: "Belum ada tugas", tasksNoneP: "Belum ada tugas. Tekan Selesai di Hasil Bedah, tugasnya muncul di sini.", tasksFinished: "SELESAI",
+    st_done: "Selesai", st_open: "Belum selesai", st_expired: "Sudah lewat", histTasks: "%s tugas dibuat", histExpired: "%s dari %s tugas belum dicentang", histResume: "Lanjutkan", histGone: "Hasil ini sudah tidak tersimpan di HP ini. Bedah lagi untuk melihatnya.",
+   
     rivalFor: "Untuk", rivalWait: "Sekitar 10 sampai 40 detik.", cancelBtn: "Batal", rivalSearching: "Mencari produk serupa…", rivalPickT: "Pilih 1 atau 2 pesaing", rivalFoundN: "Ketemu %s produk serupa. Yang paling mirip sudah dipilih.", rivalGoN: "Bandingkan (%s dipilih)",
-    rivalQuota: "Memakai 1 jatah analisis hari ini", rivalPasteSum: "Punya tautan pesaing sendiri?", rivalResultT: "Hasil Bedah pesaing", rivalVs: "Kamu vs %s", rivalCatchUp: "Perlu dikejar", rivalEdge: "Keunggulanmu", buyerRivalLbl: "KATA PEMBELI PESAING",
-    rivalDoWorse: "Cari tahu kenapa keluhan %s lebih sering muncul di produkmu daripada di pesaing, lalu perbaiki.", rivalDoGap: "Pelajari kenapa pembeli memuji %s di %s, lalu tonjolkan hal serupa di produkmu.", rivalDoEdge: "Pertahankan dan tonjolkan: pembeli pesaing mengeluhkan %s, produkmu tidak.", sumLabelFix: "RINGKASAN · %s HAL PERLU DIPERBAIKI", sumLabel: "RINGKASAN", sumItem: "%s (%s ulasan)", sumMore: "+%s lainnya: %s", moreReplies: "Balasan untuk %s ulasan lain", sumNothing: "Tidak ada keluhan yang perlu diperbaiki.", sumAlso: "Juga: %s", sumFight: "%s ulasan perlu ditanggapi", sumKeep: "%s pembeli memuji %s", cardN: "%s ulasan", buyerLbl: "KATA PEMBELI", todoLbl: "YANG PERLU KAMU LAKUKAN", endTitle: "Sudah selesai membaca?", selesaiBtn: "Selesai", endNote: "Salin balasan yang kamu perlukan dulu.", doneToast: "%s tugas masuk",
+    rivalQuota: "Pakai 1 jatah analisis hari ini", rivalPasteSum: "Punya tautan pesaing sendiri?", rivalResultT: "Hasil Bedah pesaing", rivalVs: "Kamu vs %s", rivalCatchUp: "Perlu dikejar", rivalEdge: "Kamu unggul", buyerRivalLbl: "KATA PEMBELI PESAING",
+    rivalDoWorse: "Cari tahu kenapa keluhan %s lebih sering muncul di produkmu daripada di pesaing, lalu perbaiki.", rivalDoGap: "Pelajari kenapa pembeli memuji %s di %s, lalu tonjolkan hal serupa di produkmu.", rivalDoEdge: "Pertahankan dan tonjolkan: pembeli pesaing mengeluhkan %s, produkmu tidak.", sumLabelFix: "RINGKASAN · %s HAL PERLU DIPERBAIKI", sumLabel: "RINGKASAN", sumItem: "%s (%s ulasan)", sumMore: "+%s lainnya: %s", moreReplies: "Balasan untuk %s ulasan lain", sumNothing: "Tidak ada keluhan yang perlu diperbaiki.", sumAlso: "Juga: %s", sumFight: "%s ulasan perlu ditanggapi", sumKeep: "%s pembeli memuji %s", cardN: "%s ulasan", buyerLbl: "KATA PEMBELI", todoLbl: "YANG PERLU KAMU LAKUKAN", endTitle: "Sudah selesai membaca?", selesaiBtn: "Selesai",doneToast: "%s tugas masuk",
     rivalWantLbl: "Berapa pesaing?", rivalExampleBtn: "Lihat contoh (gratis)", rivalExampleHead: "Contoh, bukan data nyata.",
     rivalExampleBody: "Angka dan kutipan di bawah dibuat untuk contoh. “Contoh Kaos Boxy” bukan produkmu: tidak ada toko atau pembeli sungguhan, dan tidak ada biaya.",
     rivalNoBox: "Pencarian pesaing butuh kotak tautan, yang belum menyala di sini. Kamu masih bisa melihat contoh.",
     groupLearn: "Pelajari dari pesaing", groupLearnSub: "Mereka lebih baik di sini, atau lebih sering dipuji.", groupAvoid: "Hindari", groupAvoidSub: "Pesaing kena keluhan ini, kamu tidak. Jangan ikuti, dan jadikan alasan orang memilihmu.",
     groupIgnore: "Abaikan", groupIgnoreSub: "Selisihnya kecil atau sama saja: tidak perlu ditindak.", groupNone: "Belum ada.",
     fbQ: "Apakah hasil ini berguna?", fbYes: "Ya", fbPartly: "Sebagian", fbNo: "Tidak", fbComment: "Mau menambahkan sesuatu? (opsional)",
-    fbNote: "Komentar hanya disimpan kalau kamu menulisnya. Jangan tulis nama orang atau menempel teks ulasan.", fbSend: "Kirim", fbThanks: "Terima kasih. Jawabanmu membantu.",
-    fbReview: "Komentarmu tampak memuat teks ulasan. Hapus bagian itu dulu, supaya tidak ada teks ulasan yang tersimpan.", fbFail: "Tidak terkirim. Coba lagi nanti.",
+    fbNote: "Jangan tulis nama orang atau tempel isi ulasan.", fbSend: "Kirim", fbThanks: "Terima kasih. Jawabanmu membantu.",
+    fbReview: "Sepertinya kamu menempel isi ulasan. Hapus dulu, ya.", fbFail: "Tidak terkirim. Coba lagi nanti.",
     limitBusy: "Server sedang sibuk. Coba lagi sebentar lagi.", logout: "Keluar", back: "Kembali", fixesBtn: "Tugas", fixesTitle: "Tugas", fixesSub: "Perbaikan disimpan di browser ini saja. Tidak ada yang dikirim ke server.",
-    fixesWarn: "Hitungan dari contoh kecil bisa menyesatkan. Keluhan yang berkurang satu bisa kebetulan, dan bukan bukti perbaikanmu berhasil. Analisis baru juga bisa memuat ulasan lama yang sama.",
+    fixesWarn: "Ulasannya masih sedikit, jadi hasilnya belum pasti. Keluhan yang berkurang satu bisa jadi kebetulan.",
     fixesNoStore: "Browser ini tidak bisa menyimpan data, jadi catatan hilang saat halaman ditutup. Buka Lainnya, lalu Simpan ke file, supaya tidak hilang.",
     fixesExport: "Simpan ke file", fixesImport: "Buka dari file", fixesEmpty: "Belum ada perbaikan yang dipantau.",
     fixMark: "Tandai sudah diperbaiki", fixNoteLbl: "Catatan singkat (opsional)", fixNotePh: "mis. size chart diganti ke cm", fixSave: "Simpan", fixCancel: "Batal",
@@ -1100,32 +1045,32 @@ const TEXT = {
     fixNoName: "Tanpa nama produk: perbaikan ini dicocokkan dengan analisis lain yang juga tanpa nama. Isi nama produk di kotak Tempel agar tepat.",
     fixesCompared: "%s perbaikan yang kamu catat dibandingkan dengan ulasan baru ini.", fixesSee: "Lihat",
     importOk: "Diimpor: %s perbaikan. Dilewati karena tidak valid: %s.", importBad: "File ini tidak bisa dibuka sebagai catatan BedahReview.", importBig: "File terlalu besar.", fixSaveFail: "Tidak bisa menyimpan di browser ini. Buka Lainnya di Tugas, lalu Simpan ke file, supaya catatan tidak hilang.",
-    limitBudget: "Membaca lewat tautan sedang tidak tersedia hari ini. Salin dan tempel ulasannya saja.", limitBudgetRival: "Pencarian pesaing sedang tidak tersedia hari ini. Coba lagi besok.", limitHour: "Terlalu banyak pengambilan lewat tautan dalam satu jam. Coba lagi nanti, atau tempel ulasannya.",
-    fbTitle: "Cara lain: tempel ulasannya", fbSteps: ["Buka produk di marketplace, lalu buka Ulasan.", "Salin teks ulasannya.", "Tempel di bawah, satu ulasan per baris."], fbRetry: "Coba tautan lagi",
+    limitBudget: "Membaca lewat link sedang tidak tersedia hari ini. Coba lagi besok.", limitBudgetRival: "Pencarian pesaing sedang tidak tersedia hari ini. Coba lagi besok.", limitHour: "Terlalu banyak pengambilan lewat link dalam satu jam. Coba lagi nanti.",
+ 
     errFetchTitle: "Ulasan dari tautan ini tidak bisa dibaca", backResults: "← Kembali ke hasil", pastedName: "Ulasan yang ditempel",
     change: "Ubah", shown: "Ditampilkan", themeDark: "Mode gelap", themeLight: "Mode terang",
     boardFix: "ulasan bisa kamu perbaiki sendiri", boardFight: "ulasan perlu kamu balas", boardIgnore: "ulasan tanpa isi, lewati saja", boardKeep: "ulasan memuji produkmu",
-    legendSummary: "Apa arti 4 kelompok ini?", legendFix: "Keluhan yang asalnya dari tokomu, misalnya ukuran atau foto. Bisa kamu ubah sendiri.", legendFight: "Kemungkinan bukan dari tokomu (kurir, diduga palsu). Cek buktinya dulu, lalu balas dengan sopan.",
+    legendSummary: "Apa arti 4 kelompok?", legendFix: "Keluhan yang asalnya dari tokomu, misalnya ukuran atau foto. Bisa kamu ubah sendiri.", legendFight: "Mungkin bukan salah tokomu (kurir atau ulasan palsu). Cek buktinya dulu, lalu balas dengan sopan.",
     legendIgnore: "Hanya bintang tanpa isi. Tidak ada yang perlu dilakukan.", legendKeep: "Hal yang dipuji pembeli. Tonjolkan di halaman produk.",
     leadFix: "Keluhan dari tokomu sendiri. Tiap kartu berisi saran dan kutipan asli pembeli.", leadFight: "Mungkin bukan salahmu, tapi cek dulu sebelum membalas. Minta foto ke pembeli, lalu pilih draf dan salin.",
-    leadIgnore: "Hanya bintang atau komentar tanpa isi. Dihitung, tidak dianalisis.", leadKeep: "Hal yang dipuji pembeli. Tonjolkan di halaman produk.",
-    noRemove: "BedahReview tidak bisa menghapus ulasan.", noRemoveBody: "Laporan hanya meminta %s meninjau; keputusan tetap ada di %s. Balasan yang sopan tetap terlihat oleh calon pembeli.", platformWord: "marketplace",
+    leadIgnore: "Hanya bintang atau komentar tanpa isi. Ikut dihitung, tapi isinya tidak dibahas.", leadKeep: "Hal yang dipuji pembeli. Tonjolkan di halaman produk.",
+  platformWord: "marketplace",
     whyLbl: "Kenapa di sini: ", moreQuotes: "Lihat %s kutipan lainnya",
     rivalOwnLbl: "Produkmu, dari Bedah ulasan", rivalOther: "Pakai produk lain", rivalBackOwn: "Pakai produk dari Bedah ulasan", rivalTitleAlone: "Bandingkan produkmu dengan pesaing",
     rivalIntroS: "Kami cari 2–3 produk serupa di platform yang sama. Kamu pilih yang cocok, lalu kami hitung keluhan dan pujian di ulasan mereka.",
     rivalYourLink: "Tautan produkmu", rivalYourName: "Nama produk (membantu pencarian)", rivalYourNamePh: "mis. Kaos Boxy Retro", rivalFindLink: "Cari pesaing",
-    rivalFreeNote: "Bisa dipakai tanpa Bedah ulasan. Satu perbandingan memakai satu jatah analisis harianmu.",
-    rivalSignIn: "Masuk untuk mencari dan membandingkan pesaing. Gratis, tanpa kata sandi.", rivalSignInNote: "Mencari pesaing perlu masuk dulu (gratis). Contohnya bisa dilihat tanpa masuk.", rivalSignInBtn: "Masuk untuk mencari pesaing", rivalNeedLink: "Tempel tautan produkmu dulu.", rivalNeedName: "Isi nama produkmu supaya kami bisa mencari yang serupa.",
+    rivalFreeNote: "Satu perbandingan = 1 jatah analisis hari ini.",
+    rivalSignIn: "Masuk dulu untuk bandingkan dengan pesaing. Gratis, tanpa password.", rivalSignInNote: "Mencari pesaing perlu masuk dulu (gratis). Contohnya bisa dilihat tanpa masuk.", rivalSignInBtn: "Masuk untuk mencari pesaing", rivalNeedLink: "Tempel tautan produkmu dulu.", rivalNeedName: "Isi nama produkmu supaya kami bisa mencari yang serupa.",
     stepFind: "Cari", stepPick: "Pilih", stepCompare: "Bandingkan", stepCompareShort: "Banding",
     rivalFound: "Kami menemukan %s produk mirip. %s yang paling mirip sudah dicentang, hapus centang kalau tidak cocok.", rivalMost: "Paling mirip", rivalMoreN: "Produk lain yang ditemukan · %s", rivalShopLbl: "Toko: %s",
     rivalSeen: "Yang terlihat dari angka", rivalByTheme: "Jumlah ulasan per jenis keluhan", rivalThemeCol: "Jenis keluhan", nReviewsCol: "%s ulasan", rivalNote: "Catatan data",
     tagSmall: "terlalu sedikit", tagFail: "gagal", tagSkip: "tidak dihitung",
-    rivalSmallLine: "%s hanya punya %s ulasan yang bisa dipercaya (perlu minimal 5), jadi tidak dipakai untuk kesimpulan.", rivalFailLine: "Satu tautan pesaing tidak bisa dibuka (produk mungkin dihapus).",
-    rivalFakeLine: "%s ulasan pesaing diduga palsu dan tidak dihitung (%s).", rivalFakeEach: "%s: %s dibaca, %s dihitung", rivalSmallNote: "%s tidak dipakai untuk kalimat di atas karena ulasannya terlalu sedikit.",
+    rivalSmallLine: "Ulasan %s terlalu sedikit untuk dibandingkan.", rivalFailLine: "Satu tautan pesaing tidak bisa dibuka (produk mungkin dihapus).",
+ 
     rivalLineWorse: "%s: %s di produkmu, di pesaing terbaik %s.", rivalLineOther: "%s: %s di produkmu, %s di %s.",
     rivalAlone: "Tanpa Bedah ulasan, kami tidak membandingkan dengan produkmu. Jalankan Bedah ulasan untuk melihat selisihnya.", rivalLinkLbl: "Lihat ulasannya",
     rivalLineWorseEx: "%s: %s di %s, di pesaing terbaik %s.", rivalLineOtherEx: "%s: %s di %s, %s di %s.",
-    gTitle: "Masuk untuk menyimpan hasilmu", gSub: "Gratis, tanpa kata sandi.", gSmall: "Teks ulasanmu tidak kami simpan.", acctCodeAsk: "Punya kode akses?", gGoogle: "Masuk dengan Google", gOr: "atau pakai email",
+    gTitle: "Masuk untuk menyimpan hasilmu", gSub: "Gratis, tanpa password.", gSmall: "Teks ulasanmu tidak kami simpan.", acctCodeAsk: "Punya kode akses?", gGoogle: "Masuk dengan Google", gOr: "atau pakai email",
     gEmail: "Email", gEmailPh: "nama@email.com", gSend: "Kirim kode ke email", gConsent: "Kami mencatat fitur yang kamu pakai per akun (misalnya bagian yang dibuka), tanpa teks ulasan, nama produk, atau alamat IP.",
     gKeep: "Tetap masuk di HP ini", gIosNote: "Pasang ke layar utama dulu (Safari > Bagikan > Tambah ke Layar Utama), lalu masuk dari ikonnya. Di aplikasi yang terpasang, kamu perlu masuk sekali lagi.",
     gClose: "Nanti saja", signInShort: "Masuk",
@@ -1134,7 +1079,7 @@ const TEXT = {
     gIntroTitle: "Sedikit tentang tokomu", gIntroSub: "Boleh dilewati. Ini membantu kami memahami siapa yang memakai BedahReview.", gPlatform: "Jualan di mana?", gPick: "Pilih…", gOther: "Lainnya",
     gShop: "Tautan toko (opsional)", gShopPh: "https://…", gCategory: "Kategori produk", gSave: "Simpan & mulai", gSkip: "Lewati",
     cat_fashion: "Fashion", cat_beauty: "Kecantikan", cat_food: "Makanan & minuman", cat_electronics: "Elektronik", cat_home: "Rumah tangga", cat_other: "Lainnya",
-    gErrEmail: "Alamat email tidak valid.", gErrShort: "Masukkan 6 digit kodenya.", gErrCode: "Kode salah atau sudah kedaluwarsa. Minta kode baru.", gErrRate: "Terlalu banyak permintaan. Tunggu sebentar, lalu coba lagi.",
+    gErrEmail: "Alamat email tidak valid.", gErrShort: "Masukkan 6 digit kodenya.", gErrCode: "Kodenya salah atau sudah habis waktunya. Minta kode baru.", gErrRate: "Terlalu banyak permintaan. Tunggu sebentar, lalu coba lagi.",
     gErrNet: "Tidak bisa menghubungi layanan masuk. Periksa koneksi, lalu coba lagi.", gErrGeneric: "Tidak bisa masuk (%s). Coba lagi.", gErrLoad: "Layanan masuk tidak bisa dimuat. Muat ulang halaman.",
     gErrShop: "Tautan toko harus diawali https://", gErrOauth: "Masuk dengan Google dibatalkan atau gagal. Coba lagi.",
     exampleNote: "Ini contoh dengan ulasan rekaan, bukan data nyata. Masuk untuk membedah ulasanmu sendiri.",
@@ -1144,18 +1089,18 @@ const TEXT = {
     delUnavailable: "Penghapusan akun belum tersedia di server ini.", gDeleted: "Akunmu dan semua datanya sudah dihapus.",
     acctMenu: "Akun", acctAs: "Masuk sebagai", acctCode: "Kode akses penguji",
     unlockTitle: "Hasilnya sudah siap", unlockBody: "Masuk gratis untuk melihat kutipan asli pembeli, apa yang perlu diperbaiki, dan draf balasan yang siap disalin.",
-    unlockEmail: "Pakai email saja", unlockNote: "Tanpa kata sandi. Hasil ini tetap ada setelah kamu masuk.",
+    unlockEmail: "Pakai email saja", unlockNote: "Gratis, tanpa password.",
     gFreeUsed: "Analisis gratismu sudah terpakai. Masuk untuk lanjut, tetap gratis.",
     fixesSubAccount: "Perbaikan disimpan di akunmu (nama produk, tautan, catatanmu, dan tanggal cek) supaya bisa dibuka dari HP lain. Jangan menulis nama orang.",
     syncOk: "Tersimpan di akunmu.", syncDown: "Akunmu sedang tidak bisa dihubungi. Catatanmu tetap tersimpan di perangkat ini dan akan disimpan ke akunmu nanti.",
-    syncOff: "Masuk agar catatanmu tersimpan di akunmu dan bisa dibuka dari HP lain.", fixNoteReview: "Catatanmu tampak memuat teks ulasan. Tulis dengan kata-katamu sendiri.",
+    syncOff: "Masuk agar catatanmu tersimpan di akunmu dan bisa dibuka dari HP lain.", fixNoteReview: "Sepertinya kamu menempel isi ulasan. Hapus dulu, ya.",
     limitDaily: "Batas harian tercapai: %s analisis per hari. Coba lagi besok (reset tengah malam WIB).", quotaLeft: "Sisa analisis hari ini: %s dari %s.",
     e_model_quota: "Kuota atau kredit layanan AI sedang habis, jadi ulasan belum bisa dibedah. Coba lagi nanti.",
     startHere: "Mulai dari sini", startFix: "Perbaiki “%s”: %s ulasan mengeluhkan ini.", startSeeFix: "Lihat saran", startFight: "Balas ulasan tentang “%s”. Drafnya siap disalin.", startSeeFight: "Lihat draf",
     startNone: "Tidak ada keluhan yang perlu ditindak. Lihat yang dipuji pembeli di Pertahankan.", whySteps: "Kenapa & langkahnya",
     // final design: first screen, link tab, results plan, the three steps, summary, Tugas
-    heroTitle: "Pilah ulasan produkmu jadi daftar tindakan", howTitle: "Cara kerjanya", how1: "Tempel tautan atau ulasan", how2: "Kami pilah ulasannya jadi 4 kelompok, dengan kutipan asli", how3: "Kamu dapat rencana singkat, plus draf balasan siap kirim",
-    shopeeNote: "Shopee belum bisa lewat tautan. Salin ulasannya dari aplikasi Shopee, lalu tempel.", toPaste: "Tempel ulasan", refunded: "Jatah analisis hari ini dikembalikan.",
+    heroTitle: "Cek ulasan produkmu", howTitle: "Cara kerjanya", how1: "Tempel link produk", how2: "Kami pilah ulasannya jadi 4 kelompok, dengan kutipan asli", how3: "Kamu dapat daftar tugas, plus draf balasan siap kirim",
+  refunded: "Jatah analisis hari ini dikembalikan.",
     boardCap: "Ketuk kelompok untuk melihat kutipan asli.", close: "Tutup", navTasks: "Tugas", ptabMine: "Analisis saya", ptabRivals: "Pesaing", sections: "Bagian", sheetT: "%s · %s ulasan",
     hOne: "Keluhan terbanyak cuma satu: %s.", hTop: "Keluhan terbanyak: %s.", hFight: "Tidak ada yang perlu diperbaiki, tapi %s ulasan perlu dibalas.", hNone: "Tidak ada keluhan yang perlu ditindak.",
     lFix: "%s dari %s ulasan menyebutnya, dan itu bisa diperbaiki.", lFight: "%s ulasan perlu dibalas.", lKeep: "%s pembeli memuji %s.", lKeepAny: "%s pembeli memuji produkmu.", and: "dan",
@@ -1176,7 +1121,7 @@ const TEXT = {
     tasksSub: "Langkah yang belum selesai dan perbaikan yang sedang dipantau.", tasksSubAll: "Langkah yang belum selesai dan perbaikan yang sedang dipantau, untuk semua produkmu.",
     today: "Hari ini · %s", watched: "Dipantau · %s", sched: "Jadwal cek", schedToday: "Hari ini", schedNext: "Berikutnya", schedNextP: "Tanggal cek muncul di sini setelah kamu mencatat perbaikan.",
     langBtn: "Bahasa: Indonesia. Ganti ke English.", readyToast: "Analisis selesai. Buka lewat Bedah ulasan.", dueChip: "Waktunya cek", loggedOn: "%s · dicatat %s", reanalyse: "Bedah ulasan terbaru", skippedNote: "Langkah yang dilewati tetap di sini sampai kamu kerjakan.", noneToday: "Tidak ada langkah yang tersisa.",
-    histTitle: "Riwayat", histSub: "Riwayat hanya menyimpan ringkasan, bukan isi ulasan. Dihapus otomatis setelah 60 hari.", histEmpty: "Belum ada riwayat. Bedah ulasan pertamamu akan muncul di sini.",
+    histTitle: "Riwayat bedah", histEmpty: "Belum ada riwayat. Bedah ulasan pertamamu akan muncul di sini.",
     histCounts: "%s ulasan", histTop: "Keluhan terbanyak: %s", histAgain: "Bedah lagi", histLoading: "Memuat…", histDown: "Riwayat tidak bisa dibuka sekarang. Coba lagi nanti.",
     tasksEmpty: "Belum ada tugas. Bedah ulasan produk untuk mulai.", tasksStart: "Bedah ulasan", tasksSignT: "Masuk untuk menyimpan tugasmu", tasksSignP: "Perbaikan dan tanggal cekmu tersimpan di akunmu, jadi tidak hilang saat browser ditutup.",
     later: "Nanti saja", allProducts: "Semua produk", open: "Buka", taskFixLbl: "Langkah perbaikanmu", taskFixP: "%s dari %s ulasan mengeluhkan ini. Tulis apa yang akan kamu ubah. Kami ingatkan untuk cek lagi seminggu lagi.", taskFixSave: "Simpan & pantau",
@@ -1185,9 +1130,9 @@ const TEXT = {
     // Server problems arrive with an English message and a code; these say the known ones in Bahasa (English uses the server's words).
     e_not_link: "Itu tidak terlihat seperti tautan.", e_link_https: "Tempel tautan https lengkap dari produk Tokopedia, Lazada, atau TikTok Shop.", e_not_product: "Itu tidak terlihat seperti tautan produk.",
     e_short_bad: "Tautan pendek itu tidak mengarah ke produk Tokopedia, Lazada, atau TikTok Shop.", e_short_open: "Tautan pendek itu tidak bisa dibuka. Buka produknya, lalu salin tautan lengkapnya.",
-    e_shopee: "Shopee Indonesia belum membuka ulasannya untuk aplikasi lain, jadi tautan Shopee tidak bisa dibaca. Tempel ulasannya, atau pakai Bagikan dari aplikasi Shopee.",
+    e_shopee: "Link Shopee belum didukung. Pakai link produk dari Tokopedia, TikTok Shop, atau Lazada.",
     e_lazada_link: "Buka halaman produk Lazada, lalu salin tautannya. Awalnya harus lazada.co.id/products/", e_tiktok_link: "Itu bukan tautan produk TikTok Shop.",
-    e_tokopedia_link: "Buka halaman produk Tokopedia, lalu salin tautannya (berisi nama toko, lalu nama produk).", e_link_unsupported: "Tautan ini belum didukung. Tempel tautan produk Tokopedia, Lazada, atau TikTok Shop, atau tempel ulasannya.",
+    e_tokopedia_link: "Buka halaman produk Tokopedia, lalu salin tautannya (berisi nama toko, lalu nama produk).", e_link_unsupported: "Link ini belum didukung. Tempel link produk Tokopedia, Lazada, atau TikTok Shop.",
     e_fetch_slow: "Layanan pengambil ulasan terlalu lama.", e_fetch_failed: "Layanan pengambil ulasan tidak bisa membaca ulasan dari tautan itu.",
     e_no_low: "Tidak ada ulasan bintang rendah yang berisi komentar untuk produk ini. Coba Ulasan terbaru.", e_no_reviews: "Tidak ada ulasan berisi komentar untuk produk ini.", e_service_paused: "Pengambil ulasan untuk platform ini sedang berhenti.",
     e_box_off: "Kotak tautan sedang tidak aktif.", e_no_title: "Nama produk belum ada, jadi pesaing tidak bisa dicari. Isi nama produknya.",
@@ -1195,44 +1140,49 @@ const TEXT = {
     e_suggest_failed: "Pencarian pesaing gagal.", e_compare_failed: "Perbandingan gagal. Coba lagi sebentar lagi.", e_too_many: "Terlalu banyak analisis dalam satu jam. Coba lagi nanti.",
     e_server: "Ada masalah di server. Coba lagi.", e_too_large: "Teksnya kosong atau terlalu panjang. Kurangi jumlah ulasan.", e_no_parse: "Tidak ada ulasan yang terbaca. Tempel minimal satu ulasan.", e_delete_failed: "Akun belum terhapus. Coba lagi.", e_delete_unavailable: "Penghapusan akun belum tersedia. Coba lagi nanti.", e_no_account: "Akun tidak ditemukan.", e_not_confirmed: "Penghapusan belum dikonfirmasi.",
     e_too_many_reviews: "Terlalu banyak ulasan sekaligus. Maksimal %s per analisis.", e_model_bad: "Jawaban model tidak bisa dipakai. Coba lagi.", e_model_down: "Tidak bisa menghubungi layanan AI. Coba lagi sebentar lagi.",
-    e_paste: "Kamu bisa menempel ulasannya.", e_pasteRivals: "Kamu bisa menempel tautan pesaing.", e_other: "Coba pesaing lain.",
+   e_pasteRivals: "Kamu bisa menempel tautan pesaing.", e_other: "Coba pesaing lain.",
   },
   en: {
+    e_pasteRivals: "You can paste a competitor link.", e_other: "Try another competitor.",
+    printSave: "Print or save as PDF",
+    e_link_unsupported: "This link is not supported yet. Paste a product link from Tokopedia, Lazada or TikTok Shop.",
+    e_shopee: "Shopee links are not supported yet. Use a product link from Tokopedia, TikTok Shop or Lazada.",
+    e_not_link: "That does not look like a link.",
     navCheck: "Check", navNew: "New reviews", newReviews: "New reviews",
-    tabPaste: "Paste", tabLink: "Link",
-    pasteHint: "Shopee? Copy the reviews from the app, then paste them here.",
-    productLabel: "Product name (optional)", productPh: "e.g. Retro Boxy Tee", boxLabel: "Paste a link or reviews", boxPh: "A Tokopedia, TikTok Shop or Lazada link… or review text you copied from Shopee", tipsBtn: "Paste tips", runN: "Check %s reviews", detectLink: "%s We fetch %s reviews, %s.", detectPf: "%s link.", detectPlain: "Product link.", detectText: "%s reviews found", modeComplaintsShort: "complaints first", modeLatestShort: "latest first",
-    howSummary: "Tips for better results",
-    howBody: "One review per line reads best. If a review has several lines, put a blank line between reviews.\n\nStars and variant can go first, but they are optional:\n\n★★★☆☆  Putih, M   warna tulisannya ijo, pas dateng hitem\n4★ bahannya tebel\nPas sampe koyak bajunya",
+  
+   
+  boxLabel: "Paste product link", boxPh: "This platform supports product links from Tokopedia, TikTok Shop and Lazada. For now, we do not support Shopee product links.",detectLink: "%s We fetch %s reviews, %s.", detectPf: "%s link.", detectPlain: "Product link.",modeComplaintsShort: "complaints first", modeLatestShort: "latest first",
+   
+   
     run: "Check reviews", running: "Working…", sample: "Nothing yet? Try an example", clear: "Clear the text",
-    shareTip: "On Android: share straight from the shop app",
-    shareSteps: ["Install BedahReview to your home screen (Android Chrome: ⋮ menu > Install app).", "In Shopee, long-press the review text and choose Share.", "Pick BedahReview. The text lands in the Paste box. Tap Check reviews."],
-    shareCaveat: "If the text does not arrive, copy and paste it instead.",
-    install: "Add to home screen",
-    sharedOk: "Text from the Share menu is in. Tap Check reviews.",
-    sharedLinkOnly: "Only a link was shared, not the review text. Copy the review text and paste it.",
+   
+   
+   
+   
+   
+   
    
     modeLabel: "Get", modeComplaints: "Complaints first (1-3★)", modeLatest: "Latest reviews", limitLabel: "Reviews", fetchRun: "Fetch & analyse",
     linkNote: "Takes up to 1 minute.",
-    errPaste: "Paste some reviews first.", errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach BedahReview. Check your internet connection and try again.",
-    pasteFound: "%s reviews found. The first one: “%s”", pasteTooMany: "%s reviews found, but the limit is %s per analysis. Remove some first.",
+   errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach BedahReview. Check your internet connection and try again.",
+  
     loadingPart: "%s of %s parts done.", loadingFetching: "Fetching reviews from the link…", loadingResume: "Picking up your earlier analysis…", e_job_gone: "This analysis is no longer available. Please run it again.",
     loadingTitle: "Reading %s reviews…", loadingFetch: "Fetching reviews, then reading them…", loadingSub: "Sorting: fix, fight, ignore.",
     results: "Results", reviewsWord: "reviews", print: "Print",
     fix: "Fix", fight: "Respond", ignore: "Ignore", keep: "Keep",
     fixRule: "The product, listing or packing caused it, and you can change it.",
-    fightRule: "Prove the cause, file a courier claim, and reply in public. This is not a way to get a review removed: Shopee only removes reviews for narrow reasons.",
-    ignoreRule: "Star ratings with no text, or filler with nothing to act on. Counted, not analysed.",
+    fightRule: "Collect proof, file a courier claim, then reply in the review.",
+    ignoreRule: "Star ratings with no text, or filler with nothing to act on. Counted, but their content is not covered.",
     chipOf: "%s of %s complaints", chipCourier: "Courier? Check first", chipCheck: "Check it yourself", chipFake: "Likely fake", chipLow: "Low confidence",
     dFix: "What you can do", dCheckSide: "Check on your side", dChat: "Chat to buyer", dPublic: "Public reply", dReport: "Report text",
     copy: "Copy", copied: "Copied", selectIt: "Text selected, copy it manually", copiedAnn: "Copied: %s",
     fullReview: "Full review", noText: "(no text)",
     emptyFix: "Nothing here for you to fix.", emptyFight: "No reviews to answer.", emptyIgnore: "No reviews ignored.",
     keepRule: "What buyers like. Protect it.", emptyKeep: "No clear praise yet.",
-    noteFake: "%s likely-fake review(s) are left out of the counts. They are in the Respond tab, each with a report text.",
-    noteDropped: "%s review(s) were skipped because the model's proof quote could not be verified.",
-    noteNoText: "%s review(s) are star-only, with no text. Counted under Ignore, not analysed.",
-    footFrom: "%s%s review(s) fetched from the product link%s. ", footLow: " low-star", footCached: " (saved copy, no new charge)",
+    noteFake: "%s suspicious review(s) are left out of the counts.",
+    noteDropped: "%s review(s) were skipped because the quote could not be found in the original review.",
+   
+   
     aiNote: "Suggestions and drafts are written by AI, and the drafts are in Bahasa Indonesia. Read them before you send anything to a buyer.",
     stars: "%s of 5 stars",
     rival: "Rivals", rivalRule: "Compare your complaints and praise with similar products. This is a small sample, not the whole market.",
@@ -1244,7 +1194,7 @@ const TEXT = {
     rivalGo: "Compare", rivalNeedOne: "Pick or paste at least one competitor.", rivalMax: "At most %s competitors.",
     rivalComparing: "Comparing reviews…", rivalCompareSub: "Fetching each shop's reviews, then reading them. About 30-90 seconds.",
     rivalSampleHead: "Small sample:", rivalSampleBody: "about 7 reviews per shop (4 complaints, 3 recent), not the whole market. Numbers are review counts, not percentages. Competitor reviews are not saved.",
-    rivalFake: "%s competitor review(s) look fake and are not counted.", rivalFailed: "Could not be read: %s The review service failed, or this shop has no reviews yet. Try again.", rivalYou: "You", rivalComplaints: "Complaints", rivalPraise: "Praise",
+   rivalFailed: "Could not be read: %s The review service failed, or this shop has no reviews yet. Try again.", rivalYou: "You", rivalComplaints: "Complaints", rivalPraise: "Praise",
     rivalWorse: "Complaints about “%s”: %s for you vs %s for the best competitor.", rivalOpp: "%s has %s complaints about “%s” (you: %s). A chance to stand out.",
     rivalPraiseGap: "Buyers praise “%s” more at %s (%s, you: %s).", rivalNoInsight: "No clear gap yet. The sample is still small.", rivalSmall: "%s: fewer than 5 credible reviews, so it is not used for any conclusion.",
     rivalQuotes: "Review quotes", rivalAgain: "Start over", rivalShop: "Shop %s", rivalSold: "%s+ sold",
@@ -1252,28 +1202,28 @@ const TEXT = {
     f2Title: "Competitor analysis", f2Sub: "Compare complaints & praise with other shops",
     step1T: "Copy & paste your reviews", step1D: "from Shopee, Tokopedia or any shop app",
     step1TLink: "Paste a link or the reviews", step1DLink: "a Tokopedia, TikTok Shop or Lazada link, or the review text", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
-    step3T: "You get a short plan", step3D: "plus reply drafts ready to send",
+    step3T: "You get a short to-do list", step3D: "plus reply drafts ready to send",
     linkOpts: "Advanced settings",
-    navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Competitor analysis · 1 use",
+    navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Competitor analysis",
     resultsTitle: "Review results",
     doneAnimT: "Done!", doneAnimSub: "%s tasks added to the Tasks tab.", doneAnimNone: "No new tasks from this result.", taskReply: "Reply to %s reviews about %s", taskRemove: "Remove this task", taskEdit: "Edit", taskEditDone: "Done editing",
     taskProgress: "%s of %s done", taskAllDoneP: "Every task is ticked. Check this product again to see whether the complaints went down.", taskSee: "See tasks", taskAgain: "Check this product again", taskRowOpen: "%s tasks · %s days left", taskRowDone: "%s of %s · done",
-    daysLeft: "%s days left", fromRival: "FROM COMPETITORS", calBtn: "Add to Calendar", calEvent: "Check again: %s", rivalsBtnShort: "Competitor analysis", tasksNone: "No tasks yet", tasksNoneP: "Tasks show up here after you press Done on a review result.", tasksFinished: "DONE",
-    st_done: "Done", st_open: "Not finished", st_expired: "Expired", histTasks: "%s tasks created", histExpired: "%s of %s tasks not ticked", histResume: "Continue", histGone: "This result is no longer kept on this phone. Check again to see it.",
-    histFoot: "History keeps only a summary, never the review text. It is deleted automatically after 60 days. Status and Continue exist only on the phone where you ran the check.",
+    daysLeft: "%s days left", fromRival: "FROM COMPETITORS", calBtn: "Add to Calendar", calEvent: "Check again: %s", rivalsBtnShort: "Competitor analysis", tasksNone: "No tasks yet", tasksNoneP: "No tasks yet. Tap Done in the review results and the tasks show up here.", tasksFinished: "DONE",
+    st_done: "Done", st_open: "Not finished", st_expired: "Ended", histTasks: "%s tasks created", histExpired: "%s of %s tasks not ticked", histResume: "Continue", histGone: "This result is no longer kept on this phone. Check again to see it.",
+   
     rivalFor: "For", rivalWait: "About 10 to 40 seconds.", cancelBtn: "Cancel", rivalSearching: "Looking for similar products…", rivalPickT: "Pick 1 or 2 competitors", rivalFoundN: "Found %s similar products. The closest match is already picked.", rivalGoN: "Compare (%s picked)",
-    rivalQuota: "Uses 1 analysis of your daily limit", rivalPasteSum: "Have a competitor link of your own?", rivalResultT: "Competitor results", rivalVs: "You vs %s", rivalCatchUp: "Catch up", rivalEdge: "Your edge", buyerRivalLbl: "WHAT COMPETITOR BUYERS SAY",
-    rivalDoWorse: "Find out why %s complaints show up more on your product than on theirs, then fix it.", rivalDoGap: "Learn why buyers praise %s at %s, then bring out something similar on your product.", rivalDoEdge: "Keep it and show it off: competitor buyers complain about %s, yours do not.", sumLabelFix: "SUMMARY · %s THINGS TO FIX", sumLabel: "SUMMARY", sumItem: "%s (%s reviews)", sumMore: "+%s more: %s", moreReplies: "Replies for %s other reviews", sumNothing: "Nothing to fix in these reviews.", sumAlso: "Also: %s", sumFight: "%s reviews to respond to", sumKeep: "%s buyers praise %s", cardN: "%s reviews", buyerLbl: "WHAT BUYERS SAY", todoLbl: "WHAT TO DO", endTitle: "Done reading?", selesaiBtn: "Done", endNote: "Copy the replies you need first.", doneToast: "%s tasks added",
+    rivalQuota: "Uses 1 of today's analyses", rivalPasteSum: "Have a competitor link of your own?", rivalResultT: "Competitor results", rivalVs: "You vs %s", rivalCatchUp: "Catch up", rivalEdge: "Your edge", buyerRivalLbl: "WHAT COMPETITOR BUYERS SAY",
+    rivalDoWorse: "Find out why %s complaints show up more on your product than on theirs, then fix it.", rivalDoGap: "Learn why buyers praise %s at %s, then bring out something similar on your product.", rivalDoEdge: "Keep it and show it off: competitor buyers complain about %s, yours do not.", sumLabelFix: "SUMMARY · %s THINGS TO FIX", sumLabel: "SUMMARY", sumItem: "%s (%s reviews)", sumMore: "+%s more: %s", moreReplies: "Replies for %s other reviews", sumNothing: "Nothing to fix in these reviews.", sumAlso: "Also: %s", sumFight: "%s reviews to respond to", sumKeep: "%s buyers praise %s", cardN: "%s reviews", buyerLbl: "WHAT BUYERS SAY", todoLbl: "WHAT TO DO", endTitle: "Done reading?", selesaiBtn: "Done",doneToast: "%s tasks added",
     rivalWantLbl: "How many competitors?", rivalExampleBtn: "See an example (free)", rivalExampleHead: "Example, not live data.",
     rivalExampleBody: "The numbers and quotes below were made up for this example. “Contoh Kaos Boxy” is not your product: no real shops or buyers, and no cost.",
     rivalNoBox: "Finding competitors needs the link box, which is not switched on here. You can still see an example.",
     groupLearn: "Learn from", groupLearnSub: "They do better here, or get praised more.", groupAvoid: "Avoid", groupAvoidSub: "Competitors get this complaint and you do not. Do not copy it, and make it a reason to choose you.",
     groupIgnore: "Ignore", groupIgnoreSub: "A small gap or no gap: nothing to act on.", groupNone: "None yet.",
     fbQ: "Was this useful?", fbYes: "Yes", fbPartly: "Partly", fbNo: "No", fbComment: "Anything to add? (optional)",
-    fbNote: "A comment is saved only if you write one. Please do not write names or paste review text.", fbSend: "Send", fbThanks: "Thank you. Your answer helps.",
-    fbReview: "Your comment looks like it contains review text. Please remove that part, so no review text is stored.", fbFail: "Could not send. Try again later.",
+    fbNote: "Please do not write names or paste review text.", fbSend: "Send", fbThanks: "Thank you. Your answer helps.",
+    fbReview: "It looks like you pasted review text. Please remove it.", fbFail: "Could not send. Try again later.",
     limitBusy: "The server is busy. Try again in a moment.", logout: "Sign out", back: "Back", fixesBtn: "Tasks", fixesTitle: "Tasks", fixesSub: "Fixes are saved in this browser only. Nothing is sent to the server.",
-    fixesWarn: "Counts from small samples can mislead. One complaint fewer can be chance, not proof that your fix worked. A new analysis may also include some of the same old reviews.",
+    fixesWarn: "There are few reviews, so the result is not certain. One complaint fewer can be chance.",
     fixesNoStore: "This browser cannot save data, so your log is lost when the page closes. Open More, then Save to a file, to keep it.",
     fixesExport: "Save to a file", fixesImport: "Open from a file", fixesEmpty: "No fixes being tracked yet.",
     fixMark: "Mark as fixed", fixNoteLbl: "Short note (optional)", fixNotePh: "e.g. size chart changed to cm", fixSave: "Save", fixCancel: "Cancel",
@@ -1284,28 +1234,28 @@ const TEXT = {
     fixNoName: "No product name: this fix is matched with other analyses that also have no name. Fill in the product name in the Paste box to be exact.",
     fixesCompared: "%s fix(es) you logged were compared with these new reviews.", fixesSee: "See",
     importOk: "Imported: %s fix(es). Skipped as invalid: %s.", importBad: "This file could not be opened as a BedahReview log.", importBig: "The file is too large.", fixSaveFail: "Could not save in this browser. Open More in Tasks, then Save to a file, so your log is not lost.",
-    limitBudget: "Reading from a link is not available for the rest of today. Copy and paste the reviews instead.", limitBudgetRival: "Competitor search is not available for the rest of today. Try again tomorrow.", limitHour: "Too many link look-ups this hour. Try again later, or paste the reviews.",
-    fbTitle: "Another way: paste the reviews", fbSteps: ["Open the product on the marketplace, then open Reviews.", "Copy the review text.", "Paste it below, one review per line."], fbRetry: "Try the link again",
+    limitBudget: "Reading from a link is not available today. Try again tomorrow.", limitBudgetRival: "Competitor search is not available for the rest of today. Try again tomorrow.", limitHour: "Too many link fetches this hour. Try again later.",
+ 
     errFetchTitle: "The reviews from this link could not be read", backResults: "← Back to results", pastedName: "Pasted reviews",
     change: "Change", shown: "Showing", themeDark: "Dark mode", themeLight: "Light mode",
     boardFix: "reviews you can fix yourself", boardFight: "reviews to answer", boardIgnore: "reviews with no content, skip", boardKeep: "reviews praising your product",
-    legendSummary: "What do these 4 groups mean?", legendFix: "Complaints that come from your shop, such as sizing or photos. You can change these yourself.", legendFight: "Probably not from your shop (courier, likely fake). Check the proof first, then reply politely.",
+    legendSummary: "What do these 4 groups mean?", legendFix: "Complaints that come from your shop, such as sizing or photos. You can change these yourself.", legendFight: "Maybe not your shop's fault (courier or fake review). Check the proof first, then reply politely.",
     legendIgnore: "Stars only, no content. Nothing to do.", legendKeep: "What buyers praise. Show it off on the product page.",
     leadFix: "Complaints from your own shop. Each card has a suggestion and the buyers' exact quotes.", leadFight: "Maybe not your fault, but check first before you reply. Ask the buyer for a photo, then pick a draft and copy it.",
-    leadIgnore: "Stars or comments with no content. Counted, not analysed.", leadKeep: "What buyers praise. Show it off on the product page.",
-    noRemove: "BedahReview cannot remove reviews.", noRemoveBody: "A report only asks %s to review it; the decision stays with %s. A polite reply stays visible to future buyers.", platformWord: "the marketplace",
+    leadIgnore: "Stars or comments with no content. Counted, but their content is not covered.", leadKeep: "What buyers praise. Show it off on the product page.",
+  platformWord: "the marketplace",
     whyLbl: "Why here: ", moreQuotes: "Show %s more quotes",
     rivalOwnLbl: "Your product, from Review checker", rivalOther: "Use another product", rivalBackOwn: "Use the product from Review checker", rivalTitleAlone: "Compare your product with competitors",
     rivalIntroS: "We look for 2–3 similar products on the same platform. You pick the ones that fit, then we count complaints and praise in their reviews.",
     rivalYourLink: "Your product link", rivalYourName: "Product name (helps the search)", rivalYourNamePh: "e.g. Retro Boxy Tee", rivalFindLink: "Find competitors",
-    rivalFreeNote: "Works without Review checker. One comparison uses one of your daily analyses.",
+    rivalFreeNote: "One comparison = 1 of today's analyses.",
     rivalSignIn: "Sign in to find and compare competitors. It is free, no password.", rivalSignInNote: "Finding competitors needs a free sign-in. You can see an example without one.", rivalSignInBtn: "Sign in to find competitors", rivalNeedLink: "Paste your product link first.", rivalNeedName: "Enter your product name so we can search for similar ones.",
     stepFind: "Find", stepPick: "Pick", stepCompare: "Compare", stepCompareShort: "Compare",
     rivalFound: "We found %s similar products. The %s closest are already ticked; untick any that do not fit.", rivalMost: "Closest", rivalMoreN: "Other products found · %s", rivalShopLbl: "Shop: %s",
     rivalSeen: "What the numbers show", rivalByTheme: "Reviews per type of complaint", rivalThemeCol: "Type of complaint", nReviewsCol: "%s reviews", rivalNote: "Data notes",
     tagSmall: "too few", tagFail: "failed", tagSkip: "not counted",
-    rivalSmallLine: "%s has only %s credible reviews (at least 5 needed), so it is not used for conclusions.", rivalFailLine: "One competitor link could not be opened (the product may be deleted).",
-    rivalFakeLine: "%s competitor review(s) look fake and are not counted (%s).", rivalFakeEach: "%s: %s read, %s counted", rivalSmallNote: "%s is not used for the lines above because it has too few reviews.",
+    rivalSmallLine: "%s has too few reviews to compare.", rivalFailLine: "One competitor link could not be opened (the product may be deleted).",
+ 
     rivalLineWorse: "%s: %s for you, %s for the best competitor.", rivalLineOther: "%s: %s for you, %s at %s.",
     rivalAlone: "Without Review checker we cannot compare against your product. Run Review checker to see the gap.", rivalLinkLbl: "See the reviews",
     rivalLineWorseEx: "%s: %s for %s, %s for the best competitor.", rivalLineOtherEx: "%s: %s for %s, %s at %s.",
@@ -1332,13 +1282,13 @@ const TEXT = {
     gFreeUsed: "You have used your free analysis. Sign in to keep going; it is still free.",
     fixesSubAccount: "Fixes are saved in your account (the product name, link, your note and the check date) so it opens on another phone. Please do not write people's names.",
     syncOk: "Saved in your account.", syncDown: "Your account can't be reached right now. Your notes stay saved on this device and will be saved to your account later.",
-    syncOff: "Sign in so your notes are saved in your account and open on another phone.", fixNoteReview: "Your note looks like it contains review text. Write it in your own words.",
+    syncOff: "Sign in so your notes are saved in your account and open on another phone.", fixNoteReview: "It looks like you pasted review text. Please remove it.",
     limitDaily: "Daily limit reached: %s analyses a day. Try again tomorrow (resets at midnight Jakarta time).", quotaLeft: "Analyses left today: %s of %s.",
     e_model_quota: "The AI service has no quota or credit left right now, so the reviews cannot be analysed. Try again later.",
     startHere: "Start here", startFix: "Fix “%s”: %s review(s) complain about this.", startSeeFix: "See the fix", startFight: "Answer the review about “%s”. The draft is ready to copy.", startSeeFight: "See the draft",
     startNone: "No complaints to act on. See what buyers praise under Keep.", whySteps: "Why & steps",
-    heroTitle: "Turn your product reviews into a to-do list", howTitle: "How it works", how1: "Paste a link or reviews", how2: "We sort the reviews into 4 groups, with the buyers' own words", how3: "You get a short plan, plus reply drafts ready to send",
-    shopeeNote: "Shopee links don't work yet. Copy the reviews from the Shopee app, then paste them.", toPaste: "Paste reviews", refunded: "Today's analysis was given back.",
+    heroTitle: "Check your product's reviews", howTitle: "How it works", how1: "Paste the product link", how2: "We sort the reviews into 4 groups, with the buyers' own words", how3: "You get a to-do list, plus reply drafts ready to send",
+  refunded: "Today's analysis was given back.",
     boardCap: "Tap a group to see the exact quotes.", close: "Close", navTasks: "Tasks", ptabMine: "My analysis", ptabRivals: "Competitors", sections: "Sections", sheetT: "%s · %s reviews",
     hOne: "There is only one big complaint: %s.", hTop: "The biggest complaint: %s.", hFight: "Nothing to fix, but %s review(s) need a reply.", hNone: "No complaints to act on.",
     lFix: "%s of %s reviews mention it, and it can be fixed.", lFight: "%s review(s) need a reply.", lKeep: "%s buyer(s) praise %s.", lKeepAny: "%s buyer(s) praise your product.", and: "and",
@@ -1359,7 +1309,7 @@ const TEXT = {
     tasksSub: "Open steps and the fixes being tracked.", tasksSubAll: "Open steps and the fixes being tracked, for all your products.",
     today: "Today · %s", watched: "Tracked · %s", sched: "Check schedule", schedToday: "Today", schedNext: "Next", schedNextP: "Check dates show here once you log a fix.",
     langBtn: "Language: English. Switch to Indonesian.", readyToast: "Analysis ready. Open it under Review checker.", dueChip: "Time to check", loggedOn: "%s · logged %s", reanalyse: "Analyse the latest reviews", skippedNote: "Skipped steps stay here until you do them.", noneToday: "No steps left.",
-    histTitle: "History", histSub: "History keeps only a summary, never the review text. It is deleted automatically after 60 days.", histEmpty: "No history yet. Your first analysis will show up here.",
+    histTitle: "History", histEmpty: "No history yet. Your first analysis will show up here.",
     histCounts: "%s reviews", histTop: "Top complaint: %s", histAgain: "Analyse again", histLoading: "Loading…", histDown: "History cannot be opened right now. Try again later.",
     tasksEmpty: "No tasks yet. Analyse a product's reviews to start.", tasksStart: "Check reviews", tasksSignT: "Sign in to keep your tasks", tasksSignP: "Your fixes and check dates are saved in your account, so they are not lost when the browser closes.",
     later: "Not now", allProducts: "All products", open: "Open", taskFixLbl: "Your fix", taskFixP: "%s of %s reviews complain about this. Write what you will change. We remind you to check again in a week.", taskFixSave: "Save & track",
@@ -1380,7 +1330,8 @@ const THEME_ID = {
 const $ = (id) => document.getElementById(id);
 let lang = "id";
 try { if (localStorage.getItem("bedahreview-lang") === "en") lang = "en"; } catch (e) { /* storage can be blocked */ }
-const tr = (key, ...args) => { let s = (TEXT[lang][key] != null ? TEXT[lang][key] : TEXT.id[key]); args.forEach((a) => { s = s.replace("%s", a); }); return s; };
+const tr = (key, ...args) => { let s = (TEXT[lang][key] != null ? TEXT[lang][key] : TEXT.id[key]); args.forEach((a) => { s = s.replace("%s", a); }); return lang === "en" ? one(s) : s; };
+const one = (s) => s.replace(/\b1 (review|buyer|thing|day)s\b( praise)?/g, (m, w, v) => "1 " + w + (v ? " praises" : ""));  // "1 reviews" reads wrong: English says the singular when there is one
 const themeName = (t) => (lang === "id" && THEME_ID[t]) || t;
 const plainTheme = (t) => { const n = themeName(t).replace(/^Pujian: |^Praise: /, ""); return n.charAt(0).toUpperCase() + n.slice(1); };  // praise themes without their prefix, capitalised
 const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1433,7 +1384,7 @@ function platformName(url) {
 /* ---------- light / dark ---------- */
 const MOON = "M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z";
 const SUN = "M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3L4.9 4.9M19.1 19.1l-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4M12 8a4 4 0 100 8 4 4 0 000-8z";
-const darkNow = () => (document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches);
+const darkNow = () => document.documentElement.dataset.theme === "dark";  // light unless the seller chose dark: the device setting is not read
 function themeLabel() {
   const dark = darkNow();
   $("theme").setAttribute("aria-label", tr(dark ? "themeLight" : "themeDark")); $("theme").title = tr(dark ? "themeLight" : "themeDark");
@@ -1447,7 +1398,6 @@ $("theme").addEventListener("click", () => {
   setTheme(next);
   try { localStorage.setItem("bedahreview-theme", next); } catch (e) { /* ignore */ }
 });
-window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", themeLabel);
 
 /* ---------- static text for the current language ---------- */
 function applyLang() {
@@ -1455,16 +1405,13 @@ function applyLang() {
   document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = tr(el.dataset.i18n); });
   document.querySelectorAll("[data-i18n-ph]").forEach((el) => { el.placeholder = tr(el.dataset.i18nPh); });
   document.querySelectorAll("[data-i18n-label]").forEach((el) => { el.setAttribute("aria-label", tr(el.dataset.i18nLabel)); });
-  $("share-steps").replaceChildren(...TEXT[lang].shareSteps.map((s, i) => h("li", {}, h("span", { class: "n", text: String(i + 1) }), h("span", { text: s }))));
-  $("fb-steps").replaceChildren(...TEXT[lang].fbSteps.map((t) => h("li", { text: t })));
   const other = lang === "id" ? "EN" : "ID";  // the current language first and darker; the other one goes on the smallest phones
   $("lang").replaceChildren(h("span", { class: "pill" }, h("em", { text: lang.toUpperCase() }), h("span", { class: "alt", "aria-hidden": "true", text: "/" }), h("span", { class: "alt", text: other })));
   $("back-results").textContent = tr("backResults"); $("print-d").textContent = tr("print");
   themeLabel(); renderFixBadge(); renderGate(); renderAccount(); setQuota(lastQuota);
   if (currentView === "fixes") renderFixes();
   if (currentView === "history") renderHistory();
-  if (!$("run").disabled) $("run").textContent = tr("run");
-  syncCount(); detectInput(); syncShopee(); syncLimit();
+  detectInput(); syncLimit();
   if (lastData) render(lastData, false);
   renderRival();
 }
@@ -1946,7 +1893,7 @@ function playDone(n, then) {  // about a second and a half: the ring draws, the 
   o.hidden = false; o.classList.remove("play"); void o.offsetWidth; o.classList.add("play");
   setTimeout(() => { o.hidden = true; o.classList.remove("play"); then(); }, reduceMotion() ? 800 : 1700);
 }
-function finishResult() {  // Selesai on a Hasil Bedah: the tasks are made, the animation plays, Riwayat opens
+function finishResult() {  // Selesai on a Hasil Bedah: the tasks are made, the animation plays, Tugas opens (the result is already in Riwayat)
   if (!lastData || lastData.example || freeLocked) return;
   const sig = reviewSig(lastData.items), src = lastData.source || {}, boxes = loadBoxes();
   let box = boxes.find((b) => b.sig === sig);
@@ -1954,11 +1901,12 @@ function finishResult() {  // Selesai on a Hasil Bedah: the tasks are made, the 
     box = cleanBox({ sig, product: productKey(src), label: src.title || "", url: src.kind === "url" ? src.url : "", created: Date.now(), items: boxItemsFrom(lastData) });
     if (box) saveBoxes(boxes.concat(box));
   }
+  if (box) boxOpen = box.sig;  // Tugas opens with the box that was just made unfolded
   const n = box ? box.items.length : 0;
   logAnalysis(lastData, lastCounts);
   updateLog(sig, { done: true, tasks: n }); dropHeld(sig);
   track("fix_marked"); renderFixBadge();
-  playDone(n, () => { if (hasAccount()) openHistory(); else openFixes(); if (n) showToast(tr("doneToast", n)); });  // go first: a new screen clears any toast
+  playDone(n, () => { openFixes(); if (n) showToast(tr("doneToast", n)); });  // go first: a new screen clears any toast
 }
 function toggleItem(sig, id) {
   saveBoxes(loadBoxes().map((b) => {
@@ -2129,21 +2077,18 @@ function openFixes() {
   renderFixes(); show("fixes"); toTop(); $("fixes-h").focus({ preventScroll: true });
 }
 const ICON_CHECK = ["M9 12l2 2 4-4", "M12 2a10 10 0 100 20 10 10 0 000-20z"], ICON_NEXT = ["M9 6l6 6-6 6"], ICON_LOCK = ["M7 11h10a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6a2 2 0 012-2z", "M8 11V7a4 4 0 018 0v4"];
-function clearInputs() { ["url", "paste", "product"].forEach((id) => { $(id).value = ""; }); $("shared-note").hidden = true; showError(""); showUrlError(""); setFallback(false); syncClear(); syncShopee(); }
-function startFresh() {  // "Bedah produk lain" at the end of a plan: an empty start, nothing of the last product left in the fields or the competitor panel
-  if ($("run").disabled) { show("loading"); toTop(); return; }  // an analysis is still running: show it, do not wipe the form under it
+function clearInputs() { $("url").value = ""; showError(""); showUrlError(""); syncClear(); }
+function startFresh() {  // "Bedah produk lain": an empty start, nothing of the last product left in the field or the competitor panel
+  if ($("fetch").disabled) { show("loading"); toTop(); return; }  // an analysis is still running: show it, do not wipe the form under it
   lastData = null; lastChanged = []; lastCounts = null;
   rival = { step: "idle" }; rivalRun += 1; rivalForm = { url: "", name: "" };
   clearInputs(); closeSheet(); renderRival(); renderFixBadge();
   show("input"); toTop();
-  $("paste").focus();
+  $("url").focus();
 }
-function reanalyse(product, label) {  // back to the start with the product filled in, so a check-up is one tap
+function reanalyse(product) {  // back to the start with the product's link filled in, so a check-up is one tap
   closeSheet(); show("input"); toTop();
-  if (/^https:\/\//.test(product || "") && linkBoxOn) { $("paste").value = product; syncClear(); $("paste").focus(); }
-  else {  // fresh reviews only: the box never keeps the last product's reviews under this product's name
-    $("paste").value = ""; $("product").value = label && !/^https?:/.test(label) ? label : ""; $("shared-note").hidden = true; syncClear(); $("paste").focus();
-  }
+  $("url").value = /^https:\/\//.test(product || "") ? product : ""; syncClear(); $("url").focus();
 }
 const fmtDayShort = (iso) => { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(lang === "id" ? "id-ID" : "en-GB", { day: "numeric", month: "short" }); };
 
@@ -2210,11 +2155,9 @@ let quotaDay = "";
 function setQuota(q) {  // how many analyses are left today, shown right above the buttons once the server has said (accounts only)
   if (q && q !== lastQuota) quotaDay = today();
   lastQuota = q || null;
-  for (const id of ["quota-note", "quota-link"]) {
-    const note = $(id); note.hidden = !lastQuota;
-    if (lastQuota) note.textContent = tr("quotaLeft", Math.max(0, lastQuota.max - lastQuota.used), lastQuota.max);
-  }
-  syncShopee();
+  const note = $("quota-link"); note.hidden = !lastQuota;
+  if (lastQuota) note.textContent = tr("quotaLeft", Math.max(0, lastQuota.max - lastQuota.used), lastQuota.max);
+  detectInput();
 }
 const quotaOut = () => !!lastQuota && lastQuota.used >= lastQuota.max && quotaDay === today();  // used up today: the buttons look off, and a tap says why instead of doing nothing
 let rival = { step: "idle" }, rivalRun = 0;  // competitor analysis state; rivalRun lets a late reply notice that a new analysis has started
@@ -2287,11 +2230,10 @@ function render(data, fresh) {
     notes.push(h("div", { class: "callout" }, tr("fixesCompared", lastChanged.length) + " ", h("button", { class: "plain strong", type: "button", text: tr("fixesSee"), onclick: () => openFixes() })));
   }
   if (data.likely_fake) notes.push(h("div", { class: "callout hot", text: tr("noteFake", data.likely_fake) }));
-  if (data.no_text) notes.push(h("div", { class: "callout", text: tr("noteNoText", data.no_text) }));
   if (data.dropped) notes.push(h("div", { class: "callout warn", text: tr("noteDropped", data.dropped) }));
   $("notes").replaceChildren(...notes);
   $("start").replaceChildren(...[data.example ? h("div", { class: "callout warn", role: "note", text: tr("exampleNote") }) : null].filter(Boolean));
-  $("done-btn").hidden = !!data.example; $("end-note").textContent = fight.length ? tr("endNote") : ""; $("end-note").hidden = !fight.length;
+  $("done-btn").hidden = !!data.example;
   renderFixBadge();
 
   const cap = (k) => k[0].toUpperCase() + k.slice(1);
@@ -2306,18 +2248,15 @@ function render(data, fresh) {
     return tab;
   }));
   tabKeys($("tabs"), "button", (t) => { selectTab(t.dataset.b, true); track("tab_viewed", { tab: t.dataset.b }); });
-  const plat = platformName(src.url || "");
   const panel = (k, body, extra) => h("div", { class: "panel", role: "tabpanel", id: "panel-" + k, "aria-labelledby": "tab-" + k, "data-b": k, hidden: true },
     k === "fix" || k === "fight" ? null : h("p", { class: "rule", text: tr(k + "Rule") }), extra, body);  // Perbaiki and Tanggapi open with their one note, not a stack of them
   $("panels").replaceChildren(
     panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") }), fixItems.length ? aiNote() : null),
-    panel("fight", fight.length ? replyGroups(fight) : h("div", { class: "empty", text: tr("emptyFight") }), [h("div", { class: "callout" }, h("b", { text: tr("noRemove") + " " }), tr("noRemoveBody", plat, plat)), fight.length ? aiNote() : null]),
+    panel("fight", fight.length ? replyGroups(fight) : h("div", { class: "empty", text: tr("emptyFight") }), fight.length ? aiNote() : null),
     panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })),
     panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })));
   renderRival(); renderFeedback();
 
-  const fromLink = src.kind === "url" ? tr("footFrom", src.count, src.mode === "complaints" ? tr("footLow") : "", src.cached ? tr("footCached") : "") : "";
-  $("foot").textContent = fromLink.trim(); $("foot").hidden = !fromLink;
 
   const first = fresh === false ? activeTab : (counts.fix ? "fix" : counts.fight ? "fight" : counts.keep ? "keep" : counts.ignore ? "ignore" : "fix");
   if (fresh !== false) closeSheet();
@@ -2373,7 +2312,7 @@ function errText(data, fallback, rival) {  // the server sends a limit code; the
   if (data && data.limit === "daily") return tr("limitDaily", data.max);
   const own = data && data.code && TEXT[lang]["e_" + data.code];  // the server words it in English; say known problems in the page language
   if (own) {
-    const next = data.fallback === "paste" ? (rival ? "e_pasteRivals" : "e_paste") : data.fallback === "other" ? "e_other" : "";
+    const next = data.fallback === "paste" ? (rival ? "e_pasteRivals" : "") : data.fallback === "other" ? "e_other" : "";
     return own.replace("%s", data.max || "") + (next ? " " + TEXT[lang][next] : "");
   }
   return (data && data.error) || fallback;
@@ -2481,11 +2420,9 @@ function rivalCard(d, x, names, edge) {
 function rivalResult(st) {
   const d = st.data, names = rivalShops(d, st), absent = !!d.you.absent, groups = groupInsights(d.insights, d.rows), all = groups.learn.concat(groups.avoid);
   const bullets = all.slice(0, 3).map((x) => rivalLine(d, x, names));
-  const small = d.competitors.filter((c) => c.small).length, fake = d.competitors.reduce((a, c) => a + c.fake, 0);
-  const notes = [];
-  d.competitors.forEach((c, i) => { if (c.small) notes.push(tr("rivalSmallLine", names[i], c.credible)); });
+    const notes = [];
+  d.competitors.forEach((c, i) => { if (c.small) notes.push(tr("rivalSmallLine", names[i])); });
   d.failed.forEach((f) => notes.push(tr("rivalFailLine") + " " + (f.title || f.url)));
-  if (fake) notes.push(tr("rivalFakeLine", fake, d.competitors.filter((c) => c.fake).map((c) => tr("rivalFakeEach", names[d.competitors.indexOf(c)], c.reviews, c.credible)).join("; ")));
   let tab = st.tab || "learn";
   const panels = { learn: groups.learn.length ? groups.learn.map((x) => rivalCard(d, x, names, false)) : h("div", { class: "empty", text: tr("groupNone") }),
     avoid: groups.avoid.length ? groups.avoid.map((x) => rivalCard(d, x, names, true)) : h("div", { class: "empty", text: tr("groupNone") }) };
@@ -2575,9 +2512,10 @@ function finishRival() {  // Selesai on a Hasil Bedah pesaing: the catch-up item
   const t = st.target || {}, key = t.url || fxStr(t.title, 150).toLowerCase(), items = rivalItemsFrom(st.data, st.shops), boxes = loadBoxes();
   const at = boxes.findIndex((b) => (t.sig && b.sig === t.sig) || (key && b.product === key));
   if (items.length) {
-    if (at >= 0) { const b = boxes[at]; boxes[at] = Object.assign({}, b, { items: b.items.filter((i) => i.kind !== "rival").concat(items).slice(0, MAX_ITEMS), doneAt: 0 }); }
-    else boxes.push(cleanBox({ sig: "r" + rid(), product: key, label: t.title || "", url: t.url || "", created: Date.now(), items }));
-    saveBoxes(boxes.filter(Boolean));
+    let sig = "";
+    if (at >= 0) { const b = boxes[at]; sig = b.sig; boxes[at] = Object.assign({}, b, { items: b.items.filter((i) => i.kind !== "rival").concat(items).slice(0, MAX_ITEMS), doneAt: 0 }); }
+    else { sig = "r" + rid(); boxes.push(cleanBox({ sig, product: key, label: t.title || "", url: t.url || "", created: Date.now(), items })); }
+    saveBoxes(boxes.filter(Boolean)); boxOpen = sig;  // the box that got the new items opens on Tugas
   }
   track("fix_marked");
   playDone(items.length, () => { rival = { step: "idle" }; rivalRun += 1; openFixes(); if (items.length) showToast(tr("doneToast", items.length)); });
@@ -2598,7 +2536,7 @@ function show(view) {
   $("workspace").classList.toggle("wide", view === "results" || view === "fixes" || view === "history" && false);  // a wide screen: Hasil Bedah and Tugas use the full width, the rest a centred column
   for (const [v, id] of Object.entries(VIEWS)) $(id).hidden = view !== v;
   $("hero").hidden = view !== "input";
-  $("print-d").hidden = view !== "results";
+  $("print-d").hidden = view !== "results"; $("acct-print").hidden = view !== "results";
   $("back-results").hidden = !(lastData && view === "input");
   $("nav-check").setAttribute("aria-current", tasks ? "false" : "page");
   $("nav-tasks").setAttribute("aria-current", tasks ? "page" : "false");
@@ -2629,66 +2567,36 @@ function tabKeys(listEl, selector, onSelect) {
   });
 }
 
-const LINK_RE = /^https?:\/\/\S+$/i;
-const isLinkText = (t) => linkBoxOn && LINK_RE.test(t.trim());
+const LINK_RE = /https?:\/\/[^\s<>"']+/i;
+const linkIn = (t) => { const m = LINK_RE.exec(t || ""); return m ? m[0] : ""; };  // a shop app shares "title + link": the link is what counts
 function linkPlatform(u) { try { const h = new URL(u.trim()).hostname; if (/tokopedia/i.test(h)) return "Tokopedia"; if (/lazada/i.test(h)) return "Lazada"; if (/tiktok/i.test(h)) return "TikTok Shop"; if (/shopee/i.test(h)) return "Shopee"; } catch (e) { /* plain link */ } return ""; }
-function detectInput() {  // one box: a single web address is a product link, anything else is pasted reviews
-  const text = $("paste").value, link = isLinkText(text), empty = !text.trim();
-  $("url").value = link ? text.trim() : $("url").value;
-  selectInput(link ? "link" : "paste", false);
-  $("view-input").classList.toggle("linkmode", link);
-  $("paste-hint").hidden = !empty;
-  $("product-fld").hidden = empty || link;
-  const n = link ? 0 : (empty ? 0 : countReviewsRough(text));
-  const run = $("run"); run.textContent = n ? tr("runN", n) : tr("run");
-  run.classList.toggle("off", empty || quotaOut()); run.setAttribute("aria-disabled", empty || quotaOut() ? "true" : "false");
-  const d = $("detect"); d.hidden = empty;
-  if (link && linkPlatform(text) === "Shopee") d.hidden = true;
-  else if (link) { const pf = linkPlatform(text), lim = syncLimit(); $("detect-text").textContent = tr("detectLink", pf ? tr("detectPf", pf) : tr("detectPlain"), lim, tr($("mode").value === "latest" ? "modeLatestShort" : "modeComplaintsShort")); }
-  else if (!empty) $("detect-text").textContent = tr("detectText", n);
-  if (link) syncShopee();
+const isShopee = (u) => { try { return /(^|\.)shopee\./i.test(new URL(u.trim()).hostname); } catch (e) { return /shopee\./i.test(u); } };
+function detectInput() {  // the one box holds a product link: say what was found, and what a tap will do
+  const text = $("url").value, link = linkIn(text), shopee = !!link && isShopee(link), ok = !!link && !shopee, out = quotaOut();
+  $("view-input").classList.toggle("linkmode", !!link);
+  const d = $("detect"); d.hidden = !ok;
+  if (ok) { const pf = linkPlatform(link), lim = syncLimit(); $("detect-text").textContent = tr("detectLink", pf ? tr("detectPf", pf) : tr("detectPlain"), lim, tr($("mode").value === "latest" ? "modeLatestShort" : "modeComplaintsShort")); }
+  $("link-extra").hidden = !ok; $("link-note").hidden = !ok;
+  const b = $("fetch"); if (!b.disabled) b.textContent = tr(ok ? "fetchRun" : "run");
+  b.classList.toggle("off", !ok || out); b.setAttribute("aria-disabled", !ok || out ? "true" : "false");
+  if (shopee) showUrlError(tr("e_shopee"), true);  // before anything is spent: Shopee is not read from a link
+  else if ($("url-error-text").textContent === tr("e_shopee")) showUrlError("");
 }
-function selectInput(which, focus) {
-  for (const t of ["paste", "link"]) {
-    const on = t === which;
-    $("intab-" + t).setAttribute("aria-selected", on ? "true" : "false"); $("intab-" + t).tabIndex = on ? 0 : -1;
-    $("in-" + t).hidden = !on;
-    if (on && focus) $("paste").focus();
-  }
-  showError("");
-}
-function setFallback(on) { $("fallback").hidden = !on; $("fb-retry").hidden = !on; }  // shown after a link could not be read: the paste route, with steps
-$("fb-retry").addEventListener("click", () => { setFallback(false); if ($("url").value) $("paste").value = $("url").value; syncClear(); $("paste").focus(); });
-
 function showError(msg, title, opts) {  // right under the button that was tapped, scrolled into view, and read out
   opts = opts || {};
-  const e = $("error"), where = opts.where || ($("in-link").hidden ? "paste" : "link");
-  const anchor = $(where === "link" ? "fetch-anchor" : "run-anchor");
+  const e = $("error"), anchor = $("fetch-anchor");
   if (anchor.nextElementSibling !== e) anchor.after(e);
   $("error-title").textContent = title || ""; $("error-title").hidden = !title;
   $("error-text").textContent = msg;
   $("error-sub").textContent = opts.sub || ""; $("error-sub").hidden = !opts.sub;
-  $("error-paste").hidden = !opts.toPaste;
   e.hidden = !msg;
   if (msg) { e.focus({ preventScroll: true }); e.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" }); }
 }
-function showUrlError(msg) {  // a link that is not right: the field turns red and says why, right under it
+function showUrlError(msg, quiet) {  // a link that is not right: the field turns red and says why, right under it
   $("url-error-text").textContent = msg || ""; $("url-error").hidden = !msg;
-  if (msg) { $("paste").setAttribute("aria-invalid", "true"); $("paste").focus(); } else $("paste").removeAttribute("aria-invalid");
+  if (msg) { $("url").setAttribute("aria-invalid", "true"); if (!quiet) $("url").focus(); } else $("url").removeAttribute("aria-invalid");
 }
-const isShopee = (u) => { try { return /(^|\.)shopee\./i.test(new URL(u.trim()).hostname); } catch (e) { return /shopee\./i.test(u); } };
-function syncShopee() {  // a Shopee link gets "not yet" and a way forward before anything is spent; the fetch button looks quiet until there is a link
-  const u = $("url").value, shopee = !!u.trim() && isShopee(u);
-  $("shopee-note").hidden = !shopee;
-  const out = quotaOut();
-  $("fetch").classList.toggle("off", out || shopee || !u.trim()); $("fetch").setAttribute("aria-disabled", out || shopee ? "true" : "false");
-  const none = !$("paste").value.trim();
-  $("run").classList.toggle("off", out || none); $("run").setAttribute("aria-disabled", out || none ? "true" : "false");
-}
-function toPaste(withSteps) { showError(""); if (isLinkText($("paste").value)) $("paste").value = ""; syncClear(); setFallback(!!withSteps); $("paste").focus(); }  // the box holds the link: clear it so reviews can go in its place
-$("paste").addEventListener("input", () => showUrlError(""));
-$("shopee-paste").addEventListener("click", () => toPaste(false));
-$("error-paste").addEventListener("click", () => toPaste(true));
+$("url").addEventListener("input", () => { if ($("url-error-text").textContent !== tr("e_shopee")) showUrlError(""); });
 
 /* ---------- sending ---------- */
 let timer = null;
@@ -2738,15 +2646,11 @@ function finishAnalysis(status, data) {  // the one place that turns a reply int
   if (!(status >= 200 && status < 300) || !data) {
     show("input");
     if (data && data.limit === "daily") setQuota({ used: data.max, max: data.max });
-    const code = data && data.code, onLink = !$("in-link").hidden;
-    if (code === "shopee" && onLink) { syncShopee(); $("shopee-note").hidden = false; $("shopee-paste").focus(); return; }
-    if (LINK_FIELD_CODES.includes(code) && onLink) { showUrlError(errText(data, tr("errGeneric", status))); return; }  // the link itself is wrong: say so on the field
-    const pasteWay = data && data.fallback === "paste";
-    const unreadable = pasteWay && !data.limit;  // a daily limit is not "this link cannot be read"
-    if (unreadable && onLink) { showError(errText(data, tr("errGeneric", status)), tr("errFetchTitle"), { where: "link", toPaste: true, sub: tr("refunded") }); return; }
-    if (pasteWay) selectInput("paste", false);  // first: switching tabs clears the error box
-    if (unreadable) setFallback(true);
-    showError(errText(data, tr("errGeneric", status)), unreadable ? tr("errFetchTitle") : "");
+    const code = data && data.code;
+    if (code === "shopee") { showUrlError(tr("e_shopee")); return; }
+    if (LINK_FIELD_CODES.includes(code)) { showUrlError(errText(data, tr("errGeneric", status))); return; }  // the link itself is wrong: say so on the field
+    const unreadable = data && data.fallback === "paste" && !data.limit;  // a daily limit is not "this link cannot be read"
+    showError(errText(data, tr("errGeneric", status)), unreadable ? tr("errFetchTitle") : "", unreadable ? { sub: tr("refunded") } : null);
     return;
   }
   setQuota(data.quota);
@@ -2756,8 +2660,8 @@ function finishAnalysis(status, data) {  // the one place that turns a reply int
   if (wasAway) { show(awayView); showToast(tr("readyToast")); }  // the seller moved on while it ran: tell them, do not pull them back
 }
 async function send(payload, title) {
-  showError(""); setFallback(false);
-  const buttons = [$("run"), $("fetch")]; buttons.forEach((b) => { b.disabled = true; });
+  showError("");
+  const buttons = [$("fetch")]; buttons.forEach((b) => { b.disabled = true; });
   startLoading(title);
   try {
     const res = await api("/api/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ async: true }, payload)) });
@@ -2774,13 +2678,13 @@ async function send(payload, title) {
     stopLoading(); show("input"); showError(tr("errNetwork"));
   } finally {
     buttons.forEach((b) => { b.disabled = false; });
-    $("run").textContent = tr("run");
+    detectInput();
   }
 }
 async function resumeJob() {  // the page was reloaded or closed while an analysis ran: pick it up if the server still has it
   const id = savedJob();
-  if (!id || $("run").disabled) return;
-  const buttons = [$("run"), $("fetch")]; buttons.forEach((b) => { b.disabled = true; });
+  if (!id || $("fetch").disabled) return;
+  const buttons = [$("fetch")]; buttons.forEach((b) => { b.disabled = true; });
   startLoading(tr("loadingResume"));
   try {
     const out = await pollJob(id);
@@ -2791,81 +2695,41 @@ async function resumeJob() {  // the page was reloaded or closed while an analys
     forgetJob(); stopLoading(); show("input");
   } finally {
     buttons.forEach((b) => { b.disabled = false; });
-    $("run").textContent = tr("run");
+    detectInput();
   }
-}
-function countReviewsRough(text) {
-  const blocks = /\n\s*\n/.test(text.trim()) ? text.trim().split(/\n\s*\n/) : text.trim().split("\n");
-  return blocks.filter((b) => b.trim()).length;
-}
-function runPaste() {
-  if (!ensureSignedIn(true)) return;
-  if (quotaOut()) { showError(tr("limitDaily", lastQuota.max), "", { where: "paste" }); return; }
-  const text = $("paste").value;
-  if (!text.trim()) { showError(tr("errPaste")); $("paste").focus(); return; }
-  $("shared-note").hidden = true;
-  send({ text, product: $("product").value.trim() }, tr("loadingTitle", countReviewsRough(text)));
 }
 function runFetch() {
   if (!ensureSignedIn(true)) return;
-  if (quotaOut()) { showError(tr("limitDaily", lastQuota.max), "", { where: "link" }); return; }
-  const url = $("url").value.trim();
-  if (!url) { showUrlError(tr("errLink")); return; }
-  if (isShopee(url)) { syncShopee(); $("shopee-paste").focus(); return; }  // nothing to spend: Shopee is not read from a link
+  if (quotaOut()) { showError(tr("limitDaily", lastQuota.max)); return; }
+  const text = $("url").value.trim(), url = linkIn(text);
+  if (!text) { showUrlError(tr("errLink")); return; }
+  if (!url) { showUrlError(tr("e_not_link")); return; }
+  if (isShopee(url)) { showUrlError(tr("e_shopee")); return; }  // nothing to spend: Shopee is not read from a link
   showUrlError("");
   send({ url, limit: syncLimit(), mode: $("mode").value }, tr("loadingFetch"));
 }
-$("run").addEventListener("click", runPaste);
 $("fetch").addEventListener("click", runFetch);
-$("paste").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && isLinkText($("paste").value)) { e.preventDefault(); runFetch(); } });
-$("sample").addEventListener("click", () => {
-  $("paste").value = [
-    "★★★★★  Putih, L   bagus banget pakenya sama bahannya bagus luamayan tebel",
-    "★★★★☆  Putih, L   nyaman bet dah pokoknya, bahannya tebel cuman pas dateng kok ada dikit noda kecil ya, tapi ini gacor sih bagus banget desainnya",
-    "★★★☆☆  Putih, M   di tampilan sebelom beli, warna tulisannya ijo, pas dateng warna tulisannya hitem",
-    "★★☆☆☆  Hitam, L   Pas sampe koyak bajunya",
-    "★☆☆☆☆  Putih, L   produk tidak sesuai deskripsi, warna hijau tapi realitanya hitam, kalo emg terima dari pabrikan nya hitam kenapa ga pasang foto hitam aja?",
-  ].join("\n");
-  $("product").value = "Kaos Boxy Retro"; syncClear(); showError(""); $("paste").focus();
+$("url").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); runFetch(); } });
+$("sample").addEventListener("click", async () => {  // a recorded result for invented reviews: no model call, no cost, no sign-in
+  showError("");
+  try {
+    const res = await fetch("/api/example"), data = await res.json();
+    if (!res.ok || !data || !data.items) throw new Error("no example");
+    render(data, true);
+  } catch (e) { showError(tr("errNetwork")); }
 });
-function syncClear() { $("clear").hidden = !$("paste").value; syncCount(); detectInput(); }  // the × in the review box shows only when there is text to clear
-function syncCount() {  // "12 reviews found": the same split the server makes, so a paste that was cut in the wrong places shows before an analysis is spent
-  const el = $("paste-count"), text = $("paste").value, max = 50;
-  if (!text.trim() || isLinkText(text)) { el.hidden = true; return; }
-  const n = countReviewsRough(text), first = text.trim().split(/\n\s*\n/)[0].trim().split("\n")[0].replace(/^[★☆\s]+/, "").trim();
-  el.textContent = n > max ? tr("pasteTooMany", n, max) : tr("pasteFound", n, first.length > 60 ? first.slice(0, 60) + "…" : first);
-  el.hidden = false;
-}
-$("paste").addEventListener("input", syncClear);
-$("clear").addEventListener("click", () => { $("paste").value = ""; $("product").value = ""; $("url").value = ""; $("shared-note").hidden = true; syncClear(); showError(""); $("paste").focus(); });
-$("paste").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { if (isLinkText($("paste").value)) runFetch(); else runPaste(); } });
+function syncClear() { $("clear").hidden = !$("url").value; detectInput(); }  // the × in the link box shows only when there is text to clear
+$("url").addEventListener("input", syncClear);
+$("clear").addEventListener("click", () => { $("url").value = ""; syncClear(); showError(""); $("url").focus(); });
 
-/* ---------- Share menu: /?title=...&text=...&url=... ---------- */
-function sharedFrom(search) {  // a shop app sends the product title as "title" and the review as "text": the title is the product name, not a review
-  const q = new URLSearchParams(search), title = (q.get("title") || "").trim(), text = (q.get("text") || "").trim(), url = (q.get("url") || "").trim();
-  const all = [title, text, url].filter(Boolean).join("\n").trim();
-  if (!text) return { all, reviews: all, product: "" };  // only a title (or a link) came: that is what there is to read
-  return { all, reviews: [text, url].filter(Boolean).join("\n").trim(), product: title.slice(0, 150) };
-}
+/* ---------- Share menu: /?title=...&text=...&url=... (a shop app sends the product title and its link) ---------- */
 function takeShared() {
-  const shared = sharedFrom(location.search);
-  if (!shared.all) return;
-  try { history.replaceState(null, "", location.pathname); } catch (e) { /* keep the query */ }  // do not leave review text in the address bar
-  const note = $("shared-note");
-  if (/^https?:\/\/\S+$/.test(shared.all)) {  // only a link arrived, not review text
-    note.textContent = tr("sharedLinkOnly"); note.hidden = false;
-    if (linkBoxOn) { $("paste").value = shared.all; syncClear(); }
-    return;
-  }
-  $("paste").value = shared.reviews; syncClear();
-  if (shared.product) {  // filled for you: the name goes first so it is the first thing checked
-    $("product").value = shared.product; $("product").classList.add("filled");
-    $("shared-note").after($("product-fld"));
-  }
-  note.textContent = tr("sharedOk"); note.hidden = false;
-  selectInput("paste", false);
+  const q = new URLSearchParams(location.search), all = ["title", "text", "url"].map((k) => (q.get(k) || "").trim()).filter(Boolean).join("\n");
+  if (!all) return;
+  try { history.replaceState(null, "", location.pathname); } catch (e) { /* keep the query */ }  // do not leave shared text in the address bar
+  const link = linkIn(all);
+  if (link) { $("url").value = link; syncClear(); } else showUrlError(tr("e_not_link"), true);  // review text is not read any more: only a link is
 }
-$("product").addEventListener("input", () => $("product").classList.remove("filled"));
 
 /* ---------- sign-in (Supabase) ----------
    Only when the server says Supabase is on. The browser talks to Supabase directly, so its per-address limits count each person apart;
@@ -2957,8 +2821,13 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("acct
 $("acct-theme").addEventListener("click", () => $("theme").click());
 $("acct-fixes").addEventListener("click", () => { setMenu(false); $("fixes-btn").click(); });
 $("acct-history").addEventListener("click", () => { setMenu(false); openHistory(); });
+$("acct-another").addEventListener("click", () => { setMenu(false); startFresh(); });
+$("acct-print").addEventListener("click", () => { setMenu(false); window.print(); });
+$("acct-legend").addEventListener("click", () => {  // what the four groups mean, in a small dialog
+  setMenu(false);
+  openDialog([h("div", { class: "legend-dlg" }, ["fix", "fight", "ignore", "keep"].map((k) => h("p", {}, h("b", { class: "lg-" + k, text: tr(k) }), tr("legend" + k[0].toUpperCase() + k.slice(1)))))], "legendSummary");
+});
 $("in-history").addEventListener("click", () => openHistory());
-$("tips-btn").addEventListener("click", () => { const open = $("tips").hidden; $("tips").hidden = !open; $("tips-btn").setAttribute("aria-expanded", open ? "true" : "false"); });
 $("tasks-history").addEventListener("click", () => openHistory());
 $("history-back").addEventListener("click", () => { const v = viewBeforeHistory; show(v === "loading" || v === "history" || ((v === "results" || v === "plan") && !lastData) ? "input" : v); toTop(); });
 function gateInfo(msg) { $("g-info").textContent = msg || ""; $("g-info").hidden = !msg; }
@@ -3137,15 +3006,7 @@ $("delete-confirm").addEventListener("click", async () => {
   location.reload();  // a clean page: no review, result or note is left in memory
 });
 $("signin-btn").addEventListener("click", () => showGate("choose"));
-/* ---------- install and offline ---------- */
-let deferredInstall = null;
-window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredInstall = e; $("install").hidden = false; });
-$("install").addEventListener("click", () => {
-  if (!deferredInstall) return;
-  deferredInstall.prompt();
-  deferredInstall.userChoice.finally(() => { deferredInstall = null; $("install").hidden = true; });
-});
-window.addEventListener("appinstalled", () => { $("install").hidden = true; });
+/* ---------- offline ---------- */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready)
     .then(() => { document.documentElement.dataset.sw = "ready"; }).catch(() => { document.documentElement.dataset.sw = "failed"; });
@@ -3153,7 +3014,6 @@ if ("serviceWorker" in navigator) {
 
 function applyBox(cfg, first) {  // the link box: shown only when the server says this visitor may use it
   linkBoxOn = !!cfg.url_box; rivalsOn = cfg.rivals === undefined ? linkBoxOn : !!cfg.rivals; renderRival();
-  $("intab-link").hidden = !cfg.url_box;  // the tabs are gone; the box decides by what is pasted
   if (cfg.url_box) {
     $("limit").max = cfg.max_limit; $("limit").value = cfg.default_limit; syncLimit();
   }
@@ -3175,8 +3035,8 @@ async function loadConfig() {
 
 
 
-$("share-tip").hidden = isIos();  // sharing into a web app does not work on iPhone, so the tip would only mislead
 document.querySelectorAll("details.xp").forEach(smoothDetails);
+$("how").open = desktop();  // "Cara kerjanya" is shown open on a wide screen, closed on a phone
 applyLang();
 takeShared();
 loadConfig().then(resumeJob);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <meta name="robots" content="noindex, nofollow">
 <title>BedahReview owner</title>
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
@@ -16,12 +16,6 @@
   --accent: #0f6b5a; --on-accent: #ffffff; --accent-soft: #dff1ec; --bad: #b3261e; --bad-soft: #fde8e6; --warn: #8a5300; --warn-soft: #fff1e0;
   --font-ui: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --gutter: 16px; --radius: 14px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --grid: #232b28;
-    --accent: #4fc2a8; --on-accent: #0b1411; --accent-soft: #163a33; --bad: #f2b8b5; --bad-soft: #3a1f1d; --warn: #f0a24a; --warn-soft: #33261a;
-  }
 }
 :root[data-theme="dark"] {
   --bg: #111614; --surface: #1a211e; --ink: #e8eeea; --muted: #9aa8a1; --line: #2c3632; --grid: #232b28;
@@ -189,6 +183,7 @@ code { font-size: 0.85em; }
 </main>
 <script>
 "use strict";
+try { const th = localStorage.getItem("bedahreview-theme"); if (th === "dark") { document.documentElement.dataset.theme = "dark"; document.documentElement.style.colorScheme = "dark"; } } catch (e) { /* storage blocked */ }
 const byId = (id) => document.getElementById(id);
 const CODE_NAMES = {
   model_quota: "Gemini out of credit or quota", model_down: "Could not reach Gemini", model_bad: "Model reply could not be used",

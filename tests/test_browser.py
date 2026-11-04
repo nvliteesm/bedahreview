@@ -51,6 +51,39 @@ PROBE = """
 window.__probe = (async () => {
   const out = {};
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const NL = String.fromCharCode(10);
+  const SAMPLE = [
+    "★★★★★  Putih, L   bagus banget pakenya sama bahannya bagus luamayan tebel",
+    "★★★★☆  Putih, L   nyaman bet dah pokoknya, bahannya tebel cuman pas dateng kok ada dikit noda kecil ya, tapi ini gacor sih bagus banget desainnya",
+    "★★★☆☆  Putih, M   di tampilan sebelom beli, warna tulisannya ijo, pas dateng warna tulisannya hitem",
+    "★★☆☆☆  Hitam, L   Pas sampe koyak bajunya",
+    "★☆☆☆☆  Putih, L   produk tidak sesuai deskripsi, warna hijau tapi realitanya hitam, kalo emg terima dari pabrikan nya hitam kenapa ga pasang foto hitam aja?",
+  ].join(NL);
+  const analyse = (text, product) => send({ text, product: product || "" }, "t");  // pasting reviews is gone from the page; the server route is still there
+  const runSample = () => analyse(SAMPLE, "Kaos Boxy Retro");
+  if (location.hash === "#theme") {  // the device is set to dark; the page must still open light
+    const snap = () => ({ attr: document.documentElement.dataset.theme || "", bg: getComputedStyle(document.body).backgroundColor, saved: localStorage.getItem("bedahreview-theme") });
+    await wait(500);
+    const stage = sessionStorage.getItem("probe-stage");
+    if (!stage) {
+      out.device = matchMedia("(prefers-color-scheme: dark)").matches;
+      out.first = snap();
+      document.getElementById("theme").click(); await wait(500); out.dark = snap();
+      sessionStorage.setItem("probe-first", JSON.stringify(out));
+      sessionStorage.setItem("probe-stage", "dark");
+      location.reload(); await wait(60000);
+    }
+    const prev = JSON.parse(sessionStorage.getItem("probe-first"));
+    if (stage === "dark") {
+      prev.darkReload = snap();
+      document.getElementById("theme").click(); await wait(500); prev.light = snap();
+      sessionStorage.setItem("probe-first", JSON.stringify(prev));
+      sessionStorage.setItem("probe-stage", "light");
+      location.reload(); await wait(60000);
+    }
+    prev.lightReload = snap();
+    return prev;
+  }
   out.swApi = "serviceWorker" in navigator;
   out.sw = await Promise.race([
     navigator.serviceWorker.ready.then((reg) => "ready:" + (reg.active ? reg.active.state : "none")),
@@ -60,22 +93,22 @@ window.__probe = (async () => {
   const link = document.querySelector('link[rel=manifest]');
   const m = await (await fetch(link.href)).json();
   out.manifest = { display: m.display, theme: m.theme_color, share: m.share_target && m.share_target.method, icons: m.icons.length };
-  out.prefill = document.getElementById("paste").value;
-  out.product = document.getElementById("product").value;
+  out.prefill = document.getElementById("url").value;
   out.search = location.search;
-  out.sharedNote = !document.getElementById("shared-note").hidden;
-  out.tabSelected = document.getElementById("intab-paste").getAttribute("aria-selected");
+  out.urlError = document.getElementById("url-error").hidden ? "" : document.getElementById("url-error-text").textContent;
+  out.fetchOff = document.getElementById("fetch").classList.contains("off");
+  out.fetchLabel = document.getElementById("fetch").textContent;
+  out.pasteGone = ["paste", "product", "run", "intabs", "shared-note", "tips", "share-tip", "fallback", "paste-count", "shopee-note"].every((id) => document.getElementById(id) === null);
   out.lang = document.documentElement.lang;
   if (location.hash === "#flow") {
-    document.getElementById("sample").click();
-    document.getElementById("run").click();
+    runSample();
     for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
     out.tabs = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
     out.cards = document.querySelectorAll("#panel-fix .card").length;
     out.chips = [...document.querySelectorAll("#panel-fight .chip")].map((c) => c.textContent);
     out.keep = document.querySelectorAll("#panel-keep blockquote").length;
     out.aiNotes = [...document.querySelectorAll(".ai-note")].map((n) => n.closest("[role=tabpanel]").id);  // one note above the drafts of each tab
-    out.footHidden = document.getElementById("foot").hidden; out.noDev = !/analytics\.md|Model:|Demo:/.test(document.body.innerText);
+    out.footHidden = document.getElementById("foot") === null && !/diambil dari tautan/.test(document.body.innerText); out.noDev = !/analytics\.md|Model:|Demo:/.test(document.body.innerText);
     const cache = await caches.open("bedahreview-shell-v2");
     out.cachedPaths = (await cache.keys()).map((r) => new URL(r.url).pathname);
     out.copyButtons = document.querySelectorAll(".copy").length;
@@ -83,6 +116,7 @@ window.__probe = (async () => {
     document.getElementById("lang").click();
     out.enTabs = [...document.querySelectorAll("#tabs button")].map((t) => t.textContent);
     out.enLang = document.documentElement.lang;
+    out.enOne = [tr("cardN", 1), tr("cardN", 11), tr("sumKeep", 1, "quality"), tr("sumKeep", 2, "quality"), tr("daysLeft", 1)];
     out.draftStillBahasa = (document.querySelector("#panel-fix .todo li") || {}).textContent;
     out.whyEn = (document.querySelector("#panel-fight .why") || {}).textContent;
     out.stepsEn = [...document.querySelectorAll("#panel-fight .todo li")].map((li) => li.textContent);
@@ -91,10 +125,24 @@ window.__probe = (async () => {
     out.stepsId = [...document.querySelectorAll("#panel-fight .todo li")].map((li) => li.textContent);
     out.draftAfterBack = (document.querySelector("#panel-fight .draft .bahasa") || {}).textContent;
   }
+  if (location.hash === "#example") {  // "Coba dengan contoh": a recorded result, no model call and no tasks to make
+    document.getElementById("sample").click();
+    for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
+    out.ex = { results: !document.getElementById("view-results").hidden, note: document.getElementById("start").textContent, doneHidden: document.getElementById("done-btn").hidden, tabs: document.querySelectorAll("#tabs button").length };
+  }
+  if (location.hash === "#selesai") {  // Selesai opens Tugas with the box already there; the result stays in the browser's log for Riwayat
+    localStorage.removeItem("bedahreview-boxes-v1");
+    runSample();
+    for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
+    out.sel = { before: currentView };
+    document.getElementById("done-btn").click();
+    for (let i = 0; i < 60 && currentView !== "fixes"; i++) await wait(100);
+    out.sel.after = [currentView, !document.getElementById("view-fixes").hidden, document.getElementById("view-history").hidden, document.querySelectorAll("#tasks-body .tbox").length, document.getElementById("tasks-count").textContent];
+    out.sel.logged = loadLog().length;
+  }
   if (location.hash === "#desktop") {
     out.noAside = document.getElementById("feature2") === null && document.getElementById("ptabs") === null;
-    document.getElementById("sample").click();
-    document.getElementById("run").click();
+    runSample();
     for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
     const res = document.getElementById("view-results"), sum = document.getElementById("sumbox");
     out.cols = getComputedStyle(res).gridTemplateColumns.split(" ").map(parseFloat);
@@ -140,8 +188,7 @@ window.__probe = (async () => {
     localStorage.removeItem("bedahreview-fixes-v1");
     const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
     const resultsUp = () => !document.getElementById("view-results").hidden;
-    document.getElementById("sample").click();
-    document.getElementById("run").click();
+    runSample();
     await until(resultsUp);
     const card = document.querySelector("#panel-fix .card");
     const noNull = card.textContent.indexOf("null") < 0;
@@ -177,8 +224,7 @@ window.__probe = (async () => {
     localStorage.removeItem("bedahreview-fixes-v1"); localStorage.removeItem("bedahreview-plans-v1");
     const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
     const btn = (sel, text) => [...document.querySelectorAll(sel)].find((b) => b.textContent === text);
-    document.getElementById("sample").click();
-    document.getElementById("run").click();
+    runSample();
     await until(() => !document.getElementById("view-results").hidden);
     out.pl = { rows: [...document.querySelectorAll("#start .prow b")].map((b) => b.textContent), headline: document.getElementById("results-h").textContent, badge: document.getElementById("tasks-count").textContent };
     document.getElementById("tab-fight").click();  // a tile opens the sheet with that group
@@ -299,8 +345,7 @@ window.__probe = (async () => {
 
   if (location.hash === "#events") {
     const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
-    document.getElementById("sample").click();
-    document.getElementById("run").click();
+    runSample();
     await until(() => !document.getElementById("view-results").hidden);
     document.getElementById("tab-fight").click();
     document.querySelector("#panel-fight .copy").click();
@@ -312,7 +357,7 @@ window.__probe = (async () => {
     area.dispatchEvent(new Event("input"));
     [...fb.querySelectorAll("button")].find((b) => b.textContent === "Kirim").click();
     await wait(200);
-    out.ev.refused = fb.textContent.indexOf("teks ulasan") >= 0;
+    out.ev.refused = fb.textContent.indexOf("isi ulasan") >= 0;
     area = fb.querySelector("textarea");
     area.value = "cukup berguna";
     area.dispatchEvent(new Event("input"));
@@ -326,8 +371,7 @@ window.__probe = (async () => {
   if (location.hash === "#sections") { try {
     const until = async (fn) => { for (let i = 0; i < 60 && !fn(); i++) await wait(100); };
     await until(() => linkBoxOn === false);
-    document.getElementById("sample").click();
-    document.getElementById("run").click();
+    runSample();
     await until(() => !document.getElementById("view-results").hidden);
     out.sec = { openVisible: getComputedStyle(document.getElementById("rivals-open")).display !== "none", gone: [document.getElementById("nav-rivals"), document.getElementById("ptabs"), document.getElementById("feature2")].map((e) => e === null),
       bottom: [...document.querySelectorAll(".bottombar .nav")].map((n) => n.id) };
@@ -454,11 +498,11 @@ class BrowserTests(unittest.TestCase):
         web.STATIC = cls.real_static
         shutil.rmtree(cls.tmp, ignore_errors=True)
 
-    def probe(self, path, width=500):
+    def probe(self, path, width=500, *chrome_args):
         profile = tempfile.mkdtemp(dir=self.tmp)
         url = "http://127.0.0.1:%d%s" % (self.port, path)
         chrome = subprocess.Popen([CHROME, "--headless=new", "--disable-gpu", "--no-first-run", "--remote-debugging-port=0",
-                                   "--user-data-dir=" + profile, "--window-size=%d,900" % width, url],
+                                   "--user-data-dir=" + profile, "--window-size=%d,900" % width, *chrome_args, url],
                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             return _read_probe(profile, url)
@@ -467,29 +511,45 @@ class BrowserTests(unittest.TestCase):
             chrome.wait(timeout=20)
 
     def test_manifest_service_worker_and_share_prefill(self):
-        text = "★★☆☆☆  Hitam, L   Pas sampe koyak bajunya"
+        text = "Kaos Boxy Retro https://www.tokopedia.com/toko/kaos-boxy"
         out = self.probe("/?title=&text=" + quote(text) + "&url=")
         self.assertEqual(out["manifest"], {"display": "standalone", "theme": "#0f6b5a", "share": "GET", "icons": 3})
         self.assertIn(out["sw"], ("ready:activating", "ready:activated"))
         self.assertEqual(out["pageFlag"], "ready")
-        self.assertEqual(out["prefill"], text)  # the shared text is in the box
-        self.assertEqual(out["search"], "")  # and is not left in the address bar
-        self.assertTrue(out["sharedNote"])
-        self.assertEqual((out["tabSelected"], out["lang"]), ("true", "id"))
+        self.assertEqual(out["prefill"], "https://www.tokopedia.com/toko/kaos-boxy")  # only the link goes in the box
+        self.assertEqual(out["search"], "")  # and the shared text is not left in the address bar
+        self.assertEqual((out["fetchLabel"], out["fetchOff"], out["urlError"]), ("Ambil & bedah", False, ""))
+        self.assertEqual(out["lang"], "id")
 
-    def test_share_with_title_and_text_puts_the_title_in_the_product_name(self):
-        out = self.probe("/?title=" + quote("Kaos Boxy") + "&text=" + quote("bagus banget"))
-        self.assertEqual((out["prefill"], out["product"]), ("bagus banget", "Kaos Boxy"))  # the title is not counted as a review
+    def test_try_an_example_shows_a_recorded_result_without_tasks(self):
+        out = self.probe("/#example")["ex"]
+        self.assertTrue(out["results"])
+        self.assertEqual(out["tabs"], 4)
+        self.assertIn("contoh", out["note"])  # labelled as made up
+        self.assertTrue(out["doneHidden"])  # nothing to turn into tasks
 
-    def test_shared_link_only_is_not_treated_as_a_review(self):
-        out = self.probe("/?text=" + quote("https://shopee.co.id/Kaos-i.1.2"))
-        self.assertEqual(out["prefill"], "")
-        self.assertTrue(out["sharedNote"])
+    def test_selesai_opens_tugas_with_the_new_box(self):
+        out = self.probe("/#selesai")["sel"]
+        self.assertEqual(out["before"], "results")
+        self.assertEqual(out["after"], ["fixes", True, True, 1, "2"])  # Tugas, not Riwayat; one box; two open items
+        self.assertEqual(out["logged"], 1)  # the analysis is still logged for Riwayat
 
-    def test_no_share_leaves_the_box_empty(self):
+    def test_the_input_has_one_box_for_a_link_and_no_paste_path(self):
         out = self.probe("/")
-        self.assertEqual((out["prefill"], out["sharedNote"]), ("", False))
+        self.assertTrue(out["pasteGone"])  # no review box, product name, tabs, tips, Android share guide or Shopee paste note
+        self.assertEqual((out["prefill"], out["fetchLabel"], out["fetchOff"]), ("", "Bedah ulasan", True))  # an empty box waits
         self.assertTrue(out["sw"].startswith("ready:"), out["sw"])
+
+    def test_shared_review_text_without_a_link_is_not_read(self):
+        out = self.probe("/?title=" + quote("Kaos Boxy") + "&text=" + quote("bagus banget"))
+        self.assertEqual(out["prefill"], "")
+        self.assertEqual(out["urlError"], "Itu tidak terlihat seperti tautan.")
+
+    def test_a_shared_shopee_link_is_kept_but_not_sent(self):
+        out = self.probe("/?text=" + quote("https://shopee.co.id/Kaos-i.1.2"))
+        self.assertEqual(out["prefill"], "https://shopee.co.id/Kaos-i.1.2")
+        self.assertIn("Shopee belum didukung", out["urlError"])
+        self.assertTrue(out["fetchOff"])
 
     def test_results_board_and_language_switch(self):
         out = self.probe("/#flow")
@@ -499,13 +559,14 @@ class BrowserTests(unittest.TestCase):
         self.assertIn("Kurir? Cek dulu", out["chips"])
         self.assertGreaterEqual(out["keep"], 1)  # praise sits in its own Pertahankan tab
         self.assertEqual(out["aiNotes"], ["panel-fix", "panel-fight"])
-        self.assertTrue(out["footHidden"] and out["noDev"])  # pasted reviews: no footer note, and no developer text anywhere
+        self.assertTrue(out["footHidden"] and out["noDev"])  # no "fetched from the link" note under the result, and no developer text anywhere
         self.assertIn("/", out["cachedPaths"])  # the app shell is cached...
         self.assertFalse([p for p in out["cachedPaths"] if p.startswith("/api/")], out["cachedPaths"])  # ...reviews never are
         self.assertGreaterEqual(out["copyButtons"], 2)  # chat and public reply (a fix has nothing to copy)
         self.assertEqual([out["enTabs"][0], out["enTabs"][1], out["enTabs"][3]], ["Fix2", "Respond1", "Ignore0"])
         self.assertTrue(out["enTabs"][2].startswith("Keep"), out["enTabs"])
         self.assertEqual(out["enLang"], "en")
+        self.assertEqual(out["enOne"], ["1 review", "11 reviews", "1 buyer praises quality", "2 buyers praise quality", "1 day left"])  # one is singular in English
         self.assertEqual(out["draftStillBahasa"], "Ganti foto varian.")  # drafts stay Bahasa in English mode
         self.assertIn("Likely transit damage.", out["whyEn"])  # the explanation and steps follow the page language...
         self.assertEqual(out["stepsEn"], ["Ask for photos."])
@@ -525,6 +586,23 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(out["pills"], [True, True])  # Bedah ulasan and Tugas pills in the header...
         self.assertEqual(out["bottom"], "none")  # ...instead of the bottom bar
         self.assertTrue(out["themeChanged"])
+
+    def test_the_page_opens_light_even_when_the_device_is_dark_and_dark_is_only_the_sellers_choice(self):
+        out = self.probe("/#theme", 500, "--force-dark-mode")
+        light_bg, dark_bg = "rgb(246, 247, 245)", "rgb(17, 22, 20)"
+        self.assertTrue(out["device"])  # the device really asked for dark
+        self.assertEqual((out["first"]["attr"], out["first"]["bg"], out["first"]["saved"]), ("", light_bg, None))
+        self.assertEqual((out["dark"]["attr"], out["dark"]["bg"], out["dark"]["saved"]), ("dark", dark_bg, "dark"))
+        self.assertEqual((out["darkReload"]["attr"], out["darkReload"]["bg"]), ("dark", dark_bg))  # remembered after a reload
+        self.assertEqual((out["light"]["attr"], out["light"]["bg"], out["light"]["saved"]), ("light", light_bg, "light"))
+        self.assertEqual((out["lightReload"]["attr"], out["lightReload"]["bg"]), ("light", light_bg))
+
+    def test_no_page_follows_the_device_colour_setting(self):
+        static = Path(self.real_static)
+        for name in ("index.html", "privacy.html", "terms.html", "admin.html"):
+            text = (static / name).read_text(encoding="utf-8")
+            self.assertNotIn("prefers-color-scheme", text, name)
+            self.assertIn('<meta name="color-scheme" content="light">', text, name)
 
     def test_fix_tracking_logic(self):
         fx = self.probe("/#fixes")["fx"]
@@ -670,7 +748,7 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(sec["nameFilled"], "Kaos Boxy Retro")  # pasted reviews have no link: the form asks for it, the name is filled in
         self.assertEqual(sec["back"], "Hasil Bedah")  # the back link names where it returns to
         self.assertEqual(sec["example"]["head"], "Hasil Bedah pesaing")
-        self.assertEqual(sec["example"]["tabs"], ["Perlu dikejar3", "Keunggulanmu1"])
+        self.assertEqual(sec["example"]["tabs"], ["Perlu dikejar3", "Kamu unggul1"])
         self.assertTrue(sec["example"]["sum"] and sec["example"]["notice"] and sec["example"]["doneHidden"])  # the made-up example never adds tasks
         self.assertEqual(sec["cards"], 3)
         self.assertEqual(sec["returned"], ["results", True])
