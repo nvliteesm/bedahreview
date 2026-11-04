@@ -226,6 +226,8 @@ main, #view-results, #view-fixes, #view-history, .panel, .stack { grid-template-
 .group.learn h3 { color: var(--keep); } .group.avoid h3 { color: var(--fix); } .group.ignore h3 { color: var(--ignore); }
 .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .card-head .chips { justify-content: flex-end; }
+.card-head .chips .chip { border: 0; background: none; padding: 0; min-height: 0; font-size: 0.8rem; }  /* labels, not buttons */
+.panel .callout { padding: 8px 12px; font-size: 0.82rem; }
 .card-head .ttl { display: grid; gap: 2px; min-width: 0; } .vtxt { font-size: 0.8rem; color: var(--muted); }
 .lbl-b { font-weight: 800; color: var(--ink); }
 .actions { display: grid; gap: 10px; }
@@ -301,9 +303,9 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.75rem;
 #legend .lg-fix, .legend-dlg .lg-fix { color: var(--fix); } #legend .lg-fight, .legend-dlg .lg-fight { color: var(--fight); } #legend .lg-ignore, .legend-dlg .lg-ignore { color: var(--ignore); } #legend .lg-keep, .legend-dlg .lg-keep { color: var(--keep); }
 
 @media (min-width: 900px) {
-  :root { --radius: 22px; --bar: #e6eae7; --shadow: 0 1px 2px rgba(23, 32, 28, 0.05), 0 8px 24px rgba(23, 32, 28, 0.04); }
-  :root[data-theme="dark"] { --bar: #1a211e; --shadow: none; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bar: #1a211e; --shadow: none; } }
+  :root { --bar: #e6eae7; }  /* flat cards, radius 14: the same tokens as a phone */
+  :root[data-theme="dark"] { --bar: #1a211e; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bar: #1a211e; } }
   html, body { height: 100%; }
   body { overflow: hidden; display: flex; flex-direction: column; }
   .topbar { position: static; flex: none; padding: 0 36px; }
@@ -331,19 +333,11 @@ table.cmp thead th small { display: block; font-weight: 500; font-size: 0.75rem;
   .pchip { display: flex; align-items: center; gap: 6px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 8px 6px 16px; font-size: 0.92rem; box-shadow: var(--shadow); }
   .pchip b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pchip span { white-space: nowrap; color: var(--muted); }
-  .steps { grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 0; padding: 0; list-style: none; }
-  .steps li { display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); font-size: 0.9rem; color: var(--muted); }
-  .steps b { display: block; color: var(--ink); }
-  .steps .num { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 800; flex: none; }
   .card-box, .card, .rcard, .ins, .dnote { box-shadow: var(--shadow); }
   .card-box { padding: 24px; gap: 16px; }
   .rcard { padding: 24px; gap: 14px; }
   .rcard h2 { font-size: 1.5rem; letter-spacing: -0.01em; }
-  .seg { display: inline-grid; grid-auto-columns: auto; justify-self: start; border-radius: 999px; padding: 5px; }
-  .seg button { border-radius: 999px; padding: 0 22px; }
-  .seg button[aria-selected="true"], .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); box-shadow: none; }
-  .btn { border-radius: 999px; min-height: 52px; }
-  .btn.primary { width: auto; padding: 0 30px; justify-self: start; }
+  .btn.primary { width: 260px; justify-self: start; }  /* a stand-alone primary button on a wide screen: 260 px, left aligned */
   .actions { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
   #paste { min-height: 160px; }
   .error { border-radius: var(--radius); padding: 18px 20px; order: -1; }
@@ -586,7 +580,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 #sheet.dlg .sheet-box { top: 50%; bottom: auto; left: 50%; right: auto; width: min(480px, calc(100% - 32px)); border-radius: 22px; padding: 24px; transform: translate(-50%, -46%); opacity: 0; transition: transform 0.24s var(--ease), opacity 0.24s; background: var(--surface); }
 #sheet.dlg.open .sheet-box { transform: translate(-50%, -50%); opacity: 1; }
 #sheet.dlg .grab { display: none; }
-.toast2 { position: fixed; left: 16px; right: 16px; top: calc(64px + env(safe-area-inset-top)); z-index: 45; pointer-events: none; max-width: 440px; margin: 0 auto; background: var(--ink); color: var(--bg); font-size: 0.85rem; font-weight: 600; padding: 10px 14px; border-radius: 12px; text-align: center; animation: rise 0.24s var(--ease); }
+.toast2 { position: fixed; left: 16px; right: 16px; top: calc(64px + env(safe-area-inset-top)); z-index: 45; pointer-events: none; max-width: 440px; margin: 0 auto; background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 4px 16px rgba(23, 32, 28, 0.12); font-size: 0.85rem; font-weight: 600; padding: 10px 14px; border-radius: 12px; text-align: center; animation: rise 0.24s var(--ease); }
 
 /* motion: short, and only where something moves or appears; off when the system asks for less motion */
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -599,7 +593,6 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 
 @media (min-width: 900px) {
   #results-h { font-size: 30px; line-height: 1.2; letter-spacing: -0.02em; }
-  .res-meta { display: none; }  /* the product chip in the column header already names it */
   .plan { border-radius: 22px; padding: 16px 20px 8px; }
   .plan .hd { padding-bottom: 10px; }
   .plan h3 { font-size: 20px; padding: 0; }
@@ -736,16 +729,18 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 /* a wide screen: one scroll area, a centred column; Hasil Bedah gets two columns with the summary kept in view; Tugas two boxes per row */
 @media (min-width: 900px) {
   .workspace { display: block; overflow-y: auto; }
-  .workspace > main.col { max-width: 720px; margin: 0 auto; overflow: visible; padding: 32px 36px 72px; }
+  .workspace > main.col { max-width: 792px; margin: 0 auto;  /* 720 px of content */ overflow: visible; padding: 32px 36px 72px; }
   .workspace.wide > main.col { max-width: 1240px; }
   .hero:not([hidden]) { display: grid; } .hero h1 { font-size: 38px; }
   .res-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .res-top .res-meta { flex: 1 0 100%; } .res-top #results-h { flex: 1; }
   #view-results { grid-template-columns: minmax(0, 1fr) 380px !important; column-gap: 32px; align-items: start; }
   #view-results > * { grid-column: 1; }
   #view-results > .res-top { grid-column: 1 / -1; }
   #view-results > #sumbox { grid-column: 2; grid-row: 2 / span 12; position: sticky; top: 16px; }
   .tgrid { grid-template-columns: 1fr 1fr; align-items: start; }
   .tgrid > .tsec, .tgrid > .full-row { grid-column: 1 / -1; }
+  .tgrid > .tbox:only-child { grid-column: 1 / -1; width: 100%; max-width: 560px; justify-self: center; }  /* one box alone sits in the middle, not at the edge of an empty page */
   .rival-wrap { max-width: 720px; }
 }
 @media (min-width: 900px) and (max-width: 1199px) { #view-results { grid-template-columns: minmax(0, 1fr) 300px !important; } }
@@ -1084,7 +1079,7 @@ const TEXT = {
     histFoot: "Riwayat hanya menyimpan ringkasan, bukan isi ulasan. Dihapus otomatis setelah 60 hari. Status dan Lanjutkan hanya ada di HP tempat kamu membedah.",
     rivalFor: "Untuk", rivalWait: "Sekitar 10 sampai 40 detik.", cancelBtn: "Batal", rivalSearching: "Mencari produk serupa…", rivalPickT: "Pilih 1 atau 2 pesaing", rivalFoundN: "Ketemu %s produk serupa. Yang paling mirip sudah dipilih.", rivalGoN: "Bandingkan (%s dipilih)",
     rivalQuota: "Memakai 1 jatah analisis hari ini", rivalPasteSum: "Punya tautan pesaing sendiri?", rivalResultT: "Hasil Bedah pesaing", rivalVs: "Kamu vs %s", rivalCatchUp: "Perlu dikejar", rivalEdge: "Keunggulanmu", buyerRivalLbl: "KATA PEMBELI PESAING",
-    rivalDoWorse: "Cari tahu kenapa keluhan %s lebih sering muncul di produkmu daripada di pesaing, lalu perbaiki.", rivalDoGap: "Pelajari kenapa pembeli memuji %s di %s, lalu tonjolkan hal serupa di produkmu.", rivalDoEdge: "Pertahankan dan tonjolkan: pembeli pesaing mengeluhkan %s, produkmu tidak.", sumLabelFix: "RINGKASAN · %s HAL PERLU DIPERBAIKI", sumLabel: "RINGKASAN", sumItem: "%s (%s ulasan)", sumMore: "+%s lainnya: %s", sumNothing: "Tidak ada keluhan yang perlu diperbaiki.", sumAlso: "Juga: %s", sumFight: "%s ulasan perlu ditanggapi", sumKeep: "%s pembeli memuji %s", cardN: "%s ulasan", buyerLbl: "KATA PEMBELI", todoLbl: "YANG PERLU KAMU LAKUKAN", endTitle: "Sudah selesai membaca?", selesaiBtn: "Selesai", endNote: "Salin balasan yang kamu perlukan dulu.", doneToast: "%s tugas masuk",
+    rivalDoWorse: "Cari tahu kenapa keluhan %s lebih sering muncul di produkmu daripada di pesaing, lalu perbaiki.", rivalDoGap: "Pelajari kenapa pembeli memuji %s di %s, lalu tonjolkan hal serupa di produkmu.", rivalDoEdge: "Pertahankan dan tonjolkan: pembeli pesaing mengeluhkan %s, produkmu tidak.", sumLabelFix: "RINGKASAN · %s HAL PERLU DIPERBAIKI", sumLabel: "RINGKASAN", sumItem: "%s (%s ulasan)", sumMore: "+%s lainnya: %s", moreReplies: "Balasan untuk %s ulasan lain", sumNothing: "Tidak ada keluhan yang perlu diperbaiki.", sumAlso: "Juga: %s", sumFight: "%s ulasan perlu ditanggapi", sumKeep: "%s pembeli memuji %s", cardN: "%s ulasan", buyerLbl: "KATA PEMBELI", todoLbl: "YANG PERLU KAMU LAKUKAN", endTitle: "Sudah selesai membaca?", selesaiBtn: "Selesai", endNote: "Salin balasan yang kamu perlukan dulu.", doneToast: "%s tugas masuk",
     rivalWantLbl: "Berapa pesaing?", rivalExampleBtn: "Lihat contoh (gratis)", rivalExampleHead: "Contoh, bukan data nyata.",
     rivalExampleBody: "Angka dan kutipan di bawah dibuat untuk contoh. “Contoh Kaos Boxy” bukan produkmu: tidak ada toko atau pembeli sungguhan, dan tidak ada biaya.",
     rivalNoBox: "Pencarian pesaing butuh kotak tautan, yang belum menyala di sini. Kamu masih bisa melihat contoh.",
@@ -1268,7 +1263,7 @@ const TEXT = {
     histFoot: "History keeps only a summary, never the review text. It is deleted automatically after 60 days. Status and Continue exist only on the phone where you ran the check.",
     rivalFor: "For", rivalWait: "About 10 to 40 seconds.", cancelBtn: "Cancel", rivalSearching: "Looking for similar products…", rivalPickT: "Pick 1 or 2 competitors", rivalFoundN: "Found %s similar products. The closest match is already picked.", rivalGoN: "Compare (%s picked)",
     rivalQuota: "Uses 1 analysis of your daily limit", rivalPasteSum: "Have a competitor link of your own?", rivalResultT: "Competitor results", rivalVs: "You vs %s", rivalCatchUp: "Catch up", rivalEdge: "Your edge", buyerRivalLbl: "WHAT COMPETITOR BUYERS SAY",
-    rivalDoWorse: "Find out why %s complaints show up more on your product than on theirs, then fix it.", rivalDoGap: "Learn why buyers praise %s at %s, then bring out something similar on your product.", rivalDoEdge: "Keep it and show it off: competitor buyers complain about %s, yours do not.", sumLabelFix: "SUMMARY · %s THINGS TO FIX", sumLabel: "SUMMARY", sumItem: "%s (%s reviews)", sumMore: "+%s more: %s", sumNothing: "Nothing to fix in these reviews.", sumAlso: "Also: %s", sumFight: "%s reviews to respond to", sumKeep: "%s buyers praise %s", cardN: "%s reviews", buyerLbl: "WHAT BUYERS SAY", todoLbl: "WHAT TO DO", endTitle: "Done reading?", selesaiBtn: "Done", endNote: "Copy the replies you need first.", doneToast: "%s tasks added",
+    rivalDoWorse: "Find out why %s complaints show up more on your product than on theirs, then fix it.", rivalDoGap: "Learn why buyers praise %s at %s, then bring out something similar on your product.", rivalDoEdge: "Keep it and show it off: competitor buyers complain about %s, yours do not.", sumLabelFix: "SUMMARY · %s THINGS TO FIX", sumLabel: "SUMMARY", sumItem: "%s (%s reviews)", sumMore: "+%s more: %s", moreReplies: "Replies for %s other reviews", sumNothing: "Nothing to fix in these reviews.", sumAlso: "Also: %s", sumFight: "%s reviews to respond to", sumKeep: "%s buyers praise %s", cardN: "%s reviews", buyerLbl: "WHAT BUYERS SAY", todoLbl: "WHAT TO DO", endTitle: "Done reading?", selesaiBtn: "Done", endNote: "Copy the replies you need first.", doneToast: "%s tasks added",
     rivalWantLbl: "How many competitors?", rivalExampleBtn: "See an example (free)", rivalExampleHead: "Example, not live data.",
     rivalExampleBody: "The numbers and quotes below were made up for this example. “Contoh Kaos Boxy” is not your product: no real shops or buyers, and no cost.",
     rivalNoBox: "Finding competitors needs the link box, which is not switched on here. You can still see an example.",
@@ -1530,23 +1525,36 @@ const buyerBox = (quotes, more) => h("div", { class: "buyer" }, h("span", { clas
   more && more.length ? h("details", { class: "full" }, h("summary", { text: tr("moreQuotes", more.length) }), h("div", { class: "stack" }, more.map((m) => [quote(m), fullText(m)]))) : null);
 const todoBox = (lines, lg, reply, why) => (lines.length ? h("div", { class: "todo" + (reply ? " reply" : "") }, h("span", { class: "lab" }, svgIcon(WRENCH), tr("todoLbl")), h("ul", { lang: lg }, lines.map((t) => h("li", { text: t }))),
   why ? h("p", { class: "why small", lang: lg, text: why }) : null) : null);  // "why": the one line that says what probably happened, under the steps of a reply card
-function replyCard(item) {  // the same shape as a fix card; the drafts are numbered 1 (chat to the buyer) and 2 (public reply)
-  const kit = item.fight || {};
+const replyKey = (it) => [it.theme, it.bucket, !!(it.likely_fake && it.likely_fake.flag), !!it.check_first].join("|");
+function replyGroups(items) {  // one card per theme (and kind), like the fix cards: the same problem is not shown twice
+  const m = new Map();
+  items.forEach((it) => { const k = replyKey(it); if (!m.has(k)) m.set(k, []); m.get(k).push(it); });
+  return [...m.values()].map(replyCard);
+}
+function replyDrafts(item) {  // the drafts are numbered 1 (chat to the buyer) and 2 (public reply)
+  const kit = item.fight || {}, NUM = { chat: "1 · ", public: "2 · " };
+  const drafts = [["chat", tr("dChat"), kit.chat_to_buyer], ["public", tr("dPublic"), kit.public_reply],
+    ["side", tr("dCheckSide"), item.bucket === "check" ? item.fix_suggestion_id : null], ["report", tr("dReport"), kit.report_text]].filter((d) => d[2]);
+  return drafts.length ? h("div", { class: "drafts" }, drafts.map(([k, label, text]) => draft((NUM[k] || "") + label, text, k))) : null;
+}
+function replyCard(items) {  // the same shape as a fix card
+  const item = items[0], kit = item.fight || {};
   const { why, steps } = kitText(kit);
   const fake = item.likely_fake && item.likely_fake.flag;
   const todo = steps.length ? steps : (why ? [why] : []), whyLine = steps.length ? why : "";
-  const NUM = { chat: "1 · ", public: "2 · " };
-  const drafts = [["chat", tr("dChat"), kit.chat_to_buyer], ["public", tr("dPublic"), kit.public_reply],
-    ["side", tr("dCheckSide"), item.bucket === "check" ? item.fix_suggestion_id : null], ["report", tr("dReport"), kit.report_text]].filter((d) => d[2]);
+  const variants = [...new Set(items.map((it) => (it.variant || "").split(",")[0].trim()).filter(Boolean))];
+  const others = items.slice(1);
   return h("article", { class: "card rcard" },
-    h("div", { class: "card-head" }, h("div", { class: "ttl" }, h("h3", { text: themeName(item.theme) }), item.variant ? h("span", { class: "vtxt", text: item.variant }) : null),
+    h("div", { class: "card-head" }, h("div", { class: "ttl" }, h("h3", { text: themeName(item.theme) }), variants.length ? h("span", { class: "vtxt", text: variants.join(", ") }) : null),
       h("div", { class: "chips" },
         fake ? h("span", { class: "chip hot", text: tr("chipFake") }) : null,
         item.bucket === "check" ? h("span", { class: "chip soft", text: tr("chipCheck") }) : null,
         item.check_first ? h("span", { class: "chip hot", text: tr("chipCourier") }) : null,
-        item.confidence === "low" ? h("span", { class: "chip", text: tr("chipLow") }) : null)),
-    buyerBox([item]), todoBox(todo, lang, true, whyLine),
-    drafts.length ? h("div", { class: "drafts" }, drafts.map(([k, label, text]) => draft((NUM[k] || "") + label, text, k))) : null);
+        item.confidence === "low" ? h("span", { class: "chip", text: tr("chipLow") }) : null,
+        items.length > 1 ? h("span", { class: "cn", text: tr("cardN", items.length) }) : null)),
+    buyerBox(items.slice(0, 2), items.slice(2)), todoBox(todo, lang, true, whyLine), replyDrafts(item),
+    others.length ? h("details", { class: "full" }, h("summary", { text: tr("moreReplies", others.length) }),
+      h("div", { class: "stack" }, others.map((o) => [quote(o), replyDrafts(o)]))) : null);
 }
 function fixCard(group, byId) {
   const members = group.ids.map((id) => byId[id]);
@@ -2303,7 +2311,7 @@ function render(data, fresh) {
     k === "fix" || k === "fight" ? null : h("p", { class: "rule", text: tr(k + "Rule") }), extra, body);  // Perbaiki and Tanggapi open with their one note, not a stack of them
   $("panels").replaceChildren(
     panel("fix", fixItems.length ? fixItems.map((g) => fixCard(g, byId)) : h("div", { class: "empty", text: tr("emptyFix") }), fixItems.length ? aiNote() : null),
-    panel("fight", fight.length ? fight.map(replyCard) : h("div", { class: "empty", text: tr("emptyFight") }), [h("div", { class: "callout" }, h("b", { text: tr("noRemove") + " " }), tr("noRemoveBody", plat, plat)), fight.length ? aiNote() : null]),
+    panel("fight", fight.length ? replyGroups(fight) : h("div", { class: "empty", text: tr("emptyFight") }), [h("div", { class: "callout" }, h("b", { text: tr("noRemove") + " " }), tr("noRemoveBody", plat, plat)), fight.length ? aiNote() : null]),
     panel("keep", keep.length ? keepBody(keep) : h("div", { class: "empty", text: tr("emptyKeep") })),
     panel("ignore", ignore.length ? ignoreList(ignore) : h("div", { class: "empty", text: tr("emptyIgnore") })));
   renderRival(); renderFeedback();
