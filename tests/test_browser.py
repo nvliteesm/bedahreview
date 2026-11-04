@@ -456,6 +456,11 @@ window.__probe = (async () => {
     lay.title = rect("results-h"); lay.sum = rect("sumbox"); lay.tabs = rect("tabs"); lay.logo = rect("brand-home"); lay.tools = rect(document.querySelector(".tools"));
     lay.noPrintButton = document.getElementById("print-d") === null;  // printing lives in the account menu
     lay.quoteFont = getComputedStyle(document.querySelector("#panels blockquote")).fontFamily;
+    lay.panels = rect("panels");
+    const ra = document.getElementById("done-btn").getBoundingClientRect(), rb = document.getElementById("rivals-open").getBoundingClientRect();
+    lay.actions = { sizeA: [Math.round(ra.width), Math.round(ra.height)], sizeB: [Math.round(rb.width), Math.round(rb.height)], topA: Math.round(ra.top), topB: Math.round(rb.top) };
+    renderSummary([{ theme: "Colour vs photo", n: 1 }], [], [], { fix: 1, fight: 0, ignore: 0, keep: 0 });  // one fix, no replies and no praise: nothing after the bullets
+    lay.summaryText = document.getElementById("sumbox").textContent;
     document.getElementById("brand-home").click(); await wait(300);
     lay.back = rect("back-results"); lay.card = rect(document.querySelector("#view-input .card-box")); lay.sample = rect("sample");
     lay.backShown = [!document.getElementById("back-results").hidden, getComputedStyle(document.getElementById("back-results")).display];
@@ -843,7 +848,10 @@ class BrowserTests(unittest.TestCase):
         self.assertGreater(lay["sum"]["left"], lay["tabs"]["right"] - 1)  # the summary beside the cards
         self.assertLessEqual(abs(lay["title"]["left"] - lay["logo"]["left"]), 1)  # the logo and Hasil Bedah start at the same edge
         self.assertLessEqual(abs(lay["tools"]["right"] - lay["sum"]["right"]), 1)  # the header ends where the summary ends
-        self.assertTrue(lay["title"]["top"] - 8 <= lay["sum"]["top"] <= lay["title"]["top"] + 24)  # the summary starts level with the title, not below the banner
+        self.assertLessEqual(abs(lay["sum"]["top"] - lay["panels"]["top"]), 1)  # the summary starts level with the first card, not hanging up beside the title
+        self.assertEqual(lay["actions"]["sizeA"], lay["actions"]["sizeB"])  # Selesai and Analisa Kompetitor are the same size...
+        self.assertEqual(lay["actions"]["topA"], lay["actions"]["topB"])  # ...side by side, on one line
+        self.assertNotIn("null", lay["summaryText"].lower())  # the summary never prints the word "null"
         self.assertTrue(lay["noPrintButton"])
         self.assertNotIn("mono", lay["quoteFont"].lower())  # quotes read as text, not code
         self.assertEqual(lay["backShown"], [True, "flex"])  # "Lihat hasil terakhir" shows while a result is held...
@@ -851,6 +859,14 @@ class BrowserTests(unittest.TestCase):
         self.assertGreaterEqual(lay["sample"]["top"], lay["back"]["bottom"] - 1)  # and each link has a line of its own
         self.assertEqual(lay["tugas"]["box"]["left"], lay["tugas"]["title"]["left"])  # a lone Tugas box lines up with its title
         self.assertIn("btn", lay["tugas"]["action"])  # Analisa Kompetitor is a button there
+
+    def test_the_two_end_buttons_are_side_by_side_and_equal_on_a_phone_too(self):
+        lay = self.probe("/#layout", width=390)
+        self.assertNotIn("err", lay, lay.get("err"))
+        lay = lay["lay"]
+        self.assertEqual(lay["actions"]["sizeA"], lay["actions"]["sizeB"])
+        self.assertEqual(lay["actions"]["topA"], lay["actions"]["topB"])
+        self.assertNotIn("null", lay["summaryText"].lower())
 
     def test_a_narrower_desktop_gets_one_column_with_the_summary_above_the_tabs(self):
         lay = self.probe("/#layout", width=1000)

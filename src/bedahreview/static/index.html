@@ -665,6 +665,9 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 .res-end .small { font-size: 12px; }
 #view-results.locked .res-end { display: none !important; }
 #another-btn { justify-self: center; min-height: 44px; }  /* a quiet third choice under Selesai and Analisa Kompetitor */
+.res-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }  /* the two real choices side by side, the same size, on every width */
+.res-actions .btn, .res-end .res-actions .btn { width: 100%; min-width: 0; padding-left: 10px; padding-right: 10px; justify-self: stretch; font-size: 1rem; font-weight: 700; }
+@media (min-width: 900px) { .res-end .res-actions { max-width: 540px; } #another-btn { justify-self: start; } }
 @media (min-width: 900px) { #another-btn { justify-self: start; } .res-end .btn { width: 260px; justify-self: start; } .gtabs { margin: 0; padding: 2px 0; flex-wrap: wrap; overflow: visible; } }
 @media print { .panel[hidden] { display: grid !important; } }
 
@@ -727,9 +730,9 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
   .hero:not([hidden]) { display: grid; } .hero h1 { font-size: 38px; }
   .res-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .res-top .res-meta { flex: 1 0 100%; } .res-top #results-h { flex: 1; }
-  .tgrid { grid-template-columns: 1fr 1fr; align-items: start; }
-  .tgrid > .tsec, .tgrid > .full-row { grid-column: 1 / -1; }
-  .tgrid > .tbox:only-child { grid-column: 1 / -1; width: 100%; max-width: 560px; justify-self: start; }  /* one box alone lines up with its title, not floating in the middle */
+  .tgrid { display: block; column-count: 2; column-gap: 12px; }  /* boxes fall into two columns, one under the other: no empty gaps between boxes of different heights, a lone box lines up with its title */
+  .tgrid > * { break-inside: avoid; margin-bottom: 12px; }
+  .tgrid > .tsec, .tgrid > .full-row { column-span: all; }
   .rival-wrap { max-width: 720px; }
 }
 /* Hasil Bedah: two columns with the summary beside the title from 1100px. Below that (a tablet held wide) it is one column with the summary above the tabs, as on a phone. */
@@ -737,8 +740,9 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 @media (min-width: 1100px) {
   #view-results { grid-template-columns: minmax(0, 1fr) 300px !important; column-gap: 32px; align-items: start; }
   #view-results > * { grid-column: 1; }
-  #view-results > .res-top { grid-column: 1; }
-  #view-results > #sumbox { grid-column: 2; grid-row: 1 / span 12; position: sticky; top: 16px; margin-top: 8px; }
+  #view-results > .res-top { grid-row: 1; } #view-results > #start { grid-row: 2; } #view-results > #tabs { grid-row: 3; } #view-results > #unlock { grid-row: 4; }
+  #view-results > #panels { grid-row: 5; } #view-results > #notes { grid-row: 6; } #view-results > #feedback { grid-row: 7; } #view-results > #res-end { grid-row: 8; } #view-results > .foot { grid-row: 9; }
+  #view-results > #sumbox { grid-column: 2; grid-row: 5 / span 5; position: sticky; top: 16px; }  /* the summary starts in the cards' row, level with the first card, and stays in view while the cards scroll */
 }
 @media (min-width: 1200px) { #view-results { grid-template-columns: minmax(0, 1fr) 380px !important; } }
 @media (min-width: 900px) { .gtabs { flex-wrap: wrap; } }
@@ -929,8 +933,10 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
     <div class="card-box" id="feedback" hidden></div>
     <div class="res-end" id="res-end">
       <h3 data-i18n="endTitle"></h3>
-      <button class="btn primary" id="done-btn" type="button" data-i18n="selesaiBtn"></button>
-      <button class="btn ghost" id="rivals-open" type="button" data-i18n="rivalsOpen"></button>
+      <div class="res-actions">
+        <button class="btn primary" id="done-btn" type="button" data-i18n="selesaiBtn"></button>
+        <button class="btn ghost" id="rivals-open" type="button" data-i18n="rivalsOpen"></button>
+      </div>
       <button class="plain strong" id="another-btn" type="button" data-i18n="another"></button>
     </div>
     <p class="foot"><a href="/privacy" target="_blank" rel="noopener" data-i18n="privLink"></a> · <a href="/terms" target="_blank" rel="noopener" data-i18n="termsLink"></a></p>
@@ -2038,8 +2044,8 @@ function taskBox(b) {
   if (boxDone(b)) {
     return h("article", { class: "tbox alldone" }, h("div", { class: "okh" }, svgIcon(["M7.5 12.5l3 3 6-7", "M12 2.5a9.5 9.5 0 100 19 9.5 9.5 0 000-19z"]), tr("taskProgress", total, total)),
       h("b", { title: b.label || null, text: boxName(b) }), h("p", { text: tr("taskAllDoneP") }),
-      h("button", { class: "btn primary", type: "button", text: tr("taskAgain"), onclick: again }),
-      h("details", { class: "xp" }, h("summary", { text: tr("taskSee") }), h("div", {}, checklist(b, false))), h("div", { class: "tlinks" }, compete));
+      h("div", { class: "res-actions" }, h("button", { class: "btn primary", type: "button", text: tr("taskAgain"), onclick: again }), compete),
+      h("details", { class: "xp" }, h("summary", { text: tr("taskSee") }), h("div", {}, checklist(b, false))));
   }
   return h("article", { class: "tbox" },
     h("div", { class: "bh" }, h("b", { title: b.label || null, text: boxName(b) }), h("span", { class: "tchip", text: tr("daysLeft", daysLeft(b)) })),
@@ -2293,8 +2299,8 @@ function renderSummary(groups, fight, keep, counts) {  // the soft-green box: wh
   const also = [];
   if (fight.length) also.push(tr("sumFight", fight.length));
   if (keep.length) { const th = [...new Set(keep.map((k) => plainTheme(k.theme).toLowerCase()))].slice(0, 2); also.push(tr("sumKeep", keep.length, th.join(" " + tr("and") + " "))); }
-  $("sumbox").replaceChildren(h("span", { class: "eb", text: counts.fix ? tr("sumLabelFix", counts.fix) : tr("sumLabel") }), h("ul", {}, bullets.map((b) => h("li", { text: b }))),
-    also.length ? h("span", { class: "also", text: tr("sumAlso", also.join(" · ")) }) : null);
+  $("sumbox").replaceChildren(...[h("span", { class: "eb", text: counts.fix ? tr("sumLabelFix", counts.fix) : tr("sumLabel") }), h("ul", {}, bullets.map((b) => h("li", { text: b }))),
+    also.length ? h("span", { class: "also", text: tr("sumAlso", also.join(" · ")) }) : null].filter(Boolean));  // never null: replaceChildren would print the word "null" when there are no replies or praise
 }
 function render(data, fresh) {
   lastData = data;
@@ -2550,7 +2556,7 @@ function rivalResult(st) {
     h("div", { class: "sumbox" }, h("span", { class: "eb", text: tr("sumLabel") }), h("ul", {}, (bullets.length ? bullets : [tr("rivalNoInsight")]).map((t) => h("li", { text: t })))),
     tabsEl, body,
     notes.length ? h("div", { class: "stack" }, notes.map((t) => h("p", { class: "small muted", text: t }))) : null,
-    h("div", { class: "res-end" }, h("h3", { text: tr("endTitle") }), done, again));
+    h("div", { class: "res-end" }, h("h3", { text: tr("endTitle") }), h("div", { class: "res-actions" }, done, again)));
 }
 function rivalBody() {
   if (rival.step === "searching") return [rivalSpinner(rival.target)];
