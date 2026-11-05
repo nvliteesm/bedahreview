@@ -194,7 +194,7 @@ class WebTests(unittest.TestCase):
         self.assertEqual(resp.getheader("Referrer-Policy"), "strict-origin-when-cross-origin")
         self.assertIn("camera=()", resp.getheader("Permissions-Policy"))
 
-    def test_the_access_code_page_is_still_reachable_for_interviewers(self):
+    def test_the_access_code_page_is_still_reachable_for_testers(self):
         resp, page = self.call("/code")
         self.assertEqual(resp.status, 200)
         self.assertIn(b'name="csrf"', page)
