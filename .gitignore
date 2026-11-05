@@ -22,3 +22,6 @@ fetch_cache/
 internal/
 
 .playwright-mcp/
+
+# Claude Code project notes: private, kept on the owner's disk only
+CLAUDE.md

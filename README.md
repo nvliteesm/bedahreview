@@ -190,4 +190,4 @@ With `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `.env`, the page opens for everyo
 
 ## Copyright
 
-Copyright © 2026 BedahReview. Contact: [bedahreview@gmail.com](mailto:bedahreview@gmail.com)
+Copyright © 2026 BedahReview. All rights reserved. See [LICENSE](LICENSE). Contact: [bedahreview@gmail.com](mailto:bedahreview@gmail.com)
