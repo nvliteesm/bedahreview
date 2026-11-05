@@ -71,7 +71,7 @@ a { color: var(--accent); font-weight: 600; }
     <li><b>Kotak Tugas, kalau kamu masuk.</b> Saat kamu menekan Selesai, kami menyimpan satu kotak per produk supaya daftarmu bisa dibuka dari HP lain: <b>nama atau tautan produk</b>, kalimat tugasnya, mana yang sudah kamu centang, dan tanggalnya. Kalimat tugas sebagian besar adalah saran yang ditulis AI dari ulasan (misalnya “Ganti foto varian”) dan nama keluhan. Tanpa teks ulasan, kutipan pembeli, draf balasan, atau nama pembeli. Lewat aplikasi, hanya akunmu yang bisa membacanya; pembuat aplikasi bisa melihatnya di dasbor Supabase. Kotak yang lebih dari 30 hari dihapus saat kamu membuka aplikasi.</li>
     <li><b>Riwayat analisis, kalau kamu masuk.</b> Setiap kali kamu membedah ulasan, kami menyimpan ringkasannya: tanggal, nama produk, jumlah ulasan, jumlah di tiap kelompok, dan nama keluhan terbanyak. Tanpa teks ulasan, kutipan, draf, atau saran AI. Riwayat dihapus setelah 60 hari, dan ikut terhapus bersama akunmu.</li>
     <li><b>Daftar perbaikan lama.</b> Versi aplikasi sebelumnya punya fitur “Tandai sudah diperbaiki”. Kalau kamu pernah memakainya, tema keluhan, tanggal, hitungan, <b>nama atau tautan produk</b>, dan <b>catatan singkatmu</b> masih tersimpan di akunmu sampai kamu menghapus akunmu. Fitur itu tidak membuat catatan baru lagi.</li>
-    <li><b>Di perangkatmu.</b> Sesi masuk, pilihan bahasa dan tema, salinan kotak Tugas, catatan analisismu (tanggal, jumlah, status), hasil analisis yang belum kamu selesaikan (termasuk kutipan ulasan, ditahan 7 hari supaya kamu bisa menekan “Lanjutkan”; tidak dikirim ke server), dan penanda acak perangkat. Salinan kotak, catatan, dan hasil ini dihapus dari perangkat saat kamu keluar (kotak tetap ada di akunmu). Semuanya di penyimpanan browser (localStorage), bukan cookie pelacak. File kalender dari “Tambah ke Kalender” dibuat di perangkatmu dan tidak dikirim ke mana pun.</li>
+    <li><b>Di perangkatmu.</b> Sesi masuk, pilihan bahasa dan tema, salinan kotak Tugas, catatan analisismu (tanggal, jumlah, status), hasil analisis yang belum kamu selesaikan (termasuk kutipan ulasan, ditahan 7 hari supaya kamu bisa menekan “Lanjutkan”; tidak dikirim ke server), dan penanda acak perangkat (dikirim bersama catatan pemakaian supaya perangkat bisa dibedakan; tidak berisi namamu). Salinan kotak, catatan, dan hasil ini dihapus dari perangkat saat kamu keluar (kotak tetap ada di akunmu). Semuanya di penyimpanan browser (localStorage), bukan cookie pelacak. File kalender dari “Tambah ke Kalender” dibuat di perangkatmu dan tidak dikirim ke mana pun.</li>
     <li><b>Analisis gratis sebelum masuk.</b> Tanpa akun, kamu bisa membedah sekali. Selain salinan sementara yang dijelaskan di bagian “Yang tidak kami simpan, atau hanya sebentar”, server hanya menyimpan hitungan jumlah, per alamat perangkat dan di memori saja (alamat tidak pernah ditulis ke catatan). Browser mencatat bahwa analisis gratis sudah dipakai. Kalau kamu masuk dengan Google, hasilnya menunggu di penyimpanan tab ini (sessionStorage) selama kamu ke halaman Google, lalu langsung dihapus begitu tampil lagi.</li>
   </ul>
 
@@ -93,7 +93,7 @@ a { color: var(--accent); font-weight: 600; }
 
   <h2>Berapa lama</h2>
   <ul>
-    <li>Catatan pemakaian: dihapus otomatis setelah 90 hari.</li>
+    <li>Catatan pemakaian: kami bersihkan secara berkala; tujuannya tidak disimpan lebih dari sekitar 90 hari.</li>
     <li>Kotak Tugas: 30 hari, atau sampai kamu menghapus akunmu.</li>
     <li>Profil dan daftar perbaikan lama: sampai kamu menghapus akunmu.</li>
     <li>Riwayat analisis: 60 hari, atau lebih cepat kalau kamu menghapus akunmu.</li>
@@ -103,6 +103,7 @@ a { color: var(--accent); font-weight: 600; }
   <h2>Pilihanmu</h2>
   <ul>
     <li><b>Hapus akun dan data saya.</b> Tombolnya ada di menu akun (ketuk bulatan huruf di kanan atas). Ini menghapus akunmu, profilmu, catatan pemakaianmu, kotak Tugasmu, riwayat analisismu, dan daftar perbaikan lamamu di server kami, serta salinannya di perangkat itu. Tidak bisa dibatalkan.</li>
+    <li><b>Lihat, perbaiki, atau tarik persetujuan.</b> Kamu boleh meminta salinan datamu, meminta perbaikan, atau menarik persetujuanmu kapan saja lewat email di bagian Kontak. Kami berusaha membalas dalam 14 hari. Cara tercepat menghentikan semuanya adalah tombol “Hapus akun dan data saya”.</li>
     <li><b>Do Not Track.</b> Kalau browsermu mengirimnya, catatan pemakaian tidak dikirim.</li>
     <li><b>Keluar.</b> Menghapus salinan kotak Tugas dan hasil yang belum selesai dari perangkat itu, jadi orang berikutnya di HP yang sama tidak melihatnya.</li>
   </ul>
@@ -127,7 +128,7 @@ a { color: var(--accent); font-weight: 600; }
     <li><b>Tasks boxes, when signed in.</b> When you press Done we keep one box per product so your list opens on another phone: the <b>product name or link</b>, the task sentences, which ones you ticked, and the dates. The task sentences are mostly steps written by AI from the reviews (for example “Change the variant photo”) and complaint names. No review text, buyer quotes, reply drafts or buyer names. Through the app only your account can read them; the person who runs the app can see them in the Supabase dashboard. A box older than 30 days is deleted when you open the app.</li>
     <li><b>Your analysis history, when signed in.</b> Each time you analyse reviews we keep a summary: the date, the product name, the number of reviews, the count in each group and the name of the top complaint. No review text, quotes, drafts or AI suggestions. History is deleted after 60 days, and with your account.</li>
     <li><b>The old fixes list.</b> An earlier version of the app had “Mark as fixed”. If you used it, the complaint theme, date, counts, the <b>product name or link</b> and your <b>short note</b> are still in your account until you delete your account. That feature no longer creates new records.</li>
-    <li><b>On your device.</b> Your sign-in session, language and theme choice, a copy of your Tasks boxes, a log of your analyses (date, counts, status), results you have not finished (including review quotes, kept 7 days so you can press “Continue”; never sent to a server), and a random device marker. The copy of the boxes, the log and these results are removed from the device when you sign out (the boxes stay in your account). All in browser storage (localStorage), not tracking cookies. The calendar file from “Add to Calendar” is made on your device and is not sent anywhere.</li>
+    <li><b>On your device.</b> Your sign-in session, language and theme choice, a copy of your Tasks boxes, a log of your analyses (date, counts, status), results you have not finished (including review quotes, kept 7 days so you can press “Continue”; never sent to a server), and a random device marker (sent with usage records to tell devices apart; it holds no name). The copy of the boxes, the log and these results are removed from the device when you sign out (the boxes stay in your account). All in browser storage (localStorage), not tracking cookies. The calendar file from “Add to Calendar” is made on your device and is not sent anywhere.</li>
     <li><b>The free analysis before signing in.</b> Without an account you can analyse once. Other than the short-lived copies described under “What we do not keep, or only briefly”, the server keeps only a count, per device address and in memory only (the address is never written to a log). Your browser notes that the free analysis was used. If you sign in with Google, the result waits in this tab's storage (sessionStorage) while you are on Google's page, and is removed as soon as it is shown again.</li>
   </ul>
 
@@ -149,7 +150,7 @@ a { color: var(--accent); font-weight: 600; }
 
   <h2>How long</h2>
   <ul>
-    <li>Usage records: deleted automatically after 90 days.</li>
+    <li>Usage records: we clear them out regularly, aiming to keep them no longer than about 90 days.</li>
     <li>Tasks boxes: 30 days, or until you delete your account.</li>
     <li>Profile and the old fixes list: until you delete your account.</li>
     <li>Analysis history: 60 days, or sooner if you delete your account.</li>
@@ -159,6 +160,7 @@ a { color: var(--accent); font-weight: 600; }
   <h2>Your choices</h2>
   <ul>
     <li><b>Delete my account and data.</b> The button is in the account menu (tap the round letter at the top right). It deletes your account, profile, usage records, Tasks boxes, analysis history and old fixes list on our server, and the copy on that device. It cannot be undone.</li>
+    <li><b>See, correct, or withdraw consent.</b> You can ask for a copy of your data, ask us to correct it, or withdraw your consent at any time by emailing the address under Contact. We aim to reply within 14 days. The fastest way to stop everything is the “Delete my account and data” button.</li>
     <li><b>Do Not Track.</b> If your browser sends it, usage records are not sent.</li>
     <li><b>Sign out.</b> Removes the copy of your Tasks boxes and unfinished results from that device, so the next person on the same phone does not see them.</li>
   </ul>
