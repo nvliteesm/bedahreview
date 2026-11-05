@@ -577,6 +577,8 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 #sheet.dlg .sheet-box { top: 50%; bottom: auto; left: 50%; right: auto; width: min(480px, calc(100% - 32px)); border-radius: 22px; padding: 24px; transform: translate(-50%, -46%); opacity: 0; transition: transform 0.24s var(--ease), opacity 0.24s; background: var(--surface); }
 #sheet.dlg.open .sheet-box { transform: translate(-50%, -50%); opacity: 1; }
 #sheet.dlg .grab { display: none; }
+.legal-top { display: flex; align-items: center; gap: 8px; position: sticky; top: -24px; background: var(--surface); padding: 0 0 8px; z-index: 1; } .legal-top .seg { flex: 1; }
+.legal { display: grid; gap: 10px; font-size: 0.92rem; line-height: 1.55; text-align: left; } .legal h1 { font-size: 1.15rem; font-weight: 800; } .legal h2 { font-size: 1rem; font-weight: 800; margin-top: 10px; } .legal p, .legal h1, .legal h2, .legal ul { margin: 0; } .legal ul { padding-left: 1.2em; display: grid; gap: 6px; } .legal .muted { color: var(--muted); font-size: 0.82rem; } .legal a { color: var(--accent); }
 .toast2 { position: fixed; left: 16px; right: 16px; top: calc(64px + env(safe-area-inset-top)); z-index: 45; pointer-events: none; max-width: 440px; margin: 0 auto; background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 4px 16px rgba(23, 32, 28, 0.12); font-size: 0.85rem; font-weight: 600; padding: 10px 14px; border-radius: 12px; text-align: center; animation: rise 0.24s var(--ease); }
 
 /* motion: short, and only where something moves or appears; off when the system asks for less motion */
@@ -1121,7 +1123,7 @@ const TEXT = {
     // final design: first screen, link tab, results plan, the three steps, summary, Tugas
     heroTitle: "Cek ulasan produkmu", howTitle: "Cara kerjanya", how1: "Tempel link produk", how2: "Kami pilah ulasannya jadi 4 kelompok, dengan kutipan asli", how3: "Kamu dapat daftar tugas, plus draf balasan siap kirim",
   refunded: "Jatah analisis hari ini dikembalikan.",
-    boardCap: "Ketuk kelompok untuk melihat kutipan asli.", close: "Tutup", navTasks: "Tugas", ptabMine: "Analisis saya", ptabRivals: "Pesaing", sections: "Bagian", sheetT: "%s · %s ulasan",
+    boardCap: "Ketuk kelompok untuk melihat kutipan asli.", close: "Tutup", legalT: "Syarat dan Kebijakan privasi", legalFail: "Tidak bisa dimuat. Periksa koneksimu.", navTasks: "Tugas", ptabMine: "Analisis saya", ptabRivals: "Pesaing", sections: "Bagian", sheetT: "%s · %s ulasan",
     hOne: "Keluhan terbanyak cuma satu: %s.", hTop: "Keluhan terbanyak: %s.", hFight: "Tidak ada yang perlu diperbaiki, tapi %s ulasan perlu dibalas.", hNone: "Tidak ada keluhan yang perlu ditindak.",
     lFix: "%s dari %s ulasan menyebutnya, dan itu bisa diperbaiki.", lFight: "%s ulasan perlu dibalas.", lKeep: "%s pembeli memuji %s.", lKeepAny: "%s pembeli memuji produkmu.", and: "dan",
     planMeta: "%s langkah · ±%s menit", planH: "Rencana hari ini", planGo: "Mulai kerjakan", planGoOn: "Lanjutkan", planAllDone: "Lihat ringkasan",
@@ -1310,7 +1312,7 @@ const TEXT = {
     startNone: "No complaints to act on. See what buyers praise under Keep.", whySteps: "Why & steps",
     heroTitle: "Check your product's reviews", howTitle: "How it works", how1: "Paste the product link", how2: "We sort the reviews into 4 groups, with the buyers' own words", how3: "You get a to-do list, plus reply drafts ready to send",
   refunded: "Today's analysis was given back.",
-    boardCap: "Tap a group to see the exact quotes.", close: "Close", navTasks: "Tasks", ptabMine: "My analysis", ptabRivals: "Competitors", sections: "Sections", sheetT: "%s · %s reviews",
+    boardCap: "Tap a group to see the exact quotes.", close: "Close", legalT: "Terms and Privacy policy", legalFail: "Could not load. Check your connection.", navTasks: "Tasks", ptabMine: "My analysis", ptabRivals: "Competitors", sections: "Sections", sheetT: "%s · %s reviews",
     hOne: "There is only one big complaint: %s.", hTop: "The biggest complaint: %s.", hFight: "Nothing to fix, but %s review(s) need a reply.", hNone: "No complaints to act on.",
     lFix: "%s of %s reviews mention it, and it can be fixed.", lFight: "%s review(s) need a reply.", lKeep: "%s buyer(s) praise %s.", lKeepAny: "%s buyer(s) praise your product.", and: "and",
     planMeta: "%s steps · ~%s min", planH: "Today's plan", planGo: "Start", planGoOn: "Continue", planAllDone: "See the summary",
@@ -2196,7 +2198,7 @@ const fmtDayShort = (iso) => { const d = new Date(iso + "T12:00:00"); return isN
 
 /* ---------- the sheet: a group's quotes and drafts (bottom sheet / side panel), or a small dialog ---------- */
 let sheetPushed = false, sheetReturn = null, lastCounts = null, toastTimer = null;
-const BEHIND = () => [$("workspace"), document.querySelector(".bottombar"), desktop() ? null : document.querySelector(".topbar")].filter(Boolean);  // a wide screen keeps the header usable beside the side panel
+const BEHIND = () => [$("workspace"), $("gate"), document.querySelector(".bottombar"), desktop() ? null : document.querySelector(".topbar")].filter(Boolean);  // a wide screen keeps the header usable beside the side panel
 function setBehind(on) { document.querySelectorAll("[data-behind]").forEach((el) => { el.inert = false; el.removeAttribute("data-behind"); }); if (on) BEHIND().forEach((el) => { el.inert = true; el.setAttribute("data-behind", "1"); }); }
 function openSheetBox(dialog) {
   const s = $("sheet"), box = s.querySelector(".sheet-box");
@@ -3155,6 +3157,38 @@ async function googleSignIn() {  // leaves the page for Google; a locked free re
 }
 $("g-keep").addEventListener("change", () => setKeep($("g-keep").checked));
 /* The tick before any sign-in: one shared state, so ticking on one card ticks the others. Without it the Google and email buttons only point at the tick. */
+/* ---------- Terms and Privacy policy as a popup with two tabs, opened from the sign-in tick, so the seller never leaves the page ---------- */
+const legalCache = {};
+async function legalArticle(page) {
+  const key = page + lang;
+  if (!legalCache[key]) {
+    const r = await fetch("/" + page, { credentials: "same-origin" }); if (!r.ok) throw new Error("legal " + r.status);
+    const art = new DOMParser().parseFromString(await r.text(), "text/html").getElementById(lang === "en" ? "p-en" : "p-id"); if (!art) throw new Error("legal article");
+    art.removeAttribute("hidden"); art.removeAttribute("id"); art.className = "legal"; art.querySelectorAll("a").forEach((a) => { a.target = "_blank"; a.rel = "noopener"; });
+    legalCache[key] = art;
+  }
+  return document.importNode(legalCache[key], true);
+}
+function openLegal(first) {
+  const s = $("sheet"), prev = s.classList.contains("open") && s.classList.contains("dlg") ? { nodes: Array.from($("sheet-extra").childNodes), title: $("sheet-h").textContent } : null;  // opened over the Tugas sign-in dialog: Back returns to it
+  const body = h("div", { class: "legal-wrap" }), tabs = {};
+  const back = h("button", { class: "xbtn", type: "button", "aria-label": tr(prev ? "back" : "close"), onclick: () => { if (prev) { $("sheet-h").textContent = prev.title; $("sheet-extra").replaceChildren(...prev.nodes); } else closeSheet(); } },
+    prev ? svgIcon(["M15 6l-6 6 6 6"]) : svgIcon(["M6 6l12 12", "M18 6L6 18"]));
+  const seg = h("div", { class: "seg", role: "tablist" });
+  const pick = async (page) => {
+    for (const k in tabs) tabs[k].setAttribute("aria-selected", String(k === page));
+    body.replaceChildren(); const mine = (pick.n = (pick.n || 0) + 1);
+    try { const a = await legalArticle(page); if (mine === pick.n) { body.replaceChildren(a); s.querySelector(".sheet-box").scrollTop = 0; } }
+    catch (e) { if (mine === pick.n) body.replaceChildren(h("p", { class: "muted", text: tr("legalFail") })); }
+  };
+  [["privacy", "privLink"], ["terms", "termsLink"]].forEach(([page, key]) => { tabs[page] = h("button", { type: "button", role: "tab", text: tr(key), onclick: () => pick(page) }); seg.appendChild(tabs[page]); });
+  openDialog([h("div", { class: "legal-top" }, back, seg), body], "legalT");
+  pick(first);
+}
+document.addEventListener("click", (e) => {
+  const a = e.target.closest && e.target.closest(".consent a"); if (!a) return;
+  e.preventDefault(); openLegal(a.getAttribute("href") === "/terms" ? "terms" : "privacy");
+});
 let consented = false;
 function syncConsent() {
   document.querySelectorAll(".consent input").forEach((b) => { b.checked = consented; });

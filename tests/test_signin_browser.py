@@ -149,6 +149,11 @@ window.__probe = (async () => {
     byId("lang").click(); out.titleEn = byId("gate-h").textContent; byId("lang").click();
     byId("g-email").value = "ani@example.com"; byId("g-google").click(); byId("g-send").click(); await wait(100);  // no tick yet: nothing is sent, the tick is pointed at
     out.untickedCalls = [calls("oauth").length, calls("otp").length, byId("g-consent").classList.contains("nudge"), byId("g-google").getAttribute("aria-disabled")];
+    byId("g-consent").querySelector("a[href='/terms']").click(); await until(() => byId("sheet").classList.contains("open") && document.querySelector("#sheet-extra .legal"));  // the tick's links open a popup, not another page
+    out.legal = [location.pathname, document.querySelector("#sheet-extra .legal h1").textContent, document.querySelectorAll("#sheet-extra .seg button").length, vis("gate")];
+    document.querySelector("#sheet-extra .seg button").click(); await until(() => /privasi/i.test((document.querySelector("#sheet-extra .legal h1") || {}).textContent));
+    out.legalPriv = document.querySelector("#sheet-extra .legal h1").textContent;
+    document.querySelector("#sheet-extra .legal-top .xbtn").click(); await wait(500); out.legalClosed = byId("sheet").hidden && vis("gate");
     byId("g-consent").querySelector("input").click(); out.tickedState = [byId("g-google").getAttribute("aria-disabled"), byId("g-send").getAttribute("aria-disabled"), byId("unlock-consent").querySelector("input").checked];
     byId("g-google").click(); await wait(100); out.oauth = calls("oauth")[0].slice(1);
     byId("g-email").value = "not an email"; byId("g-send").click(); out.badEmail = byId("g-error-text").textContent; out.otpCalls = calls("otp").length;
@@ -585,6 +590,9 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual(out["otp"], ["one-time-code", "numeric", "off", 6])
         self.assertEqual(out["titleEn"], "Sign in")
         self.assertEqual(out["untickedCalls"], [0, 0, True, "true"])  # without the tick neither Google nor the email code starts; the tick is highlighted
+        self.assertEqual(out["legal"], ["/", "Syarat penggunaan", 2, True])  # Terms opens in a popup over the sign-in screen with two tabs
+        self.assertEqual(out["legalPriv"], "Kebijakan privasi")  # the other tab, same popup
+        self.assertTrue(out["legalClosed"])  # closing leaves the seller on the sign-in screen
         self.assertEqual(out["tickedState"], ["false", "false", True])  # ticking once opens both buttons and ticks the other card too
         self.assertEqual(out["oauth"], ["google", "http://127.0.0.1:%d/" % self.port])
         self.assertEqual((out["badEmail"], out["otpCalls"]), ("Alamat email tidak valid.", 0))  # a bad address never reaches Supabase
