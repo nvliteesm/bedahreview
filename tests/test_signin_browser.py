@@ -116,6 +116,7 @@ PROBE = """
 window.__probe = (async () => {
   const out = {}, hash = location.hash;
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const later = () => { if (document.getElementById("sheet").classList.contains("open")) [...document.querySelectorAll("#sheet-extra button")].pop().click(); };  // Selesai asks about competitors: "Nanti saja" goes on to Tugas
   const until = async (fn, n = 60) => { for (let i = 0; i < n; i++) { if (fn()) return true; await wait(100); } return false; };
   const byId = (id) => document.getElementById(id), vis = (id) => !byId(id).hidden;
   const NL = String.fromCharCode(10);
@@ -236,7 +237,7 @@ window.__probe = (async () => {
     // "Belum selesai": Lanjutkan draws the held result again, Selesai makes the box, plays the animation, and Riwayat says Selesai
     [...byId("history-body").querySelectorAll("button")].find((b) => b.textContent === "Lanjutkan").click();
     out.resumed = [vis("view-results"), byId("results-h").textContent, calls("insert-history").length];
-    byId("done-btn").click();
+    byId("done-btn").click(); later();
     out.anim = vis("done-anim");
     await until(() => vis("view-fixes") && !vis("done-anim"), 80);
     out.landedOn = [vis("view-fixes"), vis("view-history")];  // Selesai opens Tugas for a signed-in seller too
@@ -267,7 +268,7 @@ window.__probe = (async () => {
     await wait(100);
     runSample();
     await until(() => !byId("view-results").hidden, 80);
-    byId("done-btn").click();
+    byId("done-btn").click(); later();
     await until(() => vis("view-fixes") && !vis("done-anim"), 80);
     await until(() => window.__sb.boxes.length > 0, 40);
     const row = window.__sb.boxes[0];
@@ -291,7 +292,7 @@ window.__probe = (async () => {
     await syncBoxes(true);
     out.removed = document.querySelectorAll(".tbox, .trow").length;
     // a new box made here is pushed
-    runSample(); await until(() => !byId("view-results").hidden, 80); byId("done-btn").click();
+    runSample(); await until(() => !byId("view-results").hidden, 80); byId("done-btn").click(); later();
     await until(() => vis("view-fixes") && !vis("done-anim"), 80); await until(() => window.__sb.boxes.length > 0, 40);
     out.pushedAgain = window.__sb.boxes.length;
     // signing out clears the browser copy; the account keeps the box
@@ -303,7 +304,7 @@ window.__probe = (async () => {
     await until(() => !byId("workspace").hidden);
     window.__sb.boxesError = true; await syncBoxes(true);  // the table cannot be read
     runSample(); await until(() => !byId("view-results").hidden, 80);
-    byId("done-btn").click();
+    byId("done-btn").click(); later();
     await until(() => vis("view-fixes") && !vis("done-anim"), 80);
     document.querySelector(".tbox .it input").click();
     await wait(300);
@@ -415,7 +416,7 @@ byId("g-consent").querySelector("input").click(); byId("g-email").value = "ani@e
 
   if (hash === "#rival-visitor") {
     await until(() => !byId("workspace").hidden);
-    out.noEntry = [byId("rivals-open").offsetParent === null || byId("view-results").hidden, document.querySelectorAll(".bottombar .nav").length];  // no result, no competitor button; two tabs only
+    out.noEntry = [byId("rivals-open") === null, document.querySelectorAll(".bottombar .nav").length];  // no result, no competitor button; two tabs only
     openRivals({ from: "results", url: "https://www.tokopedia.com/toko/kaos", title: "Kaos" });  // whatever the way in, a visitor is asked to sign in first
     await wait(200);
     out.gate = vis("gate"); out.info = byId("g-info").textContent;
@@ -438,10 +439,10 @@ byId("g-consent").querySelector("input").click(); byId("g-email").value = "ani@e
     };
     runSample();
     await until(() => !byId("view-results").hidden, 80);
-    byId("done-btn").click();   // the product gets its box first
+    byId("done-btn").click(); later();   // the product gets its box first
     await until(() => vis("view-fixes") && !vis("done-anim"), 80);
     byId("nav-check").click();
-    byId("rivals-open").click();   // pasted reviews have no link: the form asks for it
+    openRivals({ from: "results" });   // pasted reviews have no link: the form asks for it
     out.form = [vis("view-rival"), !!byId("rival-url"), byId("rival-name").value];
     byId("rival-url").value = "https://www.tokopedia.com/toko/kaos-boxy"; byId("rival-url").dispatchEvent(new Event("input"));
     [...byId("rival-body").querySelectorAll("button.btn.primary")].pop().click();

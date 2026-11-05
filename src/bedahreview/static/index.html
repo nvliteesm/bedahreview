@@ -78,6 +78,8 @@ textarea, input, select { font: inherit; color: var(--ink); background: var(--bg
 textarea { min-height: 190px; resize: vertical; font: 0.9rem/1.6 var(--font-mono); padding: 12px; }
 .ta-wrap { position: relative; } .ta-wrap textarea { padding-right: 52px; }
 .ta-clear { position: absolute; top: 4px; right: 4px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer; }
+#link-extra select, #link-extra input { height: 44px; box-sizing: border-box; -webkit-appearance: none; appearance: none; line-height: 1.2; }  /* a phone draws a select taller than a number box: both get the same fixed height */
+#link-extra select { padding-right: 34px; background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 12px center; }
 input, select { min-height: 44px; padding: 0 12px; font-size: 1rem; /* 16px stops iOS zooming into the field */ }
 textarea::placeholder, input::placeholder { color: var(--muted); opacity: 1; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 12px; border: 1px solid transparent; font: inherit; font-weight: 700; cursor: pointer; }
@@ -167,7 +169,7 @@ body.gated .bottombar, body.gated #fixes-btn, body.gated #logout-row { display: 
 .unlock h3 { margin: 0; font-size: 1.1rem; } .unlock p { margin: 0; }
 .unlock .lock { width: 28px; height: 28px; color: var(--accent); }
 #view-results.locked #panels, #view-results.locked #notes, #view-results.locked #feedback,
-#view-results.locked #rivals-open, #view-results.locked #start button { display: none !important; }
+#view-results.locked #start button { display: none !important; }
 .foot a { color: inherit; }
 .unlock a { color: inherit; }
 /* a phone header has room for four things: a visitor gets "Masuk" and the language; the theme switch moves into the account menu */
@@ -674,6 +676,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 #view-results.locked .res-end { display: none !important; }
 #another-btn { justify-self: center; min-height: 44px; }  /* a quiet third choice under Selesai and Analisa Kompetitor */
 .res-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }  /* the two real choices side by side, the same size, on every width */
+.res-actions.one { grid-template-columns: 1fr; }
 .res-actions .btn, .res-end .res-actions .btn { width: 100%; min-width: 0; padding-left: 10px; padding-right: 10px; justify-self: stretch; font-size: 1rem; font-weight: 700; }
 @media (min-width: 900px) { .res-end .res-actions { max-width: 540px; } #another-btn { justify-self: start; } }
 @media (min-width: 900px) { #another-btn { justify-self: start; } .res-end .btn { width: 260px; justify-self: start; } .gtabs { margin: 0; padding: 2px 0; flex-wrap: wrap; overflow: visible; } }
@@ -869,7 +872,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
         <span id="fetch-anchor" hidden></span>
         <details class="opts xp" id="link-extra" hidden>
           <summary id="link-opts"></summary>
-          <div class="row xp-body" style="display:flex">
+          <div class="row xp-body" style="display:flex;align-items:flex-end">
             <label class="fld" for="mode" style="flex:1 1 150px"><span data-i18n="modeLabel"></span>
               <select id="mode"><option value="complaints" data-i18n="modeComplaints"></option><option value="latest" data-i18n="modeLatest"></option></select>
             </label>
@@ -940,9 +943,8 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
     <div class="card-box" id="feedback" hidden></div>
     <div class="res-end" id="res-end">
       <h3 data-i18n="endTitle"></h3>
-      <div class="res-actions">
+      <div class="res-actions one">
         <button class="btn primary" id="done-btn" type="button" data-i18n="selesaiBtn"></button>
-        <button class="btn ghost" id="rivals-open" type="button" data-i18n="rivalsOpen"></button>
       </div>
       <button class="plain strong" id="another-btn" type="button" data-i18n="another"></button>
     </div>
@@ -1037,7 +1039,7 @@ const TEXT = {
     step1TLink: "Tempel tautan atau ulasan", step1DLink: "tautan Tokopedia atau TikTok Shop, atau teks ulasannya", step2T: "Kami pilah ulasannya", step2D: "jadi 4 kelompok, dengan kutipan asli",
     step3T: "Kamu dapat daftar tugas singkat", step3D: "plus draf balasan siap kirim",
     linkOpts: "Pengaturan lanjutan",
-    navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Analisa Kompetitor",
+    navChecker: "Bedah ulasan", navRivals: "Pesaing", newMob: "Ulasan baru", rivalsOpen: "Analisa Kompetitor", askRivalT: "Sekalian cek pesaing?", askRivalP: "Lihat apa yang dipuji pembeli di produk pesaing dan apa yang bisa kamu kejar. Hasilnya masuk ke daftar tugasmu.", askRivalNo: "Nanti saja",
     resultsTitle: "Hasil Bedah",
     doneAnimT: "Selesai!", doneAnimSub: "%s tugas masuk ke tab Tugas.", doneAnimNone: "Tidak ada tugas baru dari hasil ini.", taskReply: "Balas %s ulasan soal %s", taskRemove: "Hapus tugas ini", taskEdit: "Ubah", taskEditDone: "Selesai mengubah",
     taskProgress: "%s dari %s selesai", taskAllDoneP: "Semua tugas sudah dicentang. Bedah ulang produk ini untuk melihat apakah keluhannya berkurang.", taskSee: "Lihat tugas", taskAgain: "Bedah ulang produk ini", taskRowOpen: "%s tugas · sisa %s hari", taskRowDone: "%s dari %s · selesai",
@@ -1227,7 +1229,7 @@ const TEXT = {
     step1TLink: "Paste a link or the reviews", step1DLink: "a Tokopedia or TikTok Shop link, or the review text", step2T: "We sort the reviews", step2D: "into 4 groups, with exact quotes",
     step3T: "You get a short to-do list", step3D: "plus reply drafts ready to send",
     linkOpts: "Advanced settings",
-    navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Competitor analysis",
+    navChecker: "Review checker", navRivals: "Competitors", newMob: "New reviews", rivalsOpen: "Competitor analysis", askRivalT: "Check competitors too?", askRivalP: "See what buyers praise on competing products and what you can catch up on. The results join your task list.", askRivalNo: "Not now",
     resultsTitle: "Review results",
     doneAnimT: "Done!", doneAnimSub: "%s tasks added to the Tasks tab.", doneAnimNone: "No new tasks from this result.", taskReply: "Reply to %s reviews about %s", taskRemove: "Remove this task", taskEdit: "Edit", taskEditDone: "Done editing",
     taskProgress: "%s of %s done", taskAllDoneP: "Every task is ticked. Check this product again to see whether the complaints went down.", taskSee: "See tasks", taskAgain: "Check this product again", taskRowOpen: "%s tasks · %s days left", taskRowDone: "%s of %s · done",
@@ -1993,8 +1995,8 @@ function playDone(n, then) {  // about a second and a half: the ring draws, the 
   o.hidden = false; o.classList.remove("play"); void o.offsetWidth; o.classList.add("play");
   setTimeout(() => { o.hidden = true; o.classList.remove("play"); then(); }, reduceMotion() ? 800 : 1700);
 }
-function finishResult() {  // Selesai on a Hasil Bedah: the tasks are made, the animation plays, Tugas opens (the result is already in Riwayat)
-  if (!lastData || lastData.example || freeLocked) return;
+let madeSig = "";  // the product whose box and Riwayat entry were made by a Selesai that was then dismissed: pressing Selesai again must not log it twice
+function makeBox() {  // the tasks of this result become a box (once) and the analysis is marked finished; returns how many tasks it holds
   const sig = reviewSig(lastData.items), src = lastData.source || {}, boxes = loadBoxes();
   let box = boxes.find((b) => b.sig === sig);
   if (!box) {
@@ -2002,11 +2004,18 @@ function finishResult() {  // Selesai on a Hasil Bedah: the tasks are made, the 
     if (box) saveBoxes(boxes.concat(box));
   }
   if (box) boxOpen = box.sig;  // Tugas opens with the box that was just made unfolded
-  const n = box ? box.items.length : 0;
-  logAnalysis(lastData, lastCounts);
-  updateLog(sig, { done: true, tasks: n }); dropHeld(sig);
-  track("fix_marked"); renderFixBadge();
-  playDone(n, () => { clearInputs(); checkerView = "input"; openFixes(); if (n) showToast(tr("doneToast", n)); });  // go first: a new screen clears any toast. The Bedah ulasan tab now opens a clean start, not the finished result
+  if (madeSig !== sig) { logAnalysis(lastData, lastCounts); updateLog(sig, { done: true, tasks: box ? box.items.length : 0 }); dropHeld(sig); track("fix_marked"); madeSig = sig; }
+  renderFixBadge();
+  return box ? box.items.length : 0;
+}
+function endToTugas(n) { playDone(n, () => { clearInputs(); checkerView = "input"; openFixes(); if (n) showToast(tr("doneToast", n)); }); }  // go first: a new screen clears any toast. The Bedah ulasan tab now opens a clean start, not the finished result
+function finishResult() {  // Selesai on a Hasil Bedah: the tasks are made, then one question: look at competitors too? Yes opens Pesaing, "Nanti saja" plays the animation and opens Tugas (the result is already in Riwayat)
+  if (!lastData || lastData.example || freeLocked) return;
+  const n = makeBox();
+  if (visitor()) { endToTugas(n); return; }  // comparing needs an account, so a visitor is not asked
+  const yes = h("button", { class: "btn primary", type: "button", text: tr("rivalsOpen"), onclick: () => { closeSheet(); openRivals({ from: "results" }); } });
+  const no = h("button", { class: "btn ghost", type: "button", text: tr("askRivalNo"), onclick: () => { closeSheet(); endToTugas(n); } });
+  openDialog([h("h2", { text: tr("askRivalT") }), h("p", { class: "muted", text: tr("askRivalP") }), h("div", { class: "stack" }, yes, no)], "askRivalT");
 }
 function toggleItem(sig, id) {
   saveBoxes(loadBoxes().map((b) => {
@@ -2721,7 +2730,6 @@ $("nav-check").addEventListener("click", goChecker);
 $("check-btn").addEventListener("click", () => $("nav-check").click());
 $("nav-tasks").addEventListener("click", () => openFixes());
 $("done-btn").addEventListener("click", finishResult);
-$("rivals-open").addEventListener("click", () => openRivals({ from: "results" }));
 $("back-results").addEventListener("click", () => { if (lastData) { show("results"); toTop(); } });
 $("logout").addEventListener("click", async () => { await leaveWithFixes(); if (sb) { try { await sb.auth.signOut(); } catch (e) { /* reload anyway */ } } try { await fetch("/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); } catch (e) { /* reload anyway */ } location.reload(); });
 $("fixes-btn").addEventListener("click", () => { if (currentView === "fixes") $("nav-check").click(); else openFixes(); });

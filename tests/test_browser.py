@@ -51,6 +51,7 @@ PROBE = """
 window.__probe = (async () => {
   const out = {};
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const later = () => { if (document.getElementById("sheet").classList.contains("open")) [...document.querySelectorAll("#sheet-extra button")].pop().click(); };  // Selesai asks about competitors: "Nanti saja" goes on to Tugas
   const NL = String.fromCharCode(10);
   const SAMPLE = [
     "★★★★★  Putih, L   bagus banget pakenya sama bahannya bagus luamayan tebel",
@@ -136,6 +137,8 @@ window.__probe = (async () => {
     for (let i = 0; i < 40 && document.getElementById("view-results").hidden; i++) await wait(100);
     out.sel = { before: currentView };
     document.getElementById("done-btn").click();
+    out.sel.dialog = [document.getElementById("sheet").classList.contains("open"), [...document.querySelectorAll("#sheet-extra button")].map((b) => b.textContent)];  // one question: competitors too?
+    later();
     for (let i = 0; i < 60 && currentView !== "fixes"; i++) await wait(100);
     out.sel.after = [currentView, !document.getElementById("view-fixes").hidden, document.getElementById("view-history").hidden, document.querySelectorAll("#tasks-body .tbox").length, document.getElementById("tasks-count").textContent];
     out.sel.logged = loadLog().length;
@@ -373,9 +376,9 @@ window.__probe = (async () => {
     await until(() => linkBoxOn === false);
     runSample();
     await until(() => !document.getElementById("view-results").hidden);
-    out.sec = { openVisible: getComputedStyle(document.getElementById("rivals-open")).display !== "none", gone: [document.getElementById("nav-rivals"), document.getElementById("ptabs"), document.getElementById("feature2")].map((e) => e === null),
+    out.sec = { openVisible: document.getElementById("rivals-open") === null, gone: [document.getElementById("nav-rivals"), document.getElementById("ptabs"), document.getElementById("feature2")].map((e) => e === null),
       bottom: [...document.querySelectorAll(".bottombar .nav")].map((n) => n.id) };
-    document.getElementById("rivals-open").click();  // pasted reviews have no link: a short form asks for it
+    openRivals({ from: "results" });  // pasted reviews have no link: a short form asks for it
     out.sec.view = [currentView, !document.getElementById("view-rival").hidden];
     out.sec.nameFilled = document.getElementById("rival-name").value;
     out.sec.back = document.querySelector("#view-rival .back").textContent;
@@ -409,7 +412,7 @@ window.__probe = (async () => {
     document.getElementById("brand-home").click(); nav.logo = [vis(), document.getElementById("brand-home").tagName];  // the logo is a button now
     document.getElementById("back-results").click();
     nav.endButton = !!document.getElementById("another-btn").offsetParent;  // "Bedah produk lain" at the end of Hasil Bedah
-    document.getElementById("done-btn").click(); await until(() => currentView === "fixes");  // after Selesai the tab opens a clean start, not the finished result
+    document.getElementById("done-btn").click(); later(); await until(() => currentView === "fixes");  // after Selesai the tab opens a clean start, not the finished result
     document.getElementById("nav-check").click(); nav.afterSelesai = [vis(), !document.getElementById("hero").hidden, document.getElementById("url").value];
     document.getElementById("fetch").disabled = true; startLoading("t");  // an analysis is running: Tugas, then the tab back (this used to throw)
     document.getElementById("nav-tasks").click(); document.getElementById("nav-check").click();
@@ -426,7 +429,7 @@ window.__probe = (async () => {
     nav.noTitle = [vis(), !!rival.form, document.getElementById("rival-url").value, !!document.getElementById("rival-name"), !!document.querySelector("#view-rival .callout"), rival.mine];
     window.postJson = async () => { calls += 1; return null; };
     lastData.source = { kind: "url", url: "https://www.lazada.co.id/products/pdp-i160018103-s181853952.html", title: "" };  // a Lazada result carries no product name
-    show("results"); calls = 0; document.getElementById("rivals-open").click(); await wait(300);
+    show("results"); calls = 0; openRivals({ from: "results" }); await wait(300);
     nav.lazada = [vis(), !!rival.form, document.getElementById("rival-url").value.indexOf("lazada.co.id") > 0, calls];  // no search is started without a name
     window.postJson = realPost;
     const fresh = await (await fetch("/api/example")).json(); fresh.example = false; delete fresh.free; fresh.quota = { used: 1, max: 10 };
@@ -462,15 +465,15 @@ window.__probe = (async () => {
     lay.quoteFont = getComputedStyle(document.querySelector("#panels blockquote")).fontFamily;
     lay.panels = rect("panels");
     setQuota({ used: 1, max: 10 }); lay.quotaAlign = getComputedStyle(document.getElementById("quota-link")).textAlign;  // "Sisa analisis hari ini: 9 dari 10." sits at the left of the box
-    const ra = document.getElementById("done-btn").getBoundingClientRect(), rb = document.getElementById("rivals-open").getBoundingClientRect();
-    lay.actions = { sizeA: [Math.round(ra.width), Math.round(ra.height)], sizeB: [Math.round(rb.width), Math.round(rb.height)], topA: Math.round(ra.top), topB: Math.round(rb.top) };
+    const ra = document.getElementById("done-btn").getBoundingClientRect(), ctn = document.querySelector("#res-end .res-actions").getBoundingClientRect();
+    lay.actions = { sizeA: [Math.round(ra.width), Math.round(ra.height)], fill: Math.round(ra.width) >= Math.round(ctn.width) - 1 };
     renderSummary([{ theme: "Colour vs photo", n: 1 }], [], [], { fix: 1, fight: 0, ignore: 0, keep: 0 });  // one fix, no replies and no praise: nothing after the bullets
     lay.summaryText = document.getElementById("sumbox").textContent;
     document.getElementById("brand-home").click(); await wait(300);
     lay.back = rect("back-results"); lay.card = rect(document.querySelector("#view-input .card-box")); lay.sample = rect("sample");
     lay.backShown = [!document.getElementById("back-results").hidden, getComputedStyle(document.getElementById("back-results")).display];
     document.getElementById("back-results").click(); await wait(300);
-    document.getElementById("done-btn").click(); await until(() => currentView === "fixes"); await wait(200);
+    document.getElementById("done-btn").click(); later(); await until(() => currentView === "fixes"); await wait(200);
     lay.tugas = { title: rect("fixes-h"), box: rect(document.querySelector("#tasks-body .tbox")), action: (document.querySelector("#tasks-body .tlinks .btn") || {}).className || "" };
     showGate("choose", false); lay.gateChoose = { btn: rect("g-send"), field: rect("g-email") };  // the sign-in cards: the green button is as wide as the field above it
     showGate("verify", false); lay.gateVerify = { btn: rect("g-verify-btn"), boxes: rect("otp") };
@@ -617,6 +620,7 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(out["before"], "results")
         self.assertEqual(out["after"], ["fixes", True, True, 1, "2"])  # Tugas, not Riwayat; one box; two open items
         self.assertEqual(out["logged"], 1)  # the analysis is still logged for Riwayat
+        self.assertEqual(out["dialog"], [True, ["Analisa Kompetitor", "Nanti saja"]])  # Selesai asks once whether to look at competitors too
 
     def test_the_input_has_one_box_for_a_link_and_no_paste_path(self):
         out = self.probe("/")
@@ -814,7 +818,7 @@ class BrowserTests(unittest.TestCase):
         pr = self.probe("/#sections")
         self.assertNotIn("err", pr, pr.get("err"))
         sec = pr["sec"]
-        self.assertTrue(sec["openVisible"])  # the second button at the end of Hasil Bedah
+        self.assertTrue(sec["openVisible"])  # no second button at the end of Hasil Bedah any more: the question comes after Selesai
         self.assertEqual(sec["gone"], [True, True, True])  # no Pesaing tab, no section switch, no side column
         self.assertEqual(sec["bottom"], ["nav-check", "nav-tasks"])
         self.assertEqual(sec["view"], ["rival", True])
@@ -845,8 +849,7 @@ class BrowserTests(unittest.TestCase):
         self.assertLessEqual(abs(lay["title"]["left"] - lay["logo"]["left"]), 1)  # the logo and Hasil Bedah start at the same edge
         self.assertLessEqual(abs(lay["tools"]["right"] - lay["sum"]["right"]), 1)  # the header ends where the summary ends
         self.assertLessEqual(abs(lay["sum"]["top"] - lay["panels"]["top"]), 1)  # the summary starts level with the first card, not hanging up beside the title
-        self.assertEqual(lay["actions"]["sizeA"], lay["actions"]["sizeB"])  # Selesai and Analisa Kompetitor are the same size...
-        self.assertEqual(lay["actions"]["topA"], lay["actions"]["topB"])  # ...side by side, on one line
+        self.assertTrue(lay["actions"]["fill"])  # Selesai is the one button at the end, as wide as its row
         self.assertNotIn("null", lay["summaryText"].lower())  # the summary never prints the word "null"
         self.assertTrue(lay["noPrintButton"])
         self.assertIn(lay["quotaAlign"], ("left", "start"))
@@ -859,12 +862,11 @@ class BrowserTests(unittest.TestCase):
         for card, above in (("gateChoose", "field"), ("gateVerify", "boxes")):  # the green button is exactly as wide as the field or the code boxes above it
             self.assertEqual((lay[card]["btn"]["left"], lay[card]["btn"]["right"]), (lay[card][above]["left"], lay[card][above]["right"]), card)
 
-    def test_the_two_end_buttons_are_side_by_side_and_equal_on_a_phone_too(self):
+    def test_the_one_end_button_fills_its_row_on_a_phone_too(self):
         lay = self.probe("/#layout", width=390)
         self.assertNotIn("err", lay, lay.get("err"))
         lay = lay["lay"]
-        self.assertEqual(lay["actions"]["sizeA"], lay["actions"]["sizeB"])
-        self.assertEqual(lay["actions"]["topA"], lay["actions"]["topB"])
+        self.assertTrue(lay["actions"]["fill"])
         self.assertNotIn("null", lay["summaryText"].lower())
 
     def test_a_narrower_desktop_gets_one_column_with_the_summary_above_the_tabs(self):
