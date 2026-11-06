@@ -224,6 +224,11 @@ class SupabaseOnlyTests(unittest.TestCase):
         self.assertEqual(status("/"), 200)
         self.assertEqual(status("/api/ping"), 401)
         self.assertEqual(status("/api/ping", {"Authorization": "Bearer " + token(key)}), 404)
+        self.assertEqual(status("/nowhere"), 404)  # no code screen for strangers either
+        conn = http.client.HTTPConnection("127.0.0.1", server.server_address[1], timeout=10)
+        conn.request("POST", "/login", "code=x", {"Content-Type": "application/x-www-form-urlencoded"})
+        self.assertEqual(conn.getresponse().status, 404)
+        conn.close()
         self.assertEqual(status("/code"), 303)  # nothing to type a code into, so it goes to the app
 
 

@@ -696,6 +696,8 @@ class Handler(BaseHTTPRequestHandler):
         self._send(status, page.encode("utf-8"), "text/html; charset=utf-8", [("Set-Cookie", "%s=%s; Max-Age=%d; %s" % (CSRF_COOKIE, token, CSRF_SECS, self._cookie_flags()))])
 
     def _login(self) -> None:
+        if not self.access_codes:
+            return self._json(404, {"error": "Not found"})  # no codes set: nothing to log in to
         try:
             length = int(self.headers.get("Content-Length") or 0)
         except ValueError:
@@ -705,8 +707,6 @@ class Handler(BaseHTTPRequestHandler):
         form = parse_qs(self.rfile.read(length).decode("utf-8", "replace"))
         code, nxt, csrf = (form.get("code") or [""])[0], (form.get("next") or ["/"])[0], (form.get("csrf") or [""])[0]
         who = self._client()
-        if not self.access_codes:
-            return self._login_page(400, nxt, "Bad request.")
         if not csrf_ok(self.access_codes, self._cookie(CSRF_COOKIE), csrf):
             return self._login_page(400, nxt, "This page expired. Try again. / Halaman kedaluwarsa, coba lagi.")
         if self.login_limiter and self.login_limiter.blocked(who):
@@ -961,6 +961,8 @@ class Handler(BaseHTTPRequestHandler):
         if not self._authed() and path not in PUBLIC_ASSETS and not (open_site and (path in PAGES or path in ASSETS or path in OPEN_API or path.startswith("/api/job/"))):
             if path.startswith("/api/"):
                 return self._json(401, {"error": "Please sign in again.", "login": True})
+            if not self.access_codes:
+                return self._json(404, {"error": "Not found"})  # no codes set: there is no code screen to show
             return self._login_page(401, self.path)
         if path.startswith("/api/job/"):  # the id is a long random token that only the page that started the analysis knows, so a visitor without an account can ask too
             key = path[len("/api/job/"):]
