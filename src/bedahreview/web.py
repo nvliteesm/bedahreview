@@ -947,8 +947,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(403, {"error": "Host not allowed"})
         path = self.path.split("?", 1)[0]
         open_site = type(self).supabase_auth is not None  # Supabase on: the page is public and the sign-in screens are inside it
-        if open_site and path == "/code" and self.access_codes:
-            return self._login_page(200, "/")  # testers with an access code
+        if open_site and path == "/code":
+            if self.access_codes:
+                return self._login_page(200, "/")  # testers with an access code
+            self.send_response(303)  # no codes set: nothing to type, so go to the app
+            self.send_header("Location", "/")
+            self.send_header("Content-Length", "0")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            return
         if path in ("/admin", "/api/admin/stats"):
             return self._admin(path)
         if not self._authed() and path not in PUBLIC_ASSETS and not (open_site and (path in PAGES or path in ASSETS or path in OPEN_API or path.startswith("/api/job/"))):

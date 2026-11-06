@@ -224,7 +224,7 @@ class SupabaseOnlyTests(unittest.TestCase):
         self.assertEqual(status("/"), 200)
         self.assertEqual(status("/api/ping"), 401)
         self.assertEqual(status("/api/ping", {"Authorization": "Bearer " + token(key)}), 404)
-        self.assertEqual(status("/code"), 401)  # nothing to type a code into
+        self.assertEqual(status("/code"), 303)  # nothing to type a code into, so it goes to the app
 
 
 class RecordingFetch(Fetcher):
