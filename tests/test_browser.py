@@ -385,7 +385,7 @@ window.__probe = (async () => {
     [...document.querySelectorAll("#rival-body button")].find((b) => b.textContent.indexOf("contoh") >= 0).click();
     const body = document.getElementById("rival-body");
     out.sec.example = { head: body.querySelector("h2").textContent, tabs: [...body.querySelectorAll(".gtab")].map((x) => x.textContent), sum: !!body.querySelector(".sumbox"), notice: body.textContent.indexOf("Contoh, bukan data nyata") >= 0,
-      doneHidden: [...body.querySelectorAll(".res-end .btn.primary")].every((b) => b.hidden) };
+      doneHidden: [...body.querySelectorAll(".res-end .btn.primary:not(.try)")].every((b) => b.hidden) };
     out.sec.cards = body.querySelectorAll(".rcard").length;
     body.querySelector(".back").click();
     out.sec.returned = [currentView, !document.getElementById("view-results").hidden];
@@ -824,7 +824,7 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(sec["view"], ["rival", True])
         self.assertEqual(sec["nameFilled"], "Kaos Boxy Retro")  # pasted reviews have no link: the form asks for it, the name is filled in
         self.assertEqual(sec["back"], "Hasil Bedah")  # the back link names where it returns to
-        self.assertEqual(sec["example"]["head"], "Hasil Bedah pesaing")
+        self.assertEqual(sec["example"]["head"], "Analisa Kompetitor")
         self.assertEqual(sec["example"]["tabs"], ["Perlu dikejar3", "Kamu unggul1"])
         self.assertTrue(sec["example"]["sum"] and sec["example"]["notice"] and sec["example"]["doneHidden"])  # the made-up example never adds tasks
         self.assertEqual(sec["cards"], 3)

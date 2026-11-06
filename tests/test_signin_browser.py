@@ -807,7 +807,7 @@ class SignInBrowserTests(unittest.TestCase):
         self.assertEqual((out["pick"]["go"], out["pick"]["quota"], out["pick"]["back"]), ("Bandingkan (1 dipilih)", False, "Hasil Bedah"))  # no small "Pakai 1 jatah" line under the button (owner, 2026-11-04)
         self.assertEqual((out["two"][0], out["two"][1]), ([True, True, False], "Bandingkan (2 dipilih)"))
         self.assertEqual(out["three"], [True, True, False])  # a third shop is refused
-        self.assertEqual(out["result"]["head"], "Hasil Bedah pesaing")
+        self.assertEqual(out["result"]["head"], "Analisa Kompetitor")
         self.assertEqual(out["result"]["tabs"], ["Perlu dikejar3", "Kamu unggul1"])
         self.assertEqual(out["result"]["paths"], ["suggest", "compare:2"])
         self.assertTrue(out["result"]["selesai"])
