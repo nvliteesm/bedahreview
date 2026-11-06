@@ -112,6 +112,17 @@ class IdentifyTests(unittest.TestCase):
         self.assertEqual(identify_link("https://vt.tokopedia.com/t/ZS9yYewLpEeYF-vNQLy/", resolver), ("tiktokshop", TIKTOK))
         self.assertEqual(seen, ["https://vt.tokopedia.com/t/ZS9yYewLpEeYF-vNQLy/"])
 
+    def test_the_tokopedia_app_share_link_is_resolved_to_the_product_page(self):  # tk.tokopedia.com/<code>/ was refused as "not supported" until 2026-11-06
+        page = "https://www.tokopedia.com/wahdancollectionstore/tas-tenis-lapangan-premium-1736102758143788219"
+        seen = []
+
+        def resolver(url):
+            seen.append(url)
+            return page + "?utm_source=share"
+
+        self.assertEqual(identify_link("Lihat produk ini https://tk.tokopedia.com/ZSpjKEXsJ/ Mantap", resolver), ("tokopedia", page))
+        self.assertEqual(seen, ["https://tk.tokopedia.com/ZSpjKEXsJ/"])
+
     def test_shopee_gets_a_clear_message(self):
         with self.assertRaises(LinkError) as ctx:
             identify_link("https://shopee.co.id/Kaos-i.450430857.27207810374", _no_resolve)
