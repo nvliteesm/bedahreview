@@ -654,6 +654,23 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 .sumbox { background: var(--summary-soft); border: 1px solid var(--summary-line); border-radius: var(--radius); padding: 16px 18px; display: grid; gap: 10px; }
 .sumbox .eb { font-size: 12px; font-weight: 800; letter-spacing: 0.12em; color: var(--accent); }
 .sumbox ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; line-height: 1.45; }
+.sumbox .verdict { margin: 0; font-weight: 700; font-size: 1.02rem; line-height: 1.4; }
+.cbar { display: grid; gap: 8px; }
+.cbar-track { display: flex; height: 14px; border-radius: 99px; overflow: hidden; gap: 2px; background: var(--line); }
+.cbar-track span { min-width: 6px; }
+.cbar-key { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.88rem; }
+.cbar-key li { display: flex; align-items: center; gap: 6px; } .cbar-key i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.cdet { border-top: 1px solid var(--line); }
+.cdet > .stack { padding-bottom: 4px; }
+.rchart { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 10px; }
+.rchart h3 { margin: 0; font-size: 1rem; } .rchart p { margin: 0; }
+.rc-group { display: grid; gap: 4px; }
+.rc-theme { font-weight: 700; font-size: 0.92rem; }
+.rc-row { display: grid; grid-template-columns: minmax(64px, 28%) 1fr 24px; align-items: center; gap: 8px; font-size: 0.85rem; }
+.rc-name { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-track { height: 10px; border-radius: 99px; background: var(--ignore-soft); overflow: hidden; display: block; }
+.rc-track span { display: block; height: 100%; min-width: 3px; border-radius: 99px; background: var(--ignore); }
+.rc-row.you .rc-track span { background: var(--fix); } .rc-row.you .rc-name { color: var(--ink); font-weight: 700; }
 .sumbox .also { font-size: 0.9rem; color: var(--muted); }
 .gtabs { display: flex; gap: 8px; overflow-x: auto; margin: 0 calc(-1 * var(--gutter)); padding: 2px var(--gutter); scrollbar-width: none; }
 .gtabs::-webkit-scrollbar { display: none; }
@@ -1003,7 +1020,7 @@ const TEXT = {
    
    
     modeLabel: "Ambil", modeComplaints: "Keluhan dulu (1-3★)", modeLatest: "Ulasan terbaru", limitLabel: "Jumlah", fetchRun: "Ambil & bedah",
-    linkNote: "Butuh sampai 1 menit.",
+    linkNote: "Mohon tunggu sebentar.",
    errLink: "Tempel tautan produk dulu.", errGeneric: "Terjadi masalah (%s).", errNetwork: "Tidak bisa terhubung ke BedahReview. Periksa koneksi internetmu, lalu coba lagi.",
   
     loadingPart: "%s dari %s bagian selesai.", loadingFetching: "Mengambil ulasan dari tautan…", loadingResume: "Melanjutkan analisis tadi…", e_job_gone: "Analisis ini sudah tidak tersedia. Coba bedah lagi.",
@@ -1027,11 +1044,11 @@ const TEXT = {
     rival: "Pesaing", rivalRule: "Bandingkan keluhan dan pujian produkmu dengan produk serupa. Ini contoh kecil, bukan seluruh pasar.",
     rivalAsk: "Mau sekalian membandingkan dengan pesaing?", rivalAskBtn: "Ya, cari pesaing",
     rivalIntro: "Kami cari produk serupa di platform yang sama, kamu cek, lalu ketuk sekali. Kami ambil sekitar 7 ulasan per toko: 4 keluhan dan 3 terbaru.", rivalFind: "Cari pesaing",
-    rivalSearching: "Mencari produk serupa…", rivalSearchSub: "Sekitar 10-40 detik.",
+    rivalSearching: "Mencari produk serupa…", rivalSearchSub: "Mohon tunggu sebentar.",
     rivalPick: "Centang yang memang sebanding dengan produkmu (maks. %s):", rivalMoreLbl: "Produk lain yang ditemukan",
     rivalNone: "Tidak ada produk yang jelas sebanding. Tempel tautan pesaing di bawah.", rivalPaste: "Atau tempel tautan pesaing (satu per baris)",
     rivalGo: "Bandingkan", rivalNeedOne: "Pilih atau tempel minimal satu pesaing.", rivalMax: "Maksimal %s pesaing.",
-    rivalComparing: "Membandingkan ulasan…", rivalCompareSub: "Mengambil ulasan tiap toko lalu membedahnya. Sekitar 30-90 detik.",
+    rivalComparing: "Membandingkan ulasan…", rivalCompareSub: "Mengambil ulasan tiap toko lalu membedahnya. Mohon tunggu sebentar.",
     rivalSampleHead: "Contoh kecil:", rivalSampleBody: "sekitar 7 ulasan per toko (4 keluhan, 3 terbaru), bukan seluruh pasar. Angka adalah jumlah ulasan, bukan persen. Ulasan pesaing tidak disimpan.",
    rivalFailed: "Tidak bisa diambil: %s Layanan pengambil ulasan gagal, atau toko ini belum punya ulasan. Coba lagi.", rivalYou: "Kamu", rivalComplaints: "Keluhan", rivalPraise: "Pujian",
     rivalWorse: "Keluhan “%s”: %s di produkmu, di pesaing terbaik %s.", rivalOpp: "%s kena %s keluhan “%s” (kamu: %s). Peluang untuk menonjol.",
@@ -1050,7 +1067,7 @@ const TEXT = {
     daysLeft: "Sisa %s hari", fromRival: "DARI PESAING", calBtn: "Tambah ke Kalender", calEvent: "Cek lagi: %s", rivalsBtnShort: "Analisa Kompetitor", tasksNone: "Belum ada tugas", tasksNoneP: "Belum ada tugas. Tekan Selesai di Hasil Bedah, tugasnya muncul di sini.", tasksFinished: "SELESAI",
     st_done: "Selesai", st_open: "Belum selesai", st_expired: "Sudah lewat", histTasks: "%s tugas dibuat", histExpired: "%s dari %s tugas belum dicentang", histResume: "Lanjutkan", histGone: "Hasil ini sudah tidak tersimpan di HP ini. Bedah lagi untuk melihatnya.",
    
-    rivalFor: "Untuk", rivalWait: "Sekitar 10 sampai 40 detik.", cancelBtn: "Batal", rivalSearching: "Mencari produk serupa…", rivalPickT: "Pilih 1 atau 2 pesaing", rivalFoundN: "Ketemu %s produk serupa. Yang paling mirip sudah dipilih.", rivalGoN: "Bandingkan (%s dipilih)",
+    rivalFor: "Untuk", rivalWait: "Mohon tunggu sebentar.", cancelBtn: "Batal", rivalSearching: "Mencari produk serupa…", rivalPickT: "Pilih 1 atau 2 pesaing", rivalFoundN: "Ketemu %s produk serupa. Yang paling mirip sudah dipilih.", rivalGoN: "Bandingkan (%s dipilih)",
     rivalPasteSum: "Punya tautan pesaing sendiri?", rivalResultT: "Hasil Bedah pesaing", rivalVs: "Kamu vs %s", rivalCatchUp: "Perlu dikejar", rivalEdge: "Kamu unggul", buyerRivalLbl: "KATA PEMBELI PESAING",
     rivalDoWorse: "Cari tahu kenapa keluhan %s lebih sering muncul di produkmu daripada di pesaing, lalu perbaiki.", rivalDoGap: "Pelajari kenapa pembeli memuji %s di %s, lalu tonjolkan hal serupa di produkmu.", rivalDoEdge: "Pertahankan dan tonjolkan: pembeli pesaing mengeluhkan %s, produkmu tidak.", sumLabelFix: "RINGKASAN · %s HAL PERLU DIPERBAIKI", sumLabel: "RINGKASAN", sumItem: "%s (%s ulasan)", sumMore: "+%s lainnya: %s", moreReplies: "Balasan untuk %s ulasan lain", sumNothing: "Tidak ada keluhan yang perlu diperbaiki.", sumAlso: "Juga: %s", sumFight: "%s ulasan perlu ditanggapi", sumKeep: "%s pembeli memuji %s", cardN: "%s ulasan", buyerLbl: "KATA PEMBELI", todoLbl: "YANG PERLU KAMU LAKUKAN", endTitle: "Sudah selesai membaca?", selesaiBtn: "Selesai",doneToast: "%s tugas masuk",
     rivalWantLbl: "Berapa pesaing?", rivalExampleBtn: "Lihat contoh (gratis)", rivalExampleHead: "Contoh, bukan data nyata.",
@@ -1083,7 +1100,7 @@ const TEXT = {
     leadFix: "Keluhan dari tokomu sendiri. Tiap kartu berisi saran dan kutipan asli pembeli.", leadFight: "Mungkin bukan salahmu, tapi cek dulu sebelum membalas. Minta foto ke pembeli, lalu pilih draf dan salin.",
     leadIgnore: "Hanya bintang atau komentar tanpa isi. Ikut dihitung, tapi isinya tidak dibahas.", leadKeep: "Hal yang dipuji pembeli. Tonjolkan di halaman produk.",
   platformWord: "marketplace",
-    whyLbl: "Kenapa di sini: ", moreQuotes: "Lihat %s kutipan lainnya",
+    whyLbl: "Kenapa di sini: ", moreQuotes: "Lihat %s kutipan lainnya", seeDetail: "Lihat detail", verdictFix: "%s dari %s ulasan minta perbaikan, terbanyak soal %s.", chartAria: "Pembagian ulasan: %s", chartRivalT: "Keluhan: kamu vs pesaing", chartRivalSub: "Jumlah ulasan yang mengeluh per hal. Makin pendek makin baik.", chartYou: "Kamu",
     rivalOwnLbl: "Produkmu, dari Bedah ulasan", rivalOther: "Pakai produk lain", rivalBackOwn: "Pakai produk dari Bedah ulasan", rivalTitleAlone: "Bandingkan produkmu dengan pesaing",
     rivalIntroS: "Kami cari 2–3 produk serupa di platform yang sama. Kamu pilih yang cocok, lalu kami hitung keluhan dan pujian di ulasan mereka.",
     rivalYourLink: "Tautan produkmu", rivalYourName: "Nama produk (membantu pencarian)", rivalYourNamePh: "mis. Kaos Boxy Retro", rivalFindLink: "Cari pesaing",
@@ -1193,7 +1210,7 @@ const TEXT = {
    
    
     modeLabel: "Get", modeComplaints: "Complaints first (1-3★)", modeLatest: "Latest reviews", limitLabel: "Reviews", fetchRun: "Fetch & analyse",
-    linkNote: "Takes up to 1 minute.",
+    linkNote: "Please wait a moment.",
    errLink: "Paste a product link first.", errGeneric: "Something went wrong (%s).", errNetwork: "Could not reach BedahReview. Check your internet connection and try again.",
   
     loadingPart: "%s of %s parts done.", loadingFetching: "Fetching reviews from the link…", loadingResume: "Picking up your earlier analysis…", e_job_gone: "This analysis is no longer available. Please run it again.",
@@ -1217,11 +1234,11 @@ const TEXT = {
     rival: "Rivals", rivalRule: "Compare your complaints and praise with similar products. This is a small sample, not the whole market.",
     rivalAsk: "Also compare with competitors?", rivalAskBtn: "Yes, find competitors",
     rivalIntro: "We look for similar products on the same platform, you check them, then tap once. We read about 7 reviews per shop: 4 complaints and 3 recent ones.", rivalFind: "Find competitors",
-    rivalSearching: "Looking for similar products…", rivalSearchSub: "About 10-40 seconds.",
+    rivalSearching: "Looking for similar products…", rivalSearchSub: "Please wait a moment.",
     rivalPick: "Tick the ones that are really comparable to yours (max %s):", rivalMoreLbl: "Other products found",
     rivalNone: "No product was clearly comparable. Paste competitor links below.", rivalPaste: "Or paste competitor links (one per line)",
     rivalGo: "Compare", rivalNeedOne: "Pick or paste at least one competitor.", rivalMax: "At most %s competitors.",
-    rivalComparing: "Comparing reviews…", rivalCompareSub: "Fetching each shop's reviews, then reading them. About 30-90 seconds.",
+    rivalComparing: "Comparing reviews…", rivalCompareSub: "Fetching each shop's reviews, then reading them. Please wait a moment.",
     rivalSampleHead: "Small sample:", rivalSampleBody: "about 7 reviews per shop (4 complaints, 3 recent), not the whole market. Numbers are review counts, not percentages. Competitor reviews are not saved.",
    rivalFailed: "Could not be read: %s The review service failed, or this shop has no reviews yet. Try again.", rivalYou: "You", rivalComplaints: "Complaints", rivalPraise: "Praise",
     rivalWorse: "Complaints about “%s”: %s for you vs %s for the best competitor.", rivalOpp: "%s has %s complaints about “%s” (you: %s). A chance to stand out.",
@@ -1240,7 +1257,7 @@ const TEXT = {
     daysLeft: "%s days left", fromRival: "FROM COMPETITORS", calBtn: "Add to Calendar", calEvent: "Check again: %s", rivalsBtnShort: "Competitor analysis", tasksNone: "No tasks yet", tasksNoneP: "No tasks yet. Tap Done in the review results and the tasks show up here.", tasksFinished: "DONE",
     st_done: "Done", st_open: "Not finished", st_expired: "Ended", histTasks: "%s tasks created", histExpired: "%s of %s tasks not ticked", histResume: "Continue", histGone: "This result is no longer kept on this phone. Check again to see it.",
    
-    rivalFor: "For", rivalWait: "About 10 to 40 seconds.", cancelBtn: "Cancel", rivalSearching: "Looking for similar products…", rivalPickT: "Pick 1 or 2 competitors", rivalFoundN: "Found %s similar products. The closest match is already picked.", rivalGoN: "Compare (%s picked)",
+    rivalFor: "For", rivalWait: "Please wait a moment.", cancelBtn: "Cancel", rivalSearching: "Looking for similar products…", rivalPickT: "Pick 1 or 2 competitors", rivalFoundN: "Found %s similar products. The closest match is already picked.", rivalGoN: "Compare (%s picked)",
     rivalPasteSum: "Have a competitor link of your own?", rivalResultT: "Competitor results", rivalVs: "You vs %s", rivalCatchUp: "Catch up", rivalEdge: "Your edge", buyerRivalLbl: "WHAT COMPETITOR BUYERS SAY",
     rivalDoWorse: "Find out why %s complaints show up more on your product than on theirs, then fix it.", rivalDoGap: "Learn why buyers praise %s at %s, then bring out something similar on your product.", rivalDoEdge: "Keep it and show it off: competitor buyers complain about %s, yours do not.", sumLabelFix: "SUMMARY · %s THINGS TO FIX", sumLabel: "SUMMARY", sumItem: "%s (%s reviews)", sumMore: "+%s more: %s", moreReplies: "Replies for %s other reviews", sumNothing: "Nothing to fix in these reviews.", sumAlso: "Also: %s", sumFight: "%s reviews to respond to", sumKeep: "%s buyers praise %s", cardN: "%s reviews", buyerLbl: "WHAT BUYERS SAY", todoLbl: "WHAT TO DO", endTitle: "Done reading?", selesaiBtn: "Done",doneToast: "%s tasks added",
     rivalWantLbl: "How many competitors?", rivalExampleBtn: "See an example (free)", rivalExampleHead: "Example, not live data.",
@@ -1273,7 +1290,7 @@ const TEXT = {
     leadFix: "Complaints from your own shop. Each card has a suggestion and the buyers' exact quotes.", leadFight: "Maybe not your fault, but check first before you reply. Ask the buyer for a photo, then pick a draft and copy it.",
     leadIgnore: "Stars or comments with no content. Counted, but their content is not covered.", leadKeep: "What buyers praise. Show it off on the product page.",
   platformWord: "the marketplace",
-    whyLbl: "Why here: ", moreQuotes: "Show %s more quotes",
+    whyLbl: "Why here: ", moreQuotes: "Show %s more quotes", seeDetail: "See details", verdictFix: "%s of %s reviews ask for a fix, mostly about %s.", chartAria: "How the reviews split: %s", chartRivalT: "Complaints: you vs competitors", chartRivalSub: "Number of reviews complaining about each thing. Shorter is better.", chartYou: "You",
     rivalOwnLbl: "Your product, from Review checker", rivalOther: "Use another product", rivalBackOwn: "Use the product from Review checker", rivalTitleAlone: "Compare your product with competitors",
     rivalIntroS: "We look for 2–3 similar products on the same platform. You pick the ones that fit, then we count complaints and praise in their reviews.",
     rivalYourLink: "Your product link", rivalYourName: "Product name (helps the search)", rivalYourNamePh: "e.g. Retro Boxy Tee", rivalFindLink: "Find competitors",
@@ -1500,6 +1517,10 @@ const buyerBox = (quotes, more) => h("div", { class: "buyer" }, h("span", { clas
   more && more.length ? h("details", { class: "full" }, h("summary", { text: tr("moreQuotes", more.length) }), h("div", { class: "stack" }, more.map((m) => [quote(m), fullText(m)]))) : null);
 const todoBox = (lines, lg, reply, why) => (lines.length ? h("div", { class: "todo" + (reply ? " reply" : "") }, h("span", { class: "lab" }, svgIcon(WRENCH), tr("todoLbl")), h("ul", { lang: lg }, lines.map((t) => h("li", { text: t }))),
   why ? h("p", { class: "why small", lang: lg, text: why }) : null) : null);  // "why": the one line that says what probably happened, under the steps of a reply card
+function foldDetail(...parts) {  // a card shows its title and one quote; the steps, drafts and other quotes wait under "Lihat detail"
+  const body = parts.filter(Boolean);
+  return body.length ? h("details", { class: "full cdet" }, h("summary", { text: tr("seeDetail") }), h("div", { class: "stack" }, body)) : null;
+}
 const replyKey = (it) => [it.theme, it.bucket, !!(it.likely_fake && it.likely_fake.flag), !!it.check_first].join("|");
 function replyGroups(items) {  // one card per theme (and kind), like the fix cards: the same problem is not shown twice
   const m = new Map();
@@ -1527,9 +1548,10 @@ function replyCard(items) {  // the same shape as a fix card
         item.check_first ? h("span", { class: "chip hot", text: tr("chipCourier") }) : null,
         item.confidence === "low" ? h("span", { class: "chip", text: tr("chipLow") }) : null,
         items.length > 1 ? h("span", { class: "cn", text: tr("cardN", items.length) }) : null)),
-    buyerBox(items.slice(0, 2), items.slice(2)), todoBox(todo, lang, true, whyLine), replyDrafts(item),
-    others.length ? h("details", { class: "full" }, h("summary", { text: tr("moreReplies", others.length) }),
-      h("div", { class: "stack" }, others.map((o) => [quote(o), replyDrafts(o)]))) : null);
+    buyerBox(items.slice(0, 1), []),
+    foldDetail(todoBox(todo, lang, true, whyLine), replyDrafts(item),
+      others.length ? h("details", { class: "full" }, h("summary", { text: tr("moreReplies", others.length) }),
+        h("div", { class: "stack" }, others.map((o) => [quote(o), replyDrafts(o)]))) : null));
 }
 function fixCard(group, byId) {
   const members = group.ids.map((id) => byId[id]);
@@ -1537,7 +1559,8 @@ function fixCard(group, byId) {
   return h("article", { class: "card rcard" },
     h("div", { class: "card-head" }, h("div", { class: "ttl" }, h("h3", { text: themeName(group.theme) }), (group.variants || []).length ? h("span", { class: "vtxt", text: group.variants.join(", ") }) : null),
       h("div", { class: "chips" }, h("span", { class: "cn", text: tr("cardN", group.n) }))),
-    buyerBox(members.slice(0, 2), members.slice(2)), todoBox(suggestions, "id", false));
+    buyerBox(members.slice(0, 1), []),
+    foldDetail(members.length > 1 ? h("div", { class: "buyer" }, members.slice(1).map((m) => [quote(m), fullText(m)])) : null, todoBox(suggestions, "id", false)));
 }
 function startHere(groups, fight, byId) {  // the one task to do first: the biggest fix, else the first review to answer
   let text, detail = null, tab, label;
@@ -2316,14 +2339,30 @@ function headline(groups, fight, keep, items) {  // one calm sentence and one li
   }
   return { h: hd, lead: parts.join(" ") };
 }
-function renderSummary(groups, fight, keep, counts) {  // the soft-green box: what is wrong, in three to four lines, then what else the reviews hold
+const BAR_ORDER = [["fix", "--fix"], ["fight", "--fight"], ["keep", "--keep"], ["ignore", "--ignore"]];
+function countBar(counts) {  // one stacked bar of the four groups with the numbers under it; counts only, no model call
+  const total = BAR_ORDER.reduce((a, [k]) => a + (counts[k] || 0), 0);
+  if (!total) return null;
+  const used = BAR_ORDER.filter(([k]) => counts[k]);
+  return h("div", { class: "cbar" },
+    h("div", { class: "cbar-track", role: "img", "aria-label": tr("chartAria", used.map(([k]) => tr(k) + " " + counts[k]).join(", ")) },
+      used.map(([k, v]) => h("span", { style: "flex:" + counts[k] + ";background:var(" + v + ")" }))),
+    h("ul", { class: "cbar-key" }, used.map(([k, v]) => h("li", {}, h("i", { style: "background:var(" + v + ")", "aria-hidden": "true" }), tr(k) + " ", h("b", { text: counts[k] })))));
+}
+function verdictLine(groups, fight, keep, counts, items) {  // one sentence with the numbers: how many reviews want a fix, and about what
+  if (!groups.length) return headline(groups, fight, keep, items).h;
+  const total = counts.fix + counts.fight + counts.ignore + counts.keep;
+  return tr("verdictFix", counts.fix, total, lowerTheme(groups[0].theme));
+}
+function renderSummary(groups, fight, keep, counts, items) {  // the soft-green box: what is wrong, in three to four lines, then what else the reviews hold
   const bullets = groups.slice(0, 3).map((g) => tr("sumItem", themeName(g.theme), g.n));
   if (groups.length > 3) bullets.push(tr("sumMore", groups.length - 3, groups.slice(3, 6).map((g) => lowerTheme(g.theme)).join(", ")));
   if (!bullets.length) bullets.push(tr("sumNothing"));
   const also = [];
   if (fight.length) also.push(tr("sumFight", fight.length));
   if (keep.length) { const th = [...new Set(keep.map((k) => plainTheme(k.theme).toLowerCase()))].slice(0, 2); also.push(tr("sumKeep", keep.length, th.join(" " + tr("and") + " "))); }
-  $("sumbox").replaceChildren(...[h("span", { class: "eb", text: counts.fix ? tr("sumLabelFix", counts.fix) : tr("sumLabel") }), h("ul", {}, bullets.map((b) => h("li", { text: b }))),
+  $("sumbox").replaceChildren(...[h("span", { class: "eb", text: counts.fix ? tr("sumLabelFix", counts.fix) : tr("sumLabel") }),
+    h("p", { class: "verdict", text: verdictLine(groups, fight, keep, counts, items) }), countBar(counts), h("ul", {}, bullets.map((b) => h("li", { text: b }))),
     also.length ? h("span", { class: "also", text: tr("sumAlso", also.join(" · ")) }) : null].filter(Boolean));  // never null: replaceChildren would print the word "null" when there are no replies or praise
 }
 function render(data, fresh) {
@@ -2342,7 +2381,7 @@ function render(data, fresh) {
   const src = data.source || {};
   lastCounts = counts;
   $("summary").textContent = [src.title || (src.kind === "url" ? "" : tr("pastedName")), data.reviews + " " + tr("reviewsWord"), src.kind === "url" ? platformName(src.url) : data.star_avg ? data.star_avg + "★" : ""].filter(Boolean).join(" · ");
-  renderSummary(fixItems, fight, keep, counts);
+  renderSummary(fixItems, fight, keep, counts, data.items);
 
   if (data.example) lastChanged = [];
   if (fresh !== false && !data.example) {  // new reviews: compare them with every fix saved for this product
@@ -2556,6 +2595,16 @@ function rivalCard(d, x, names, edge) {
       q ? h("blockquote", {}, h("span", { lang: "id" }, q.stars ? h("span", { class: "stars", text: starsText(q.stars) + " " }) : null, "“" + q.quote + "”")) : h("p", { text: rivalLine(d, x, names) })),
     h("div", { class: "todo" + (edge ? " keep" : "") }, h("span", { class: "lab" }, svgIcon(WRENCH), tr("todoLbl")), h("ul", {}, h("li", { text: todo }))));
 }
+function rivalChart(d, names) {  // complaint counts per theme: you against each competitor, from the numbers the comparison already holds
+  const rows = d.rows.filter((r) => r.kind === "complaint" && (r.you || r.others.some(Boolean))).sort((a, b) => Math.max(b.you, ...b.others) - Math.max(a.you, ...a.others)).slice(0, 4);
+  if (!rows.length) return null;
+  const max = Math.max(1, ...rows.map((r) => Math.max(r.you, ...r.others)));
+  const bar = (label, n, you) => h("div", { class: "rc-row" + (you ? " you" : "") }, h("span", { class: "rc-name", text: label }),
+    h("span", { class: "rc-track" }, h("span", { style: "width:" + Math.round(n / max * 100) + "%" })), h("b", { text: n }));
+  return h("section", { class: "rchart", "aria-label": tr("chartRivalT") }, h("h3", { text: tr("chartRivalT") }), h("p", { class: "small muted", text: tr("chartRivalSub") }),
+    rows.map((r) => h("div", { class: "rc-group" }, h("span", { class: "rc-theme", text: plainTheme(r.theme) }),
+      bar(tr("chartYou"), r.you, true), r.others.map((n, i) => bar(names[i] || "", n, false)))));
+}
 function rivalResult(st) {
   const d = st.data, names = rivalShops(d, st), absent = !!d.you.absent, groups = groupInsights(d.insights, d.rows), all = groups.learn.concat(groups.avoid);
   const bullets = all.slice(0, 3).map((x) => rivalLine(d, x, names));
@@ -2578,7 +2627,7 @@ function rivalResult(st) {
     d.example ? h("div", { class: "callout warn", role: "note" }, h("b", { text: tr("rivalExampleHead") + " " }), tr("rivalExampleBody")) : null,
     absent ? h("div", { class: "callout", text: tr("rivalAlone") }) : null,
     h("div", { class: "sumbox" }, h("span", { class: "eb", text: tr("sumLabel") }), h("ul", {}, (bullets.length ? bullets : [tr("rivalNoInsight")]).map((t) => h("li", { text: t })))),
-    tabsEl, body,
+    rivalChart(d, names), tabsEl, body,
     notes.length ? h("div", { class: "stack" }, notes.map((t) => h("p", { class: "small muted", text: t }))) : null,
     h("div", { class: "res-end" }, h("h3", { text: tr("endTitle") }), h("div", { class: "res-actions" }, done, again)));
 }
