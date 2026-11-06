@@ -556,6 +556,9 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 .empty2 .btn.primary { max-width: 280px; }
 .signbox { background: var(--surface); border: 1.5px solid var(--accent); border-radius: 16px; padding: 20px 16px; display: grid; gap: 12px; text-align: center; }
 .signbox .lock { width: 24px; height: 24px; margin: 0 auto; color: var(--accent); }
+.askbox { display: grid; gap: 16px; text-align: center; padding: 8px 4px 4px; }  /* the "check competitors too?" dialog: room around the title, the sentence and the two buttons */
+.askbox h2 { font-size: 1.2rem; font-weight: 800; line-height: 1.3; margin: 0; } .askbox p { margin: 0; line-height: 1.5; }
+.askbox .btns { display: grid; gap: 12px; margin-top: 8px; } .askbox .btn { width: 100%; min-height: 48px; }
 .signbox h2, .signbox h3 { font-size: 18px; font-weight: 800; }
 .signbox .btn.ghost, .unlock .btn.ghost { width: 100%; min-height: 44px; }
 .sched { list-style: none; padding: 0 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
@@ -677,6 +680,7 @@ textarea.lineq { min-height: 96px; font: 15px/1.55 var(--font-ui); padding: 12px
 #another-btn { justify-self: center; min-height: 44px; }  /* a quiet third choice under Selesai and Analisa Kompetitor */
 .res-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }  /* the two real choices side by side, the same size, on every width */
 .res-actions.one { grid-template-columns: 1fr; }
+@media (min-width: 600px) { .res-end .res-actions.one { max-width: 280px; } }  /* a single Selesai on a tablet or desktop is a short button, not a bar across the column */
 .res-actions .btn, .res-end .res-actions .btn { width: 100%; min-width: 0; padding-left: 10px; padding-right: 10px; justify-self: stretch; font-size: 1rem; font-weight: 700; }
 @media (min-width: 900px) { .res-end .res-actions { max-width: 540px; } #another-btn { justify-self: start; } }
 @media (min-width: 900px) { #another-btn { justify-self: start; } .res-end .btn { width: 260px; justify-self: start; } .gtabs { margin: 0; padding: 2px 0; flex-wrap: wrap; overflow: visible; } }
@@ -2015,7 +2019,7 @@ function finishResult() {  // Selesai on a Hasil Bedah: the tasks are made, then
   if (visitor()) { endToTugas(n); return; }  // comparing needs an account, so a visitor is not asked
   const yes = h("button", { class: "btn primary", type: "button", text: tr("rivalsOpen"), onclick: () => { closeSheet(); openRivals({ from: "results" }); } });
   const no = h("button", { class: "btn ghost", type: "button", text: tr("askRivalNo"), onclick: () => { closeSheet(); endToTugas(n); } });
-  openDialog([h("h2", { text: tr("askRivalT") }), h("p", { class: "muted", text: tr("askRivalP") }), h("div", { class: "stack" }, yes, no)], "askRivalT");
+  openDialog([h("div", { class: "askbox" }, h("h2", { text: tr("askRivalT") }), h("p", { class: "muted", text: tr("askRivalP") }), h("div", { class: "btns" }, yes, no))], "askRivalT");
 }
 function toggleItem(sig, id) {
   saveBoxes(loadBoxes().map((b) => {
